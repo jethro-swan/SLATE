@@ -151,6 +151,15 @@ see the following additional links in its **home screen**:
   - _re-enable **user**_
   - _export journal_
 
+So the following additional screens are required:
+
+  - **Suspend user**
+    - **user** name (entered in a text box)
+  - **Re-enable user**
+    - **user** name (selected from drop-down list)
+  - **Export journal**
+    - **currency** name (selected from drop-down list)
+
 #### Global administrators
 
 When logged in, any **user** registered as a _global administrator_ will see
@@ -164,10 +173,16 @@ the following additional links in its **home screen**:
 
 So the following additional screens are required:
 
-  - **add new community**
-    - **community name** (entered in a text box)
-  - **add global administrator**
-    - **name** (entered in a text box)
+  - **Add new community**
+    - **community** name (entered in a text box)
+  - **Add global administrator**
+    - user name (entered in a text box)
+  - **Suspend user**
+    - user name (entered in a text box)
+  - **Re-enable user**
+    - user name (selected from drop-down list)
+  - **Export journal**
+    - **currency** name (selected from drop-down list)
 
 
 ----
