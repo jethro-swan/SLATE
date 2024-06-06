@@ -7,16 +7,16 @@ able to support multiple currencies.
 This is a temporary system to allow networks/islands to form while
 [NESTS](https://nests.lrc.org.uk) is still being developed (its specification
 being still somewhat fluid at this stage). For this reason, the names used to
-identify _entities_ (users and currencies) in the un-nested _SLATE_ are
+identify _entities_ (agents and currencies) in the un-nested _SLATE_ are
 compatible with those of the fully-nested (and much more capable) _NESTS_
 software.
 
 ----
-### User categories
+### Agent categories
 
-There are three categories of user:
+There are three categories of agent:
 
-  - A **general user** - a set to which _all_ **users** belong.
+  - A **general agent** - a set to which _all_ **agents** belong.
   - A **currency steward** - a _steward_ of a **currency**, assigned this role
     either by another _steward_ of a **currency** or by a **global system
     administrator**.
@@ -26,23 +26,23 @@ There are three categories of user:
 ----
 ### Internal representation
 
-For convenience, each _entity_ (**user**, **currency** or **community**) is
+For convenience, each _entity_ (**agent**, **currency** or **community**) is
 represented internally by a unique number (assigned sequentially), mapped each
 way using a pair of associative arrays (_DBM_). These numbers are _not_
 compatible with the _FPH_ (_Full Path Hash_) used in _NESTS_ (although they
 could be made so).
 
 These global mappings are:
-  - **user**: _name_ &rarr; _number_
-  - **user**: _number_ &rarr; _name_
+  - **agent**: _name_ &rarr; _number_
+  - **agent**: _number_ &rarr; _name_
   - **currency**: _name_ &rarr; _number_
   - **currency**: _number_ &rarr; _name_
   - **community**: _name_ &rarr; _number_
   - **community**: _number_ &rarr; _name_
 
-Each **community** has its own collection of **currencies** and **users**, so
+Each **community** has its own collection of **currencies** and **agents**, so
 this lacks the flexibility of the recursively-nested **namespaces** in _NESTS_.
-However, a **user**'s or **currency**'s _name_ may be duplicated in multiple
+However, a **agent**'s or **currency**'s _name_ may be duplicated in multiple
 **communities**, so a this provides a sufficient entry point into a network
 fully compatible with [open money](https://openmoney.github.io/specification)
 (although notably lacking provision for the construction of the rich governance
@@ -66,38 +66,38 @@ recorded, listing
 The **currency**'s journal can be exported at any time by one of its _stewards_
 or by a **global system administrator**.
 
-#### Users' ledgers
+#### Agents' ledgers
 
 The ledgers are all stored internally as CSV, in a format convenient for direct
 export.
 
-Each **user** (_agent_) has access to at least one **currency** (generally
-more), and a separate ledger for each of these. The **user**'s ledgers list the
+Each **agent** (_agent_) has access to at least one **currency** (generally
+more), and a separate ledger for each of these. The **agent**'s ledgers list the
 transaction (_payments_ and _receipts_) for its accounts. These ledgers each
 comprise fields listing
-  - the name of the other **user** (whether a _payer_ or a _payee_)
+  - the name of the other **agent** (whether a _payer_ or a _payee_)
   - the _amount_ paid or received (+ or -)
   - the _balance_ following this payment
   - an _annotation_ (if specified by the _payer_)
-and the _ledger_ file is identified by **currency** and **user**.
+and the _ledger_ file is identified by **currency** and **agent**.
 
 For each payment made
   - the _payer's_ balance in this **currency** is reduced by _amount_
   - the _payee's_ balance  in this **currency** is increased by _amount_
   - the payment is recorded in the this **currency**'s _journal_
 
-Each **user** (_agent_) can export its own ledger in any **currency** to which
+Each **agent** (_agent_) can export its own ledger in any **currency** to which
 it has access.
 
 ----
-## The user interface
+## The agent interface
 
-### User screens
+### Agent screens
 
   - **Registration**  
-    Once registered, the **user** has access to (an **account** in) every **currency** within that **community**.
+    Once registered, the **agent** has access to (an **account** in) every **currency** within that **community**.
     - **community** (selected from a drop-down list)
-    - **user name** (entered in a text box)
+    - **agent** name (entered in a text box)
     - real name (entered in a text box) (optional)
     - _email address_ (entered in a text box)
     - password (entered in a text box)
@@ -105,7 +105,7 @@ it has access.
 
   - **Login recovery**
     A recovery link is sent by email.
-    - _email address_ or **user name** (entered in a text box)
+    - _email address_ or **agent name** (entered in a text box)
 
   - **Payment**
     Each _payment_ is recorded in the **currency**'s journal
@@ -123,10 +123,10 @@ it has access.
       - transaction history in each **currency**
       - export link for the _ledger_ in each **currency**
       - a link to the _parabola plots_ for each **currency**
-      - a **user update** screen
+      - a **agent update** screen
 
-  - **User update** screen allowing changes to
-    - **user name** (entered in a text box)
+  - **Agent update** screen allowing changes to
+    - **agent name** (entered in a text box)
     - real name (entered in a text box) (optional)
     - _email address_ (entered in a text box)
     - password (entered in a text box)
@@ -137,33 +137,33 @@ reset_ received by email.
 
 #### Community stewards
 
-When logged in, any **user** registered as a _steward_ of a **community** will see the following additional links in its
+When logged in, any **agent** registered as a _steward_ of a **community** will see the following additional links in its
 **home screen**:
   - _add steward_
-  - _add new currency_
+  - _add new **currency**_
   - _confirm pending registration_
-  - _suspend **user**_
-  - _re-enable **user**_
+  - _suspend **agent**_
+  - _re-enable **agent**_
   - _export journal_
 
 Therefore the following additional screens are required:
 
-  - **Suspend user**
-    - **user** name (entered in a text box)
-  - **Re-enable user**
-    - **user** name (selected from drop-down list)
+  - **Suspend agent**
+    - **agent** name (entered in a text box)
+  - **Re-enable agent**
+    - **agent** name (selected from drop-down list)
   - **Export journal**
     - **currency** name (selected from drop-down list)
 
 #### Global administrators
 
-When logged in, any **user** registered as a _global administrator_ will see
+When logged in, any **agent** registered as a _global administrator_ will see
 the following additional links in its **home screen**:
-  - _add new community_
+  - _add new **community**_
   - _add global administrator_
   - _confirm pending registration_
-  - _suspend **user**_
-  - _re-enable **user**_
+  - _suspend **agent**_
+  - _re-enable **agent**_
   - _export journal_ (for any **currency**)
 
 Therefore the following additional screens are required:
@@ -171,11 +171,11 @@ Therefore the following additional screens are required:
   - **Add new community**
     - **community** name (entered in a text box)
   - **Add global administrator**
-    - user name (entered in a text box)
-  - **Suspend user**
-    - user name (entered in a text box)
-  - **Re-enable user**
-    - user name (selected from drop-down list)
+    - **agent** name (entered in a text box)
+  - **Suspend agent**
+    - **agent** name (entered in a text box)
+  - **Re-enable agent**
+    - **agent** name (selected from drop-down list)
   - **Export journal**
     - **currency** name (selected from drop-down list)
 
