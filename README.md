@@ -162,9 +162,12 @@ the following additional links in its **home screen**:
   - _re-enable **user**_
   - _export journal_ (for any **currency**)
 
+So the following additional screens are required:
 
-
-
+  - **add new community**
+    - **community name** (entered in a text box)
+  - **add global administrator**
+    - **name** (entered in a text box)
 
 
 ----
