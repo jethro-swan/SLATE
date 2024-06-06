@@ -14,14 +14,16 @@ software.
 ----
 ### Agent categories
 
-There are three categories of agent:
+There are four categories of agent:
 
-  - A **general agent** - a set to which _all_ **agents** belong.
-  - A **currency steward** - a _steward_ of a **currency**, assigned this role
-    either by another _steward_ of a **currency** or by a **global system
-    administrator**.
-  - A **global system administrator**, assigned this role at setup or by
-    an existing **global system administrator**.
+  - A general **agent** - the set to which _all_ **agents** belong.
+  - A **community** _steward_ - a _steward_ of a **community** (a.k.a. a
+    _network_ or _island_), assigned this role by an **agent** already holding
+    it or by a _global system administrator_.
+  - A **currency** _steward_ - a _steward_ of a **currency**, assigned this role
+    an **agent** already holding it or by a _global system administrator_.
+  - A _global system administrator_, assigned this role at setup or by an
+    existing _global system administrator_.
 
 ----
 ### Internal representation
@@ -42,8 +44,8 @@ These global mappings are:
 
 Each **community** has its own collection of **currencies** and **agents**, so
 this lacks the flexibility of the recursively-nested **namespaces** in _NESTS_.
-However, a **agent**'s or **currency**'s _name_ may be duplicated in multiple
-**communities**, so a this provides a sufficient entry point into a network
+However, an **agent**'s or **currency**'s _name_ may be duplicated in multiple
+**communities**, so this provides a sufficient entry point into a network
 fully compatible with [open money](https://openmoney.github.io/specification)
 (although notably lacking provision for the construction of the rich governance
 system that it is intended to support).
@@ -137,17 +139,43 @@ reset_ received by email.
 
 #### Community stewards
 
-When logged in, any **agent** registered as a _steward_ of a **community** will see the following additional links in its
-**home screen**:
+When logged in, any **agent** registered as a _steward_ of a **community** will
+see the following additional links in its _home screen_:
+  - _add steward_
+  - _add new **currency**_
+  - _confirm pending registration_
+  - _suspend **agent**_
+  - _re-enable **agent**_
+
+Therefore the following additional screens are required:
+  - **Add steward** for this **community**
+    - _steward_ **name**
+  - **Add currency** for this **community**
+    - **currency**'s **name** (entered in a text box)
+    - **currency** prefix (entered in a text box) (optional)
+    - **currency** suffix (entered in a text box) (optional)
+    - initial _steward_ **name** (entered in a text box)
+  - **Suspend agent**
+    - **agent** name (entered in a text box)
+  - **Re-enable agent**
+    - **agent** name (selected from drop-down list)
+
+
+#### Currency stewards
+
+When logged in, any **agent** registered as a _steward_ of a **currency** will
+see the following additional links in its _home screen_:
   - _add steward_
   - _add new **currency**_
   - _confirm pending registration_
   - _suspend **agent**_
   - _re-enable **agent**_
   - _export journal_
+  - _post reversing transaction_
 
 Therefore the following additional screens are required:
-
+  - **Add steward** for this **currency**
+    - _steward_ **name**
   - **Suspend agent**
     - **agent** name (entered in a text box)
   - **Re-enable agent**
