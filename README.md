@@ -12,7 +12,7 @@ compatible with those of the fully-nested (and much more capable) _NESTS_
 software.
 
 ----
-#### User categories
+### User categories
 
 There are three categories of user:
 
@@ -24,7 +24,7 @@ There are three categories of user:
     an existing **global system administrator**.
 
 ----
-#### Internal representation
+### Internal representation
 
 For convenience, each _entity_ (**user**, **currency** or **community**) is
 represented internally by a unique number (assigned sequentially), mapped each
@@ -52,9 +52,9 @@ The compatibility of the _entity_ names is sufficient to enable convenient and
 complete migration from _SLATE_ to _NESTS_ in due course.
 
 -----
-#### Ledger files
+### Ledger files
 
-###### Currency journal
+#### Currency journal
 
 Each **currency** has an associated journal (CSV) in which all _payments_ are
 recorded, listing
@@ -66,7 +66,7 @@ recorded, listing
 The **currency**'s journal can be exported at any time by one of its _stewards_
 or by a **global system administrator**.
 
-###### Users' ledgers
+#### Users' ledgers
 
 The ledgers are all stored internally as CSV, in a format convenient for direct
 export.
@@ -90,9 +90,9 @@ Each **user** (_agent_) can export its own ledger in any **currency** to which
 it has access.
 
 ----
-### The user interface
+## The user interface
 
-#### User screens
+### User screens
 
   - **Registration**  
     Once registered, the **user** has access to (an **account** in) every **currency** within that **community**.
@@ -101,32 +101,29 @@ it has access.
     - real name (entered in a text box) (optional)
     - _email address_ (entered in a text box)
     - password (entered in a text box)
-    - PIN (entered in a text box) 
+    - PIN (entered in a text box)
 
   - **Login recovery**
+    A recovery link is sent by email.
     - _email address_ or **user name** (entered in a text box)
 
-A recovery link is sent by email.
-
   - **Payment**
+    Each _payment_ is recorded in the **currency**'s journal
+    and in the ledgers of both _payer_ and _payee_.
     - _payee_ identifier
     - _amount_
     - parallel amount paid in national currency (optional)
     - **currency** (selected from drop-down list)
     - _annotation_ (optional)
 
-Each _payment_ is recorded in the **currency**'s journal and in the ledgers of
-both _payer_ and _payee_.
-
-  - **home screen** displaying
+  - **home screen**
+    This is the screen displayed upon logging in, displaying
     - _balance_ in each **currency**
     - links to
       - transaction history in each **currency**
       - export link for the _ledger_ in each **currency**
       - a link to the _parabola plots_ for each **currency**
       - a **user update** screen
-
-This is the screen displayed upon logging in.
 
   - **User update** screen allowing changes to
     - **user name** (entered in a text box)
@@ -140,8 +137,8 @@ reset_ received by email.
 
 #### Community stewards
 
-When logged in, any **user** registered as a _steward_ of a **community** will
-see the following additional links in its **home screen**:
+When logged in, any **user** registered as a _steward_ of a **community** will see the following additional links in its
+**home screen**:
   - _add steward_
   - _add new currency_
   - _confirm pending registration_
@@ -149,7 +146,7 @@ see the following additional links in its **home screen**:
   - _re-enable **user**_
   - _export journal_
 
-So the following additional screens are required:
+Therefore the following additional screens are required:
 
   - **Suspend user**
     - **user** name (entered in a text box)
@@ -169,7 +166,7 @@ the following additional links in its **home screen**:
   - _re-enable **user**_
   - _export journal_ (for any **currency**)
 
-So the following additional screens are required:
+Therefore the following additional screens are required:
 
   - **Add new community**
     - **community** name (entered in a text box)
