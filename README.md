@@ -137,7 +137,7 @@ it has access.
 This screen can be reached either when already logged in or via a _password
 reset_ received by email.
 
-#### Community stewards
+### Community stewards
 
 When logged in, any **agent** registered as a _steward_ of a **community** will
 see the following additional links in its _home screen_:
@@ -160,8 +160,7 @@ Therefore the following additional screens are required:
   - **Re-enable agent**
     - **agent** name (selected from drop-down list)
 
-
-#### Currency stewards
+### Currency stewards
 
 When logged in, any **agent** registered as a _steward_ of a **currency** will
 see the following additional links in its _home screen_:
@@ -183,7 +182,7 @@ Therefore the following additional screens are required:
   - **Export journal**
     - **currency** name (selected from drop-down list)
 
-#### Global administrators
+### Global administrators
 
 When logged in, any **agent** registered as a _global administrator_ will see
 the following additional links in its **home screen**:
