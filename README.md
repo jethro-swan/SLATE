@@ -94,16 +94,14 @@ it has access.
 
 #### User screens
 
-  - **Registration**
+  - **Registration**  
+    Once registered, the **user** has access to (an **account** in) every **currency** within that **community**.
     - **community** (selected from a drop-down list)
     - **user name** (entered in a text box)
     - real name (entered in a text box) (optional)
     - _email address_ (entered in a text box)
     - password (entered in a text box)
-    - PIN (entered in a text box)
-
-Once registered, the **user** has access to (an **account** in) every
-**currency** within that **community**.
+    - PIN (entered in a text box) 
 
   - **Login recovery**
     - _email address_ or **user name** (entered in a text box)
