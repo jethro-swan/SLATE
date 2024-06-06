@@ -185,8 +185,8 @@ Therefore the following additional screens are required:
     - **currency**'s **name** (selected from drop-down list)
     - _transaction_ (selected from drop-down list displaying most recent
       transactions in this **currency**.
-      
-    NB, this does not removed the original transaction from the journal.
+
+    NB, this does not remove the original transaction from the journal.
     Instead, it posts a reversing transaction.
 
 ### Global administrators
@@ -209,9 +209,10 @@ Therefore the following additional screens are required:
   - **Suspend agent**
     - **agent** name (entered in a text box)
   - **Re-enable agent**
-    - **agent** name (selected from drop-down list)
+    - **agent** name (selected from drop-down list of disabled **agent**s)
   - **Export journal**
     - **currency** name (selected from drop-down list)
+    - File download location (file dialogue)
 
 
 ----
