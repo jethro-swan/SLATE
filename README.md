@@ -181,13 +181,10 @@ Therefore the following additional screens are required:
     - **agent** name (selected from drop-down list)
   - **Export journal**
     - **currency** name (selected from drop-down list)
-  - **Post reversing transaction**
+  - **Post reversing transaction**[^1]
     - **currency**'s **name** (selected from drop-down list)
     - _transaction_ (selected from drop-down list displaying most recent
-      transactions in this **currency**.
-
-    NB, this does not remove the original transaction from the journal.
-    Instead, it posts a reversing transaction.
+      transactions in this **currency**).
 
 ### Global administrators
 
@@ -216,3 +213,5 @@ Therefore the following additional screens are required:
 
 
 ----
+
+[^1]: NB, this does not remove the original transaction from the journal. Instead, it posts a reversing transaction.
