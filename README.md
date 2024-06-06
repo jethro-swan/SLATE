@@ -46,7 +46,7 @@ However, a **user**'s or **currency**'s _name_ may be duplicated in multiple
 **communities**, so a this provides a sufficient entry point into a network
 fully compatible with [open money](https://openmoney.github.io/specification)
 (although notably lacking provision for the construction of the rich governance
-system that is intended to support).
+system that it is intended to support).
 
 The compatibility of the _entity_ names is sufficient to enable convenient and
 complete migration from _SLATE_ to _NESTS_ in due course.
@@ -137,7 +137,7 @@ This is the screen displayed upon logging in.
     - password (entered in a text box)
     - PIN (entered in a text box)
 
-This screen can be reach either when already logged in or via a _password
+This screen can be reached either when already logged in or via a _password
 reset_ received by email.
 
 #### Community stewards
