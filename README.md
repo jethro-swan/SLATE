@@ -104,11 +104,9 @@ it has access.
     - _email address_ (entered in a text box)
     - password (entered in a text box)
     - PIN (entered in a text box)
-
   - **Login recovery**
     A recovery link is sent by email.
     - _email address_ or **agent name** (entered in a text box)
-
   - **Payment**
     Each _payment_ is recorded in the **currency**'s journal
     and in the ledgers of both _payer_ and _payee_.
@@ -117,7 +115,6 @@ it has access.
     - parallel amount paid in national currency (optional)
     - **currency** (selected from drop-down list)
     - _annotation_ (optional)
-
   - **home screen**
     This is the screen displayed upon logging in, displaying
     - _balance_ in each **currency**
@@ -126,7 +123,6 @@ it has access.
       - export link for the _ledger_ in each **currency**
       - a link to the _parabola plots_ for each **currency**
       - a **agent update** screen
-
   - **Agent update** screen allowing changes to
     - **agent name** (entered in a text box)
     - real name (entered in a text box) (optional)
@@ -198,7 +194,6 @@ the following additional links in its **home screen**:
   - _export journal_ (for any **currency**)
 
 Therefore the following additional screens are required:
-
   - **Add new community**
     - **community** name (entered in a text box)
   - **Add global administrator**
