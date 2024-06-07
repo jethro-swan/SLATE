@@ -1,4 +1,4 @@
-## SLATE (Simple Ledger Application for Temporary Expediency)
+## SLATE (Simple Ledger Application: a Temporary Expedient)
 
 This is an extremely simple _Flask_ application to support un-nested
 [open money](https://openmoney.github.io/specification) payment networks, each
