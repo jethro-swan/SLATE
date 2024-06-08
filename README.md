@@ -29,10 +29,10 @@ There are four categories of agent:
 ### Internal representation
 
 For convenience, each _entity_ (**agent**, **currency** or **community**) is
-represented internally by a unique number (assigned sequentially), mapped each
-way using a pair of associative arrays (_DBM_). These numbers are _not_
-compatible with the _FPH_ (_Full Path Hash_) used in _NESTS_ (although they
-could be made so).
+identified internally by a unique number (assigned sequentially for each
+entity type), mapped each way using a pair of associative arrays (_DBM_).
+These numbers are _not_ compatible with the _FPH_ (_Full Path Hash_) used in
+_NESTS_ (although a unique mapping each way could be added in due course).
 
 These global mappings are:
   - **agent**: _name_ &rarr; _number_
@@ -93,6 +93,9 @@ it has access.
 
 ----
 ## The agent interface
+
+The _SLATE_ screens form a subset those used in _NESTS_, with minimal, if any,
+modification.
 
 ### Agent screens
 
