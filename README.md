@@ -30,21 +30,26 @@ There are four categories of agent:
 
 For convenience, each _entity_ (**agent**, **currency** or **community**) is
 identified internally by a unique number (assigned sequentially for each
-entity type), mapped each way using a pair of associative arrays (_DBM_).
-These numbers are _not_ compatible with the _FPH_ (_Full Path Hash_) used in
-_NESTS_ (although a unique mapping each way could be added in due course).
+entity type as the autoincrementing primary key in an _SQLite_ table. (NB,
+these numbers are _not_ compatible with the _FPH_ (_Full Path Hash_) used in
+_NESTS_ (although a unique mapping each way could be added easily in due
+course).
 
 These global mappings are:
-  - **agent**: _name_ &rarr; _number_
-  - **agent**: _number_ &rarr; _name_
-  - **currency**: _name_ &rarr; _number_
-  - **currency**: _number_ &rarr; _name_
-  - **community**: _name_ &rarr; _number_
-  - **community**: _number_ &rarr; _name_
+  - **agent**: _agent_hrns_ &rarr; _agent_id_
+  - **agent**: _agent_id_ &rarr; _agent_hrns_
+  - **currency**: _currency_hrns_ &rarr; _currency_id_
+  - **currency**: _currency_id_ &rarr; _currency_hrns_
+  - **community**: _community_hrns_ &rarr; _community_id_
+  - **community**: _community_id_ &rarr; _community_hrns_
+
+As in _NESTS_, each entity (**agent**, **currency** or **community**) is
+identified by a human-readable name string (HRNS) placing it within a
+**community** (equivalent to a _namespace_ in _NESTS_).
 
 Each **community** has its own collection of **currencies** and **agents**, so
 this lacks the flexibility of the recursively-nested **namespaces** in _NESTS_.
-However, an **agent**'s or **currency**'s _name_ may be duplicated in multiple
+However, an **agent**'s or **currency**'s _HRNS_ may be duplicated in multiple
 **communities**, so this provides a sufficient entry point into a network
 fully compatible with [open money](https://openmoney.github.io/specification)
 (although notably lacking provision for the construction of the rich governance
@@ -212,4 +217,9 @@ Therefore the following additional screens are required:
 
 ----
 
-[^1]: NB, this does not remove the original transaction from the journal. Instead, it posts a reversing transaction.
+[^1]: NB, this does not remove the original transaction from the journal.
+Instead, it posts a reversing transaction.
+
+----
+
+Most recently updated: 2024/06/17
