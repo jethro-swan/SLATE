@@ -404,11 +404,32 @@ def new_account(
             accounts_fph_list = pickle.loads(accounts_fph_blob[5])
             accounts_fph_list.append(account_fph)
             accounts_fph_blob = pickle.dumps(accounts_fph_list)
-            cursor.execute("""
-                UPDATE agents SET accounts_fph_list = ? WHERE agent_fph = ?
+            cursor.execute(
+                """
+                UPDATE agents SET accounts_fph_list = ?
+                WHERE agent_fph = ?
                 """,
                 (accounts_fph_blob, agent_fph)
             )
+
+        cursor.execute("""
+            SELECT * FROM currencies WHERE currency_fph = ?
+            """,
+            (currency_fph,)
+        )
+        accounts_fph_blob = cursor.fetchone()
+        if accounts_fph_blob is not None:
+            accounts_fph_list = pickle.loads(accounts_fph_blob[5])
+            accounts_fph_list.append(account_fph)
+            accounts_fph_blob = pickle.dumps(accounts_fph_list)
+            cursor.execute(
+                """
+                UPDATE currencies SET accounts_fph_list = ?
+                WHERE currency_fph = ?
+                """,
+                (accounts_fph_blob, currency_fph)
+            )
+
         conn.commit()
         cursor.close()
 
@@ -628,10 +649,28 @@ def get_account_currency(account_fph):
     return currency_fph
 
 #==============================================================================
+# Identify the account in the specified currency:
+def list_currency_accounts(currency_fph):
+    with sqlite3.connect(ENTITIES_DB) as conn:
+        cursor = conn.cursor()
+        cursor.execute(
+            "SELECT * FROM currencies WHERE currency_fph = ?",
+            (currency_fph,)
+        )
+        accounts_fph_blob = cursor.fetchone()[5]
+        cursor.close()
+    accounts_fph_list = pickle.loads(accounts_fph_blob)
+    return accounts_fph_list    # list
+
+#==============================================================================
+
+
+
 # Identify the account (if any) in which the agent has access to the specified
 # currency:
-def list_currency_accounts(agent_fph, currency_fph):
-    acct_fph_list = list_agent_accounts(agent_fph)
+
+def list_agent_currency_accounts(agent_fph, currency_fph):
+
     accounts_fph_list = []
     for account_fph in acct_fph_list:
         if get_account_currency(account_fph) == currency_fph:

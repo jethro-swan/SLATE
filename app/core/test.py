@@ -384,7 +384,6 @@ for agent_fph in l_agents:
         print("\t" + fph_to_hrns(account_fph))
 print()
 print("="*80)
-print()
 
 # List currencies to which each fake agent has an account:
 print("\nList the fake agents' accounts' currencies:\n")
@@ -396,26 +395,20 @@ for agent_fph in l_agents:
         print("\t" + fph_to_hrns(currency_fph))
 print()
 print("="*80)
+
+# List each fake currency's accounts:
+print("\nList the fake currencies' accounts:\n")
+
+for currency_fph in l_currencies:
+    print(currency_fph + " :: " + fph_to_hrns(currency_fph))
+    accounts_fph_list = list_currency_accounts(currency_fph)
+    for account_fph in accounts_fph_list:
+        print("\t" + account_fph + " :: " + fph_to_hrns(account_fph))
+
+print()
+print("="*80)
 print()
 
-
-#for i in range(10):
-#    print()
-#    no_common_currency_found = True
-#    while no_common_currency_found:
-#        agent_fph = select_available_agent()
-#        currency_fph = select_available_currency()
-#        no_
-#        while
-
-
-
-#    print("agent\t= " + fph_to_hrns(agent_fph))
-#    print("currency\t= " + fph_to_hrns(currency_fph))
-#    accounts_fph_list = list_currency_accounts(agent_fph, currency_fph)
-#    for account_fph in accounts_fph_list:
-#        print("\t" + fph_to_hrns(account_fph))
-#    print()
 
 
 
