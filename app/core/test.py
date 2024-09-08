@@ -28,6 +28,10 @@ from auth import auth_hash
 fake = Faker()
 Faker.seed(24)
 
+#
+print("Please wait while a set of fake entities is created. ", end="")
+print("This may take some time because the dependency rules must be followed.")
+print()
 
 # The HRNS>FPH and FPH>HRNS DBM maps are created:
 create_maps()

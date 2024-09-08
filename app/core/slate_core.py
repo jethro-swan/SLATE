@@ -38,6 +38,8 @@ def create_entities_db():
         cursor.execute("""
     	    CREATE TABLE IF NOT EXISTS agents (
                 agent_fph TEXT PRIMARY KEY,
+                parent_namespace_fph TEXT,
+                entity_type TEXT,
                 agent_realname TEXT,
                 agent_email TEXT NOT NULL,
                 accounts_fph_list BLOB,
@@ -51,6 +53,8 @@ def create_entities_db():
         cursor.execute("""
             CREATE TABLE IF NOT EXISTS currencies (
                 currency_fph TEXT PRIMARY KEY,
+                parent_namespace_fph TEXT,
+                entity_type TEXT,
                 currency_prefix TEXT,
                 currency_suffix TEXT,
                 accounts_fph_list BLOB,
@@ -62,6 +66,8 @@ def create_entities_db():
         cursor.execute("""
             CREATE TABLE IF NOT EXISTS accounts (
                 account_fph TEXT PRIMARY KEY,
+                parent_namespace_fph TEXT,
+                entity_type TEXT,
                 account_owner_fph TEXT NOT NULL,
                 account_currency_fph TEXT NOT NULL,
                 account_balance INTEGER NOT NULL DEFAULT 0,
@@ -72,6 +78,8 @@ def create_entities_db():
         cursor.execute("""
             CREATE TABLE IF NOT EXISTS namespaces (
                 namespace_fph TEXT PRIMARY KEY,
+                parent_namespace_fph TEXT,
+                entity_type TEXT,
                 stewards_fph_list TEXT NOT NULL,
                 active INTEGER NOT NULL
             );"""
@@ -156,17 +164,17 @@ def create_seed_entities():
                             # initial steward:      "gaia.global"
 
     seed_currency_hrns      = "hours.global"
-                            # parent namespace:     "global"
+    seed_currency_parent_ns = "global"
                             # initial steward:      "gaia.global"
 
     seed_agent_hrns         = "gaia.global"
-                            # parent namespace:     "global"
+    seed_agent_parent_ns    = "global"
                             # initial account:      "hours.gaia.global"
                             # stewardships:         "global" (namespace)
                             #                       "hours.global" (currency)
 
     seed_account_hrns       = "hours.gaia.global"
-                            # parent namespace:     "gaia.global"
+    seed_account_parent_ns  = "gaia.global"
                             # owned by:             "gaia.global"
                             # in currency:          "hours.global"
 
@@ -227,6 +235,8 @@ def create_seed_entities():
         cursor.execute("""
             INSERT INTO agents (
                 agent_fph,
+                parent_namespace_fph,
+                entity_type,
                 agent_realname,
                 agent_email,
                 accounts_fph_list,
@@ -235,9 +245,11 @@ def create_seed_entities():
                 pin,
                 active
             )
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?)""",
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
             (
                 seed_agent_fph,
+                nshash(seed_agent_parent_ns),
+                "agent",
                 s_agent_realname,
                 s_agent_email,
                 s_agent_accts_fph_blob,
@@ -251,15 +263,19 @@ def create_seed_entities():
         cursor.execute("""
             INSERT INTO currencies (
                 currency_fph,
+                parent_namespace_fph,
+                entity_type,
                 currency_prefix,
                 currency_suffix,
                 accounts_fph_list,
                 stewards_fph_list,
                 active
             )
-            VALUES (?, ?, ?, ?, ?, ?)""",
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?)""",
             (
                 seed_currency_fph,
+                nshash(seed_currency_parent_ns),
+                "currency",
                 "",
                 "h",
                 currency_accts_fph_blob,
@@ -271,12 +287,16 @@ def create_seed_entities():
         cursor.execute("""
             INSERT INTO namespaces (
                 namespace_fph,
+                parent_namespace_fph,
+                entity_type,
                 stewards_fph_list,
                 active
             )
-            VALUES (?, ?, ?)""",
+            VALUES (?, ?, ?, ?, ?)""",
             (
                 seed_namespace_fph,
+                root_fph,
+                "namespace",
                 stewards_fph_blob,
                 True
             )
@@ -288,14 +308,18 @@ def create_seed_entities():
         cursor.execute("""
             INSERT INTO accounts (
                 account_fph,
+                parent_namespace_fph,
+                entity_type,
                 account_owner_fph,
                 account_currency_fph,
                 account_balance,
                 active
             )
-            VALUES (?, ?, ?, ?, ?)""",
+            VALUES (?, ?, ?, ?, ?, ?, ?)""",
             (
                 seed_acct_fph,
+                nshash(seed_account_parent_ns),
+                "account",
                 seed_agent_fph,
                 seed_currency_fph,
                 0,
@@ -352,14 +376,18 @@ def new_account(
         cursor.execute("""
             INSERT INTO accounts (
                 account_fph,
+                parent_namespace_fph,
+                entity_type,
                 account_owner_fph,
                 account_currency_fph,
                 account_balance,
                 active
             )
-            VALUES (?, ?, ?, ?, ?)""",
+            VALUES (?, ?, ?, ?, ?, ?, ?)""",
             (
                 account_fph,
+                agent_fph,      # In the case of an *account*, the owner's
+                "account",      # private *namespace* is always the parent.
                 agent_fph,
                 currency_fph,
                 0,
@@ -415,6 +443,8 @@ def new_agent(
         cursor.execute("""
             INSERT INTO agents (
                 agent_fph,
+                parent_namespace_fph,
+                entity_type,
                 agent_realname,
                 agent_email,
                 accounts_fph_list,
@@ -423,9 +453,11 @@ def new_agent(
                 pin,
                 active
             )
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?)""",
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
             (
                 agent_fph,
+                parent_namespace_fph,
+                "agent",
                 realname,
                 email_address,
                 accounts_fph_list,
@@ -470,12 +502,16 @@ def new_namespace(
         cursor.execute("""
             INSERT INTO namespaces (
                 namespace_fph,
+                parent_namespace_fph,
+                entity_type,
                 stewards_fph_list,
                 active
             )
-            VALUES (?, ?, ?)""",
+            VALUES (?, ?, ?, ?, ?)""",
             (
                 namespace_fph,
+                parent_namespace_fph,
+                "namespace",
                 stewards_fph_blob,
                 True
             )
@@ -524,15 +560,19 @@ def new_currency(
         cursor.execute("""
             INSERT INTO currencies (
                 currency_fph,
+                parent_namespace_fph,
+                entity_type,
                 currency_prefix,
                 currency_suffix,
                 accounts_fph_list,
                 stewards_fph_list,
                 active
             )
-            VALUES (?, ?, ?, ?, ?, ?)""",
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?)""",
             (
                 currency_fph,
+                parent_namespace_fph,
+                "currency",
                 currency_prefix,
                 currency_suffix,
                 accounts_fph_list,

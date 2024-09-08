@@ -1,25 +1,33 @@
 ## SLATE (Simple Ledger Application: a Temporary Expedient)
 
-This is an extremely simple _Flask_ application to support un-nested
+This is an extremely simple _Flask_ application to support nested
 [open money](https://openmoney.github.io/specification) payment networks, each
 able to support multiple currencies.
 
 This is a temporary system to allow networks/islands to form while
 [NESTS](https://nests.lrc.org.uk) is still being developed (its specification
 being still somewhat fluid at this stage). For this reason, the names used to
-identify _entities_ (agents and currencies) in the un-nested _SLATE_ are
-compatible with those of the fully-nested (and much more capable) _NESTS_
-software.
+identify _entities_ (agents and currencies) in _SLATE_ are compatible [^1] with
+those of the fully-nested (and much more capable) _NESTS_ software.
 
 ----
+### Entity categories
+
+There are four categories of _entity_:
+  - **namespaces** (a.k.a. _network_ or _island_) in which _names_ of all
+    entities (including other **namespaces**) are contained.
+  - **agents** (equivalent to **identities**).
+  - **currencies** (limited to scalar values of type _money_, in contrast to
+    those supported by _NESTS_) - a set of **accounts**.
+  - **accounts** (_variables_) each of which is a member of one **currency**
+    (set).
+
 ### Agent categories
 
-There are four categories of agent:
-
-  - A general **agent** - the set to which _all_ **agents** belong.
-  - A **community** _steward_ - a _steward_ of a **community** (a.k.a. a
-    _network_ or _island_), assigned this role by an **agent** already holding
-    it or by a _global system administrator_.
+There are four categories of **agent**:
+  - A general **agent** - the set to which _all_ **agents** belong.[^2]
+  - A **namespace** _steward_, assigned this role by an **agent** already
+    holding it or by a _global system administrator_.
   - A **currency** _steward_ - a _steward_ of a **currency**, assigned this role
     an **agent** already holding it or by a _global system administrator_.
   - A _global system administrator_, assigned this role at setup or by an
@@ -28,32 +36,32 @@ There are four categories of agent:
 ----
 ### Internal representation
 
-For convenience, each _entity_ (**agent**, **currency** or **community**) is
-identified internally by a unique number (assigned sequentially for each
-entity type as the autoincrementing primary key in an _SQLite_ table. (NB,
-these numbers are _not_ compatible with the _FPH_ (_Full Path Hash_) used in
-_NESTS_ (although a unique mapping each way could be added easily in due
-course).
+For convenience, each _entity_ (**namespace**, **agent**, **currency** or
+**account**) is identified internally by a unique number (_FPH_) serving as the
+primary key in an _SQLite_ table. (NB, these numbers are _not_ fully compatible
+with the _FPH_ (_Full Path Hash_) used in _NESTS_.
 
 These global mappings are:
-  - **agent**: _agent_hrns_ &rarr; _agent_id_
-  - **agent**: _agent_id_ &rarr; _agent_hrns_
-  - **currency**: _currency_hrns_ &rarr; _currency_id_
-  - **currency**: _currency_id_ &rarr; _currency_hrns_
-  - **community**: _community_hrns_ &rarr; _community_id_
-  - **community**: _community_id_ &rarr; _community_hrns_
+  - **namespace**: _namespace_hrns_ &rarr; _namespace_fph_
+  - **namespace**: _namespace_fph_ &rarr; _namespace_hrns_
+  - **currency**: _currency_hrns_ &rarr; _currency_fph_
+  - **currency**: _currency_fph_ &rarr; _currency_hrns_
+  - **agent**: _agent_hrns_ &rarr; _agent_fph_
+  - **agent**: _agent_fph_ &rarr; _agent_hrns_
+  - **account**: _account_hrns_ &rarr; _account_fph_
+  - **account**: _account_fph_ &rarr; _account_hrns_
 
-As in _NESTS_, each entity (**agent**, **currency** or **community**) is
-identified by a human-readable name string (HRNS) placing it within a
-**community** (equivalent to a _namespace_ in _NESTS_).
+As in _NESTS_, each entity (**namespace**, **currency**, **agent** or
+**account**) is identified by a human-readable name string (HRNS) placing it
+within a **namespace**.
 
-Each **community** has its own collection of **currencies** and **agents**, so
-this lacks the flexibility of the recursively-nested **namespaces** in _NESTS_.
-However, an **agent**'s or **currency**'s _HRNS_ may be duplicated in multiple
-**communities**, so this provides a sufficient entry point into a network
-fully compatible with [open money](https://openmoney.github.io/specification)
-(although notably lacking provision for the construction of the rich governance
-system that it is intended to support).
+Each **namespace** contains the names of **namespaces**, **currencies** and
+**agents** but, in contrast to _NESTS_, the names of **accounts** are contained
+only within the _private namespaces_ of the **agent** to which the **accounts**
+belong. This provides a sufficient entry point into a network fully compatible
+with [open money](https://openmoney.github.io/specification) (although notably
+lacking provision for the construction of the rich governance system that
+_NESTS_ is intended to support).
 
 The compatibility of the _entity_ names is sufficient to enable convenient and
 complete migration from _SLATE_ to _NESTS_ in due course.
@@ -63,38 +71,38 @@ complete migration from _SLATE_ to _NESTS_ in due course.
 
 #### Currency journal
 
-Each **currency** has an associated journal (CSV) in which all _payments_ are
+Each **currency** has an associated journal in which all _payments_ are
 recorded, listing
-  - the _payer_
-  - the _payee_
+  - the _payer_ **account**
+  - the _payee_ **account**
   - the _amount_
   - an (optional) annotation (if specified by the _payer_)
 
-The **currency**'s journal can be exported at any time by one of its _stewards_
-or by a **global system administrator**.
+The **currency**'s journal can be exported at any time (either as a CSV files
+or as a pretty-printed table) by one of its _stewards_ or by a **global system
+administrator**.
 
 #### Agents' ledgers
 
-The ledgers are all stored internally as CSV, in a format convenient for direct
-export.
+Each **account** has an associated journal in which all _payments_ and
+_receipts_ are recorded.
 
-Each **agent** (_agent_) has access to at least one **currency** (generally
-more), and a separate ledger for each of these. The **agent**'s ledgers list the
-transaction (_payments_ and _receipts_) for its accounts. These ledgers each
-comprise fields listing
-  - the name of the other **agent** (whether a _payer_ or a _payee_)
+Each **agent** (_agent_) has access to at least one **account** (generally
+more), and a separate ledger for each of these. The **account**s' ledgers list
+all transaction (_payments_ and _receipts_). These ledgers each comprise fields
+listing
+  - the name of the other **account** (whether a _payer_ or a _payee_)
   - the _amount_ paid or received (+ or -)
   - the _balance_ following this payment
   - an _annotation_ (if specified by the _payer_)
-and the _ledger_ file is identified by **currency** and **agent**.
 
 For each payment made
   - the _payer's_ balance in this **currency** is reduced by _amount_
   - the _payee's_ balance  in this **currency** is increased by _amount_
   - the payment is recorded in the this **currency**'s _journal_
 
-Each **agent** (_agent_) can export its own ledger in any **currency** to which
-it has access.
+Each **agent** (_agent_) can export its own **accounts**' ledgers, each
+**account** being in a distinct **currency**.
 
 ----
 ## The agent interface
@@ -105,8 +113,8 @@ modification.
 ### Agent screens
 
   - **Registration**  
-    Once registered, the **agent** has access to (an **account** in) every **currency** within that **community**.
-    - **community** (selected from a drop-down list)
+    Once registered, the **agent** has access to (an **account** in) every **currency** within that **namespace**.
+    - **namespace** (selected from a drop-down list)
     - **agent** name (entered in a text box)
     - real name (entered in a text box) (optional)
     - _email address_ (entered in a text box)
@@ -141,9 +149,9 @@ modification.
 This screen can be reached either when already logged in or via a _password
 reset_ received by email.
 
-### Community stewards
+### Namespace stewards
 
-When logged in, any **agent** registered as a _steward_ of a **community** will
+When logged in, any **agent** registered as a _steward_ of a **namespace** will
 see the following additional links in its _home screen_:
   - _add steward_
   - _add new **currency**_
@@ -152,9 +160,9 @@ see the following additional links in its _home screen_:
   - _re-enable **agent**_
 
 Therefore the following additional screens are required:
-  - **Add steward** for this **community**
+  - **Add steward** for this **namespace**
     - _steward_ **name**
-  - **Add currency** for this **community**
+  - **Add currency** for this **namespace**
     - **currency**'s **name** (entered in a text box)
     - **currency** prefix (entered in a text box) (optional)
     - **currency** suffix (entered in a text box) (optional)
@@ -185,7 +193,7 @@ Therefore the following additional screens are required:
     - **agent** name (selected from drop-down list)
   - **Export journal**
     - **currency** name (selected from drop-down list)
-  - **Post reversing transaction**[^1]
+  - **Post reversing transaction**[^3]
     - **currency**'s **name** (selected from drop-down list)
     - _transaction_ (selected from drop-down list displaying most recent
       transactions in this **currency**).
@@ -194,7 +202,7 @@ Therefore the following additional screens are required:
 
 When logged in, any **agent** registered as a _global administrator_ will see
 the following additional links in its **home screen**:
-  - _add new **community**_
+  - _add new **namespace**_
   - _add global administrator_
   - _confirm pending registration_
   - _suspend **agent**_
@@ -202,8 +210,8 @@ the following additional links in its **home screen**:
   - _export journal_ (for any **currency**)
 
 Therefore the following additional screens are required:
-  - **Add new community**
-    - **community** name (entered in a text box)
+  - **Add new namespace**
+    - **namespace** name (entered in a text box)
   - **Add global administrator**
     - **agent** name (entered in a text box)
   - **Suspend agent**
@@ -217,9 +225,16 @@ Therefore the following additional screens are required:
 
 ----
 
-[^1]: NB, this does not remove the original transaction from the journal.
+[^1]: _SLATE_ names are limited to UTF-8 Latin characters using only "." as the
+namespace delimiter whereas _NESTS_ names and the namespace delimiter may be
+any UTF-8 character.
+
+[^2]: In contrast to _NESTS_, no distinction is made between _primary_ and
+_secondary_ **agents** (**identities**).
+
+[^3]: NB, this does not remove the original transaction from the journal.
 Instead, it posts a reversing transaction.
 
 ----
 
-Most recently updated: 2024/06/17
+Most recently updated: 2024/09/08
