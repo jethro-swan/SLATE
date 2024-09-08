@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+
+{% block content %}
+  <form action="" method="post" novalidate>
+    {{ form.hidden_tag() }}
+    <p>
+      {{ form.identity.label }}<br />
+      {{ form.identity(size=32) }} (full namespace path)<br />
+      {% for error in form.identity.errors %}
+        <span style="color: red;">[{{ error }}]</span>
+      {% endfor %}
+    </p>
+    <p>
+      {{ form.fph.label }}<br />
+      {{ form.fph(size=32) }}
+      {% for error in form.fph.errors %}
+        <span style="color: red;">[{{ error }}]</span>
+      {% endfor %}
+    </p>
+    <p>
+      {{ form.email.label }}<br />
+      {{ form.email(size=32) }}
+      {% for error in form.email.errors %}
+        <span style="color: red;">[{{ error }}]</span>
+      {% endfor %}
+    </p>
+    <p>
+      {{ form.submit() }}
+    </p>
+  </form>
+  <br />
+  <hr />
+  <p class="footnote">
+    Enter <em>either</em> the FPH or the HRNS or your <strong>primary
+    identity</strong> along with email address you have registered. You will be
+    sent a link to allow you to set a new password and PIN.
+  </p>
+  <p class="footnote">
+    NB, your password is never stored. When you enter your email address here,
+    it is hashed cryptographically and that hash is then compared to the hash
+    already stored. If the hashes agree, a time-limited recovery link will be
+    sent to the email address, which will be discarded immediately.
+  </p>
+  <p class="footnote">
+    This function has not yet been implemented.
+  </p>
+
+  <hr />
+
+  <div class="shoutbox">
+    <p class="shout">
+      NOT YET IMPLEMENTED
+    </p>
+  </div>
+
+  <hr />
+
+
+{% endblock %}

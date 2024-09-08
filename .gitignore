@@ -1,0 +1,15 @@
+# See https://git-scm.com/docs/gitignore
+
+# The Python virtual environment is created for each fresh installation so is
+# excluded from the GIT tree:
+venv
+
+# Also exclude any obsolete versions:
+_3.8_venv
+
+app/templates/probably_not_needed
+app/core/obsolete
+
+__pycache__
+
+temp

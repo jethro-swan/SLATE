@@ -1,0 +1,71 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<h2>Make a payment</h2>
+
+<p>
+  You can make a payment to any <strong>account</strong> if
+  <ul>
+    <li class="compact">
+      you know either its <em>name</em> (its HRNS) or its
+      <strong>account</strong> number (FPH); and
+    </li>
+    <li class="compact">
+      you have at least one <strong>account</strong> in the same
+      <strong>currency</strong>.
+    </li>
+  </ul>
+  If you have at least one <strong>account</strong> in the same
+  <strong>currency</strong>, it will be displayed in the payment form. If you
+  have more than one <strong>account</strong> in this <strong>currency</strong>
+  a list will displayed from which you can select an account.
+</p>
+<p>
+  It is also possible to make a payment to a known <strong>identity</strong>
+  rather than to an <strong>account</strong>. In this case, as long as you know
+  either the <em>name</em> (HRNS) or <strong>identity</strong> number (FPH) of
+  the recipient, then you will be presented with a list of
+  <strong>accounts</strong> in which you share a <strong>currency</strong>.
+  <sup>1, 2</sup>
+</p>
+<p>
+  The payment options are:
+  <ul>
+    <li class="compact">
+      <a href="/pay/account/hrns">
+        Pay to a known <strong>account</strong> identified by name
+      </a>
+    </li>
+    <li class="compact">
+      <a href="/pay/account/fph">
+        Pay to a known <strong>account</strong> identified by FPH
+      </a>
+    </li>
+    <li class="compact">
+      <a href="/pay/identity/hrns">
+        Pay to a known <strong>identity</strong> identified by name <sup>2</sup>
+      </a>
+    </li>
+    <li class="compact">
+      <a href="/pay/identity/fph">
+        Pay to a known <strong>identity</strong> identified by FPH <sup>2</sup>
+      </a>
+    </li>
+  </ul>
+</p>
+<hr />
+<p class="footnote">
+  <ol>
+    <li class="compact-footnote"><!-- 1 -->
+      These <strong>accounts</strong> may be in a variety of different
+      <strong>currencies</strong>, so it is your responsibility to identify
+      which, if any, is suitable for your need.
+    </li>
+    <li class="compact-footnote"><!-- 2 -->
+      Not yet implemented.
+    </li>
+  </ol>
+</p>
+
+{% endblock %}

@@ -1,0 +1,246 @@
+{% extends "base.html" %}
+
+{% block content %}
+<!--
+<p style="color:red">
+  Complete and test this form next before proceeding to the others.
+</p>
+<p style="color:red" style="color:red">
+  Add
+  <ul>
+    <li class="compact2" style="color:red">
+      Drop-down Q lists for the recovery answers
+    </li>
+    <li class="compact2" style="color:red">
+      A drop-down list of countries
+    </li>
+    <li class="compact2" style="color:red">
+      RegExp validators for
+      <ul>
+        <li class="compact2" style="color:red">HRNS</li>
+        <li class="compact2" style="color:red">namespace</li>
+        <li class="compact2" style="color:red">phone numbers</li>
+      </ul>
+    </li>
+  </ul>
+</p>
+<p style="color:red">
+  Also, create a recovery form to allow login access to be recovered using
+  the Q:A pairs.
+</p>
+<hr />
+-->
+
+  <form action="" method="post" novalidate>
+    {{ form.hidden_tag() }}
+    <!-- initial currency -->
+    <p>
+    {% if initial_currency_fph and initial_currency_hrns %}
+      initial currency:
+      <span class="dark-green-bold">{{ initial_currency_hrns }}</span>
+      [<span class="dark-red-bold">{{ initial_currency_fph }}</span>]
+    {% else %}
+      {{ form.currency.label }}<br />
+      {{ form.currency(size=42) }}
+      {% for error in form.currency.errors %}
+        <span style="color: red;">[{{ error }}]</span>
+      {% endfor %}
+    {% endif %}
+    </p>
+    <!-- initial user namespace -->
+    <p>
+    {% if initial_namespace_fph and initial_namespace_hrns %}
+      initial user namespace:
+      <span class="dark-green-bold">{{ initial_namespace_hrns }}</span>
+      [<span class="dark-red-bold">{{ initial_namespace_fph }}</span>]
+    {% else %}
+      {{ form.namespace.label }}<br />
+      {{ form.namespace(size=42) }}
+      {% for error in form.namespace.errors %}
+        <span style="color: red;">[{{ error }}]</span>
+      {% endfor %}
+    {% endif %}
+    </p>
+    <!-- username (primary identity) -->
+    <p>
+      {{ form.username.label }} (username)<br />
+      {{ form.username(size=42) }}
+      {% for error in form.username.errors %}
+        <span style="color: red;">[{{ error }}]</span>
+      {% endfor %}
+    </p>
+    <!-- location details -->
+    {% if country_included %}
+    <p>
+      {{ form.country.label }}<br />
+      {{ form.country(size=42) }}
+      {% for error in form.country.errors %}
+        <span style="color: red;">[{{ error }}]</span>
+      {% endfor %}
+    </p>
+    {% endif %}
+    {% if address_details_included %}
+      <!-- address details -->
+      <p>
+        {{ form.county.label }}<br />
+        {{ form.county(size=42) }}
+      </p>
+      <p>
+        {{ form.town.label }}<br />
+        {{ form.town(size=42) }}
+      </p>
+      <p>
+        {{ form.village.label }}<br />
+        {{ form.village(size=42) }}
+      </p>
+      <p>
+        {{ form.bld_number.label }}<br />
+        {{ form.bld_number(size=42) }}
+      </p>
+      <p>
+        {{ form.bld_name.label }}<br />
+        {{ form.bld_name(size=42) }}
+      </p>
+      <p>
+        {{ form.flat_number.label }}<br />
+        {{ form.flat_number(size=42) }}
+      </p>
+      <p>
+        {{ form.room_number.label }}<br />
+        {{ form.room_number(size=42) }}
+      </p>
+      <p>
+        {{ form.postal_code.label }}<br />
+        {{ form.postal_code(size=42) }}
+      </p>
+      <!-- end address details -->
+    {% endif %}
+    {% if location_details_included %}
+    <p>
+      {{ form.grid_ref.label }}<br />
+      {{ form.grid_ref(size=32) }}
+    </p>
+    <p>
+      {{ form.olc.label }}<br />
+      {{ form.olc(size=32) }}
+    </p>
+    <p>
+      {{ form.utm_coord.label }}<br />
+      {{ form.utm_coord(size=32) }}
+    </p>
+    {% endif %}
+    <p>
+      {{ form.email_1.label }}<br />
+      {{ form.email_1(size=42) }}
+    </p>
+    {% if notification_option_included %}
+    <p>
+      {{ form.save_email_1 }} {{ form.save_email_1.label }}
+    </p>
+    {% endif %}
+    <p>
+      {{ form.email_2.label }}<br />
+      {{ form.email_2(size=42) }}
+    </p>
+    {% if notification_option_included %}
+    <p>
+      {{ form.save_email_2 }} {{ form.save_email_2.label }}
+    </p>
+    {% endif %}
+    {% if phone_details_included %}
+    <p>
+      {{ form.phone_1.label }}<br />
+      {{ form.phone_1(size=32) }}
+    </p>
+    <p>
+      {{ form.phone_2.label }}<br />
+      {{ form.phone_2(size=42) }}
+    </p>
+    {% endif %}
+    {% if recovery_questions_included %}
+    <p>
+      {{ form.recovery_a_1.label }}<br />
+      {{ form.recovery_a_1(size=42) }}
+    </p>
+    <p>
+      {{ form.recovery_a_2.label }}<br />
+      {{ form.recovery_a_2(size=32) }}
+    </p>
+    {% endif %}
+    <!-- password -->
+    <p>
+      {{ form.password.label }}<br />
+      {{ form.password(size=32) }}
+      {% for error in form.password.errors %}
+        <span style="color: red;">[{{ error }}]</span>
+      {% endfor %}
+    </p>
+    <p>
+      {{ form.password_repeat.label }}<br />
+      {{ form.password_repeat(size=32) }}
+      {% for error in form.password_repeat.errors %}
+        <span style="color: red;">[{{ error }}]</span>
+      {% endfor %}
+    </p>
+    <!-- PIN -->
+    <p>
+      {{ form.pin.label }}<br />
+      {{ form.pin(size=6) }} Enter a 6-digit memorable PIN.
+      {% for error in form.pin.errors %}
+        <span style="color: red;">[{{ error }}]</span>
+      {% endfor %}
+    </p>
+    <!-- SSH public key -->
+    {% if ssh_public_key_allowed %}
+      <p>
+        {{ form.ssh_pubkey.label }}<br />
+        {{ form.ssh_pubkey(size=42) }}
+      </p>
+    {% endif %}
+    <!-- -->
+    <p>
+      {{ form.submit() }}
+    </p>
+  </form>
+
+  <hr />
+
+<p class="footnote">
+  You will not be able to register (i.e. to create your <strong>primary
+  identity</strong>) unless both an initial parent <strong>namespace</strong>
+  and an initial <strong>currency</strong> are specified.
+</p>
+<p class="footnote">
+  Upon registration, a <strong>namespace</strong> will be created for you with
+  the specified parent <strong>namespace</strong> and an intial
+  <strong>account</strong> (in the specified <strong>currency</strong>) will be
+  created for you within your own <strong>namespace</strong>. That account will
+  be given the same <em>name</em> as the <strong>currency</strong>.
+</p>
+<p class="footnote">
+  For example, if the parent <strong>namespace</strong> is
+  <em>someneighbourhood.sometown.somewhere</em>, the <em>username</em>
+  you have chosen is <em>fred</em> and the initial <strong>currency</strong> is
+  <em>local£.possibly.somewhere.else</em>, then<ul>
+  <li class="compact-footnote">
+    your namespace will be <em>fred.someneighbourhood.sometown.somewhere</em>
+  </li>
+  <li class="compact-footnote">
+    your initial account will be
+    <em>local£.fred.someneighbourhood.sometown.somewhere</em>
+  </li>
+  </ul>
+<p class="footnote">
+  If you were to specify your <em>username</em> as <em>fred.flintstone</em>
+  then the intermediate <strong>namespace</strong> <em>flintstone</em> would
+  be created for you, assigning you its initial <em>stewardship</em>. This
+  might be useful, for example, when creating a <strong>namespace</strong> for
+  a town, a neighbourhood, an organization or a family. It would then be your
+  responsibility to assign additional <em>stewards</em> to these new
+  <strong>namespaces</strong>.
+</p>
+<p class="footnote">
+  You will not be able to use any <em>name</em> that already exists within a
+  <strong>namespace</strong>.
+</p>
+{% endblock %}

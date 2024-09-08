@@ -1,0 +1,49 @@
+# Last modified: 2023-08-14 22.200 JW
+
+SLATE_DATA_ROOT     = '/var/slate/data/'
+SLATE_DATA          = '/var/slate/data/active/'
+
+SLATE_FLAGS         = SLATE_DATA + 'flags/'     # The trailing / is important
+SLATE_TREES         = SLATE_DATA + 'roots/'     # in this group.
+SLATE_FIXED         = SLATE_DATA + 'fixed/'     #
+SLATE_MAPS          = SLATE_DATA + 'maps/'      #
+SLATE_EXPORT        = SLATE_DATA + 'export/'    # CSV exports
+SLATE_WWW_OUT       = SLATE_DATA + 'www/'       # CSV exports
+SLATE_QR_CODES      = SLATE_DATA + 'qr_codes/'  # QR codes generated
+                                                # (both cleared out regularly)
+# fixed values (symlinked files)
+ENABLED             = SLATE_FIXED + '/enabled'   # f: = True
+DISABLED            = SLATE_FIXED + '/disabled'  # f: = False
+
+# logging files
+SLATE_LOGS          = SLATE_DATA + '/logs'
+DEBUG_LOG           = SLATE_LOGS + '/debug.log'
+ERROR_LOG           = SLATE_LOGS + '/error.log'
+AUTH_LOG            = SLATE_LOGS + '/auth.log'
+ACTIVITY_LOG        = SLATE_LOGS + '/activity.log'
+
+# Export files:
+
+NS_SEPARATOR        = '.'
+NSS                 = '.'
+TIMESTAMP_FMT       = "%Y-%m-%d %H:%M (%A)"
+FNAME_DATETIME_FMT  = "%Y%m%d%H%M%S%f"
+LOG_DATETIME_FMT    = "%Y-%m-%d %H:%M:%S:%f"
+LEDGER_DATETIME_FMT = "%Y-%m-%d %H:%M:%S:%f"
+
+
+# Database directory (SQLite and DBM):
+DB_DIR              = "/var/slate/db/"
+DB_BKP_DIR          = "/var/slate/db/backups/"
+
+# SQLite database files:
+ENTITIES_DB         = "/var/slate/db/entities.db"
+#MAP_DB              = "/var/slate/db/map.db"
+PAYMENTS_DB         = "/var/slate/db/payments.db"
+
+# DBM maps:
+MAP_BKP_DIR         = "/var/slate/maps/backups/"
+FPH_TO_HRNS_MAP     = "/var/slate/maps/FPH_to_HRNS_map.dbm"
+HRNS_C_FPH_MAP      = "/var/slate/maps/FPH_to_HRNS_collision_map.dbm"
+#FPH_TO_HRNS_MAP     = "/var/slate/db/FPH_to_HRNS_map.dbm"
+#HRNS_C_FPH_MAP      = "/var/slate/db/FPH_to_HRNS_collision_map.dbm"

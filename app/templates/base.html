@@ -1,0 +1,149 @@
+<!doctype html>
+<html>
+  <head>
+    {% if title %}
+      <title>{{ title }} - SLATE</title>
+    {% else %}
+      <title>SLATE</title>
+    {% endif %}
+    <link rel="stylesheet"
+    href="{{ url_for('static', filename='css/default.css') }}">
+  </head>
+  <body>
+
+    <hr />
+
+    <div class="clear-both"><!-- menu row 1 -->
+
+  {% if not current_user.is_authenticated %}
+
+    {% if page == "login" %}
+      <div class="mba">log in</div>
+    {% else %}
+      <div class="mb"><a href="/login">log in</a></div>
+    {% endif %}
+
+    {% if page == "login_recovery" %}
+      <div class="mba">recover login</div>
+    {% else %}
+      <div class="mb"><a href="/login/recover">recover login</a></div>
+    {% endif %}
+
+    {% if page == "registration" %}
+      <div class="mba">register</div>
+    {% else %}
+      <div class="mb"><a href="/register">register</a></div>
+    {% endif %}
+
+  {% else %}<!-- logged_in -->
+
+    {% if (page == "home") or (group == "home") %}
+      <div class="mba">home</div>
+    {% else %}
+      <div class="mb"><a href="/home">home</a></div>
+    {% endif %}
+
+    {% if (group == "payment") %}
+      <div class="mba">pay</div>
+    {% else %}
+      <div class="mb"><a href="/pay">pay</a></div>
+    {% endif %}
+
+    {% if (group == "management") %}
+      <div class="mba">manage</div>
+    {% else %}
+      <div class="mb"><a href="/manage">manage</a></div>
+    {% endif %}
+
+    <div class="mb"><a href="/logout">logout</a></div>
+
+  {% endif %}<!-- logged_in -->
+
+  {% if page == "help" %}
+    <div class="mba">help</div>
+  {% else %}
+    <div class="mb"><a href="/help">help</a></div>
+  {% endif %}
+
+<!-- end menu row 1 -->
+
+<br class="clear-both" />
+<hr class="dashed" />
+
+    <div class="clear-both"><!-- menu row 2 -->
+
+  {% if logged_in %}
+
+    {% if (group == "management") or (group=="home") %}
+
+      {% if page == "accounts_manage" %}
+        <div class="mba">communities</div>
+      {% else %}
+        <div class="mb"><a href="/communities/manage">communities</a></div>
+      {% endif %}
+
+      {% if page == "agents_manage" %}
+        <div class="mba">agents</div>
+      {% else %}
+        <div class="mb"><a href="/agents/manage">agents</a></div>
+      {% endif %}
+
+      {% if page == "currencies_manage" %}
+        <div class="mba">currencies</div>
+      {% else %}
+        <div class="mb"><a href="/currencies/manage">currencies</a></div>
+      {% endif %}
+
+    {% endif %}<!-- group == home -->
+
+    {% if group == "payment" %}
+
+      {% if page == "pay" %}
+        <div class="mba">pay</div>
+      {% else %}
+        <div class="mb">
+          <a href="/pay">pay</a>
+        </div>
+      {% endif %}
+
+    {% endif %}
+
+  {% else %}
+
+    <!-- if there are no menu items to display (logged out), display the
+    entry page banner instead. -->
+
+    <img src="{{ url_for('static', filename='img/openmoney_32x20.png') }}"
+    align="left" valign="bottom" hspace="5">
+    <span class="entry-page-banner">SLATE LoCuS</span>
+
+  {% endif %}<!-- logged_in -->
+
+<!-- end menu row 2 -->
+
+  <br class="clear-both" />
+
+  <hr />
+
+  {% with messages = get_flashed_messages() %}
+  {% if messages %}
+  <ul>
+    {% for message in messages %}
+      <li>{{ message }}</li>
+    {% endfor %}
+  </ul>
+  {% endif %}
+  {% endwith %}
+
+  {% if current_user.is_authenticated %}
+    current identity:
+    <span style="color:#008000; font-weight:bold;">{{ agent_hrns }}</span>
+    <br />
+
+    <hr />
+    {% endif %}
+
+    {% block content %}{% endblock %}
+
+  </body>
+</html>

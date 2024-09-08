@@ -1,0 +1,11 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+  <p class="error">An unexpected error has occurred</p>
+
+  <p>The administrator has been notified. Apologies for the inconvenience.</p>
+
+  <p><a href="{{ url_for('home') }}">back</a></p>
+
+{% endblock %}

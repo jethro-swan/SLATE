@@ -1,0 +1,61 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+  <strong>accounts</strong>
+  <a href="/account/create">+</a>
+  <a href="/account/create">(add new account)</a>
+  <br />
+  <ul>
+  {% for account in accounts %}
+    <li class="compact2">
+      <a href="/account/{{ account.fph }}">
+        {{ account.hrns }}
+      </a>
+    </li>
+  {% endfor %}
+  </ul>
+
+  <hr />
+
+  <strong>identities</strong>
+
+  <a href="/identity/create/secondary">+</a>
+  <a href="/identity/create/secondary">(add secondary identity)</a>
+  <br />
+  <ul>
+  {% if primid_iff_needed %}
+    <li class="compact2">
+      <a href="/primids/{{ primid.fph }}">
+        {{ primid.hrns }} *
+      </a>
+    </li>
+  {% endif %}
+  {% for secid in secids %}
+    <li class="compact2">
+      <a href="/secids/{{ secid.fph }}">
+        {{ secid.hrns }}
+      </a>
+    </li>
+  {% endfor %}
+  </ul>
+
+  <hr />
+
+  <strong>stewardships</strong><br />
+  {% if identity_type == "primary identity" %}
+    <ul>
+    {% for secid in secids %}
+      <li class="compact2">
+        <a href="/secids/{{ secid.fph }}">
+          {{ secid.hrns }}
+        </a>
+      </li>
+    {% endfor %}
+    </ul>
+  {% endif %}
+
+  <hr />
+
+
+{% endblock %}

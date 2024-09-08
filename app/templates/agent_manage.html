@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<h2>manage own identities</h2>
+
+{% if identity_type == "primary" %}
+  <strong>secondary identities</strong>
+  <a href="/identity/create/secondary">+</a>
+  <a href="/identity/create/secondary">(add secondary identity)</a>
+  <br />
+  <ul>
+  {% for secid in secids %}
+    <li class="compact2">
+      <a href="/secids/{{ secid.fph }}">
+        {{ secid.hrns }}
+      </a>
+    </li>
+  {% endfor %}
+  </ul>
+{% endif %}
+
+<hr />
+
+
+{% endblock %}

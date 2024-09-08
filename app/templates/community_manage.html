@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<h2>manage namespace</h2>
+<hr />
+
+<form action="" method="post" novalidate>
+  {{ form.hidden_tag() }}
+  <p>
+    {{ form.namespace_hrns.label }} (full namespace path)<br />
+    {{ form.namespace_hrns(size=48,
+       placeholder="enter the full namespace path (HRNS)") }}
+    {% for error in form.namespace_hrns.errors %}
+      <span style="color: red;">[{{ error }}]</span>
+    {% endfor %}
+  </p>
+  <p>
+    {{ form.update_namespace() }}
+  </p>
+</form>
+
+<hr />
+
+
+
+{% endblock %}

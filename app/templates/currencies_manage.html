@@ -1,0 +1,152 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<h2>manage currencies</h2>
+
+<strong>currencies</strong>
+<a href="/currency/create">+</a>
+<a href="/currency/create">(add new currency)</a>
+<br />
+<ul>
+{% for currency in currencies %}
+  <li class="compact2">
+    <a href="/currency/{{ currency.fph }}">
+      {{ currency.hrns }}
+    </a>
+  </li>
+{% endfor %}
+</ul>
+
+<hr />
+
+<p>
+  The active page replacing this in due course will contain:
+  <ul>
+    <li class="compact">
+      a link to <a href="/currency/create">create new currency</a>
+    </li>
+    <li class="compact">
+      a list of the existing <strong>currencies</strong> over which this
+      identity shares <em>stewardship</em> (not necessarily as its original
+      creator), including links to:
+      <ul>
+        <li class="compact">
+          <a href="/currency/status">status</a>
+          [add<sup>1</sup>|suspend<sup>2</sup>|remove<sup>2</sup>]
+        </li>
+       <li class="compact">
+          <a href="/currency/policy">policy</a> <sup>3</sup>
+          [permissive|merchant|restrictive]
+        </li>
+        <li class="compact">
+          <a href="/currency/stewards">stewards</a>
+          [add<sup>4</sup>|suspend<sup>5</sup>|remove<sup>5</sup>]
+        </li>
+        <li class="compact">
+          <a href="/currency/export">export</a> a JSON dump of all
+          transactions<sup>6</sup> in this <strong>currency</strong>
+        </li>
+        <li class="compact">
+          <a href="/currency/import">import</a> JSON record of all
+          transactions<sup>7</sup> in this <strong>currency</strong>
+        </li>
+       </ul>
+    </li>
+  </ul>
+</p>
+
+<hr />
+<div class="footnote">
+
+<p>NOTES:</p>
+<ol>
+  <li class="compact"><!-- 1 -->
+    Any <strong>identity</strong> may create a new <strong>currency</strong>
+    if, and according to conditions defined by the <em>stewards</em> of its
+    <em>parent</em> <strong>namespace</strong>. If authorized, that
+    <strong>identity</strong> becomes the first <em>stewards</em> of that new
+    <strong>currency</strong>.
+  </li>
+  <li class="compact"><!-- 2 -->
+    The conditions allowing the <em>stewards</em> of any
+    <strong>currency</strong> to <u>suspend</u> or <u>remove</u> (i.e.
+    <u>archive</u>) it are defined by the <em>stewards</em> of its
+    <em>parent</em> <strong>namespace</strong>.
+  </li>
+  <li class="compact"><!-- 3 -->
+    <ul>
+      <li class="compact">
+        If <u>permissive</u>, any <strong>identity</strong> may create an
+        <strong>account</strong> in this <strong>currency</strong> immediately.
+      </li>
+      <li class="compact">
+        If <u>merchant</u>, any <strong>identity</strong> may create an
+        <strong>account</strong> in this <strong>currency</strong> immediately if
+        invited to do so by an <strong>identity</strong> registered as a
+        <em>merchant</em> in this <strong>currency</strong>.
+      </li>
+      <li class="compact">
+        If <u>restrictive</u>, any <strong>identity</strong> may apply to create
+        an <strong>account</strong> in this <strong>currency</strong> but must
+        wait for its <em>authorization</em> by the <em>stewards</em> of the
+        <strong>currency</strong>..
+      </li>
+    </ul>
+    However it is created, any <strong>account</strong> may subsequently be
+    <em>suspended</em> (or, exceptionally, subjected to more permanent
+    restrictions) by the <em>stewards</em> of the <strong>currency</strong>.
+  </li>
+  <li class="compact"><!-- 4 -->
+    The conditions allowing the <em>stewards</em> of any
+    <strong>currency</strong> to add a new <em>steward</em> or to remove an
+    existing <em>steward</em> are defined by the <em>stewards</em> of its
+    <em>parent</em> <strong>namespace</strong>.
+  </li>
+  <li class="compact"><!-- 5 -->
+    Unless the policy set by the <em>stewards</em> of its <em>parent</em>
+    <strong>namespace</strong> permits it (according to some majority vote
+    criterion) the removal of a <strong>currency</strong>'s <em>steward</em>
+    will require referral to the <em>stewards</em> of its <em>parent</em>
+    <strong>namespace</strong>. The policy may permit more immediate
+    suspension, the suspended <em>steward</em> having the right to appeal to
+    <em>stewards</em> of its <em>parent</em>
+    <strong>namespace</strong>.
+  </li>
+  <li class="compact"><!-- 6 -->
+    An of the <em>stewards</em> of a <strong>currency</strong> may export a
+    JSON dump of all transactions within that <strong>currency</strong>. The
+    <strong>accounts</strong> will be identified by both HRNS (the full
+    namespace path) and FPH (the 64-character ID).
+  </li>
+  <li class="compact"><!-- 7 -->
+    Where permitted by the policy defined by the <em>stewards</em> of its
+    <em>parent</em> <strong>namespace</strong>, a <em>steward</em> of a newly
+    created <strong>currency</strong> may import a JSON listing of
+    <strong>accounts</strong> (identified by HRNS) and transactions between
+    them.
+    <br />
+    Since this is a new <strong>currency</strong>, there will be no existing
+    <strong>accounts</strong> but some of the <strong>identities</strong> may
+    exist already. Therefore, if any <strong>account</strong>-holder listed
+    exists already, the corresponding <strong>account</strong> will be
+    ignored unless the policy configuration (set by both the <em>stewards</em>)
+    and by the individual <strong>identity</strong> will have to allow the
+    <strong>account</strong>'s creation.
+    <br />
+    Any non-existing <strong>account</strong>-holders will be created (along
+    with any required new intermediate <strong>namespaces</strong>) for which
+    reason the JSON listing will will have to include some initial
+    access authorization details).
+    <br />
+    Such an import will generally be use to permit demonstrations, simulations,
+    etc., and it will not be possible to overwrite or extend a "live"
+    <strong>currency</strong>'s <strong>account</strong> set.
+  </li>
+</ol>
+
+</div>
+
+
+
+{% endblock %}

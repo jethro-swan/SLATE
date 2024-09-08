@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+
+<hr />
+
+<div class="shoutbox">
+  <p class="shout">
+    NOT YET IMPLEMENTED
+  </p>
+</div>
+
+<hr />
+
+
+{% block content %}
+  <table>
+    <tr>
+      <th>
+        amount
+      </th>
+      <th>
+        account name
+      </th>
+      <th>
+        currency name
+      </th>
+    </tr>
+    {% for acct in accounts %}
+      <tr>
+        <td>
+          {{ acct.prefix }}<strong>{{ acct.balance }}</strong>{{ acct.suffix }}
+        </td>
+        <td>
+          <a href="/currency/hrns={{ acct.currency }}">
+            {{ acct.currency }}
+          </a>
+        </td>
+        <td>
+          <a href="/account/hrns={{ acct.account_name }}">
+            {{ acct.account_name }}
+          </a>
+        </td>
+      </tr>
+    {% endfor %}
+  </table>
+  <hr />
+{% endblock %}

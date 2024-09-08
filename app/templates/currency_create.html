@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<h2>create currency</h2>
+
+<form action="" method="post" novalidate>
+  {{ form.hidden_tag() }}
+  <p>
+    {{ form.currency_hrns.label }} (full namespace path)<br />
+    {{ form.currency_hrns(size=48,
+       placeholder="enter the full namespace path (HRNS)") }}
+    {% for error in form.currency_hrns.errors %}
+      <span style="color: red;">[{{ error }}]</span>
+    {% endfor %}
+  </p>
+  <p>
+    {{ form.currency_type.label }}<br />
+    {{ form.currency_type() }}
+    {% for error in form.currency_type.errors %}
+      <span style="color: red;">[{{ error }}]</span>
+    {% endfor %}
+  </p>
+  <p>
+    {{ form.prefix_symbol.label }}<br />
+    {{ form.prefix_symbol(size=1) }} (any UTF-8 character)
+    {% for error in form.prefix_symbol.errors %}
+      <span style="color: red;">[{{ error }}]</span>
+    {% endfor %}
+  </p>
+  <p>
+    {{ form.suffix_symbol.label }}<br />
+    {{ form.suffix_symbol(size=1) }} (any UTF-8 character)
+    {% for error in form.suffix_symbol.errors %}
+      <span style="color: red;">[{{ error }}]</span>
+    {% endfor %}
+  </p>
+  <p>
+    {{ form.acct_same_name }} {{ form.acct_same_name.label }}
+  </p>
+  <p>
+    {{ form.acct_id_parent }} {{ form.acct_id_parent.label }}
+  </p>
+  <p>
+    {{ form.acct_immdt_crtn }} {{ form.acct_immdt_crtn.label }}
+  </p>
+  <p>
+    {{ form.create_currency() }}
+  </p>
+</form>
+
+<hr />
+
+<hr />
+
+{% endblock %}

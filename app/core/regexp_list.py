@@ -1,0 +1,70 @@
+import re
+import sys
+
+from constants import NS_SEPARATOR as NSS
+
+# RegExp list:
+
+#------------------------------------------------------------------------------
+# Email:
+#re_email = re.compile(r"(\w(\w_-\.)+\w)+@(\.\w+(\w_-)+)+\.\w{2,4}")
+#re_email = re.compile(r"^w+[+.w-]*@([w-]+.)*w+[w-]*.([a-z]{2,4}|d+)$")
+#re_email = re.compile(r"^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$")
+re_email = \
+re.compile(r"([A-Za-z0-9]+[.-_])*[A-Za-z0-9]+@[A-Za-z0-9-]+(\.[A-Z|a-z]{2,})+")
+# (Not perfect, but good enough for most practical purposes)
+
+#------------------------------------------------------------------------------
+# Payment value:
+re_pvalue = re.compile(r"^\d{1,}\.\d{2}$")
+
+# It is assumed that any number input with "," thousands separators will have
+# these stripped out before being tested against the RE.
+#------------------------------------------------------------------------------
+
+#------------------------------------------------------------------------------
+# Transaction ID:
+re_transid = re.compile(r"^\d{1,}:\d{19,}:[0-9a-f]{16}$")
+
+
+
+
+
+# RegExp list:
+
+#------------------------------------------------------------------------------
+# HRNS = Human-Readable NameSpace
+# human-readable namespace path (external)
+re_hrns = re.compile(r"^(\S+\.)*\S+$")
+#re_hrns = re.compile(r"^([a-z0-9_-]+\.)*[a-z0-9_-]+$")
+# (NB, the current version handles only unaccented latin characters)
+
+# See: https://docs.python.org/3/library/re.html
+#
+# For Unicode (str) patterns:
+#
+#   Matches Unicode word characters; this includes most characters that can be
+#   part of a word in any language, as well as numbers and the underscore. If
+#   the ASCII flag is used, only [a-zA-Z0-9_] is matched.
+#
+# For 8-bit (bytes) patterns:
+#
+#   Matches characters considered alphanumeric in the ASCII character set; this
+#   is equivalent to [a-zA-Z0-9_]. If the LOCALE flag is used, matches
+#   characters considered alphanumeric in the current locale and the underscore.
+
+#------------------------------------------------------------------------------
+# FPH = Full Path Hash = hash of FIP
+re_fph = re.compile(r"^[0-9a-f]{32}$") # string of 32 hex digits
+#re_fph = re.compile(r"^[0-9a-f]{16}$") # string of 16 hex digits
+
+#------------------------------------------------------------------------------
+# Payment value:
+re_pvalue = re.compile(r"^\d{1,}\.\d{2}$")
+
+# It is assumed that any number input with "," thousands separators will have
+# these stripped out before being tested against the RE.
+#------------------------------------------------------------------------------
+
+#------------------------------------------------------------------------------
+# Transaction ID:

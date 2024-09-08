@@ -1,0 +1,90 @@
+auth.py:def auth_hash(password):
+auth.py:def check_auth_hash(password, pwd_hash):
+auth.py:def authenticate_web_access(fph, auth_code):
+auth.py:def authenticate_cli_access(fph, auth_code):
+auth.py:def list_password_characters():
+auth.py:def password_valid(password):
+auth.py:def generate_password(min_length):
+auth.py:def list_url_safe_password_characters():
+auth.py:def url_safe_password_valid(password):
+auth.py:def generate_url_safe_password(n):
+auth.py:def pin_random_ord():
+auth.py:def pin_prompt_message(psi):
+auth.py:def authenticate_pin(user_fph, pse, psi):
+
+common.py:def unixtime_str():
+common.py:def unixtime_int():
+common.py:def timestamp():
+common.py:def filename_timestamp():
+common.py:def nshash(name):
+common.py:def fphash(name):
+common.py:def valid_fph(fph):
+common.py:def valid_hrns(hrns):
+common.py:def dbm_store(db_file, key, value):
+common.py:def dbm_fetch(db_file, key):
+common.py:def dbm_delete(db_file, key):
+common.py:def dbm_keys(db_file):
+common.py:def dbm_create_maps():
+common.py:def fph_to_hrns(fph):
+common.py:def hrns_to_fph(hrns):
+common.py:def delete_fph_from_map(fph):
+
+csv_export.py:def v2dp(integer_string):
+csv_export.py:def export_account_journal_to_csv(account_fph, sc=","):
+csv_export.py:def export_currency_journal_to_csv(currency_fph, sc=","):
+csv_export.py:def export_accounts_csv(fph): # FPH
+csv_export.py:def list_accounts_csv(currency_fph): # FPH
+
+csv_import.py:def import_currency_record_csv(currency_fph, separator=";"):
+csv_import.py:def import_csv_entity_set(data_set, entity_definition_file):
+csv_import.py:def identities_bulk_creation(import_file):
+csv_import.py:def import_account_values():
+
+qrcode.py:def random_name():
+qrcode.py:def qr_code_png(url, qr_png_name):
+qrcode.py:def qrencode_invitation(hub, currency_fph, inviter_fph, expiry):
+qrcode.py:def qrencode_payment(hub, currency_fph, payer_fph, payee_fph, amount, transid):
+
+slate_core.py:def create_map_db(): # MDB map
+slate_core.py:def create_entities_db():
+slate_core.py:def create_seed_entities():
+slate_core.py:def create_payments_db():
+slate_core.py:def get_namespace_hrns(namespace_fph):
+slate_core.py:def get_agent_hrns(agent_fph):
+slate_core.py:def get_currency_hrns(currency_fph):
+slate_core.py:def get_currency_name(currency_fph):
+slate_core.py:def new_account(agent_hrns, currency_fph):
+slate_core.py:def new_agent(username, parent_namespace_fph, realname, email_address,
+slate_core.py:def new_namespace(namespace_name, parent_namespace_fph, initial_steward_fph):
+slate_core.py:def new_currency(
+slate_core.py:def payment(payer_fph, payee_fph, amount, annotation):
+slate_core.py:def dump_currency_payments(currency_fph, optype="csv", edtype="fph"):
+slate_core.py:def dump_agent_payments(currency_fph, optype="csv", edtype="fph"):
+
+test.py:def random_community_name():
+test.py:def create_fake_agents(num_records):
+test.py:def list_fake_agents():
+
+unix_functions.py:def log_event(category, summary, details):
+unix_functions.py:def create_dir(dirname, mode):
+unix_functions.py:def create_file(filename):
+unix_functions.py:def sym_link(symlink, target):
+unix_functions.py:def get_uid(path):
+unix_functions.py:def get_gid(path):
+unix_functions.py:def get_user(path):
+unix_functions.py:def get_path(path):
+unix_functions.py:def get_user_uid(user_name):
+unix_functions.py:def get_group_gid(group_name):
+unix_functions.py:def set_owner_group(path, owner, group):
+unix_functions.py:def set_owner(path, owner):
+unix_functions.py:def set_group(path, ugroup):
+unix_functions.py:def fcopy(src_path, dest_path):
+unix_functions.py:def fcopysl(src_path, dest_path):
+unix_functions.py:def treecopy(src_path, dest_path):
+unix_functions.py:def treecopysl(src_path, dest_path):
+unix_functions.py:def remove_tree(path):
+unix_functions.py:def move_tree(path):
+unix_functions.py:def disc_usage(path):
+unix_functions.py:def get_perms_octal(path):
+unix_functions.py:def set_perms_octal(path, mask):
+unix_functions.py:def get_file_size(path):

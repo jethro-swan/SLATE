@@ -1,0 +1,58 @@
+
+
+payment
+  payment to account
+  payment to identity
+
+manage
+  accounts (own)
+    list
+      - account [edit] [delete] [export] [backup] [restore *]
+      - account [edit] [delete] [export] [backup] [restore *]
+          :
+      - account [edit] [delete] [export] [backup] [restore *]
+    add/new
+  identities (own)
+    list
+      - secondary identity [edit] [delete]
+      - secondary identity [edit] [delete]
+          :
+      - secondary identity [edit] [delete]
+    add/new
+  currencies (available to this identity)
+    list
+      - currency [contact stewards]
+      - currency [contact stewards]
+          :
+      - currency [contact stewards]
+    add/new
+  namespaces (available to this identity)
+    list
+      - namespace [contact stewards]
+      - namespace [contact stewards]
+          :
+      - namespace [contact stewards]
+    add/new
+  stewardships
+    currencies
+      - currency [stewards] [policy] [suspend|enable|block] [export] [import]
+      - currency [stewards] [policy] [suspend|enable|block] [export] [import]
+          :
+      - currency [stewards] [policy] [suspend|enable|block] [export] [import]
+    namespaces
+      - namespace [edit] [stewards] [suspend|enable|block]
+      - namespace [edit] [stewards] [suspend|enable|block]
+          :
+      - namespace [edit] [stewards] [suspend|enable|block]
+    messages
+    logs
+
+messages
+  stewards
+    currency
+    namespace
+  account-holder
+
+
+
+*
