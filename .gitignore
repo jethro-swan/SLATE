@@ -9,6 +9,8 @@ _3.8_venv
 
 app/templates/probably_not_needed
 app/core/obsolete
+app/core/useful_references.txt
+app/core/references
 
 __pycache__
 

@@ -19,6 +19,9 @@ from slate_core import new_namespace, new_agent, new_currency, new_account
 from slate_core import create_seed_entities
 from fph_hrns_maps import hrns_to_fph, fph_to_hrns, create_maps
 from slate_core import get_currency_name
+from slate_core import list_agent_accounts
+from slate_core import list_agent_currencies
+from slate_core import list_currency_accounts
 from common import nshash
 from auth import auth_hash
 
@@ -339,54 +342,84 @@ print()
 with sqlite3.connect(ENTITIES_DB) as conn:
     cursor = conn.cursor()
 
-    cursor.execute("""
-        SELECT * FROM namespaces;
-    """)
+    cursor.execute("SELECT * FROM namespaces;")
     namespace_list = cursor.fetchall()
-    print()
-    print("namespaces:")
-    print()
+    print("\nnamespaces:\n")
     for namespace in namespace_list:
         print(namespace)
 
-    cursor.execute("""
-        SELECT * FROM agents;
-    """)
+    cursor.execute("SELECT * FROM agents;")
     agent_list = cursor.fetchall()
-    print()
-    print("agents:")
-    print()
+    print("\nagents:\n")
     for agent in agent_list:
         print(agent)
 
-    cursor.execute("""
-        SELECT * FROM currencies;
-    """)
+    cursor.execute("SELECT * FROM currencies;")
     currency_list = cursor.fetchall()
-    print()
-    print("currencies:")
-    print()
+    print("\ncurrencies:\n")
     for currency in currency_list:
         print(currency)
 
-    cursor.execute("""
-        SELECT * FROM accounts;
-    """)
+    cursor.execute("SELECT * FROM accounts;")
     account_list = cursor.fetchall()
-    print()
-    print("accounts:")
-    print()
+    print("\naccounts:\n")
     for account in account_list:
         print(account)
 
-    #conn.commit()
     cursor.close()
 
     print()
     print("="*80)
     print()
 
+#==============================================================================
+# List each fake agent's accounts:
+
+print("\nList the fake agents' accounts:\n")
+
+for agent_fph in l_agents:
+    print(agent_fph + " :: " + fph_to_hrns(agent_fph))
+    accounts_fph_list = list_agent_accounts(agent_fph)
+    for account_fph in accounts_fph_list:
+        print("\t" + fph_to_hrns(account_fph))
+print()
+print("="*80)
+print()
+
+# List currencies to which each fake agent has an account:
+print("\nList the fake agents' accounts' currencies:\n")
+
+for agent_fph in l_agents:
+    print(agent_fph + " :: " + fph_to_hrns(agent_fph))
+    currencies_fph_list = list_agent_currencies(agent_fph)
+    for currency_fph in currencies_fph_list:
+        print("\t" + fph_to_hrns(currency_fph))
+print()
+print("="*80)
+print()
+
+
+#for i in range(10):
+#    print()
+#    no_common_currency_found = True
+#    while no_common_currency_found:
+#        agent_fph = select_available_agent()
+#        currency_fph = select_available_currency()
+#        no_
+#        while
+
+
+
+#    print("agent\t= " + fph_to_hrns(agent_fph))
+#    print("currency\t= " + fph_to_hrns(currency_fph))
+#    accounts_fph_list = list_currency_accounts(agent_fph, currency_fph)
+#    for account_fph in accounts_fph_list:
+#        print("\t" + fph_to_hrns(account_fph))
+#    print()
+
+
+
 
 #==============================================================================
-# Now that we have a usefull large collection of fake accounts, we can run some
-# payment tests:
+# Now that we have a usefully large collection of fake accounts, we can run
+# some payment tests:

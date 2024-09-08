@@ -394,6 +394,21 @@ def new_account(
                 True
             )
         )
+        cursor.execute("""
+            SELECT * FROM agents WHERE agent_fph = ?
+            """,
+            (agent_fph,)
+        )
+        accounts_fph_blob = cursor.fetchone()
+        if accounts_fph_blob is not None:
+            accounts_fph_list = pickle.loads(accounts_fph_blob[5])
+            accounts_fph_list.append(account_fph)
+            accounts_fph_blob = pickle.dumps(accounts_fph_list)
+            cursor.execute("""
+                UPDATE agents SET accounts_fph_list = ? WHERE agent_fph = ?
+                """,
+                (accounts_fph_blob, agent_fph)
+            )
         conn.commit()
         cursor.close()
 
@@ -586,30 +601,59 @@ def new_currency(
     return currency_fph, currency_hrns, ""
 
 #==============================================================================
-
-def get_accounts(agent_fph):
+# List the agent's accounts:
+def list_agent_accounts(agent_fph):
     with sqlite3.connect(ENTITIES_DB) as conn:
         cursor = conn.cursor()
-        cursor.execute("""
-            SELECT accounts_list FROM agents WHERE agent_fph = ?;
-        """)
-        accounts_fph_blob = cursor.fetchone()
+        cursor.execute(
+            "SELECT * FROM agents WHERE agent_fph = ?",
+            (agent_fph,)
+        )
+        accounts_fph_blob = cursor.fetchone()[5]
         cursor.close()
     accounts_fph_list = pickle.loads(accounts_fph_blob)
-
     return accounts_fph_list    # list
 
+#==============================================================================
+# Get the currency of an account:
+def get_account_currency(account_fph):
+    with sqlite3.connect(ENTITIES_DB) as conn:
+        cursor = conn.cursor()
+        cursor.execute(
+            "SELECT * FROM accounts WHERE account_fph = ?",
+            (account_fph,)
+        )
+        currency_fph = cursor.fetchone()[4]
+        cursor.close()
+    return currency_fph
 
-def get_currencies(agent_fph): # in which an agent has accounts
+#==============================================================================
+# Identify the account (if any) in which the agent has access to the specified
+# currency:
+def list_currency_accounts(agent_fph, currency_fph):
+    acct_fph_list = list_agent_accounts(agent_fph)
+    accounts_fph_list = []
+    for account_fph in acct_fph_list:
+        if get_account_currency(account_fph) == currency_fph:
+            accounts_fph_list.append(currency_fph)
+    return accounts_fph_list
 
+
+
+
+
+
+#==============================================================================
+# List the agent's accounts' currencies:
+def list_agent_currencies(agent_fph): # in which an agent has accounts
+    accounts_fph_list = list_agent_accounts(agent_fph)
+    currencies_fph_list = []
+    for account_fph in accounts_fph_list:
+        currencies_fph_list.append(get_account_currency(account_fph))
     return currencies_fph_list    # list
 
-
-def get_account(agent_fph, currency_fph): # which the agent has for the currency
-
-    return account_fph
-
-
+#==============================================================================
+#
 def get_parent_namespace(entity_fph): # for any entity
 
     return namespace_fph # string
@@ -638,7 +682,7 @@ def list_all_namespaces(root_namespace_fph):
 
 
 # List all currencies named within the specified namespace:
-def list_currencies(namespace_fph):
+def list_namespace_currencies(namespace_fph):
 
     return currency_fph_list # list
 
@@ -649,17 +693,12 @@ def list_agents(namespace_fph):
     return agent_fph_list # list
 
 
-# List all accounts belong to the specified agent:
-def list_accounts(agent_fph):
-
-    return account_fph_list # list
-
 
 
 
 # List the FPH of the currencies in which two agents both have an account:
 def list_currencies_in_common_by_fph(a1_fph, a2_fph):
-    return list(set(get_currencies(a1_fph)) & set(get_currencies(a2_fph)))
+    return list(set(list_currencies(a1_fph)) & set(list_currencies(a2_fph)))
 
 # List the HRNS of the currencies in which two agents both have an account:
 def list_currencies_in_common_by_hrns(a1_fph, a2_fph):
