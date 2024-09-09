@@ -700,65 +700,44 @@ def get_parent_namespace(entity_fph): # for any entity
     return namespace_fph # string
 
 
-#==============================================================================
 #def get_child_namespaces(namespaces_fph):
 #
 #    return namespace_fph_list # list
 
-#==============================================================================
 # Get the entity type:
 def get_entity_type(entity_fph):
-
-    if not re_fph.match(entity_fph):
-        return "", "Invalid FPH: " + entity_fph
-
-    # A table name cannot be passed using ?-substitution. Therefore .format( )
-    # must be used. See
-    # https://stackoverflow.com/questions/3247183/variable-table-name-in-sqlite
-
-    entity_fph = "'" + entity_fph + "'" # wrapped to enable SQLite to accept it.
-
-    with sqlite3.connect(ENTITIES_DB) as conn:
-        cursor = conn.cursor()
-        # Using table names: "namespaces", "currencys", "agents" and "accounts"
-        for et in ["namespaces", "currencies", "agents", "accounts"]:
-            cursor.execute(
-                "SELECT * FROM {} WHERE entity_fph = {}".format(
-                                                             et,
-                                                             entity_fph
-                                                         )
-            )
-            result = cursor.fetchone()
-            if result != None:
-                entity_type = result[2] # entity_type
-                if entity_type:
-                    break
-        cursor.close()
-    return entity_type, ""
+#    with sqlite3.connect(ENTITIES_DB) as conn:
+#        cursor = conn.cursor()
+#        for etype in ["namespace", "currency", "agent", "account"]:
+#            cursor.execute(
+#                "SELECT * FROM ? WHERE entity_fph = ?",
+#                (etype, entity_fph)
+#            )
+#            entity_type = cursor.fetchone()[2] # entity_type
+#            if entity_type:
+#                break
+#        cursor.close()
+    return entity_type
 
 
-#==============================================================================
 # List all namespaces immediately below a specified namespace:
 def list_child_namespaces(namespace_fph):
 
     return namespace_fph_list # list
 
 
-#==============================================================================
 # List all namespaces anywhere in the tree below the specified root namespace:
 def list_all_namespaces(root_namespace_fph):
 
     return namespace_fph_list # list
 
 
-#==============================================================================
 # List all currencies named within the specified namespace:
 def list_namespace_currencies(namespace_fph):
 
     return currency_fph_list # list
 
 
-#==============================================================================
 # List all agents named within the specified namespace:
 def list_agents(namespace_fph):
 
@@ -768,7 +747,6 @@ def list_agents(namespace_fph):
 
 
 
-#==============================================================================
 # List the FPH of the currencies in which two agents both have an account:
 def list_currencies_in_common_by_fph(a1_fph, a2_fph):
     return list(set(list_currencies(a1_fph)) & set(list_currencies(a2_fph)))

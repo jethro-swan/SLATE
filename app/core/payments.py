@@ -16,6 +16,7 @@ from dbm_functions import dbm_create_map
 from auth import auth_hash
 from regexp_list import *
 from unix_functions import fcopy
+from slate_core import account_exists
 from slate_core import list_currencies_in_common_by_fph
 from slate_core import list_currencies_in_common_by_hrns
 

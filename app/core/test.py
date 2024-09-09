@@ -10,18 +10,19 @@ import string
 import pickle
 import secrets
 from prettytable import PrettyTable
+from wonderwords import RandomWord
 
 from constants import ENTITIES_DB, PAYMENTS_DB, DB_DIR, FPH_TO_HRNS_MAP
 from dbm_functions import dbm_list_entries
 from slate_core import create_entities_db
-from payments import create_payments_db
+from payments import create_payments_db, payment
 from slate_core import new_namespace, new_agent, new_currency, new_account
 from slate_core import create_seed_entities
 from fph_hrns_maps import hrns_to_fph, fph_to_hrns, create_maps
 from slate_core import get_currency_name
-from slate_core import list_agent_accounts
-from slate_core import list_agent_currencies
+from slate_core import list_agent_accounts, list_agent_currencies
 from slate_core import list_currency_accounts
+from slate_core import get_entity_type
 from common import nshash
 from auth import auth_hash
 
@@ -72,7 +73,7 @@ l_currencies = [nshash("hours.global")]     # seed currency "hours.global"
 l_agents = [nshash("gaia.global")]          # seed agent "gaia.global"
 l_accounts = [nshash("hours.gaia.global")]  # seed account "hours.gaia.global"
 
-def list_entities():
+def list_l_entities():
     print()
     print("Namespaces:")
     for namespace_fph in l_namespaces:
@@ -89,7 +90,8 @@ def list_entities():
     print()
 
 # List the seed entities:
-#list_entities()
+print("Entities in temporary lists:")
+list_l_entities()
 
 
 # Entities are selected randomly from the lists of those already available:
@@ -242,6 +244,10 @@ def create_test_account(): # (beyond the initial account created for each agent)
                                        agent_fph,
                                        currency_fph
                                    )
+    if m:
+        return "", "", m
+
+    l_accounts.append(account_fph)
 
     return account_fph, account_hrns, m
 
@@ -249,6 +255,21 @@ def create_test_account(): # (beyond the initial account created for each agent)
 #==============================================================================
 # A set of fake entities is created, each built upon a set of randomly-selected
 # entities satisfying the dependency requirements:
+
+# This is a crude progress counter to indicate the sequence in which random
+# entities are created or an HRNS collision detected.
+progress_count = 100
+def pc(char):
+    global progress_count
+    #print(char, end="")
+    sys.stdout.write(char)
+    sys.stdout.flush()
+    progress_count -= 1
+    if progress_count == 0:
+        progress_count = 100
+        #print()
+        sys.stdout.write("\n")
+        sys.stdout.flush()
 
 def create_fake_entities(n):
 
@@ -259,7 +280,9 @@ def create_fake_entities(n):
     hrns_random_duplicates = []
     hrns_random_duplicates_count = 0
 
-    for i in range(n):
+    ec = 0 # count of entities created (free from HRNS collisions)
+    while ec < n:
+    #for i in range(n):
         # Create a new entity the type of which is selected randomly and the
         # dependencies of which exist only among those already created:
         e = random.choice(["namespace", "agent", "currency", "account"])
@@ -267,34 +290,56 @@ def create_fake_entities(n):
         if e == "namespace":
             fph, hrns, m = create_test_namespace()
             if m:
-                hrns_random_duplicates.append(m.replace(" exists", ""))
+                #hrns_random_duplicates.append(m.replace(" exists", ""))
+                hrns_random_duplicates.append(m)
                 hrns_random_duplicates_count += 1
+                pc(".")
             else:
                 fake_entities.append([fph, hrns, e, m])
+                ec += 1
+                pc("n")
         elif e == "agent":
             fph, hrns, m = create_test_agent()
             if m:
-                hrns_random_duplicates.append(m.replace(" exists", ""))
+                #hrns_random_duplicates.append(m.replace(" exists", ""))
+                hrns_random_duplicates.append(m)
                 hrns_random_duplicates_count += 1
+                pc(".")
             else:
+                ec += 1
                 fake_entities.append([fph, hrns, e, m])
+                pc("i")
         elif e == "currency":
             fph, hrns, m = create_test_currency()
             if m:
-                hrns_random_duplicates.append(m.replace(" exists", ""))
+                #hrns_random_duplicates.append(m.replace(" exists", ""))
+                hrns_random_duplicates.append(m)
                 hrns_random_duplicates_count += 1
+                pc(".")
             else:
+                ec += 1
                 fake_entities.append([fph, hrns, e, m])
+                pc("c")
         elif e == "account":
             fph, hrns, m = create_test_account()
             if m:
-                hrns_random_duplicates.append(m.replace(" exists", ""))
+                #hrns_random_duplicates.append(m.replace(" exists", ""))
+                hrns_random_duplicates.append(m)
                 hrns_random_duplicates_count += 1
+                pc(".")
             else:
+                ec += 1
                 fake_entities.append([fph, hrns, e, m])
+                pc("a")
         else:
             print("Something has gone very wrong here")
 
+    #for i in range(hrns_random_duplicates_count):
+    #    print(".", end="")
+
+        #print(".", end="") # show indication of progress
+    print()
+    print()
 
     fe_rows = []
     for fake_entity in fake_entities:
@@ -315,6 +360,8 @@ def create_fake_entities(n):
 # The set of fake entities is generated:
 create_fake_entities(200)
 
+print("Fake entities initially in temporary lists:")
+list_l_entities()
 
 # The fake agents are listed (along with their login credentials) from the
 # temporary list:
@@ -409,10 +456,112 @@ print()
 print("="*80)
 print()
 
+print("Testing get_entity_type(entity_fph) function:")
+
+print("\nNamespaces:")
+for namespace_fph in l_namespaces:
+    entity_type, m = get_entity_type(namespace_fph)
+    if entity_type != "namespace":
+        print("\t" + namespace_fph + " misidentified as " + entity_type)
+    else:
+        print("\t" + namespace_fph + " identified correctly")
+
+print("\nCurrencies:")
+for currency_fph in l_currencies:
+    entity_type, m = get_entity_type(currency_fph)
+    if entity_type != "currency":
+        print("\t" + currency_fph + " misidentified as " + entity_type)
+    else:
+        print("\t" + currency_fph + " identified correctly")
+
+print("\nAgents:")
+for agent_fph in l_agents:
+    entity_type, m = get_entity_type(agent_fph)
+    if entity_type != "agent":
+        print("\t" + agent_fph + " misidentified as " + entity_type)
+    else:
+        print("\t" + agent_fph + " identified correctly")
+
+print("\nAccounts:")
+for account_fph in l_accounts:
+    entity_type, m = get_entity_type(account_fph)
+    if entity_type != "account":
+        print("\t" + account_fph + " misidentified as " + entity_type)
+    else:
+        print("\t" + account_fph + " identified correctly")
 
 
 
 
 #==============================================================================
+# The full set of fake entities is now listed againfrom the SQLite database:
+
+with sqlite3.connect(ENTITIES_DB) as conn:
+    cursor = conn.cursor()
+
+    cursor.execute("SELECT * FROM namespaces;")
+    namespace_list = cursor.fetchall()
+    print("\nnamespaces:\n")
+    for namespace in namespace_list:
+        print(namespace)
+
+    cursor.execute("SELECT * FROM agents;")
+    agent_list = cursor.fetchall()
+    print("\nagents:\n")
+    for agent in agent_list:
+        print(agent)
+
+    cursor.execute("SELECT * FROM currencies;")
+    currency_list = cursor.fetchall()
+    print("\ncurrencies:\n")
+    for currency in currency_list:
+        print(currency)
+
+    cursor.execute("SELECT * FROM accounts;")
+    account_list = cursor.fetchall()
+    print("\naccounts:\n")
+    for account in account_list:
+        print(account)
+
+    cursor.close()
+
+print()
+print("="*80)
+print()
+
+#==============================================================================
+
+#print("Namespaces in l_namespaces:")
+#for namespace_fph in l_namespaces:
+#    print("\t" + namespace_fph + " :: " + fph_to_hrns(namespace_fph))
+
+#print("Currencies in l_currencies:")
+#for currency_fph in l_currencies:
+#    print("\t" + currency_fph + " :: " + fph_to_hrns(currency_fph))
+
+#print("Agents in l_agents:")
+#for agent_fph in l_agents:
+#    print("\t" + agent_fph + " :: " + fph_to_hrns(agent_fph))
+
+#print("Accounts in l_accounts:")
+#for account_fph in l_accounts:
+#    print("\t" + account_fph + " :: " + fph_to_hrns(account_fph))
+
+print("Entities still in temporary lists:")
+list_l_entities()
+
+#==============================================================================
 # Now that we have a usefully large collection of fake accounts, we can run
 # some payment tests:
+
+#for currency_fph in l_currencies:
+#    accounts_fph_list = list_currency_accounts(currency_fph)
+#    n_accounts = len(accounts_fph_list)
+#    if n_accounts >= 2:
+#        payer_fph = random.choice(accounts_fph_list)
+#        accounts_fph_list.remove(payer_fph)
+#        payee_fph = random.choice(accounts_fph_list)
+#        amount = random.randint(1,9999999)
+#        rword = RandomWord()
+#        annotation = rword.random_words(5)
+#        payment(payer_fph, payee_fph, amount, annotation)
