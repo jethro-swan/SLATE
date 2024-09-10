@@ -15,7 +15,7 @@ from wonderwords import RandomWord
 from constants import ENTITIES_DB, PAYMENTS_DB, DB_DIR, FPH_TO_HRNS_MAP
 from dbm_functions import dbm_list_entries
 from slate_core import create_entities_db
-from payments import create_payments_db, payment
+from payments import create_payments_db, payment, dump_currency_payments
 from slate_core import new_namespace, new_agent, new_currency, new_account
 from slate_core import create_seed_entities
 from fph_hrns_maps import hrns_to_fph, fph_to_hrns, create_maps
@@ -25,15 +25,19 @@ from slate_core import list_currency_accounts
 from slate_core import get_entity_type
 from common import nshash
 from auth import auth_hash
+from display import integer_to_money_format
 
 # TEMPORARY TEST BITS
+
+
+#testing = True
 
 # Initialize Faker object
 fake = Faker()
 Faker.seed(24)
 
 #
-print("Please wait while a set of fake entities is created. ", end="")
+print("\nPlease wait while a set of fake entities is created. ", end="")
 print("This may take some time because the dependency rules must be followed.")
 print()
 
@@ -50,7 +54,7 @@ create_seed_entities()
 
 
 def random_name():
-    name_length = random.randint(3,5)
+    name_length = random.randint(2,3)
     letters = string.ascii_lowercase
     n = []
     for i in range(name_length):
@@ -64,7 +68,18 @@ def random_hrns(length):
     return ".".join(hrnsbits)
 
 def fake_hrns():
-    return random_hrns(random.randint(1,6))
+    return random_hrns(random.randint(1,3))
+
+def test_hrns_faker():
+    print()
+    print("A random name:\t" + random_name())
+    print("A random HRNS:\t" + random_hrns(3))
+    print("A random fake:\t" + fake_hrns())
+    print()
+
+test_hrns_faker()
+
+
 
 # For the purposes of these tests, a list of each randomly-generated entity is
 # saved in a list, starting with the "seed" entities' FPH:
@@ -90,8 +105,8 @@ def list_l_entities():
     print()
 
 # List the seed entities:
-print("Entities in temporary lists:")
-list_l_entities()
+##print("Entities in temporary lists:")
+##list_l_entities()
 
 
 # Entities are selected randomly from the lists of those already available:
@@ -198,21 +213,21 @@ def create_test_currency():
     #currency_name = random_name()
     currency_name = random.choice([
                         "hours",
-                        "energy",
-                        "gpounds",
-                        "gdollars"
+                        "kWh",
+                        "g£",
+                        "g$"
                     ])
     if currency_name == "hours":
         currency_prefix = ""
         currency_suffix = "h"
-    elif currency_name == "energy":
+    elif currency_name == "kWh":
         currency_prefix = ""
         currency_suffix = "kWh"
-    elif currency_name == "gpounds":
-        currency_prefix = "G£"
+    elif currency_name == "g£":
+        currency_prefix = "g£"
         currency_suffix = ""
-    elif currency_name == "gdollars":
-        currency_prefix = "G$"
+    elif currency_name == "g$":
+        currency_prefix = "g$"
         currency_suffix = ""
     else:
         print("Something has gone very wrong here")
@@ -258,7 +273,7 @@ def create_test_account(): # (beyond the initial account created for each agent)
 
 # This is a crude progress counter to indicate the sequence in which random
 # entities are created or an HRNS collision detected.
-progress_count = 100
+progress_count = 80
 def pc(char):
     global progress_count
     #print(char, end="")
@@ -266,8 +281,7 @@ def pc(char):
     sys.stdout.flush()
     progress_count -= 1
     if progress_count == 0:
-        progress_count = 100
-        #print()
+        progress_count = 80
         sys.stdout.write("\n")
         sys.stdout.flush()
 
@@ -293,44 +307,44 @@ def create_fake_entities(n):
                 #hrns_random_duplicates.append(m.replace(" exists", ""))
                 hrns_random_duplicates.append(m)
                 hrns_random_duplicates_count += 1
-                pc(".")
+                #pc(".")
             else:
                 fake_entities.append([fph, hrns, e, m])
                 ec += 1
-                pc("n")
+                #pc("n")
         elif e == "agent":
             fph, hrns, m = create_test_agent()
             if m:
                 #hrns_random_duplicates.append(m.replace(" exists", ""))
                 hrns_random_duplicates.append(m)
                 hrns_random_duplicates_count += 1
-                pc(".")
+                #pc(".")
             else:
                 ec += 1
                 fake_entities.append([fph, hrns, e, m])
-                pc("i")
+                #pc("i")
         elif e == "currency":
             fph, hrns, m = create_test_currency()
             if m:
                 #hrns_random_duplicates.append(m.replace(" exists", ""))
                 hrns_random_duplicates.append(m)
                 hrns_random_duplicates_count += 1
-                pc(".")
+                #pc(".")
             else:
                 ec += 1
                 fake_entities.append([fph, hrns, e, m])
-                pc("c")
+                #pc("c")
         elif e == "account":
             fph, hrns, m = create_test_account()
             if m:
                 #hrns_random_duplicates.append(m.replace(" exists", ""))
                 hrns_random_duplicates.append(m)
                 hrns_random_duplicates_count += 1
-                pc(".")
+                #pc(".")
             else:
                 ec += 1
                 fake_entities.append([fph, hrns, e, m])
-                pc("a")
+                #pc("a")
         else:
             print("Something has gone very wrong here")
 
@@ -360,8 +374,8 @@ def create_fake_entities(n):
 # The set of fake entities is generated:
 create_fake_entities(200)
 
-print("Fake entities initially in temporary lists:")
-list_l_entities()
+#print("Fake entities initially in temporary lists:")
+#list_l_entities()
 
 # The fake agents are listed (along with their login credentials) from the
 # temporary list:
@@ -547,21 +561,87 @@ print()
 #for account_fph in l_accounts:
 #    print("\t" + account_fph + " :: " + fph_to_hrns(account_fph))
 
-print("Entities still in temporary lists:")
-list_l_entities()
+##print("Entities still in temporary lists:")
+##list_l_entities()
 
 #==============================================================================
 # Now that we have a usefully large collection of fake accounts, we can run
 # some payment tests:
 
-#for currency_fph in l_currencies:
-#    accounts_fph_list = list_currency_accounts(currency_fph)
-#    n_accounts = len(accounts_fph_list)
-#    if n_accounts >= 2:
-#        payer_fph = random.choice(accounts_fph_list)
-#        accounts_fph_list.remove(payer_fph)
-#        payee_fph = random.choice(accounts_fph_list)
-#        amount = random.randint(1,9999999)
-#        rword = RandomWord()
-#        annotation = rword.random_words(5)
-#        payment(payer_fph, payee_fph, amount, annotation)
+def test_payment_function():
+    for currency_fph in l_currencies:
+        accounts_fph_list = list_currency_accounts(currency_fph)
+        n_accounts = len(accounts_fph_list)
+        if n_accounts >= 2:
+            afphl = accounts_fph_list
+            payer_fph = random.choice(afphl)
+            afphl.remove(payer_fph)
+            payee_fph = random.choice(afphl)
+            amount = random.randint(1, 100000)
+            rword = RandomWord()
+            rwords = rword.random_words(4) # list
+            annotation = " ".join(rwords)
+            payment(payer_fph, payee_fph, amount, annotation)
+
+            pstring = payer_fph + " > " + payee_fph \
+                    + " | " + currency_fph \
+                    + " | " + str(amount) \
+                    + " | " + annotation
+            print(pstring)
+
+
+
+test_payment_function()
+
+def list_accounts(dtype="tuple"):
+    # Now let's take another look at the accounts:
+    with sqlite3.connect(ENTITIES_DB) as conn:
+        cursor = conn.cursor()
+        cursor.execute("SELECT * FROM accounts;")
+        account_list = list(cursor.fetchall())
+        cursor.close()
+    print("\naccounts:\n")
+
+    if dtype == "tuple":
+        acct_rows = []
+        for account in account_list:
+            print(account)
+    elif dtype == "table":
+        acct_rows = []
+        for account in account_list:
+            ar = list(account)
+            acct_row = []
+            acct_row.append(fph_to_hrns(ar[0]))
+            acct_row.append(fph_to_hrns(ar[1]))
+            acct_row.append(fph_to_hrns(ar[3]))
+            acct_row.append(fph_to_hrns(ar[4]))
+            acct_row.append(integer_to_money_format(ar[5]))
+            acct_rows.append(acct_row)
+        acct_table = PrettyTable()
+        acct_table.field_names = [
+                                   "account HRNS",
+                                   "parent namespace HRNS",
+                                   "owner HRNS",
+                                   "currency HRNS",
+                                   "balance"
+                                 ]
+        acct_table.align = "r"
+        #acct_table.align["account_balance"] = "r"
+        acct_table.add_rows(acct_rows[1:])
+        print(acct_table)
+
+list_accounts("table")
+
+
+
+
+#==============================================================================
+#
+
+def show_payments_for_test_currencies():
+    print("\nPayments in each currency\n")
+    for currency_fph in l_currencies:
+        print(currency_fph + " :: " + fph_to_hrns(currency_fph))
+        dump_currency_payments(currency_fph)
+
+show_payments_for_test_currencies()

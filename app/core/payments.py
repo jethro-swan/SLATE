@@ -43,11 +43,11 @@ def create_payments_db():
                 payment_id INTEGER PRIMARY KEY AUTOINCREMENT,
                 payer_fph TEXT NOT NULL,
                 payee_fph TEXT NOT NULL,
+                currency_fph TEXT NOT NULL,
                 amount INTEGER NOT NULL,
                 annotation TEXT
             );"""
         )
-
         conn.commit()
         cursor.close()
 
@@ -66,8 +66,8 @@ def payment(payer_fph, payee_fph, amount, annotation):
         return "Payee account " + payee_fph + " is inactive"
     if not re_payment.match(amount):
         return str(amount) + " is not a valid payment"
-    payee_currency = currency_of(payee_fph)
-    if currency_of(payer_fph) != payee_currency:
+    currency_fph = currency_of(payee_fph)
+    if currency_of(payer_fph) != currency_fph:
         return "Accounts " + payer_fph + " and " + payee_fph + " are not in " \
                "the same currency"
 
@@ -81,7 +81,7 @@ def payment(payer_fph, payee_fph, amount, annotation):
         cursor.execute("""
             SELECT account_balance FROM accounts WHERE payee_fph = ?
             """,
-            (payee_fph)
+            (payee_fph,)
         )
         payee_balance = cursor.fetchone() + amount
         update_command = "UPDATE balance SET account_balance = " \
@@ -92,24 +92,30 @@ def payment(payer_fph, payee_fph, amount, annotation):
         cursor.execute("""
             SELECT account_balance FROM accounts WHERE payer_fph = ?
             """,
-            (payer_fph)
+            (payer_fph,)
         )
         payer_adjusted_balance = cursor.fetchone() - amount
         update_command = "UPDATE balance SET account_balance = " \
                        + str(payer_adjusted_balance) \
                        + "WHERE payer_fph = " + str(payer_fph)
         cursor.execute(update_command)
-
         conn.commit()
         cursor.close()
 
     #--------------------------------------------------------------------------
     # Then the payment is recorded in the journal:
     #
+    print(
+        payer_fph + " (" + fph_to_hrns(payer_fph) + ") > "
+        + payee_fph + " (" + fph_to_hrns(payee_fph) + ") | "
+        + currency_fph + " (" + fph_to_hrns(currency_fph) + ") | "
+        + amount  + " | "
+        + annotation
+    )
+
+
     with sqlite3.connect(PAYMENTS_DB) as conn:
         cursor = conn.cursor()
-
-
         cursor.execute("""
             INSERT INTO payments (
                 payer_fph, payee_fph, currency_fph, amount, annotation
@@ -117,7 +123,6 @@ def payment(payer_fph, payee_fph, amount, annotation):
             VALUES (?, ?, ?, ?, ?)""",
             (payer_fph, payee_fph, currency_fph, amount, annotation)
         )
-
         conn.commit()
         cursor.close()
 
@@ -146,33 +151,30 @@ def list_currencies_in_common_as_html(a1_fph, a2_fph):
 #==============================================================================
 
 
-def dump_currency_payments(currency_fph, optype="csv", edtype="fph"):
+def dump_currency_payments(currency_fph, optype="text_table", edtype="fph"):
 
     currency_hrns = fph_to_hrns(currency_fph)
 
+    payment_rows = []
+    payment_rows.append(["payment number",
+                         "payer FPH", "payer HRNS",
+                         "payee FPH", "payee HRNS",
+                         "amount",
+                         "annotation"
+                        ])
+
     with sqlite3.connect(PAYMENTS_DB) as conn:
         cursor = conn.cursor()
-
         # Read transactions for specified currency:
-        cursor.execute("""
-            SELECT payment_id, payer_fph, payee_fph, amount, annotation
-            FROM payments WHERE currency_fph = ?
-            )
-            VALUES (?)""",
-            (currency_fph)
+        cursor.execute(
+            "SELECT * FROM payments WHERE currency_fph = ?",
+            (currency_fph,)
         )
         all_payments = cursor.fetchall()
-        #conn.commit()
         cursor.close()
 
         payment_rows = []
         # Create column headers as the first row:
-        payment_row.append(["payment number",
-                            "payer FPH", "payer HRNS",
-                            "payee FPH", "payee HRNS",
-                            "amount",
-                            "annotation"
-                           ])
         for payment in all_payments:
             payment_row = []
             p = list(payment)
@@ -180,24 +182,35 @@ def dump_currency_payments(currency_fph, optype="csv", edtype="fph"):
             payment_row.append(p[1])                     # payer FPH
             payment_row.append(fph_to_hrns(payer_fph))   # payer HRNS
             payment_row.append(p[2])                     # payee FPH
-            payment_row.append(fph_to_hrns(payee_fph))   # payee HRNS
-            payment_row.append(str(p[3]//100))           # amount paid
-            payment_row.append(p[4])                     # annotation
-            payment_rows.append(payment_row)
+            # p[3] currency_fph
+            payment_row.append(str(p[4]//100))           # amount paid
+            payment_row.append(p[5])                     # annotation
+            if p[3] == currency_fph:
+                payment_rows.append(payment_row)
+                print(":".join(payment_row))
 
         #----------------------------------------------------------------------
         if optype == "csv":
             # CSV header row:
             print("payment number:payer FPH:payee FPH:amount:annotation")
             for row in payment_rows:
-                for row_field in row:
-                    print(row_field + ":", end="")
-                print() # add line feed
+                print(":".join(row))
+#                for c in range(len(row)-1):
+#                    print(row[c] + ":", end="")
+#                print(row[-1]) # add line feed
 
         #----------------------------------------------------------------------
         elif optype == "text_table":
-            text_table = PrettyTable(payment_row[0])
-            text_table.add_rows(payment_row[1:])
+            text_table = PrettyTable()
+            text_table.align = "l"
+            text_table.field_names = [
+                                        "payment number",
+                                        "payer FPH",
+                                        "payee FPH",
+                                        "amount",
+                                        "annotation"
+                                     ]
+            text_table.add_rows(payment_rows[1:])
             print(text_table)
 
         #----------------------------------------------------------------------
@@ -231,15 +244,21 @@ def dump_agent_payments(currency_fph, optype="csv", edtype="fph"):
 
         # Read transactions for specified currency:
         cursor.execute("""
-            SELECT payment_id, payer_fph, payee_fph, currency_fph, amount,
-            annotation FROM payments WHERE currency_fph = ?
-            )
-            VALUES (?)""",
-            (currency_fph)
+            SELECT * FROM payments WHERE currency_fph = ?""",
+            (currency_fph,)
         )
         all_payments = cursor.fetchall()
         #conn.commit()
         cursor.close()
+
+
+        #payment_id INTEGER PRIMARY KEY AUTOINCREMENT,
+        #payer_fph TEXT NOT NULL,
+        #payee_fph TEXT NOT NULL,
+        #amount INTEGER NOT NULL,
+        #annotation TEXT
+
+
 
 
 #==============================================================================

@@ -15,6 +15,9 @@ from auth import auth_hash
 from regexp_list import *
 from unix_functions import fcopy
 
+
+testing = True
+
 #------------------------------------------------------------------------------
 # In NESTS the FPH has so far been formed as the hash of the FIP, but making it
 # the hash of the HRNS instead will simplify compatibility between SLATE and
@@ -369,6 +372,16 @@ def new_account(
         #print("\t" + account_hrns + " exists already")
         return "", "", account_hrns + " exists already"
 
+
+    if testing:
+        print("Creating new account:")
+        print("\taccount name \t\t= " + currency_name)
+        print("\tparent namespace \t= " + agent_hrns)
+        print("\taccount\t\t\t= " + account_hrns)
+
+
+
+
     account_fph, m = hrns_to_fph(account_hrns)
 
     with sqlite3.connect(ENTITIES_DB) as conn:
@@ -464,6 +477,17 @@ def new_agent(
     if fph_to_hrns(nshash(agent_hrns)):
         return "", "", agent_hrns + " exists already"
 
+
+    if testing:
+        print("Creating new agent:")
+        print("\tagent name \t\t= " + username)
+        print("\tparent namespace \t= " + namespace_hrns)
+        print("\tagent\t\t\t= " + agent_hrns)
+
+
+
+
+
     agent_fph, m = hrns_to_fph(agent_hrns)
 
     if not re_email.match(email_address):
@@ -531,6 +555,16 @@ def new_namespace(
     if fph_to_hrns(nshash(namespace_hrns)):
         return "", "", namespace_hrns + " exists already"
 
+    if testing:
+        print("Creating new namespace:")
+        print("\tnamespace name \t\t= " + namespace_name)
+        print("\tparent namespace \t= " + parent_namespace_hrns)
+        print("\tnamespace\t\t\t= " + namespace_hrns)
+
+
+
+
+
     namespace_fph, m = hrns_to_fph(namespace_hrns)
 
     stewards_fph_blob = pickle.dumps(list([initial_steward_fph]))
@@ -584,6 +618,15 @@ def new_currency(
     if fph_to_hrns(nshash(currency_hrns)):
         return "", "", currency_hrns + " exists already"
 
+    if testing:
+        print("Creating new currency")
+        print("\tcurrency name \t\t= " + currency_name)
+        print("\tparent namespace \t= " + parent_namespace_hrns)
+        print("\tcurrency\t\t\t= " + currency_hrns)
+
+
+
+
     currency_fph, m = hrns_to_fph(currency_hrns)
 
     initial_steward_hrns = fph_to_hrns(initial_steward_fph)
@@ -634,8 +677,11 @@ def list_agent_accounts(agent_fph):
         )
         accounts_fph_blob = cursor.fetchone()[5]
         cursor.close()
-    accounts_fph_list = pickle.loads(accounts_fph_blob)
-    return accounts_fph_list    # list
+    if accounts_fph_blob != None:
+        accounts_fph_list = pickle.loads(accounts_fph_blob)
+        return accounts_fph_list    # list
+    else:
+        return []
 
 #==============================================================================
 # Get the currency of an account:
@@ -665,9 +711,6 @@ def list_currency_accounts(currency_fph):
     return accounts_fph_list    # list
 
 #==============================================================================
-
-
-
 # Identify the account (if any) in which the agent has access to the specified
 # currency:
 
@@ -699,11 +742,17 @@ def get_parent_namespace(entity_fph): # for any entity
 
     return namespace_fph # string
 
+#==============================================================================
+# List all namespaces immediately below a specified namespace:
+def list_child_namespaces(namespace_fph):
+
+    return namespace_fph_list # list
 
 #==============================================================================
-#def get_child_namespaces(namespaces_fph):
-#
-#    return namespace_fph_list # list
+# List all namespaces anywhere in the tree below the specified root namespace:
+def list_all_namespaces(root_namespace_fph):
+
+    return namespace_fph_list # list
 
 #==============================================================================
 # Get the entity type:
@@ -721,46 +770,34 @@ def get_entity_type(entity_fph):
     with sqlite3.connect(ENTITIES_DB) as conn:
         cursor = conn.cursor()
         # Using table names: "namespaces", "currencys", "agents" and "accounts"
-        for et in ["namespaces", "currencies", "agents", "accounts"]:
+        for entity_table in ["namespaces", "currencies", "agents", "accounts"]:
             cursor.execute(
                 "SELECT * FROM {} WHERE entity_fph = {}".format(
-                                                             et,
+                                                             entity_table,
                                                              entity_fph
                                                          )
             )
             result = cursor.fetchone()
+            cursor.close()
             if result != None:
                 entity_type = result[2] # entity_type
                 if entity_type:
                     break
-        cursor.close()
+            else:
+                return "", "Entity type unidentifiable"
+
     return entity_type, ""
-
-
-#==============================================================================
-# List all namespaces immediately below a specified namespace:
-def list_child_namespaces(namespace_fph):
-
-    return namespace_fph_list # list
-
-
-#==============================================================================
-# List all namespaces anywhere in the tree below the specified root namespace:
-def list_all_namespaces(root_namespace_fph):
-
-    return namespace_fph_list # list
-
 
 #==============================================================================
 # List all currencies named within the specified namespace:
-def list_namespace_currencies(namespace_fph):
+def list_currencies_in_namespace(namespace_fph):
 
     return currency_fph_list # list
 
 
 #==============================================================================
 # List all agents named within the specified namespace:
-def list_agents(namespace_fph):
+def list_agents_in_namespace(namespace_fph):
 
     return agent_fph_list # list
 
