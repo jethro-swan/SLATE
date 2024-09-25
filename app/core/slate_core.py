@@ -3,6 +3,7 @@ import random
 import os
 import pickle
 from pathlib import Path
+from string import ascii_lowercase
 
 from constants import ENTITIES_DB, PAYMENTS_DB, DB_DIR, DB_BKP_DIR
 from constants import FPH_TO_HRNS_MAP, HRNS_C_FPH_MAP
@@ -14,9 +15,10 @@ from dbm_functions import dbm_create_map
 from auth import auth_hash
 from regexp_list import *
 from unix_functions import fcopy
-
+from cctld_list import *
 
 testing = True
+max_hrns_length = 0
 
 #------------------------------------------------------------------------------
 # In NESTS the FPH has so far been formed as the hash of the FIP, but making it
@@ -333,6 +335,10 @@ def create_seed_entities():
         conn.commit()
         cursor.close()
 
+
+
+
+
 #==============================================================================
 #def get_currency_hrns(currency_fph):
 #    return fph_to_hrns(currency_fph)
@@ -370,17 +376,7 @@ def new_account(
 
     if fph_to_hrns(nshash(account_hrns)):
         #print("\t" + account_hrns + " exists already")
-        return "", "", account_hrns + " exists already"
-
-
-    if testing:
-        print("Creating new account:")
-        print("\taccount name \t\t= " + currency_name)
-        print("\tparent namespace \t= " + agent_hrns)
-        print("\taccount\t\t\t= " + account_hrns)
-
-
-
+        return "", "", "collision:  " + account_hrns
 
     account_fph, m = hrns_to_fph(account_hrns)
 
@@ -446,9 +442,14 @@ def new_account(
         conn.commit()
         cursor.close()
 
+    if testing:
+        hrns_length = len(account_hrns.split("."))
+        print(
+            "account: \t" + "{:>2}".format(str(hrns_length)) + "\t" \
+            + account_hrns
+        )
+
     return account_fph, account_hrns, ""
-
-
 
 #==============================================================================
 # A new agent is created in the specified namespace.
@@ -475,18 +476,7 @@ def new_agent(
     agent_hrns = username + "." + namespace_hrns
 
     if fph_to_hrns(nshash(agent_hrns)):
-        return "", "", agent_hrns + " exists already"
-
-
-    if testing:
-        print("Creating new agent:")
-        print("\tagent name \t\t= " + username)
-        print("\tparent namespace \t= " + namespace_hrns)
-        print("\tagent\t\t\t= " + agent_hrns)
-
-
-
-
+        return "", "", "collision:  " + agent_hrns
 
     agent_fph, m = hrns_to_fph(agent_hrns)
 
@@ -532,6 +522,13 @@ def new_agent(
         conn.commit()
         cursor.close()
 
+    if testing:
+        hrns_length = len(agent_hrns.split("."))
+        print(
+            "agent: \t\t" + "{:>2}".format(str(hrns_length)) + "\t" \
+            + agent_hrns
+        )
+
     return agent_fph, agent_hrns, ""
 
 #==============================================================================
@@ -550,20 +547,13 @@ def new_namespace(
         return "", "", "Invalid initial steward FPH: " + initial_steward_fph
 
     parent_namespace_hrns = fph_to_hrns(parent_namespace_fph)
-    namespace_hrns = namespace_name + "." + parent_namespace_hrns
+    if parent_namespace_hrns:
+        namespace_hrns = namespace_name + "." + parent_namespace_hrns
+    else:
+        namespace_hrns = namespace_name
 
     if fph_to_hrns(nshash(namespace_hrns)):
-        return "", "", namespace_hrns + " exists already"
-
-    if testing:
-        print("Creating new namespace:")
-        print("\tnamespace name \t\t= " + namespace_name)
-        print("\tparent namespace \t= " + parent_namespace_hrns)
-        print("\tnamespace\t\t\t= " + namespace_hrns)
-
-
-
-
+        return "", "", "collision:  " + namespace_hrns
 
     namespace_fph, m = hrns_to_fph(namespace_hrns)
 
@@ -591,6 +581,13 @@ def new_namespace(
         conn.commit()
         cursor.close()
 
+    if testing:
+        hrns_length = len(namespace_hrns.split("."))
+        print(
+            "namespace: \t" + "{:>2}".format(str(hrns_length)) + "\t" \
+            + namespace_hrns
+        )
+
     return namespace_fph, namespace_hrns, ""
 
 #==============================================================================
@@ -616,16 +613,7 @@ def new_currency(
     currency_hrns = currency_name + "." + parent_namespace_hrns
 
     if fph_to_hrns(nshash(currency_hrns)):
-        return "", "", currency_hrns + " exists already"
-
-    if testing:
-        print("Creating new currency")
-        print("\tcurrency name \t\t= " + currency_name)
-        print("\tparent namespace \t= " + parent_namespace_hrns)
-        print("\tcurrency\t\t\t= " + currency_hrns)
-
-
-
+        return "", "", "collision:  " + currency_hrns
 
     currency_fph, m = hrns_to_fph(currency_hrns)
 
@@ -664,7 +652,38 @@ def new_currency(
         conn.commit()
         cursor.close()
 
+    if testing:
+        hrns_length = len(currency_hrns.split("."))
+        print(
+            "currency: \t" + "{:>2}".format(str(hrns_length)) + "\t" \
+            + currency_hrns
+        )
+
     return currency_fph, currency_hrns, ""
+
+
+
+
+#==============================================================================
+# A set of "pseudo-TLD" root namespaces, each having the same null parent
+# nameaspace ("": root_fph) and the same initial steward ("gaia.global":
+# seed_agent_fph):
+
+def create_pseudotld_set():
+    root_fph = nshash("")
+    seed_agent_fph = nshash("gaia.global")
+    for tld in cctld_list:
+        namespace_fph, namespace_hrns, m = new_namespace(
+                                               tld,
+                                               root_fph,
+                                               seed_agent_fph
+                                           )
+        if testing:
+            message = ""
+            if m:
+                message = " | " + m
+            print(namespace_fph + " :: " + namespace_hrns + message)
+    print("="*160)
 
 #==============================================================================
 # List the agent's accounts:
@@ -675,13 +694,18 @@ def list_agent_accounts(agent_fph):
             "SELECT * FROM agents WHERE entity_fph = ?",
             (agent_fph,)
         )
-        accounts_fph_blob = cursor.fetchone()[5]
+        agent_properties = cursor.fetchone()
         cursor.close()
-    if accounts_fph_blob != None:
-        accounts_fph_list = pickle.loads(accounts_fph_blob)
-        return accounts_fph_list    # list
-    else:
-        return []
+        if agent_properties != None:
+            accounts_fph_blob = agent_properties[5]
+            if accounts_fph_blob != None:
+                accounts_fph_list = pickle.loads(accounts_fph_blob)
+                return accounts_fph_list, ""    # list + message
+            else:
+                return [], "Accounts FPH list invalid"
+        else:
+            return [], "Agent properties list invalid"
+
 
 #==============================================================================
 # Get the currency of an account:
@@ -708,7 +732,7 @@ def list_currency_accounts(currency_fph):
         accounts_fph_blob = cursor.fetchone()[5]
         cursor.close()
     accounts_fph_list = pickle.loads(accounts_fph_blob)
-    return accounts_fph_list    # list
+    return accounts_fph_list, ""    # list + message
 
 #==============================================================================
 # Identify the account (if any) in which the agent has access to the specified
@@ -730,7 +754,7 @@ def list_agent_currency_accounts(agent_fph, currency_fph):
 #==============================================================================
 # List the agent's accounts' currencies:
 def list_agent_currencies(agent_fph): # in which an agent has accounts
-    accounts_fph_list = list_agent_accounts(agent_fph)
+    accounts_fph_list, m = list_agent_accounts(agent_fph)
     currencies_fph_list = []
     for account_fph in accounts_fph_list:
         currencies_fph_list.append(get_account_currency(account_fph))
@@ -778,15 +802,14 @@ def get_entity_type(entity_fph):
                                                          )
             )
             result = cursor.fetchone()
-            cursor.close()
             if result != None:
                 entity_type = result[2] # entity_type
                 if entity_type:
-                    break
-            else:
-                return "", "Entity type unidentifiable"
+                    cursor.close()
+                    return entity_type, ""
+        cursor.close()
 
-    return entity_type, ""
+    return "", "Entity type unidentifiable"
 
 #==============================================================================
 # List all currencies named within the specified namespace:

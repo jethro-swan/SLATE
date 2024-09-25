@@ -26,11 +26,10 @@ from slate_core import get_entity_type
 from common import nshash
 from auth import auth_hash
 from display import integer_to_money_format
+from slate_core import create_pseudotld_set
 
 # TEMPORARY TEST BITS
 
-
-#testing = True
 
 # Initialize Faker object
 fake = Faker()
@@ -60,15 +59,24 @@ def random_name():
     for i in range(name_length):
         n.append(random.choice(letters))
     return "".join(n)
+    #name = "".join(n)                       # Temporaryt debuggery
+    #print("\t\t" + name)                    #
+    #return name                             #
 
 def random_hrns(length):
     hrnsbits = []
     for i in range(length):
         hrnsbits.append(random_name())
     return ".".join(hrnsbits)
+    #hrns = ".".join(hrnsbits)               # Temporaryt debuggery
+    #print("\t" + hrns)                      #
+    #return hrns                             #
 
 def fake_hrns():
     return random_hrns(random.randint(1,3))
+    #hrns = random_hrns(random.randint(1,3)) # Temporaryt debuggery
+    #print("\t\t\t" + hrns)                  #
+    #return hrns                             #
 
 def test_hrns_faker():
     print()
@@ -77,7 +85,7 @@ def test_hrns_faker():
     print("A random fake:\t" + fake_hrns())
     print()
 
-test_hrns_faker()
+#test_hrns_faker()
 
 
 
@@ -107,6 +115,14 @@ def list_l_entities():
 # List the seed entities:
 ##print("Entities in temporary lists:")
 ##list_l_entities()
+
+# Create the full set of pseudo-TLD root namespaces:
+create_pseudotld_set()
+
+# Add a small subset of these to test namespaces list:
+for hrns in ["uk", "es", "fr", "de", "ca", "us"]:
+    fph, m = hrns_to_fph(hrns)
+    l_namespaces.append(fph)
 
 
 # Entities are selected randomly from the lists of those already available:
@@ -440,9 +456,12 @@ print("\nList the fake agents' accounts:\n")
 
 for agent_fph in l_agents:
     print(agent_fph + " :: " + fph_to_hrns(agent_fph))
-    accounts_fph_list = list_agent_accounts(agent_fph)
-    for account_fph in accounts_fph_list:
-        print("\t" + fph_to_hrns(account_fph))
+    accounts_fph_list, m = list_agent_accounts(agent_fph)
+    if m:
+        print("\t" + m)
+    else:
+        for account_fph in accounts_fph_list:
+            print("\t" + fph_to_hrns(account_fph))
 print()
 print("="*80)
 
@@ -462,7 +481,7 @@ print("\nList the fake currencies' accounts:\n")
 
 for currency_fph in l_currencies:
     print(currency_fph + " :: " + fph_to_hrns(currency_fph))
-    accounts_fph_list = list_currency_accounts(currency_fph)
+    accounts_fph_list, m = list_currency_accounts(currency_fph)
     for account_fph in accounts_fph_list:
         print("\t" + account_fph + " :: " + fph_to_hrns(account_fph))
 
@@ -475,37 +494,38 @@ print("Testing get_entity_type(entity_fph) function:")
 print("\nNamespaces:")
 for namespace_fph in l_namespaces:
     entity_type, m = get_entity_type(namespace_fph)
+    print("\t" + fph_to_hrns(namespace_fph) + " (" + namespace_fph + ")", end="")
     if entity_type != "namespace":
-        print("\t" + namespace_fph + " misidentified as " + entity_type)
+        print(" misidentified as " + entity_type + " (" + m + ")")
     else:
-        print("\t" + namespace_fph + " identified correctly")
+        print(" identified correctly as " + entity_type)
 
 print("\nCurrencies:")
 for currency_fph in l_currencies:
     entity_type, m = get_entity_type(currency_fph)
+    print("\t" + fph_to_hrns(currency_fph) + " (" + currency_fph + ")", end="")
     if entity_type != "currency":
-        print("\t" + currency_fph + " misidentified as " + entity_type)
+        print(" misidentified as " + entity_type + " (" + m + ")")
     else:
-        print("\t" + currency_fph + " identified correctly")
+        print(" identified correctly as " + entity_type)
 
 print("\nAgents:")
 for agent_fph in l_agents:
     entity_type, m = get_entity_type(agent_fph)
+    print("\t" + fph_to_hrns(agent_fph) + " (" + agent_fph + ")", end="")
     if entity_type != "agent":
-        print("\t" + agent_fph + " misidentified as " + entity_type)
+        print(" misidentified as " + entity_type + " (" + m + ")")
     else:
-        print("\t" + agent_fph + " identified correctly")
+        print(" identified correctly as " + entity_type)
 
 print("\nAccounts:")
 for account_fph in l_accounts:
     entity_type, m = get_entity_type(account_fph)
+    print("\t" + fph_to_hrns(account_fph) + " (" + account_fph + ")", end="")
     if entity_type != "account":
-        print("\t" + account_fph + " misidentified as " + entity_type)
+        print(" misidentified as " + entity_type + " (" + m + ")")
     else:
-        print("\t" + account_fph + " identified correctly")
-
-
-
+        print(" identified correctly as " + entity_type)
 
 #==============================================================================
 # The full set of fake entities is now listed againfrom the SQLite database:
@@ -544,54 +564,56 @@ print("="*80)
 print()
 
 #==============================================================================
-
-#print("Namespaces in l_namespaces:")
-#for namespace_fph in l_namespaces:
-#    print("\t" + namespace_fph + " :: " + fph_to_hrns(namespace_fph))
-
-#print("Currencies in l_currencies:")
-#for currency_fph in l_currencies:
-#    print("\t" + currency_fph + " :: " + fph_to_hrns(currency_fph))
-
-#print("Agents in l_agents:")
-#for agent_fph in l_agents:
-#    print("\t" + agent_fph + " :: " + fph_to_hrns(agent_fph))
-
-#print("Accounts in l_accounts:")
-#for account_fph in l_accounts:
-#    print("\t" + account_fph + " :: " + fph_to_hrns(account_fph))
-
-##print("Entities still in temporary lists:")
-##list_l_entities()
-
-#==============================================================================
 # Now that we have a usefully large collection of fake accounts, we can run
 # some payment tests:
 
 def test_payment_function():
     for currency_fph in l_currencies:
-        accounts_fph_list = list_currency_accounts(currency_fph)
+        accounts_fph_list, m = list_currency_accounts(currency_fph)
         n_accounts = len(accounts_fph_list)
-        if n_accounts >= 2:
-            afphl = accounts_fph_list
-            payer_fph = random.choice(afphl)
-            afphl.remove(payer_fph)
-            payee_fph = random.choice(afphl)
-            amount = random.randint(1, 100000)
-            rword = RandomWord()
-            rwords = rword.random_words(4) # list
-            annotation = " ".join(rwords)
-            payment(payer_fph, payee_fph, amount, annotation)
+        if n_accounts >= 7: # minumum number of accounts in trading set
+            print("Currency: " + fph_to_hrns(currency_fph) + " has accounts:")
+            # List the accounts in this currency:
+            for account_fph in accounts_fph_list:
+                print("\t" + fph_to_hrns(account_fph))
+            n_payments = n_accounts * 20 # arbitrary number of test payments
+            p_table = PrettyTable()
+            p_table.field_names = [
+                                    "payer account",
+                                    "payee account",
+                                    "amount",
+                                    "annotation"
+                                  ]
+            #p_table._min_width = {
+            #                        "payer account" : 40,
+            #                        "payee account" : 40,
+            #                        "amount" : 15
+            #                     }
+            p_rows = []
+            for p in range(n_payments):
+                p_row = []
+                payer_fph = random.choice(accounts_fph_list)
+                payee_fph = random.choice(accounts_fph_list)
+                if payer_fph != payee_fph:
+                    amount = random.randint(1, 100000)
+                    rword = RandomWord()
+                    rwords = rword.random_words(3) # list
+                    annotation = " ".join(rwords)
+                    # Record the payment in the databases:
+                    payment(payer_fph, payee_fph, amount, annotation)
+                    # Add payment to test table:
+                    p_row.append(fph_to_hrns(payer_fph))
+                    p_row.append(fph_to_hrns(payee_fph))
+                    p_row.append(integer_to_money_format(amount))
+                    p_row.append(annotation)
+                    p_rows.append(p_row)
+            p_table.align = "r"
+            p_table.add_rows(p_rows[1:])
+            print(p_table)
 
-            pstring = payer_fph + " > " + payee_fph \
-                    + " | " + currency_fph \
-                    + " | " + str(amount) \
-                    + " | " + annotation
-            print(pstring)
 
 
-
-test_payment_function()
+#test_payment_function()
 
 def list_accounts(dtype="tuple"):
     # Now let's take another look at the accounts:
@@ -630,6 +652,11 @@ def list_accounts(dtype="tuple"):
         acct_table.add_rows(acct_rows[1:])
         print(acct_table)
 
+
+list_accounts("table")
+
+test_payment_function()
+
 list_accounts("table")
 
 
@@ -644,4 +671,4 @@ def show_payments_for_test_currencies():
         print(currency_fph + " :: " + fph_to_hrns(currency_fph))
         dump_currency_payments(currency_fph)
 
-show_payments_for_test_currencies()
+#show_payments_for_test_currencies()
