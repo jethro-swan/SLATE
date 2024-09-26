@@ -17,8 +17,8 @@ from regexp_list import *
 from unix_functions import fcopy
 from cctld_list import *
 
-testing = True
-max_hrns_length = 0
+debugging = True
+#max_hrns_length = 0
 
 #------------------------------------------------------------------------------
 # In NESTS the FPH has so far been formed as the hash of the FIP, but making it
@@ -442,7 +442,7 @@ def new_account(
         conn.commit()
         cursor.close()
 
-    if testing:
+    if debugging:
         hrns_length = len(account_hrns.split("."))
         print(
             "account: \t" + "{:>2}".format(str(hrns_length)) + "\t" \
@@ -522,7 +522,7 @@ def new_agent(
         conn.commit()
         cursor.close()
 
-    if testing:
+    if debugging:
         hrns_length = len(agent_hrns.split("."))
         print(
             "agent: \t\t" + "{:>2}".format(str(hrns_length)) + "\t" \
@@ -581,7 +581,7 @@ def new_namespace(
         conn.commit()
         cursor.close()
 
-    if testing:
+    if debugging:
         hrns_length = len(namespace_hrns.split("."))
         print(
             "namespace: \t" + "{:>2}".format(str(hrns_length)) + "\t" \
@@ -652,7 +652,7 @@ def new_currency(
         conn.commit()
         cursor.close()
 
-    if testing:
+    if debugging:
         hrns_length = len(currency_hrns.split("."))
         print(
             "currency: \t" + "{:>2}".format(str(hrns_length)) + "\t" \
@@ -678,7 +678,7 @@ def create_pseudotld_set():
                                                root_fph,
                                                seed_agent_fph
                                            )
-        if testing:
+        if debugging:
             message = ""
             if m:
                 message = " | " + m
@@ -811,6 +811,39 @@ def get_entity_type(entity_fph):
 
     return "", "Entity type unidentifiable"
 
+
+
+#==============================================================================
+
+def account_status(account_fph):
+
+    if not re_fph.match(account_fph):
+        return "", "", "", "", "Invalid FPH: " + account_fph
+
+    account_fph = "'" + account_fph + "'" # wrapped to enable SQLite to accept it.
+
+    with sqlite3.connect(ENTITIES_DB) as conn:
+        cursor = conn.cursor()
+        cursor.execute(
+            "SELECT * FROM accounts WHERE entity_fph = {}".format(account_fph)
+        )
+        result = cursor.fetchone()
+        cursor.close()
+    if result == None:
+        return False, False, "", "", "Account not found"
+    entity_type = result[2]
+    owner_fph = result[3]
+    currency_fph = result[4]
+    balance = result[5]
+    active = result[6]
+    if not active:
+        return True, False, currency_fph, owner_fph, \
+               "Account " + account_fph + " inactive"
+    else:
+        return True, True, currency_fph, owner_fph, ""
+
+
+
 #==============================================================================
 # List all currencies named within the specified namespace:
 def list_currencies_in_namespace(namespace_fph):
@@ -839,8 +872,3 @@ def list_currencies_in_common_by_hrns(a1_fph, a2_fph):
         print(fph_to_hrns(currency_fph))
 
 #==============================================================================
-
-
-
-def account_exists(account_fph):
-    return (get_entity_type(account_fph) == "account")

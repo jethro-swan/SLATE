@@ -16,12 +16,13 @@ from dbm_functions import dbm_create_map
 from auth import auth_hash
 from regexp_list import *
 from unix_functions import fcopy
-from slate_core import account_exists
+from slate_core import account_status
 from slate_core import list_currencies_in_common_by_fph
 from slate_core import list_currencies_in_common_by_hrns
+from display import integer_to_money_format
 
 
-
+debugging = True
 
 
 #==============================================================================
@@ -56,20 +57,31 @@ def create_payments_db():
 
 def payment(payer_fph, payee_fph, amount, annotation):
 
-    if not account_exists(payer_fph):
+    exists, active, payer_currency_fph, owner_fph, m = account_status(payer_fph)
+    if not exists:
         return "Payer account " + payer_fph + " does not exist"
-    if not account_active(payer_fph):
+    if not active:
         return "Payer account " + payer_fph + " is inactive"
-    if not account_exists(payee_fph):
+
+    exists, active, payee_currency_fph, owner_fph, m = account_status(payer_fph)
+    if not exists:
         return "Payee account " + payee_fph + " does not exist"
-    if not account_active(payee_fph):
+    if not active:
         return "Payee account " + payee_fph + " is inactive"
-    if not re_payment.match(amount):
+
+    if not re_pvalue.match(str(amount)):
         return str(amount) + " is not a valid payment"
-    currency_fph = currency_of(payee_fph)
-    if currency_of(payer_fph) != currency_fph:
+    if payer_currency_fph != payee_currency_fph:
         return "Accounts " + payer_fph + " and " + payee_fph + " are not in " \
                "the same currency"
+
+    #if debugging:
+    #    print(
+    #        "payment from " + fph_to_hrns(payer_fph) \
+    #        + " to " + fph_to_hrns(payee_fph) \
+    #        + " of " + integer_to_money_format(amount) \
+    #        + " for " + annotation
+    #    )
 
     #--------------------------------------------------------------------------
     # First the balances are adjusted:
@@ -78,40 +90,46 @@ def payment(payer_fph, payee_fph, amount, annotation):
         cursor = conn.cursor()
         # First the balances are adjusted:
         #
-        cursor.execute("""
-            SELECT account_balance FROM accounts WHERE payee_fph = ?
-            """,
+        # The payee account is debited:
+        cursor.execute(
+            "SELECT * FROM accounts WHERE entity_fph = ?",
             (payee_fph,)
         )
-        payee_balance = cursor.fetchone() + amount
-        update_command = "UPDATE balance SET account_balance = " \
-                       + str(payee_adjusted_balance) \
-                       + "WHERE payee_fph = " + str(payee_fph)
-        cursor.execute(update_command)
+        account_details = cursor.fetchone()
+        if account_details == None:
+            return "Something very wrong with payee account"
+        payee_balance = account_details[5] + amount
+        cursor.execute(
+            "UPDATE accounts SET account_balance = ? WHERE entity_fph = ?",
+            (payee_balance, payee_fph)
+        )
         #
-        cursor.execute("""
-            SELECT account_balance FROM accounts WHERE payer_fph = ?
-            """,
+        # The payer account is credited:
+        cursor.execute(
+            "SELECT * FROM accounts WHERE entity_fph = ?",
             (payer_fph,)
         )
-        payer_adjusted_balance = cursor.fetchone() - amount
-        update_command = "UPDATE balance SET account_balance = " \
-                       + str(payer_adjusted_balance) \
-                       + "WHERE payer_fph = " + str(payer_fph)
-        cursor.execute(update_command)
+        account_details = cursor.fetchone()
+        if account_details == None:
+            return "Something very wrong with payer account"
+        payer_balance = account_details[5] - amount
+        cursor.execute(
+            "UPDATE accounts SET account_balance = ? WHERE entity_fph = ?",
+            (payer_balance, payer_fph)
+        )
         conn.commit()
         cursor.close()
 
     #--------------------------------------------------------------------------
     # Then the payment is recorded in the journal:
     #
-    print(
-        payer_fph + " (" + fph_to_hrns(payer_fph) + ") > "
-        + payee_fph + " (" + fph_to_hrns(payee_fph) + ") | "
-        + currency_fph + " (" + fph_to_hrns(currency_fph) + ") | "
-        + amount  + " | "
-        + annotation
-    )
+    #print(
+    #    payer_fph + " (" + fph_to_hrns(payer_fph) + ") > "
+    #    + payee_fph + " (" + fph_to_hrns(payee_fph) + ") | "
+    #    + payer_currency_fph + " (" + fph_to_hrns(payer_currency_fph) + ") | "
+    #    + integer_to_money_format(amount) + " | "
+    #    + annotation
+    #)
 
 
     with sqlite3.connect(PAYMENTS_DB) as conn:
@@ -121,7 +139,7 @@ def payment(payer_fph, payee_fph, amount, annotation):
                 payer_fph, payee_fph, currency_fph, amount, annotation
             )
             VALUES (?, ?, ?, ?, ?)""",
-            (payer_fph, payee_fph, currency_fph, amount, annotation)
+            (payer_fph, payee_fph, payer_currency_fph, amount, annotation)
         )
         conn.commit()
         cursor.close()

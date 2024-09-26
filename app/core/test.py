@@ -118,7 +118,7 @@ def list_l_entities():
 
 # Create the full set of pseudo-TLD root namespaces:
 create_pseudotld_set()
-
+#
 # Add a small subset of these to test namespaces list:
 for hrns in ["uk", "es", "fr", "de", "ca", "us"]:
     fph, m = hrns_to_fph(hrns)
@@ -568,11 +568,15 @@ print()
 # some payment tests:
 
 def test_payment_function():
+    print("="*160)
+    print("Testing payment function:\n")
     for currency_fph in l_currencies:
         accounts_fph_list, m = list_currency_accounts(currency_fph)
         n_accounts = len(accounts_fph_list)
         if n_accounts >= 7: # minumum number of accounts in trading set
-            print("Currency: " + fph_to_hrns(currency_fph) + " has accounts:")
+            print(
+                "\nCurrency " + fph_to_hrns(currency_fph) \
+                + " has the following accounts:")
             # List the accounts in this currency:
             for account_fph in accounts_fph_list:
                 print("\t" + fph_to_hrns(account_fph))
@@ -600,7 +604,9 @@ def test_payment_function():
                     rwords = rword.random_words(3) # list
                     annotation = " ".join(rwords)
                     # Record the payment in the databases:
-                    payment(payer_fph, payee_fph, amount, annotation)
+                    m = payment(payer_fph, payee_fph, amount, annotation)
+                    if m:
+                        print(m)
                     # Add payment to test table:
                     p_row.append(fph_to_hrns(payer_fph))
                     p_row.append(fph_to_hrns(payee_fph))
@@ -625,7 +631,7 @@ def list_accounts(dtype="tuple"):
     print("\naccounts:\n")
 
     if dtype == "tuple":
-        acct_rows = []
+        #acct_rows = []
         for account in account_list:
             print(account)
     elif dtype == "table":
@@ -654,11 +660,11 @@ def list_accounts(dtype="tuple"):
 
 
 list_accounts("table")
-
+#list_accounts()
 test_payment_function()
 
 list_accounts("table")
-
+#list_accounts()
 
 
 

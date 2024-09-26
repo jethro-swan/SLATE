@@ -60,7 +60,8 @@ re_fph = re.compile(r"^[0-9a-f]{32}$") # string of 32 hex digits
 
 #------------------------------------------------------------------------------
 # Payment value:
-re_pvalue = re.compile(r"^\d{1,}\.\d{2}$")
+#re_pvalue = re.compile(r"^\d{1,}\.\d{2}$")
+re_pvalue = re.compile(r"^\d{1,}$")
 
 # It is assumed that any number input with "," thousands separators will have
 # these stripped out before being tested against the RE.
