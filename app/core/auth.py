@@ -10,8 +10,9 @@ import json
 import os
 import sys
 
-from dbm_functions import dbm_store, dbm_fetch, dbm_delete
-from regexp_list import re_email
+from .dbm_functions import dbm_store, dbm_fetch, dbm_delete
+from .regexp_list import re_email
+from .common import nshash
 
 #------------------------------------------------------------------------------
 # Used to authenticate both passwords and recovery details (email addresses or
@@ -44,7 +45,7 @@ def list_password_characters():
            + "   upper case letters\n" \
            + "   lower case letters\n" \
            + "   numbers\n" \
-           + "  !#$%&()*+,-./:;<=>?@[\]^_`{|}~\n" \
+           + "   !#$%&()*+,-./:;<=>?@[\]^_`{|}~\n" \
            + "and must contain at least one of each type. " \
            + "It must be at least 16 characters in length."
 
@@ -101,8 +102,14 @@ def generate_url_safe_password(n):
 
 
 
+#------------------------------------------------------------------------------
+# Generate an access toke:
+def generate_access_token():
+    # An access token is generated:
+    ri = random.randint(0,9999999)
+    return nshash(str(random.randint(0,ri)*random.randint(0,9999999)))
 
-
+# This is used mainly for command line (over SSH) access.
 
 #------------------------------------------------------------------------------
 # Generate an array of three random digits, increasing and non-repeating:

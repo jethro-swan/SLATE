@@ -12,21 +12,23 @@ import secrets
 from prettytable import PrettyTable
 from wonderwords import RandomWord
 
-from constants import ENTITIES_DB, PAYMENTS_DB, DB_DIR, FPH_TO_HRNS_MAP
-from dbm_functions import dbm_list_entries
-from slate_core import create_entities_db
-from payments import create_payments_db, payment, dump_currency_payments
-from slate_core import new_namespace, new_agent, new_currency, new_account
-from slate_core import create_seed_entities
-from fph_hrns_maps import hrns_to_fph, fph_to_hrns, create_maps
-from slate_core import get_currency_name
-from slate_core import list_agent_accounts, list_agent_currencies
-from slate_core import list_currency_accounts
-from slate_core import get_entity_type
-from common import nshash
-from auth import auth_hash
-from display import integer_to_money_format
-from slate_core import create_pseudotld_set
+from core.constants import ENTITIES_DB, PAYMENTS_DB, DB_DIR, FPH_TO_HRNS_MAP
+from core.dbm_functions import dbm_list_entries
+from core.slate_core import create_entities_db
+from core.payments import create_payments_db, payment, dump_currency_payments
+from core.slate_core import new_namespace, new_agent, new_currency, new_account
+from core.slate_core import create_seed_entities
+from core.fph_hrns_maps import hrns_to_fph, fph_to_hrns, create_maps
+from core.slate_core import get_currency_name
+from core.slate_core import list_agent_accounts, list_agent_currencies
+from core.slate_core import list_currency_accounts
+from core.slate_core import get_entity_type
+from core.common import nshash
+from core.auth import auth_hash
+from core.display import integer_to_money_format
+from core.slate_core import create_pseudotld_set
+from core.slate_core import add_steward, remove_steward
+from core.slate_core import list_stewards, list_stewardships
 
 # TEMPORARY TEST BITS
 
@@ -143,8 +145,8 @@ def select_available_account():
 # For each new test agent created, its password and PIN must be recorded:
 agent_credentials = {}
 
-def record_test_agent_credentials(fph, hrns, password, pin):
-    agent_credentials[fph] = [hrns, password, pin]
+def record_test_agent_credentials(fph, hrns, password, pin, access_token):
+    agent_credentials[fph] = [hrns, password, pin, access_token]
 
 def get_test_agent_hrns(fph):
     return agent_credentials[fph][0]
@@ -154,6 +156,9 @@ def get_test_agent_password(fph):
 
 def get_test_agent_pin(fph):
     return agent_credentials[fph][2]
+
+def get_test_agent_access_token(fph):
+    return agent_credentials[fph][3]
 
 
 def create_test_namespace():
@@ -205,18 +210,18 @@ def create_test_agent():
     p = random.randint(0,999999)
     pin = str((p*p)%1000000).zfill(6)
 
-    agent_fph, agent_hrns, m = new_agent(
-                                   agent_name,
-                                   parent_namespace_fph,
-                                   agent_realname,
-                                   agent_email,
-                                   password,
-                                   pin,
-                                   initial_currency_fph,
-                                   initial_stewardship_fph_list
-                               )
+    agent_fph, agent_hrns, access_token, m = new_agent(
+                                                 agent_name,
+                                                 parent_namespace_fph,
+                                                 agent_realname,
+                                                 agent_email,
+                                                 password,
+                                                 pin,
+                                                 initial_currency_fph,
+                                                 initial_stewardship_fph_list
+                                             )
 
-    agent_credentials[agent_fph] = [agent_hrns, password, pin]
+    agent_credentials[agent_fph] = [agent_hrns, password, pin, access_token]
 
     l_agents.append(agent_fph)
 
@@ -312,55 +317,49 @@ def create_fake_entities(n):
 
     ec = 0 # count of entities created (free from HRNS collisions)
     while ec < n:
-    #for i in range(n):
         # Create a new entity the type of which is selected randomly and the
         # dependencies of which exist only among those already created:
         e = random.choice(["namespace", "agent", "currency", "account"])
-        #print("Creating a new " + e + ":  ", end="")
         if e == "namespace":
             fph, hrns, m = create_test_namespace()
             if m:
-                #hrns_random_duplicates.append(m.replace(" exists", ""))
+                #print("namespace error: " + m)
                 hrns_random_duplicates.append(m)
                 hrns_random_duplicates_count += 1
-                #pc(".")
             else:
-                fake_entities.append([fph, hrns, e, m])
+                print("{:>4}".format(ec) + "\t", end="")
                 ec += 1
-                #pc("n")
+                fake_entities.append([fph, hrns, e, m])
         elif e == "agent":
             fph, hrns, m = create_test_agent()
             if m:
-                #hrns_random_duplicates.append(m.replace(" exists", ""))
+                #print("agent error: " + m)
                 hrns_random_duplicates.append(m)
                 hrns_random_duplicates_count += 1
-                #pc(".")
             else:
+                print("{:>4}".format(ec) + "\t", end="")
                 ec += 1
                 fake_entities.append([fph, hrns, e, m])
-                #pc("i")
         elif e == "currency":
             fph, hrns, m = create_test_currency()
             if m:
-                #hrns_random_duplicates.append(m.replace(" exists", ""))
+                #print("currency error: " + m)
                 hrns_random_duplicates.append(m)
                 hrns_random_duplicates_count += 1
-                #pc(".")
             else:
+                print("{:>4}".format(ec) + "\t", end="")
                 ec += 1
                 fake_entities.append([fph, hrns, e, m])
-                #pc("c")
         elif e == "account":
             fph, hrns, m = create_test_account()
             if m:
-                #hrns_random_duplicates.append(m.replace(" exists", ""))
+                #print("account error: " + m)
                 hrns_random_duplicates.append(m)
                 hrns_random_duplicates_count += 1
-                #pc(".")
             else:
+                print("{:>4}".format(ec) + "\t", end="")
                 ec += 1
                 fake_entities.append([fph, hrns, e, m])
-                #pc("a")
         else:
             print("Something has gone very wrong here")
 
@@ -402,7 +401,13 @@ def list_fake_agents():
         agent.insert(0, key)
         fa_rows.append(agent)
     fa_table = PrettyTable()
-    fa_table.field_names = ["agent FPH", "agent HRNS", "password", "PIN"]
+    fa_table.field_names = [
+                             "agent FPH",
+                             "agent HRNS",
+                             "password",
+                             "PIN",
+                             "access token"
+                           ]
     fa_table.align = "l"
     fa_table.add_rows(fa_rows[1:])
     print(fa_table)
@@ -411,7 +416,7 @@ def list_fake_agents():
 list_fake_agents()
 
 print()
-print("="*80)
+print("="*160)
 print()
 
 # The full set of fake entities is now listed, this time extracted from the
@@ -446,7 +451,7 @@ with sqlite3.connect(ENTITIES_DB) as conn:
     cursor.close()
 
     print()
-    print("="*80)
+    print("="*160)
     print()
 
 #==============================================================================
@@ -463,7 +468,7 @@ for agent_fph in l_agents:
         for account_fph in accounts_fph_list:
             print("\t" + fph_to_hrns(account_fph))
 print()
-print("="*80)
+print("="*160)
 
 # List currencies to which each fake agent has an account:
 print("\nList the fake agents' accounts' currencies:\n")
@@ -474,7 +479,7 @@ for agent_fph in l_agents:
     for currency_fph in currencies_fph_list:
         print("\t" + fph_to_hrns(currency_fph))
 print()
-print("="*80)
+print("="*160)
 
 # List each fake currency's accounts:
 print("\nList the fake currencies' accounts:\n")
@@ -486,7 +491,7 @@ for currency_fph in l_currencies:
         print("\t" + account_fph + " :: " + fph_to_hrns(account_fph))
 
 print()
-print("="*80)
+print("="*160)
 print()
 
 print("Testing get_entity_type(entity_fph) function:")
@@ -560,7 +565,7 @@ with sqlite3.connect(ENTITIES_DB) as conn:
     cursor.close()
 
 print()
-print("="*80)
+print("="*160)
 print()
 
 #==============================================================================
@@ -678,3 +683,44 @@ def show_payments_for_test_currencies():
         dump_currency_payments(currency_fph)
 
 #show_payments_for_test_currencies()
+
+
+
+
+#==============================================================================
+
+
+print("\nTesting steward adding/removal\n")
+
+test_entities = []
+test_agents = []
+
+for i in range(100):
+    if random.choice([True, False]):
+        entity_fph = select_available_namespace()
+    else:
+        entity_fph = select_available_currency()
+
+    agent_fph = select_available_agent()
+    test_entities.append(entity_fph)
+    test_agents.append(agent_fph)
+    add_steward(entity_fph, agent_fph)
+
+print("\nStewards\n")
+
+for entity_fph in test_entities:
+    stewards, m = list_stewards(entity_fph)
+    if m:
+        print(m)
+    print(stewards)
+
+print("\nStewardships\n")
+
+for agent_fph in test_agents:
+    stewardships, m = list_stewardships(agent_fph)
+    if m:
+        print(m)
+    print(stewardships)
+
+
+#remove_steward(entity_fph, agent_fph)

@@ -7,17 +7,17 @@ import random
 import string
 from faker import Faker
 
-from constants import ENTITIES_DB, PAYMENTS_DB, DB_DIR
-from constants import FPH_TO_HRNS_MAP, HRNS_C_FPH_MAP
-from constants import FNAME_DATETIME_FMT
+from core.constants import ENTITIES_DB, PAYMENTS_DB, DB_DIR
+from core.constants import FPH_TO_HRNS_MAP, HRNS_C_FPH_MAP
+from core.constants import FNAME_DATETIME_FMT
 #from common import hrns_to_fph, fph_to_hrns
 #from fph_hrns_maps import create_maps, hrns_to_fph, fph_to_hrns
 #from common import dbm_fetch, dbm_store
-from fph_hrns_maps import hrns_to_fph, fph_to_hrns, create_maps
-from common import nshash
-from common import filename_timestamp as timestamp
+from core.fph_hrns_maps import hrns_to_fph, fph_to_hrns, create_maps, update_mapping
+from core.common import nshash
+from core.common import filename_timestamp as timestamp
 #from slate_core import create_maps
-from regexp_list import re_fph, re_hrns
+from core.regexp_list import re_fph, re_hrns
 #from test import random_hrns, fake_hrns
 
 # ... but, for reasons not yet identified at 2024-08-25, importing from test.py
@@ -47,9 +47,7 @@ def fake_hrns():
 
 create_maps()
 
-print()
-print("Some randomly-generated HRNS fakes and their corresponding FPH:")
-print()
+print("\nSome randomly-generated HRNS fakes and their corresponding FPH:\n")
 
 N = 100
 l_fph = []
@@ -62,9 +60,7 @@ for n in range(N):
     l_fph.append(fph)
     print("\t" + fph + " :: " + hrns)
 
-print()
-print("The same HRNS fakes retrieved from the FPH>HRNS map:")
-print()
+print("\nThe same HRNS fakes retrieved from the FPH>HRNS map:\n")
 
 l2_hrns = []
 for fph in l_fph:
@@ -73,8 +69,7 @@ for fph in l_fph:
     print("\t" + fph + " :: " + hrns_)
 #    print(hrns_)
 
-print()
-print("Comparing the set of retrieved HRNS fakes with the generated set:")
+print("\nComparing the set of retrieved HRNS fakes with the generated set:\n")
 
 mismatch_found = False
 for hrns in l_hrns:
@@ -83,5 +78,19 @@ for hrns in l_hrns:
         mismatch_found = True
 if not mismatch_found:
     print("\tNo mismatch found")
+
+print("\nTesting map updating:\n")
+
+entity_new_hrns = fake_hrns()
+entity_current_fph = random.choice(l_fph)
+entity_current_hrns = fph_to_hrns(entity_current_fph)
+print("\tcurrent mapping: " + entity_current_fph + " > " + entity_current_hrns)
+update_mapping(entity_current_hrns, entity_new_hrns)
+print("\tUpdated mapping: " + entity_current_fph + " > " + entity_new_hrns)
+test_fph, m = hrns_to_fph(entity_new_hrns)
+if m:
+    print(m)
+if fph_to_hrns(test_fph) == entity_new_hrns:
+    print("\tRe-mapping successful")
 
 print()

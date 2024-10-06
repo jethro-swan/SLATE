@@ -8,12 +8,11 @@ import os
 import sys
 from pathlib import Path
 
-from regexp_list import re_fph, re_hrns
+from .regexp_list import re_fph, re_hrns
 
-from unix_functions import fcopy
+from .unix_functions import fcopy
 
-from constants import TIMESTAMP_FMT
-from constants import FNAME_DATETIME_FMT
+from .constants import TIMESTAMP_FMT, FNAME_DATETIME_FMT
 
 
 #==============================================================================

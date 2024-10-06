@@ -50,8 +50,14 @@ if script_name == "slate_agent_new":
     agent_password = sys.argv[5]    # required
     agent_pin = sys.argv[6]         # required
     agent_fph = hrns_to_fph(agent_hrns)
-    response = create_agent(agent_hrns, agent_fph, agent_email, currency_fph,
-                            agent_name, agent_password, agent_pin
+    response = create_agent(
+                   agent_hrns,
+                   agent_fph,
+                   agent_email,
+                   currency_fph,
+                   agent_name,
+                   agent_password,
+                   agent_pin
                )
     print(agent_fph)
     print(response)

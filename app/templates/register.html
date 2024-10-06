@@ -35,6 +35,9 @@
     {{ form.hidden_tag() }}
     <!-- initial currency -->
     <p>
+    <!-- If the initial currency has already been specified (e.g. if the form
+    has been invoked by scanning a QR code), this is displayed instead of the
+    input field. -->
     {% if initial_currency_fph and initial_currency_hrns %}
       initial currency:
       <span class="dark-green-bold">{{ initial_currency_hrns }}</span>
@@ -49,6 +52,9 @@
     </p>
     <!-- initial user namespace -->
     <p>
+    <!-- If the the parent namespace has already been specified (e.g. if the
+    form has been invoked by scanning a QR code), this is displayed instead of
+    the input field. -->
     {% if initial_namespace_fph and initial_namespace_hrns %}
       initial user namespace:
       <span class="dark-green-bold">{{ initial_namespace_hrns }}</span>

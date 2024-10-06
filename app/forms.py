@@ -1,107 +1,22 @@
 import sys
 
+# SLATE components: -----------------------------------------------------------
+
+#from app.core.list_namespaces import build_namepace_list
+from app.core.fph_hrns_maps import hrns_to_fph
+from app.core.auth import pin_random_ord, pin_prompt_message
+
+
 # Flask components: -----------------------------------------------------------
 
 from flask_wtf import FlaskForm, RecaptchaField
+from flask_wtf import Form ###
 from wtforms import StringField, PasswordField, BooleanField, SubmitField
-from wtforms import TextField, TextAreaField, SelectField, RadioField
+#from wtforms import TextField, TextAreaField, SelectField, RadioField
+from wtforms import TextAreaField, SelectField, RadioField
 from wtforms import IntegerField, DecimalField, HiddenField
 from wtforms.validators import DataRequired, InputRequired, Email
 from wtforms.validators import Length, EqualTo
-
-# SLATE components: -----------------------------------------------------------
-
-from nests_core.constants import ROOTS
-from nests_core.list_namespaces import build_namepace_list
-from nests_core.common import hrns_to_fph
-from nests_core.auth import pin_random_ord, pin_prompt_message
-
-#------------------------------------------------------------------------------
-
-class RegistrationForm(FlaskForm):
-    # The [username] must be a unique HRNS:
-    username        = StringField(
-                        "identity",
-                        validators=[DataRequired("required")]
-                      )
-
-    # The following two are not assigned validators because one or both values
-    # may be provided via the URL:
-    #namespace       = StringField("namespace")
-    currency        = StringField("currency")
-
-    # Email addresses are not stored by default but the identity's owner may
-    # choose to use them to receive notifications:
-    #email_1         = StringField("email address 1",
-    #                    validators=[DataRequired("required"), Email()])
-    email               = StringField("email address")
-    save_email          = BooleanField("save for notifications")
-    # A hash of the email addressis stored instead. This enables the email
-    # addresses to be used for access-recovery purposes.
-    #
-    # The user's mobile numbers are not stored as plain text, but a hash of it
-    # provides an alternative means to validate an access recovery request.
-    phone               = StringField("mobile number")
-    #
-    recovery_a_1        = StringField("recovery answer 1")
-    #recovery_q_1   = StringField("")
-    recovery_a_2        = StringField("recovery answer 2")
-    #recovery_q_2   = StringField("")
-    password            = PasswordField(
-                            "password",
-                            validators=[
-                                InputRequired(),
-                                EqualTo(
-                                    "password_repeat",
-                                    message="Passwords must match"
-                                )
-                            ]
-                          )
-    password_repeat     = PasswordField("repeat password")
-
-    pin                 = PasswordField(
-                            "PIN",
-                            validators=[
-                                DataRequired(),
-                                Length(min=6, max=6)
-                            ]
-                          )
-    submit              = SubmitField("register")
-
-
-    #------------------------------------------------------------------------------
-    class LoginForm(FlaskForm):
-        identity        = StringField(
-                            "identity"
-        #                    "identity",
-        #                    validators=[DataRequired("required")]
-                          )
-        email           = StringField(
-                            "email address"
-                          )
-        password        = PasswordField("password")
-        pro_a = pin_random_ord()
-        pin_prompt = pin_prompt_message(pro_a)
-        pro             = HiddenField(default=pro_a)
-        pse             = PasswordField(
-                             pin_prompt,
-                            validators=[DataRequired("required")]
-                          )
-        remember_me     = BooleanField("remember me")
-        submit          = SubmitField("log in")
-
-    #------------------------------------------------------------------------------
-
-    class LoginRecoveryForm(FlaskForm):
-        identity        = StringField(
-                            "identity",
-                            validators=[DataRequired("required")]
-                          )
-        email           = StringField(
-                                "email address",
-                                validators=[DataRequired("required"), Email()]
-                          )
-        submit          = SubmitField("send recovery link")
 
 # payments --------------------------------------------------------------------
 
@@ -117,18 +32,18 @@ class PaymentToAccountHRNSForm(FlaskForm):
     annotation      = TextAreaField("annotation")
     submit          = SubmitField("pay")
 
-#class PaymentToAccountFPHForm(FlaskForm):
-#    to_account_fph  = StringField("account FPH", validators=[DataRequired("required")])
-#    amount          = DecimalField(
-#                        "amount",
-#                        validators=[DataRequired("required")]
-#                      )
-#    annotation      = TextAreaField("annotation")
-#    submit          = SubmitField("pay")
+class PaymentToAccountFPHForm(FlaskForm):
+    to_account_fph  = StringField("account FPH", validators=[DataRequired("required")])
+    amount          = DecimalField(
+                        "amount",
+                        validators=[DataRequired("required")]
+                      )
+    annotation      = TextAreaField("annotation")
+    submit          = SubmitField("pay")
 
 class PaymentToAccountForm(FlaskForm):
     to_account_hrns = StringField("account name")
-#    to_account_fph  = StringField("account FPH")
+    to_account_fph  = StringField("account FPH")
     amount          = DecimalField(
                         "amount",
                         validators=[DataRequired("required")]
@@ -150,23 +65,23 @@ class PaymentToIdentityHRNSForm(FlaskForm):
     annotation      = TextAreaField("annotation")
     submit          = SubmitField("pay")
 
-#class PaymentToIdentityFPHForm(FlaskForm):
-#    to_id_fph       = StringField(
-#                        "payee FPH",
-#                        validators=[DataRequired("required")]
-#                      )
+class PaymentToIdentityFPHForm(FlaskForm):
+    to_id_fph       = StringField(
+                        "payee FPH",
+                        validators=[DataRequired("required")]
+                      )
     #currency_hrns   = StringField("currency name")
     #currency_fph    = StringField("currency FPH")
-#    amount          = DecimalField(
-#                        "amount",
-#                        validators=[DataRequired("required")]
-#                      )
-#    annotation      = TextAreaField("annotation")
-#    submit          = SubmitField("pay")
+    amount          = DecimalField(
+                        "amount",
+                        validators=[DataRequired("required")]
+                      )
+    annotation      = TextAreaField("annotation")
+    submit          = SubmitField("pay")
 
 class PaymentToIdentityForm(FlaskForm):
     to_id_hrns      = StringField("payee name")
-#    to_id_fph       = StringField("payee FPH")
+    to_id_fph       = StringField("payee FPH")
     currency_hrns   = StringField("currency name")
     currency_fph    = StringField("currency FPH")
     amount          = DecimalField(
@@ -183,21 +98,21 @@ class CurrencyCreateForm(FlaskForm):
                         "currency name",
                         validators=[DataRequired("required")]
                       )
-#    currency_type   = RadioField(
-#                        "currency type",
-#                        choices = [
-#                            ("money", "money"),
-#                            ("scalar", "scalar"),
-#                            ("count", "count"),
-#                            ("vector", "vector"),
-#                            ("matrix", "matrix"),
-#                            ("time_series", "time series"),
-#                            ("trigger", "trigger")
+    currency_type   = RadioField(
+                        "currency type",
+                        choices = [
+                            ("money", "money"),
+                            ("scalar", "scalar"),
+                            ("count", "count"),
+                            ("vector", "vector"),
+                            ("matrix", "matrix"),
+                            ("time_series", "time series"),
+                            ("trigger", "trigger")
                             #,
                             #("ACP_ratios", "A:C:P ratio")
-#                        ],
-#                        validators=[DataRequired("required")]
-#                      )
+                        ],
+                        validators=[DataRequired("required")]
+                      )
     prefix_symbol   = StringField(
                         "currency prefix symbol"
                       )
@@ -224,12 +139,12 @@ class CurrencyCreateForm(FlaskForm):
 
 
 
-#class NamespaceCreateForm(FlaskForm):
-#    namespace_hrns   = StringField(
-#                        "namespace name",
-#                        validators=[DataRequired("required")]
-#                      )
-#    create_namespace = SubmitField("create namespace")
+class NamespaceCreateForm(FlaskForm):
+    namespace_hrns   = StringField(
+                        "namespace name",
+                        validators=[DataRequired("required")]
+                      )
+    create_namespace = SubmitField("create namespace")
 
 
 
@@ -242,10 +157,199 @@ class CurrencyCreateForm(FlaskForm):
 
 
 
+
+#------------------------------------------------------------------------------
+class LoginForm(FlaskForm):
+    identity        = StringField(
+                        "identity"
+    #                    "identity",
+    #                    validators=[DataRequired("required")]
+                      )
+    email           = StringField(
+                        "email address"
+                      )
+    password        = PasswordField("password")
+    pro_a = pin_random_ord()
+    pin_prompt = pin_prompt_message(pro_a)
+    pro             = HiddenField(default=pro_a)
+    pse             = PasswordField(
+                         pin_prompt,
+                        validators=[DataRequired("required")]
+                      )
+    remember_me     = BooleanField("remember me")
+    #recaptcha = RecaptchaField("recaptcha", validators=[DataRequired("required")])
+    submit          = SubmitField("log in")
+
+#------------------------------------------------------------------------------
+
+class LoginRecoveryForm(FlaskForm):
+    identity        = StringField(
+                        "identity",
+                        validators=[DataRequired("required")]
+                      )
+    fph             = StringField(
+                        "FPH",
+                        validators=[DataRequired("required")]
+                      )
+    email           = StringField(
+                            "email address",
+                            validators=[DataRequired("required"), Email()]
+                      )
+    submit          = SubmitField("send recovery link")
+
+#------------------------------------------------------------------------------
+
+class RegistrationForm(FlaskForm):
+    # The [username] must be unique within the [namespace] specified:
+    username        = StringField(
+                        "identity",
+                        validators=[DataRequired("required")]
+                      )
+    #username      = StringField("identity")
+    #
+    # The [[namespace]] specified must exist already unless the stewards of its
+    # most recent ancestor have opted to permit automatic creation of the
+    # intermediate namespaces, in which case the initial stewardship of the new
+    # namespaces is assigned to those stewards:
+    #namespace       = StringField(
+    #                    "namespace",
+    #                    validators=[DataRequired("required")]
+    #                  )
+
+    # The following two are not assigned validators because one or both values
+    # may be provided via the URL:
+    namespace       = StringField("namespace")
+    currency        = StringField("currency")
+
+    # The drop-down version commented out below works, but is more trouble than
+    # it's worth ...
+    #test_root = ROOTS + "/4fdcca5ddb678139"
+    #namespaces = build_namepace_list(test_root)
+    #choices = []
+    #for namespace in namespaces:
+    #    choices.append((namespace, hrns_to_fph(namespace)))
+    #
+    #namespace     = SelectField(
+    #                    u"choose namespace",
+    #                    choices=choices
+    #                )
+    #
+    # Here's the corresponding section cut out of
+    #   app/templates/registration.html
+    #<p>
+    #  <select name="namespace">
+    #    {{ form.choices.label }}<br />
+    #    {% for choice in form.choices %}
+    #      <option value="{{ choice[1] }}">
+    #        {{ choice[0] }}
+    #      </option>
+    #    {% endfor %}
+    #  </select>
+    #</p>
+    #
+    # However, a variant of this will be useful for
+    # (a) stewards' management of their own namespaces and currencies
+    # (b) users' management of their own accounts
+
+    # The [[country]] specified determines certain geographically specific
+    # actions or constraints:
+    country         = StringField(
+                        "country"
+                        #"country",
+                        #validators=[DataRequired("required")]
+                       )
+    #country       = StringField("country")
+    # The [[country]] field will normally be pre-filled from the root namespace
+    # specified in [[namespace]] but may be replaced where the substitution is
+    # valid (e.g. where a different name is preferred by this identity for the
+    # same country - such as "Cymru"|"Wales").
+    #
+    # NB    THE SET OF FIELDS DISPLAYED HERE WILL DEPEND UPON THE FIELD ABOVE
+    #       and the initial set included here is UK-specific.
+    #
+    #       These fields will not be displayed in all deployments and it is
+    #       entirely a matter for the (primary) identity's owner whether or not
+    #       to provide such information.
+    #
+    #       Where such information is provided, it is is the reponsibility of
+    #       the stewards of the containing namespace to ensure that these data
+    #       are managed in a way compliant with GDPR or whatever other rules
+    #       apply locally.
+    #
+    county              = StringField("county")
+    town                = StringField("county/city")
+    village             = StringField("village/neighbourhood")
+    bld_number          = StringField("building number")
+    bld_name            = StringField("building name")
+    flat_number         = StringField("flat number")
+    room_number         = StringField("room number")
+    postal_code         = StringField("postcode")
+    #
+    grid_ref            = StringField("grid reference")
+    olc                 = StringField("Open Location Code")
+    utm_coord           = StringField("UTM coordinate")
+    #
+    # Email addresses are not stored by default but the identity's owner may
+    # choose to use them to receive notifications:
+    #email_1         = StringField("email address 1",
+    #                    validators=[DataRequired("required"), Email()])
+    email_1             = StringField("email address 1")
+    save_email_1        = BooleanField("save for notifications")
+    #email_2         = StringField(
+    #                    "email address 2",
+    #                    validators=[Email()])
+    email_2             = StringField("email address 2")
+    save_email_2        = BooleanField("save for notifications")
+    # By default, a hash of the email addressis stored instead. This enables
+    # the email addresses to be used for access-recovery purposes.
+    #
+    # Mobile numbers are not stored by default but the identity's owner may
+    # choose to use them to receive notifications (if the stewards of the
+    # enclosing namespace allow this. Most will probably not choose to allow
+    # SMS to be used for this urpose given that charges will be incurred, but
+    # in some cases an arrangement may be made to account for these using one
+    # of the identity's local money accounts.
+    phone_1             = StringField("mobile number 1")
+    #save_phone_1    = BooleanField("use for notifications")
+    phone_2             = StringField("mobile number 2")
+    #save_phone_2    = BooleanField("use for notifications")
+    # By default, a hash of the mobile number is stored instead. This enables
+    # the mobile number to be used for access-recovery purposes.
+    #
+    recovery_a_1        = StringField("recovery answer 1")
+    #recovery_q_1   = StringField("")
+    recovery_a_2        = StringField("recovery answer 2")
+    #recovery_q_2   = StringField("")
+    password            = PasswordField(
+                            "password",
+                            validators=[
+                                #DataRequired("required")
+                                InputRequired(),
+                                EqualTo(
+                                    "password_repeat",
+                                    message="Passwords must match"
+                                )
+                            ]
+                          )
+    password_repeat     = PasswordField("repeat password")
+
+    #password        = PasswordField("password", validators=[DataRequired("required")])
+    pin                 = PasswordField(
+                            "PIN",
+                            validators=[
+                                DataRequired(),
+                                Length(min=6, max=6)
+                            ]
+                          )
+    ssh_pubkey          = StringField(
+                            "SSH public key"
+                          )
+    #recaptcha       = RecaptchaField("recaptcha", validators=[DataRequired("required")])
+    submit              = SubmitField("register")
 
 #------------------------------------------------------------------------------
 # administration --------------------------------------------------------------
 
-#class TQueueForm(FlaskForm):
-#    activate_loop   = SubmitField("activate transaction loop")
-#    deactivate_loop = SubmitField("deactivate transaction loop")
+class TQueueForm(FlaskForm):
+    activate_loop   = SubmitField("activate transaction loop")
+    deactivate_loop = SubmitField("deactivate transaction loop")

@@ -4,16 +4,9 @@
   <form action="" method="post" novalidate>
     {{ form.hidden_tag() }}
     <p>
-      {{ form.identity.label }}<br />
-      {{ form.identity(size=32) }} (full namespace path)<br />
+      {{ form.identity.label }} (HRNS or FPH)<br />
+      {{ form.identity(size=32) }}<br />
       {% for error in form.identity.errors %}
-        <span style="color: red;">[{{ error }}]</span>
-      {% endfor %}
-    </p>
-    <p>
-      {{ form.fph.label }}<br />
-      {{ form.fph(size=32) }}
-      {% for error in form.fph.errors %}
         <span style="color: red;">[{{ error }}]</span>
       {% endfor %}
     </p>

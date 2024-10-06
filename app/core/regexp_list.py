@@ -1,7 +1,7 @@
 import re
 import sys
 
-from constants import NS_SEPARATOR as NSS
+#from constants import NS_SEPARATOR as NSS
 
 # RegExp list:
 

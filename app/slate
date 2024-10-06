@@ -1,0 +1,359 @@
+#!/home/john/NESTS/SLATE/venv/bin/python3
+##!/usr/bin/env python3
+#
+# This is a simple CLI tool for SLATE users.
+
+import os
+import argparse
+
+from .fph_hrns_maps import hrns_to_fph, fph_to_hrns
+from .regexp_list import *
+from .slate_core import identify_entity
+from .payments import payment
+from .slate_core import new_account, new_currency, new_namespace
+
+#==============================================================================
+# This script is hard-linked to
+#
+#   slate                 = for general use by unprivileged users, including:
+#                           - payments
+#                           - reports/listing of own accounts or currencies
+#                             under own stewardship
+#                           - creation of new entities under own stewardship
+#                             (subject to constraints imposed by the containing
+#                             namespace)
+#
+#   slate_registration    = for self-registration by a new agent#
+#
+#   slate_steward         = for stewards of namespaces or currencies,
+#                           including (additionally to the above):
+#                           - creation of new accounts
+#                           - listing of all payments in currencies under own
+#                             stewardship
+#                           - creation of new entities under own stewardship
+#
+#   slate_administration  = for system-wide administration
+
+script_name = sys.argv[0].replace("./", "").replace(".py", "")
+
+#==============================================================================
+# The slate_registration script can be invoked only by the owner of a login
+# account on the host (in general, a very small number of users). Such a user
+# must already be a member of the "slate" group.
+#
+# At this point, no "~/.slate.cnf" file exists. It will be generated here.
+
+if script_name == "slate_registration":
+
+    p = argparse.ArgumentParser(description="SLATE agent registration script")
+
+    p.add_argument(
+        "-U", "--agent-hrns", dest = "agent_hrns", action = "store",
+        required = True,
+        help = "Username for the new agent."
+    )
+    p.add_argument(
+        "-R", "--real-name", dest = "real_name", action = "store",
+        help = "Real name of agent."
+    )
+    p.add_argument(
+        "-e", "--email-address", dest = "email", action = "store",
+        required = True,
+        help = "Email address of agent."
+    )
+    p.add_argument(
+        "-p", "--password", dest = "password", action = "store",
+        required = True,
+        help = "Password for Web GUI access."
+    )
+    p.add_argument(
+        "-I", "--pin", dest = "pin", action = "store",
+        required = True,
+        help = "PIN for Web GUI access."
+    )
+    p.add_argument(
+        "-c", "--initial-currency", dest = "currency_fph", action = "store",
+        required = True,
+        help = "Currency in which the agent's initial account is created."
+    )
+    p.add_argument(
+        "-s", "--initial-stewardship", dest = "stewardship_fph",
+        action = "store",
+        help = "Initial stewardship (if any)."
+    )
+    args = p.parse_args()
+    agent_hrns = args.agent_hrns
+    realname = args.realname
+    email_address = args.email_address
+    password = args.password
+    pin = args.pin
+    currency_fph = args.currency_fph
+    stewardship_fph = args.stewardship_fph
+
+    if not re_hrns.match(agent_hrns):
+        sys.stderr.write("The agent HRNS is invalid.")
+        sys.exit(1)
+
+    hrns_names = agent_hrns.split(".")
+    username = hrns_names.pop([0])
+    parent_namespace_fph, m = hrns_to_fph(".".join(hrns_names))
+    if m:
+        sys.stderr.write(m)
+        sys.exit(1)
+    entity_type, m = get_entity_type(parent_namespace_fph)
+    if m:
+        sys.stderr.write(m)
+        sys.exit(1)
+    if entity_type != "namespace":
+        m = fph_to_hrns(parent_namespace_fph) + " is not a namespace."
+        sys.stderr.write(m)
+        sys.exit(1)
+
+
+
+    agent_fph, agent_hrns, access_token, m = new_agent(
+                                                 username,
+                                                 parent_namespace_fph,
+                                                 realname,
+                                                 email_address,
+                                                 password,
+                                                 pin,
+                                                 initial_currency_fph,
+                                                 initial_stewardship_fph
+                                             )
+
+
+
+#==============================================================================
+# Since this script is generally accessed over SSH, it should be invoked from
+# the agent's home directory in which a file named .slate.cnf exists containing
+# the agent's FPH.
+
+cwd = os.getcwd()
+cnf_path = cwd + "/.slate.cnf"
+
+if not os.path.exists(cnf_path):
+    sys.stderr.write("No ~/.slate.cnf file found in home directory.")
+#    sys.exit(1)
+else:
+    with open(cnf_path, "r") as f:
+        agent_cfg_fph = f.read().strip()
+    if re_fph.match(agent_cfg_fph):
+        hrns = fph_to_hrns(agent_cfg_fph)
+        if hrns: # FPH is in register
+            agent_fph = agent_cfg_fph
+        else:
+            sys.stderr.write("The FPH " + agent_fph + " is not registered.")
+            sys.exit(1)
+
+
+
+
+#==============================================================================
+#
+
+p = argparse.ArgumentParser(description="SLATE command line tool")
+#
+# Create new entities:
+#
+p.add_argument(
+    "-N", "--create", dest = "entity_type_to_create", action = "store",
+    choices = ["account", "currency", "namespace", "agent"],
+    help = "Create a new entity of the specified type (account, currency, "
+         + "or namespace) with the HRNS specified in the first positional "
+         + "argument. The agent creating the entity will be the owner (if an "
+         + "account) or the initial steward (if a namespace or currency). "
+         + "If the new entity is an account, the currency must be specified "
+         + "(either by HRNS or FPH) either as the second positional argument "
+         + "or by using the -c option."
+)
+#
+p.add_argument(
+    "entity_hrns", action = "store",
+    help = "HRNS of new entity created"
+)
+#
+p.add_argument(
+    "amount", action = "store",
+    help = "The amount of a payment."
+)
+#
+p.add_argument(
+    "-L", "--list", dest = "entity_type_to_list", action = "store",
+    choices = ["accounts", "namespaces", "currencies"],
+    help = "List all entities owned (accounts) or stewarded (namespaces or "
+         + "or currencies) by this agent, i.e.\n"
+         + "    -L accounts"
+         + "    -L namespaces"
+         + "    -L currencies"
+         + "Unless a currency is specified using the -c option, '-L accounts' "
+         + "causes all accounts to be listed."
+)
+#
+# Specify the currency to be used with the -A or -L options (otherwise ignored):
+#
+p.add_argument(
+    "-c", "--currency", dest = "currency_identifer", action = "store",
+    help = "Specify the currency to be used in payment (-p), in the creation "
+         + "of an account (-A) or in the listing of accounts (-L)."
+)
+#
+# Payments:
+#
+p.add_argument(
+    "-p", "--pay", dest = "payee_identifier", action = "store",
+    help = "Make a payment (of the amount specified using -a) to the account "
+         + "or agent identified by HRNS or FPH.\n"
+         + "If the payee is identified as an account, the currency is "
+         + "identified from it.\n"
+         + "If the payee is identified as an agent and the currency is "
+         + "specified, an attempt will be made to identify all the accounts "
+         + "in which they share a currency, presenting the payer with the "
+         + "available options.\n"
+)
+#
+# Annotation to payment:
+#
+p.add_argument(
+    "-m", "--annotation", dest = "annotation", action = "store",
+    help = "Add an annotation to a payment."
+)
+
+
+
+args = p.parse_args()
+entity_type_to_create = args.entity_type_to_create
+entity_type_to_list = args.entity_type_to_list
+entity_hrns = args.entity_hrns
+#payee_identifier = args.payee_identifier
+#currency_identifer = args.currency_identifer
+annotation = args.annotation
+amount = args.amount
+
+currency_fph, currency_hrns, type, m = identify_entity(args.currency_identifier)
+if m:
+    sys.stderr.write(m)
+    sys.exit(1)
+payee_fph, payee_hrns, type, m = identify_entity(args.payee_identifier)
+if m:
+    sys.stderr.write(m)
+    sys.exit(1)
+
+
+
+
+if payee_identifier: # The action required is a payment
+    if entity_type_to_create or entity_type_to_list or entity_hrns:
+        sys.stderr.write(
+            "Cannot use -C or -L with -p."
+        )
+        sys.exit(1)
+    #
+    payee_fph, payee_hrns, entity_type, m = identify_entity(payee_identifier)
+    #
+    if entity_type == "account":
+        # In this case, the currency can be identified from the account:
+        exists, active, currency_fph, owner_fph, m = account_status(account_fph)
+        if not exists:
+            sys.stderr.write(
+                "The account " + payee_identifier + " does not exist."
+            )
+            sys.exit(1)
+        if not active:
+            sys.stderr.write(
+                "The account " + payee_identifier + " is inactive."
+            )
+            sys.exit(1)
+        payer_fph = has_account_in(agent_fph, currency_fph)
+        if not payer_fph: # This agent does not have an account in this currency
+            sys.stderr.write(
+                "The payer does not have an account in the same currency as " \
+                + payee_identifier
+            )
+            sys.exit(1)
+        else:
+            m = payment(payer_fph, payee_fph, amount, annotation)
+            sys.exit(0)
+    #
+    elif entity_type == "agent":
+        currencies = list_currencies_in_common_by_fph(payer_fph, payee_fph)
+        if not currencies:
+            sys.stderr.write(
+                "The agents have no currencies in common."
+            )
+            sys.exit(1)
+        elif len(currencies) == 1:
+            m = payment(payer_fph, payee_fph, amount, annotation)
+            sys.exit(0)
+        else:
+            print(
+                "You and the payee have accounts in the following currencies:"
+            )
+            for currency_fph in currencies:
+                print(
+                    "\t" + currency_fph + " : " + fph_to_hrns(currency_fph)
+                )
+            print(
+                "Please specify one of these."
+            )
+    #
+    else:
+        sys.stderr.write(
+            "Payee cannot be identified."
+        )
+        sys.exit(1)
+
+elif entity_type_to_create: # The action required is creation of an entity
+    if entity_type_to_create == "currency":
+        hrns_names = entity_hrns.split(".")
+        namespace_name = hrns_names.pop([0])
+        parent_namespace_fph, m = hrns_to_fph(".".join(namespace_name))
+        if m:
+            sys.stderr.write(m)
+            sys.exit(1)
+        else:
+
+            currency_fph, currency_hrns, m = new_currency(
+                                                 currency_name,
+                                                 parent_namespace_fph,
+                                                 agent_fph,
+                                                 currency_prefix,
+                                                 currency_suffix
+                                             )
+
+    if entity_type_to_create == "namespace":
+        hrns_names = entity_hrns.split(".")
+        namespace_name = hrns_names.pop([0])
+        parent_namespace_fph, m = hrns_to_fph(".".join(namespace_name))
+        if m:
+            sys.stderr.write(m)
+            sys.exit(1)
+        else:
+            namespace_fph, namespace_hrns, m = new_namespace(
+                                                   namespace_name,
+                                                   parent_namespace_fph,
+                                                   agent_fph
+                                               )
+            print(
+                "Namespace " + namespace_hrns + " (" + namespace_fph + ") " \
+                + "has been created."
+            )
+            sys.exit(0)
+
+    if entity_type_to_create == "account":
+        currency_hrns = fph_to_hrns(currency_fph)
+        account_fph, account_hrns, m = new_account(agent_fph, currency_fph)
+        if m:
+            sys.stderr.write(m)
+            sys.exit(1)
+        else:
+            print(
+                "Account " + account_hrns + " (" + account_fph + ") " \
+                + "has been created."
+            )
+            sys.exit(0)
+
+
+
+elif entity_type_to_list: # The action required is listing entities
+    sys.exit(0)

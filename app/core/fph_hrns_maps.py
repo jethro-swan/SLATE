@@ -1,13 +1,13 @@
 import os
 
-from unix_functions import fcopy
-from regexp_list import re_fph, re_hrns
-from constants import DB_DIR
-from constants import MAP_BKP_DIR, FPH_TO_HRNS_MAP, HRNS_C_FPH_MAP
-from common import filename_timestamp as timestamp
-from common import nshash
-from dbm_functions import dbm_store, dbm_fetch, dbm_delete, dbm_keys
-from dbm_functions import dbm_create_map
+from .unix_functions import fcopy
+from .regexp_list import re_fph, re_hrns
+from .constants import DB_DIR
+from .constants import MAP_BKP_DIR, FPH_TO_HRNS_MAP, HRNS_C_FPH_MAP
+from .common import filename_timestamp as timestamp
+from .common import nshash
+from .dbm_functions import dbm_store, dbm_fetch, dbm_delete, dbm_keys
+from .dbm_functions import dbm_create_map
 
 #------------------------------------------------------------------------------
 # Create new empty FPH<>HRNS maps:
@@ -95,8 +95,9 @@ def hrns_to_fph(hrns): # returns FPH and message
     dbm_store(FPH_TO_HRNS_MAP, fph, hrns)
     return fph, ""
 
-
 save_fph_to_map = hrns_to_fph # alias
+
+#------------------------------------------------------------------------------
 
 def delete_fph_from_map(fph):
     hrns = dbm_delete(FPH_TO_HRNS_MAP, fph)
@@ -104,3 +105,35 @@ def delete_fph_from_map(fph):
     dbm_delete(HRNS_C_FPH_MAP, hrns)
 
 #------------------------------------------------------------------------------
+
+
+
+#==============================================================================
+# When any entity is moved to a new namespace, the HRNS>FPH and FPH>HRNS
+# mappings must be updated.
+
+def update_mapping(current_hrns, new_hrns):
+
+    if not re_hrns.match(current_hrns):
+        return current_hrns + " is not a valid HRNS", ""
+
+    current_fph, m = hrns_to_fph(current_hrns)
+    if not current_fph:
+        return "HRNS " + current_hrns + " has not been registered"
+    if m:
+        return m # error message
+
+    # The entity's HRNS is updated but its FPH must remain the same. Therefore,
+    # whereas the original FPH is a simple hash of the HRNS when first mapped,
+    # any subsequent update to the HRNS must be mapped to the original FPH (and
+    # vice versa).
+    #
+    # (1) HRNS>FPH map must be updated
+    #dbm_delete(HRNS_C_FPH_MAP, current_hrns)
+    dbm_store(HRNS_C_FPH_MAP, new_hrns, current_fph)
+
+    # (2) FPH>HRNS map must be updated
+    #dbm_delete(FPH_TO_HRNS_MAP, current_fph)
+    dbm_store(FPH_TO_HRNS_MAP, current_fph, new_hrns)
+
+    return ""

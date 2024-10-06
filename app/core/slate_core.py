@@ -5,20 +5,20 @@ import pickle
 from pathlib import Path
 from string import ascii_lowercase
 
-from constants import ENTITIES_DB, PAYMENTS_DB, DB_DIR, DB_BKP_DIR
-from constants import FPH_TO_HRNS_MAP, HRNS_C_FPH_MAP
-from common import filename_timestamp as timestamp
-from common import nshash
-from fph_hrns_maps import hrns_to_fph, fph_to_hrns, create_maps
-from dbm_functions import dbm_store, dbm_fetch, dbm_delete, dbm_keys
-from dbm_functions import dbm_create_map
-from auth import auth_hash
-from regexp_list import *
-from unix_functions import fcopy
-from cctld_list import *
+from .constants import ENTITIES_DB, PAYMENTS_DB, DB_DIR, DB_BKP_DIR
+from .constants import FPH_TO_HRNS_MAP, HRNS_C_FPH_MAP
+from .common import filename_timestamp as timestamp
+from .common import nshash
+from .fph_hrns_maps import hrns_to_fph, fph_to_hrns, create_maps
+from .dbm_functions import dbm_store, dbm_fetch, dbm_delete, dbm_keys
+from .dbm_functions import dbm_create_map
+from .auth import auth_hash, generate_access_token
+from .regexp_list import *
+from .unix_functions import fcopy
+from .cctld_list import *
 
 debugging = True
-#max_hrns_length = 0
+#max_hrns_depth = 0
 
 #------------------------------------------------------------------------------
 # In NESTS the FPH has so far been formed as the hash of the FIP, but making it
@@ -51,6 +51,7 @@ def create_entities_db():
                 stewardships_fph_list BLOB,
                 password_hash TEXT NOT NULL,
                 pin TEXT,
+                access_token TEXT,
                 active INTEGER NOT NULL
             );"""
         )
@@ -89,6 +90,45 @@ def create_entities_db():
                 active INTEGER NOT NULL
             );"""
         )
+        # Create stewards table (for namespaces and currencies):
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS stewards (
+                entity_fph TEXT,
+                primid_fph TEXT
+            );"""
+        )
+        # Create stewardships table (for namespaces and currencies):
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS stewardships (
+                primid_fph TEXT,
+                entity_fph TEXT
+            );"""
+        )
+        # Create currency_accounts table:
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS currency_accounts (
+                currency_fph TEXT,
+                account_fph TEXT
+            );"""
+        )
+        # Create agent_accounts table (agent = primid or secid):
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS agent_accounts (
+                agent_fph TEXT,
+                account_fph TEXT
+            );"""
+        )
+        # Create secids table:
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS secids (
+                secid_fph TEXT,
+                primid_fph TEXT
+            );"""
+        )
+
+
+
+
         conn.commit()
         cursor.close()
 
@@ -248,9 +288,10 @@ def create_seed_entities():
                 stewardships_fph_list,
                 password_hash,
                 pin,
+                access_token,
                 active
             )
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
             (
                 seed_agent_fph,
                 nshash(seed_agent_parent_ns),
@@ -261,6 +302,7 @@ def create_seed_entities():
                 stewardships_fph_blob,
                 s_agent_password_hash,
                 s_agent_pin,
+                "",
                 True
             )
         )
@@ -443,9 +485,9 @@ def new_account(
         cursor.close()
 
     if debugging:
-        hrns_length = len(account_hrns.split("."))
+        hrns_depth = len(account_hrns.split("."))
         print(
-            "account: \t" + "{:>2}".format(str(hrns_length)) + "\t" \
+            "account: \t" + "{:>2}".format(str(hrns_depth)) + "\t" \
             + account_hrns
         )
 
@@ -467,16 +509,16 @@ def new_agent(
     ):
 
     if not re_fph.match(parent_namespace_fph):
-        return "", "", "Invalid parent namespace FPH: " + parent_namespace_fph
+        return "", "", "", "Invalid parent namespace: " + parent_namespace_fph
 
     if not re_fph.match(initial_currency_fph):
-        return "", "", "Invalid initial currency FPH: " + initial_currency_fph
+        return "", "", "", "Invalid currency: " + initial_currency_fph
 
     namespace_hrns = fph_to_hrns(parent_namespace_fph)
     agent_hrns = username + "." + namespace_hrns
 
     if fph_to_hrns(nshash(agent_hrns)):
-        return "", "", "collision:  " + agent_hrns
+        return "", "", "", "collision:  " + agent_hrns
 
     agent_fph, m = hrns_to_fph(agent_hrns)
 
@@ -489,6 +531,8 @@ def new_agent(
 
     accounts_fph_list = pickle.dumps([account_fph])
     stewardships_fph_list = pickle.dumps([])
+
+    access_token = generate_access_token()
 
     with sqlite3.connect(ENTITIES_DB) as conn:
         cursor = conn.cursor()
@@ -503,9 +547,10 @@ def new_agent(
                 stewardships_fph_list,
                 password_hash,
                 pin,
+                access_token,
                 active
             )
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
             (
                 agent_fph,
                 parent_namespace_fph,
@@ -516,6 +561,7 @@ def new_agent(
                 stewardships_fph_list,
                 password_hash,
                 pin,
+                access_token,
                 True
             )
         )
@@ -523,13 +569,16 @@ def new_agent(
         cursor.close()
 
     if debugging:
-        hrns_length = len(agent_hrns.split("."))
+        hrns_depth = len(agent_hrns.split("."))
         print(
-            "agent: \t\t" + "{:>2}".format(str(hrns_length)) + "\t" \
+            "agent: \t\t" + "{:>2}".format(str(hrns_depth)) + "\t" \
             + agent_hrns
         )
 
-    return agent_fph, agent_hrns, ""
+    return agent_fph, agent_hrns, access_token, ""
+
+# Although the initial access token is generated automatically here, it may be
+# updated by the agent at any time.
 
 #==============================================================================
 # A new namespace is created:
@@ -582,9 +631,9 @@ def new_namespace(
         cursor.close()
 
     if debugging:
-        hrns_length = len(namespace_hrns.split("."))
+        hrns_depth = len(namespace_hrns.split("."))
         print(
-            "namespace: \t" + "{:>2}".format(str(hrns_length)) + "\t" \
+            "namespace: \t" + "{:>2}".format(str(hrns_depth)) + "\t" \
             + namespace_hrns
         )
 
@@ -653,15 +702,35 @@ def new_currency(
         cursor.close()
 
     if debugging:
-        hrns_length = len(currency_hrns.split("."))
+        hrns_depth = len(currency_hrns.split("."))
         print(
-            "currency: \t" + "{:>2}".format(str(hrns_length)) + "\t" \
+            "currency: \t" + "{:>2}".format(str(hrns_depth)) + "\t" \
             + currency_hrns
         )
 
     return currency_fph, currency_hrns, ""
 
+#==============================================================================
 
+def set_web_password_hash(agent_fph, password):
+
+    return ""
+
+
+
+def agent_update_realname(agent_fph, new_name):
+
+    return ""
+
+#------------------------------------------------------------------------------
+def agent_update_email(agent_fph, new_email):
+
+    return ""
+
+#------------------------------------------------------------------------------
+def agent_update_login(agent_fph, new_password, new_pin):
+
+    return new_access_token, ""
 
 
 #==============================================================================
@@ -682,7 +751,8 @@ def create_pseudotld_set():
             message = ""
             if m:
                 message = " | " + m
-            print(namespace_fph + " :: " + namespace_hrns + message)
+            print(namespace_fph + " : " + namespace_hrns + message)
+    print("\t")
     print("="*160)
 
 #==============================================================================
@@ -815,10 +885,10 @@ def get_entity_type(entity_fph):
 
 #==============================================================================
 
-def account_status(account_fph):
-
+def account_status(account_fph): # returns: exists (boolean), active (boolean),
+                                 # currency (FPH), owner (FPH), error message
     if not re_fph.match(account_fph):
-        return "", "", "", "", "Invalid FPH: " + account_fph
+        return False, False, "", "", "Invalid FPH: " + account_fph
 
     account_fph = "'" + account_fph + "'" # wrapped to enable SQLite to accept it.
 
@@ -829,7 +899,7 @@ def account_status(account_fph):
         )
         result = cursor.fetchone()
         cursor.close()
-    if result == None:
+    if result == None: # no record for account_fph
         return False, False, "", "", "Account not found"
     entity_type = result[2]
     owner_fph = result[3]
@@ -858,6 +928,29 @@ def list_agents_in_namespace(namespace_fph):
     return agent_fph_list # list
 
 
+#==============================================================================
+# Move any entity to a new namespace (with the permission of both the entity's
+# stewards/owner and the permission policy of the namespaces stewards).
+def move_entity(entity_fph, destination_namespace_fph):
+
+    entity_current_hrns = fph_to_hrns(entity_fph).split(".")
+    entity_name = entity_current_hrns.pop([0]) # name = head of current HRNS
+    destination_namespace_hrns = fph_to_hrns(destination_namespace_fph)
+    entity_new_hrns = entity_name + destination_namespace_hrns
+
+
+
+    # The entity's HRNS is updated but its FPH must remain the same. Therefore,
+    # whereas the original FPH is a simple hash of the HRNS when first mapped,
+    # any subsequent update to the HRNS must be mapped to the original FPH (and
+    # vice versa).
+    #
+    # (1) the HRNS>FPH map must be updated
+    # (2) the FPH>HRNS map must be updated
+    #
+    ##return new_hrns, error_message
+
+    update_mapping(entity_current_hrns, entity_new_hrns)
 
 
 
@@ -872,3 +965,114 @@ def list_currencies_in_common_by_hrns(a1_fph, a2_fph):
         print(fph_to_hrns(currency_fph))
 
 #==============================================================================
+# Entities may be identified either by HRNS or by FPH. Given that these are
+# very different in structure, they may be identified automatically:
+
+def identify_entity(entity_identifier): # HRNS or FPH
+    if re_fph.match(entity_identifier): # this is an FPH
+        entity_fph = entity_identifier
+        entity_hrns = fph_to_hrns(entity_fph)
+        if entity_hrns: # entity exists
+            entity_type = get_entity_type(entity_fph)
+            return entity_fph, entity_hrns, entity_type, ""
+        else:
+            return "", "", "", "Entity " + entity_fph + " does not exist"
+    elif re_hrns.match(entity_identifier): # this is an HRNS
+        entity_hrns = entity_identifier
+        entity_fph, m = hrns_to_fph(entity_identifier)
+        if entity_fph: # entity exists
+            entity_type = get_entity_type(entity_fph)
+            return entity_fph, entity_hrns, entity_type, ""
+        else:
+            return "", "", "", "Entity " + entity_hrns + " does not exist"
+    else: # this is not an entity
+        return "", "", "", entity_hrns + " is not an entity"
+
+#==============================================================================
+
+def add_steward(entity_fph, agent_fph):
+    if not re_fph.match(entity_fph):
+        return entity_fph + " is not an FPH"
+    if not re_fph.match(agent_fph):
+        return agent_fph + " is not an FPH"
+    with sqlite3.connect(ENTITIES_DB) as conn:
+        cursor = conn.cursor()
+        cursor.execute("""
+            INSERT INTO stewards (
+                entity_fph,
+                primid_fph
+            )
+            VALUES (?, ?)""",
+            (entity_fph, agent_fph)
+        )
+        cursor.execute("""
+            INSERT INTO stewardships (
+                primid_fph,
+                entity_fph
+            )
+            VALUES (?, ?)""",
+            (agent_fph, entity_fph)
+        )
+        conn.commit()
+        cursor.close()
+    return True
+
+# An entity may have several stewards and an agent (primid) may have several
+# stewardships, so both must be specified to ensure that only the correct pair
+# is deleted.
+def remove_steward(entity_fph, agent_fph):
+    if not re_fph.match(entity_fph):
+        return entity_fph + " is not an FPH"
+    if not re_fph.match(agent_fph):
+        return agent_fph + " is not an FPH"
+    with sqlite3.connect(ENTITIES_DB) as conn:
+        cursor = conn.cursor()
+        cursor.execute("""
+            DELETE FROM stewards WHERE entity_fph = ? AND primid_fph = ?
+            """,
+            (entity_fph, agent_fph)
+        )
+        cursor.execute("""
+            DELETE FROM stewardships WHERE primid_fph = ? AND entity_fph = ?
+            """,
+            (agent_fph, entity_fph)
+        )
+        conn.commit()
+        cursor.close()
+    return True
+
+def list_stewards(entity_fph):
+    if not re_fph.match(entity_fph):
+        return [], entity_fph + " is not an FPH"
+    with sqlite3.connect(ENTITIES_DB) as conn:
+        cursor = conn.cursor()
+        cursor.execute("""
+            SELECT * FROM stewards WHERE entity_fph = ?
+            """,
+            (entity_fph,)
+        )
+        results = list(cursor.fetchall())
+        cursor.close()
+        stewards = []
+        for result in results:
+            stewards.append(result[1])
+    return stewards, ""
+
+### NB, there may be no need for these to be two separate tables.
+
+def list_stewardships(agent_fph):
+    if not re_fph.match(agent_fph):
+        return [], agent_fph + " is not an FPH"
+    with sqlite3.connect(ENTITIES_DB) as conn:
+        cursor = conn.cursor()
+        cursor.execute("""
+            SELECT * FROM stewardships WHERE primid_fph = ?
+            """,
+            (agent_fph,)
+        )
+        results = list(cursor.fetchall())
+        cursor.close()
+        stewardships = []
+        for result in results:
+            stewardships.append(result[1])
+    return stewardships, ""
