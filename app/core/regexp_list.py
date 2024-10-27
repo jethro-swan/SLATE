@@ -5,6 +5,16 @@ import sys
 
 # RegExp list:
 
+re_realname = re.compile(r"")
+
+re_access_token = re.compile(r"^[0-9a-fA-F]{32}$") # (currently same as for FPH)
+
+#re_password \
+#= re.compile(r"^[A-Za-z0-9!£\$%\^&*()-+-=\[\]{}:@~;'#<>?,.\\/']${16,}]")
+# THIS NEEDS TO BE IMPROVED
+
+re_pin = re.compile(r"^[0-9]{6}$")
+
 #------------------------------------------------------------------------------
 # Email:
 #re_email = re.compile(r"(\w(\w_-\.)+\w)+@(\.\w+(\w_-)+)+\.\w{2,4}")
@@ -27,7 +37,11 @@ re_pvalue = re.compile(r"^\d{1,}\.\d{2}$")
 re_transid = re.compile(r"^\d{1,}:\d{19,}:[0-9a-f]{16}$")
 
 
-
+#------------------------------------------------------------------------------
+# Password:
+pwre = r"^(?=.*[0-9])(?=.*[a-z])(?=.*[A-Z])(?=.*\W)(?!.* ).{12,48}$"
+#pwre = r"^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$"
+re_password = re.compile(pwre)
 
 
 # RegExp list:
@@ -55,7 +69,7 @@ re_hrns = re.compile(r"^(\S+\.)*\S+$")
 
 #------------------------------------------------------------------------------
 # FPH = Full Path Hash = hash of FIP
-re_fph = re.compile(r"^[0-9a-f]{32}$") # string of 32 hex digits
+re_fph = re.compile(r"^[0-9a-fA-F]{32}$") # string of 32 hex digits
 #re_fph = re.compile(r"^[0-9a-f]{16}$") # string of 16 hex digits
 
 #------------------------------------------------------------------------------

@@ -74,6 +74,7 @@ def hrns_to_fph(hrns): # returns FPH and message
     # returned unless found to be inconsistent.
     if hrns_:
         if hrns == hrns_:
+            #print(">>> HRNS mapping collision")
             return fph, ""
         else:
             return "", "inconsistent FPH>HRNS mapping" # should NEVER happen.

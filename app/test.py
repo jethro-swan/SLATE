@@ -2,7 +2,7 @@
 
 # TEMPORARY TEST FILE
 
-import sys
+import sys, os
 from faker import Faker
 import sqlite3
 import random
@@ -12,301 +12,399 @@ import secrets
 from prettytable import PrettyTable
 from wonderwords import RandomWord
 
+# While the *agent* type is being systematically replaced with *secid*, paving
+# the way for the introduction of the *secid*, some functions are imported as
+# aliases.
+
 from core.constants import ENTITIES_DB, PAYMENTS_DB, DB_DIR, FPH_TO_HRNS_MAP
-from core.dbm_functions import dbm_list_entries
-from core.slate_core import create_entities_db
-from core.payments import create_payments_db, payment, dump_currency_payments
-from core.slate_core import new_namespace, new_agent, new_currency, new_account
-from core.slate_core import create_seed_entities
+from core.constants import HRNS_C_FPH_MAP
+from core.common import nshash
 from core.fph_hrns_maps import hrns_to_fph, fph_to_hrns, create_maps
-from core.slate_core import get_currency_name
-from core.slate_core import list_agent_accounts, list_agent_currencies
+from core.dbm_functions import dbm_list_entries, dbm_keys
+from core.slate_core import create_entities_db
+from core.slate_core import new_namespace, new_currency, new_account
+from core.slate_core import new_primid
+from core.slate_core import identify_entity, get_currency_name
+from core.slate_core import list_primid_accounts
+from core.slate_core import list_primid_currencies
 from core.slate_core import list_currency_accounts
 from core.slate_core import get_entity_type
-from core.common import nshash
-from core.auth import auth_hash
-from core.display import integer_to_money_format
-from core.slate_core import create_pseudotld_set
-from core.slate_core import add_steward, remove_steward
+#from core.slate_core import get_auth_data
+from core.slate_core import account_status
+from core.slate_core import add_stewards, remove_stewards
 from core.slate_core import list_stewards, list_stewardships
+from core.slate_core import list_active_namespaces
+from core.slate_core import list_primids
+from core.slate_seed import create_seed_entities
+from core.slate_seed import create_quasitld_set
+from core.payments import create_payments_db, payment, dump_currency_payments
+from core.auth import auth_hash, check_auth_hash
+from core.auth import authenticate_web_access, authenticate_cli_access
+from core.auth import list_password_characters, password_valid
+from core.auth import generate_password, list_url_safe_password_characters
+from core.auth import url_safe_password_valid, generate_url_safe_password
+from core.auth import generate_access_token
+from core.auth import pin_random_ord, pin_prompt_message, authenticate_pin
+from core.display import integer_to_money_format
+from core.display import thin_line, thick_line, title_line, thin_title_line
+from core.display import yN, Yn, yesno, get_cli_number_input, pause
+from core.slate_login import get_auth_data
+#from core.cctld_list import cctld_reduced_list, cctld_reduced_set
+#from core.cctld_list import cctld_reduced_list2, cctld_reduced_set2
 
-# TEMPORARY TEST BITS
-
+#==============================================================================
 
 # Initialize Faker object
 fake = Faker()
 Faker.seed(24)
 
-#
-print("\nPlease wait while a set of fake entities is created. ", end="")
-print("This may take some time because the dependency rules must be followed.")
-print()
-
+print("\nCreating FPH>HRNS and HRNS>FPH maps\n")
 # The HRNS>FPH and FPH>HRNS DBM maps are created:
 create_maps()
 
+
+print("\nThe SQLite DBs are created\n")
 # The SQLite DBs are created:
 create_entities_db()
 create_payments_db()
 
 
+title_line("Creating seed entities")
+
 # The seed entities are created:
 create_seed_entities()
+# The seed entities' FPH>HRNS mappings will have been registered here and the
+# primid is available to use:
+seed_primid_hrns = "gaia.global"
+seed_primid_fph, m = hrns_to_fph(seed_primid_hrns)
 
 
-def random_name():
-    name_length = random.randint(2,3)
-    letters = string.ascii_lowercase
-    n = []
-    for i in range(name_length):
-        n.append(random.choice(letters))
-    return "".join(n)
-    #name = "".join(n)                       # Temporaryt debuggery
-    #print("\t\t" + name)                    #
-    #return name                             #
+def check_maps():
 
-def random_hrns(length):
-    hrnsbits = []
-    for i in range(length):
-        hrnsbits.append(random_name())
-    return ".".join(hrnsbits)
-    #hrns = ".".join(hrnsbits)               # Temporaryt debuggery
-    #print("\t" + hrns)                      #
-    #return hrns                             #
+    title_line("Check consistency of FPH>HRNS and HRNS>FPH mapping")
 
-def fake_hrns():
-    return random_hrns(random.randint(1,3))
-    #hrns = random_hrns(random.randint(1,3)) # Temporaryt debuggery
-    #print("\t\t\t" + hrns)                  #
-    #return hrns                             #
+    #print("\nList FPH>HRNS map entries\n")
+    thin_title_line("List FPH>HRNS map entries")
+    fph_hrns_map = dbm_list_entries(FPH_TO_HRNS_MAP)
+    for fph in fph_hrns_map.keys():
+        print("\t" + fph + " > " + fph_hrns_map[fph])
 
-def test_hrns_faker():
+    #print("\nList FPH collision map entries\n")
+    thin_title_line("List FPH collision map entries")
+
+    c_map = dbm_list_entries(HRNS_C_FPH_MAP)
+    for hrns in c_map.keys():
+        fph = c_map[hrns]
+        print("\t" + "{:>40}".format(hrns) + " > " + fph)
+
+    thin_title_line("Check inverse mapping again")
+    #title_line("Check inverse mapping again")
+
+    map_keys = dbm_keys(FPH_TO_HRNS_MAP)
+    for key_fph in map_keys:
+        hrns = fph_to_hrns(key_fph)
+        fph, m = hrns_to_fph(hrns)
+        if m:
+            print(m)
+        if fph != key_fph:
+            #print("Inverse mapping incorrect")
+            print("Inverse mapping incorrect")
+        print(key_fph + " > " + "{:>40}".format(hrns) + " > " + fph)
     print()
-    print("A random name:\t" + random_name())
-    print("A random HRNS:\t" + random_hrns(3))
-    print("A random fake:\t" + fake_hrns())
-    print()
 
-#test_hrns_faker()
+    thick_line()
+
+    return
 
 
-
+#==============================================================================
 # For the purposes of these tests, a list of each randomly-generated entity is
-# saved in a list, starting with the "seed" entities' FPH:
-l_namespaces = [nshash("global")]           # seed namespace "global"
-l_currencies = [nshash("hours.global")]     # seed currency "hours.global"
-l_agents = [nshash("gaia.global")]          # seed agent "gaia.global"
-l_accounts = [nshash("hours.gaia.global")]  # seed account "hours.gaia.global"
+# saved in a list, starting with the "seed" entities' FPH (which have already
+# been created and registered using the  create_seed_entities()  function):
 
+fph, m = hrns_to_fph("global")              # seed namespace "global"
+if m:
+    print(m)
+else:
+    if fph_to_hrns(fph) == "global":
+        print(fph + " > " + fph_to_hrns(fph))
+        l_namespaces = [fph]
+    else:
+        print("Should be \"global\"")
+
+fph, m = hrns_to_fph("hours.global")        # seed currency "hours.global"
+if m:
+    print(m)
+else:
+    if fph_to_hrns(fph) == "hours.global":
+        print(fph + " > " + fph_to_hrns(fph))
+        l_currencies = [fph]
+    else:
+        print("Should be \"hours.global\"")
+
+fph, m = hrns_to_fph("gaia.global")         # seed primid "gaia.global"
+if m:
+    print(m)
+else:
+    if fph_to_hrns(fph) == "gaia.global":
+        print(fph + " > " + fph_to_hrns(fph))
+        l_primids = [fph]
+    else:
+        print("Should be \"gaia.global\"")
+
+fph, m = hrns_to_fph("hours.gaia.global")   # seed account "hours.gaia.global"
+if m:
+    print(m)
+else:
+    if fph_to_hrns(fph) == "hours.gaia.global":
+        print(fph + " > " + fph_to_hrns(fph))
+        l_accounts = [fph]
+    else:
+        print("Should be \"hours.gaia.global\"")
+
+# The following arrays have been created above:
+#   l_namespaces
+#   l_currencies
+#   l_primids
+#   l_accounts
+# but because no seed *secid* is required another must be created:
+l_secids = []
+
+# Entities are selected randomly from the lists of those already available:
+
+def select_available_namespace():
+    return random.choice(l_namespaces) # FPH
+
+def select_available_currency():
+    return random.choice(l_currencies) # FPH
+
+def select_available_primid():
+    return random.choice(l_primids) # FPH
+
+def select_available_secid():
+    return random.choice(l_secids) # FPH
+
+def select_available_account():
+    return random.choice(l_accounts) # FPH
+
+# The entities recorded in these temporary arrays can be displayed:
 def list_l_entities():
     print()
-    print("Namespaces:")
+    #thin_title_line("namespaces")
     for namespace_fph in l_namespaces:
         print("\t" + namespace_fph + "\t" + fph_to_hrns(namespace_fph))
-    print("Currencies:")
+    #thin_title_line("currencies")
     for currency_fph in l_currencies:
         print("\t" + currency_fph + "\t" + fph_to_hrns(currency_fph))
-    print("Agents:")
-    for agent_fph in l_agents:
-        print("\t" + agent_fph + "\t" + fph_to_hrns(agent_fph))
-    print("Accounts:")
+    #thin_title_line("primids")
+    for primid_fph in l_primids:
+        print("\t" + primid_fph + "\t" + fph_to_hrns(primid_fph))
+    #thin_title_line("secids")
+    for secid_fph in l_secids:
+        print("\t" + secid_fph + "\t" + fph_to_hrns(secid_fph))
+    #thin_title_line("accounts")
     for account_fph in l_accounts:
         print("\t" + account_fph + "\t" + fph_to_hrns(account_fph))
     print()
+    thin_line()
+    return
 
 # List the seed entities:
-##print("Entities in temporary lists:")
-##list_l_entities()
+print("Entities in temporary lists:")
+list_l_entities()
+thin_line()
 
-# Create the full set of pseudo-TLD root namespaces:
-create_pseudotld_set()
-#
+if yN("Create full quasi-TLD root namespace set?"):
+    title_line("Creating quasi-TLD root namespace set")
+    # Create the full set of pseudo-TLD root namespaces:
+    if yN("Display the quasi-TLD set while it is being created?"):
+        create_quasitld_set(True, True)
+    else:
+        create_quasitld_set(True, False)
+else:
+    title_line("Creating reduced quasi-TLD root namespace set")
+    create_quasitld_set(False, False)
+print()
+thick_line()
+
 # Add a small subset of these to test namespaces list:
 for hrns in ["uk", "es", "fr", "de", "ca", "us"]:
     fph, m = hrns_to_fph(hrns)
     l_namespaces.append(fph)
 
+# For each new test primid created, its password and PIN must be recorded:
+primid_credentials = {}
 
-# Entities are selected randomly from the lists of those already available:
+def record_test_primid_credentials(fph, hrns, password, pin, access_token):
+    if fph: # not ""
+        primid_credentials[fph] = list([hrns, password, pin, access_token])
 
-def select_available_namespace():
-    return random.choice(l_namespaces)
+# The first test primid is the seed primid (gaia.global) created earlier:
+record_test_primid_credentials(
+    seed_primid_fph,
+    seed_primid_hrns,
+    "Gl0balM3ltd0wn",
+    "123456",
+    "1a1b2c3d5e8f13g21f34e55d89e144ff"
+)
+# (See  slate_core.py )
 
-def select_available_currency():
-    return random.choice(l_currencies)
+def get_test_primid_hrns(fph):
+    return primid_credentials[fph][1]
 
-def select_available_agent():
-    return random.choice(l_agents)
+def get_test_primid_password(fph):
+    return primid_credentials[fph][2]
 
-def select_available_account():
-    return random.choice(l_accounts)
+def get_test_primid_pin(fph):
+    return primid_credentials[fph][3]
 
-
-# For each new test agent created, its password and PIN must be recorded:
-agent_credentials = {}
-
-def record_test_agent_credentials(fph, hrns, password, pin, access_token):
-    agent_credentials[fph] = [hrns, password, pin, access_token]
-
-def get_test_agent_hrns(fph):
-    return agent_credentials[fph][0]
-
-def get_test_agent_password(fph):
-    return agent_credentials[fph][1]
-
-def get_test_agent_pin(fph):
-    return agent_credentials[fph][2]
-
-def get_test_agent_access_token(fph):
-    return agent_credentials[fph][3]
-
-
-def create_test_namespace():
-
-    parent_namespace_fph = select_available_namespace()
-
-    namespace_name = random_name()
-
-    initial_steward_fph = select_available_agent()
-
-    namespace_fph, namespace_hrns, m = new_namespace(
-                                           namespace_name,
-                                           parent_namespace_fph,
-                                           initial_steward_fph
-                                       )
-
-    l_namespaces.append(namespace_fph)
-
-    return namespace_fph, namespace_hrns, m
-
-
-def create_test_agent():
-
-    parent_namespace_fph = select_available_namespace()
-    parent_namespace_hrns = fph_to_hrns(parent_namespace_fph)
-
-    agent_name = random_name()
-    agent_hrns = agent_name + "." + parent_namespace_hrns
-
-    initial_currency_fph = select_available_currency()
-    initial_account_name = get_currency_name(initial_currency_fph)
-    initial_account_fph, initial_account_hrns, m = new_account(
-                                                       agent_hrns,
-                                                       initial_currency_fph
-                                                   )
-    agent_realname = fake.name()
-
-    agent_email = fake.email()
-
-    if random.choice([0, 1]):
-        initial_stewardship_fph = select_available_currency()
-    else:
-        initial_stewardship_fph = select_available_namespace()
-    initial_stewardship_fph_list = pickle.dumps([])
-
-    alphabet = string.ascii_letters + string.digits
-    password = "".join(secrets.choice(alphabet) for i in range(16))
-
-    p = random.randint(0,999999)
-    pin = str((p*p)%1000000).zfill(6)
-
-    agent_fph, agent_hrns, access_token, m = new_agent(
-                                                 agent_name,
-                                                 parent_namespace_fph,
-                                                 agent_realname,
-                                                 agent_email,
-                                                 password,
-                                                 pin,
-                                                 initial_currency_fph,
-                                                 initial_stewardship_fph_list
-                                             )
-
-    agent_credentials[agent_fph] = [agent_hrns, password, pin, access_token]
-
-    l_agents.append(agent_fph)
-
-    return agent_fph, agent_hrns, m
-
-
-def create_test_currency():
-
-    parent_namespace_fph = select_available_namespace()
-    #currency_name = random_name()
-    currency_name = random.choice([
-                        "hours",
-                        "kWh",
-                        "g£",
-                        "g$"
-                    ])
-    if currency_name == "hours":
-        currency_prefix = ""
-        currency_suffix = "h"
-    elif currency_name == "kWh":
-        currency_prefix = ""
-        currency_suffix = "kWh"
-    elif currency_name == "g£":
-        currency_prefix = "g£"
-        currency_suffix = ""
-    elif currency_name == "g$":
-        currency_prefix = "g$"
-        currency_suffix = ""
-    else:
-        print("Something has gone very wrong here")
-
-    initial_steward_fph = select_available_agent()
-
-    currency_fph, currency_hrns, m = new_currency(
-                                         currency_name,
-                                         parent_namespace_fph,
-                                         initial_steward_fph,
-                                         currency_prefix,
-                                         currency_suffix
-                                     )
-    if m:
-        return "", "", m
-
-    l_currencies.append(currency_fph)
-
-    return currency_fph, currency_hrns, m
-
-
-def create_test_account(): # (beyond the initial account created for each agent)
-
-    agent_fph = select_available_agent()
-
-    currency_fph = select_available_currency()
-
-    account_fph, account_hrns, m = new_account(
-                                       agent_fph,
-                                       currency_fph
-                                   )
-    if m:
-        return "", "", m
-
-    l_accounts.append(account_fph)
-
-    return account_fph, account_hrns, m
-
+def get_test_primid_access_token(fph):
+    return primid_credentials[fph][4]
 
 #==============================================================================
 # A set of fake entities is created, each built upon a set of randomly-selected
 # entities satisfying the dependency requirements:
 
-# This is a crude progress counter to indicate the sequence in which random
-# entities are created or an HRNS collision detected.
-progress_count = 80
-def pc(char):
-    global progress_count
-    #print(char, end="")
-    sys.stdout.write(char)
-    sys.stdout.flush()
-    progress_count -= 1
-    if progress_count == 0:
-        progress_count = 80
-        sys.stdout.write("\n")
-        sys.stdout.flush()
+def create_fake_entities(n, a):
 
-def create_fake_entities(n):
+    print(
+        "\nPlease wait while a set of " + str(n + a) + " fake entities is " \
+        + "created, more than " + str(a) + " of which\nwill be accounts. " \
+        + "This may take some time because the dependency rules must be\n" \
+        + "followed.\n"
+    )
+
+    def random_name():
+        name_length = random.randint(2,3)
+        letters = string.ascii_lowercase
+        n = []
+        for i in range(name_length):
+            n.append(random.choice(letters))
+        return "".join(n)
+
+    def random_hrns(length):
+        hrnsbits = []
+        for i in range(length):
+            hrnsbits.append(random_name())
+        return ".".join(hrnsbits)
+
+    def fake_hrns():
+        return random_hrns(random.randint(1,3))
+
+    def create_test_namespace():
+        parent_namespace_fph = select_available_namespace()
+        namespace_name = random_name()
+        initial_steward_fph = select_available_primid()
+        namespace_fph, \
+        namespace_hrns, \
+        m = new_namespace(
+                namespace_name,
+                parent_namespace_fph,
+                initial_steward_fph
+            )
+        l_namespaces.append(namespace_fph)
+        return namespace_fph, namespace_hrns, m
+
+    def create_test_primid():
+        parent_namespace_fph = select_available_namespace()
+        parent_namespace_hrns = fph_to_hrns(parent_namespace_fph)
+        primid_name = random_name()
+        primid_hrns = primid_name + "." + parent_namespace_hrns
+        initial_currency_fph = select_available_currency()
+        #initial_account_name = get_currency_name(initial_currency_fph)
+        primid_realname = fake.name()
+        primid_email_1 = fake.email()
+        primid_email_2 = fake.email()
+        if random.choice([0, 1]):
+            initial_stewardship_fph = select_available_currency()
+        else:
+            initial_stewardship_fph = select_available_namespace()
+        stewardship_fph_list = pickle.dumps([])
+        alphabet = string.ascii_letters + string.digits
+        password = "".join(secrets.choice(alphabet) for i in range(16))
+        p = random.randint(0,999999)
+        pin = str((p*p)%1000000).zfill(6)
+        primid_fph, \
+        primid_hrns, \
+        access_token, \
+        m = new_primid(
+                primid_name,
+                parent_namespace_fph,
+                primid_realname,
+                primid_email_1,
+                primid_email_2,
+                password,
+                pin
+            )
+        record_test_primid_credentials(
+            primid_fph, primid_hrns, password, pin, access_token
+        )
+        l_primids.append(primid_fph)
+
+        #
+#        account_namespace_hrns = fph_to_hrns(select_available_namespace())
+#        initial_account_fph, \
+#        initial_account_hrns, \
+#        m = new_account(
+#                random_name() + "." + account_namespace_hrns,
+#                primid_fph,
+#                initial_currency_fph
+#            )
+
+        return primid_fph, primid_hrns, m
+
+    def create_test_currency():
+        parent_namespace_fph = select_available_namespace()
+        currency_name = random_name()
+        #parent_namespace_hrns = fph_to_hrns(parent_namespace_fph)
+        currency_type = random.choice(["hours", "kWh", "g£", "g$"])
+        if currency_type == "hours":
+            currency_prefix = ""
+            currency_suffix = "h"
+        elif currency_type == "kWh":
+            currency_prefix = ""
+            currency_suffix = "kWh"
+        elif currency_type == "g£":
+            currency_prefix = "g£"
+            currency_suffix = ""
+        elif currency_type == "g$":
+            currency_prefix = "g$"
+            currency_suffix = ""
+        else:
+            currency_prefix = ""
+            currency_suffix = ""
+
+        initial_steward_fph = select_available_primid()
+        currency_fph, \
+        currency_hrns, \
+        m = new_currency(
+                currency_name,
+                parent_namespace_fph,
+                initial_steward_fph,
+                currency_prefix,
+                currency_suffix
+            )
+        if m:
+            return "", "", m
+        l_currencies.append(currency_fph)
+        return currency_fph, currency_hrns, m
+
+    def create_test_account():
+        account_namesapace_hrns = fph_to_hrns(select_available_namespace())
+        account_hrns = random_name() + "." + account_namesapace_hrns
+        primid_fph = select_available_primid()
+        currency_fph = select_available_currency()
+        account_fph, \
+        account_hrns, \
+        m = new_account(
+                account_hrns,
+                primid_fph,
+                currency_fph
+            )
+        if m:
+            return "", "", m
+        l_accounts.append(account_fph)
+        return account_fph, account_hrns, m
 
     fake_entities = []
 
@@ -315,33 +413,95 @@ def create_fake_entities(n):
     hrns_random_duplicates = []
     hrns_random_duplicates_count = 0
 
-    ec = 0 # count of entities created (free from HRNS collisions)
+    invalid_parent_namespace = []
+
+    namespace_count = 0
+    primid_count = 0
+    currency_count = 0
+    account_count = 0
+
+    error_messages = []
+    error_count = 0
+
+    ec = 0 # count of initial entities to be created (free from HRNS collisions)
     while ec < n:
         # Create a new entity the type of which is selected randomly and the
         # dependencies of which exist only among those already created:
-        e = random.choice(["namespace", "agent", "currency", "account"])
+        e = random.choice([
+                            "namespace",
+                            "primid",
+                            #"secid",
+                            "currency",
+                            "account"
+                         ])
         if e == "namespace":
             fph, hrns, m = create_test_namespace()
-        elif e == "agent":
-            fph, hrns, m = create_test_agent()
+            if m:
+                error_messages.append(m)
+                error_count += 1
+            else:
+                namespace_count += 1
+        elif e == "primid":
+            fph, hrns, m = create_test_primid()
+            if m:
+                error_messages.append(m)
+                error_count += 1
+            else:
+                primid_count += 1
+#        elif e == "secid":
+#            fph, hrns, m = create_test_secid()
+#            if m:
+#                error_messages.append(m)
+#                error_count += 1
+#            else:
+#                secid_count += 1
         elif e == "currency":
             fph, hrns, m = create_test_currency()
+            if m:
+                error_messages.append(m)
+                error_count += 1
+            else:
+                currency_count += 1
         elif e == "account":
             fph, hrns, m = create_test_account()
+            if m:
+                error_messages.append(m)
+                error_count += 1
+            else:
+                account_count += 1
+
         if m:
-            hrns_random_duplicates.append(m)
-            hrns_random_duplicates_count += 1
-        else:
-            print("{:>4}".format(ec) + "\t", end="")
+            print(m)
+
+        if fph:
+            print("{:>6}".format(ec) + "\t", end="")
+            print("{:<10}".format(e), end="")
+            print("{:>8}".format(error_count), end="")
+            print("    ", end="")
+            print(fph + " > " + hrns)
+            #print(fph + " > " + hrns, end="")
+            #print("    " + m)
             ec += 1
             fake_entities.append([fph, hrns, e, m])
 
-    #for i in range(hrns_random_duplicates_count):
-    #    print(".", end="")
+    # In general there will be far more accounts than other entities, so now an
+    # extra set of accounts will be created.
+#    while ec < a:
+#        fph, hrns, m = create_test_account()
+#        if m:
+#            error_messages.append(m)
+#        else:
+#            account_count += 1
+#            error_count += 1
+#        if fph:
+#            print("{:>6}".format(ec) + "\t", end="")
+#            print("{:<20}".format("account"), end="")
+#            print(fph + " > " + hrns)
+#            ec += 1
+#            fake_entities.append([fph, hrns, e, m])
 
-        #print(".", end="") # show indication of progress
-    print()
-    print()
+    #print("\n")
+    print("\nError count (collisions) = " + str(error_count) + "\n")
 
     fe_rows = []
     for fake_entity in fake_entities:
@@ -358,25 +518,58 @@ def create_fake_entities(n):
         print("\t" + hrns)
     print()
 
+    e_count = namespace_count + currency_count + primid_count + account_count
+    if e_count == n:
+        print("{:2.2f}".format(100*namespace_count/n) + "% namespaces")
+        print("{:2.2f}".format(100*currency_count/n) + "% currencies")
+        print("{:2.2f}".format(100*primid_count/n) + "% primids")
+        print("{:2.2f}".format(100*account_count/n) + "% accounts")
+    print()
+
+    if yN("Show error messages?"):
+        for error_message in error_messages:
+            print(error_message)
+
+    pause()
+    thick_line()
+    return
 
 # The set of fake entities is generated:
-create_fake_entities(200)
 
-#print("Fake entities initially in temporary lists:")
-#list_l_entities()
+#pause()
 
+title_line("Generating fake entities")
+#
+entity_count = get_cli_number_input(
+                   "How many fake entities should be created initially? ",
+                   100, 500, 200
+               )
+# IMPORTANT:
+# Each agent (whether *primid* or *secid*) can have only one *account* in each
+# *currency*, therefore the restricting the *account* names to the *agent*s'
+# personal *namespaces* creates a problem.
+additional_accounts = 0
+additional_accounts = entity_count*1
+print(
+    "The number of accounts will be far greater than that of the other" \
+    + " entitity types\nso a further " + str(additional_accounts) \
+    + " accounts will be added."
+)
+create_fake_entities(entity_count, additional_accounts)
+
+#==============================================================================
 # The fake agents are listed (along with their login credentials) from the
 # temporary list:
-def list_fake_agents():
+def list_fake_primids_from_temporary_list():
     fa_rows = []
-    for key in agent_credentials.keys():
-        agent = agent_credentials[key]
-        agent.insert(0, key)
-        fa_rows.append(agent)
+    for key in primid_credentials.keys():
+        primid = primid_credentials[key]
+        primid.insert(0, key)
+        fa_rows.append(primid)
     fa_table = PrettyTable()
     fa_table.field_names = [
-                             "agent FPH",
-                             "agent HRNS",
+                             "primid FPH",
+                             "primid HRNS",
                              "password",
                              "PIN",
                              "access token"
@@ -385,169 +578,230 @@ def list_fake_agents():
     fa_table.add_rows(fa_rows[1:])
     print(fa_table)
 
+    fname = os.getcwd() + "/fake_primids_access_credentials.txt"
+    with open(fname, "w") as f:
+        f.write("\n" + str(fa_table) + "\n\n")
+    print("\nA copy of the table above has been written to " + fname + "\n")
 
-list_fake_agents()
+list_fake_primids_from_temporary_list()
 
-print()
-print("="*160)
-print()
+thick_line()
+pause()
 
+#==============================================================================
 # The full set of fake entities is now listed, this time extracted from the
 # (temporary) SQLite database:
-with sqlite3.connect(ENTITIES_DB) as conn:
-    cursor = conn.cursor()
 
-    cursor.execute("SELECT * FROM namespaces;")
-    namespace_list = cursor.fetchall()
-    print("\nnamespaces:\n")
-    for namespace in namespace_list:
-        print(namespace)
+def show_raw_database_entries_for_fake_entities():
 
-    cursor.execute("SELECT * FROM agents;")
-    agent_list = cursor.fetchall()
-    print("\nagents:\n")
-    for agent in agent_list:
-        print(agent)
+    with sqlite3.connect(ENTITIES_DB) as conn:
+        cursor = conn.cursor()
 
-    cursor.execute("SELECT * FROM currencies;")
-    currency_list = cursor.fetchall()
-    print("\ncurrencies:\n")
-    for currency in currency_list:
-        print(currency)
+        cursor.execute("SELECT * FROM namespaces;")
+        namespace_list = cursor.fetchall()
+        thin_title_line("namespaces")
+        for namespace in namespace_list:
+            print(namespace)
+        pause()
 
-    cursor.execute("SELECT * FROM accounts;")
-    account_list = cursor.fetchall()
-    print("\naccounts:\n")
-    for account in account_list:
-        print(account)
+        cursor.execute("SELECT * FROM primids;")
+        primid_list = cursor.fetchall()
+        thin_title_line("primids")
+        for primid in primid_list:
+            print(primid)
+        pause()
 
-    cursor.close()
+        cursor.execute("SELECT * FROM secids;")
+        secid_list = cursor.fetchall()
+        thin_title_line("secids")
+        for secid in secid_list:
+            print(primid)
+        pause()
 
-    print()
-    print("="*160)
-    print()
+        cursor.execute("SELECT * FROM currencies;")
+        currency_list = cursor.fetchall()
+        thin_title_line("currencies")
+        for currency in currency_list:
+            print(currency)
+        pause()
+
+        cursor.execute("SELECT * FROM accounts;")
+        account_list = cursor.fetchall()
+        thin_title_line("accounts")
+        for account in account_list:
+            print(account)
+        #pause()
+
+        cursor.close()
+
+    thick_line()
+    pause()
+    return
+
+if yN("Do you want to see the fake entities' raw database entries?"):
+    show_raw_database_entries_for_fake_entities()
 
 #==============================================================================
-# List each fake agent's accounts:
+# The following entities and relationships are listed from the temporary lists
+# in this script:
+# - the accounts belonging to each of the fake primids
+# - the currencies in which each fake primid has as account
+# - the accounts associated with each currency
 
-print("\nList the fake agents' accounts:\n")
+def list_fake_entities_relationships_from_test_lists():
 
-for agent_fph in l_agents:
-    print(agent_fph + " :: " + fph_to_hrns(agent_fph))
-    accounts_fph_list, m = list_agent_accounts(agent_fph)
-    if m:
-        print("\t" + m)
-    else:
+    # List each fake primid's accounts:
+
+    title_line("List the fake primids' accounts (from l_accounts list)")
+
+    for primid_fph in l_primids:
+        print(primid_fph + " :: " + fph_to_hrns(primid_fph))
+        accounts_fph_list, m = list_primid_accounts(primid_fph)
+        if m:
+            print("\t" + m)
+        else:
+            for account_fph in accounts_fph_list:
+                print("\t" + fph_to_hrns(account_fph))
+
+    thin_line()
+    pause()
+
+    # List currencies to which each fake primid has an account:
+    title_line("List the fake primids' accounts' currencies")
+
+    for primid_fph in l_primids:
+        print(primid_fph + " :: " + fph_to_hrns(primid_fph))
+        currencies_fph_list = list_primid_currencies(primid_fph)
+        for currency_fph in currencies_fph_list:
+            print("\t" + fph_to_hrns(currency_fph))
+
+    thin_line()
+    pause()
+
+    # List each fake currency's accounts:
+    title_line("List the fake currencies' accounts")
+
+    for currency_fph in l_currencies:
+        print(currency_fph + " > " + fph_to_hrns(currency_fph))
+        accounts_fph_list, m = list_currency_accounts(currency_fph)
+        if m:
+            print(m)
         for account_fph in accounts_fph_list:
-            print("\t" + fph_to_hrns(account_fph))
-print()
-print("="*160)
+            print("\t" + account_fph + " > " + fph_to_hrns(account_fph))
 
-# List currencies to which each fake agent has an account:
-print("\nList the fake agents' accounts' currencies:\n")
+    #thin_line()
+    #pause()
 
-for agent_fph in l_agents:
-    print(agent_fph + " :: " + fph_to_hrns(agent_fph))
-    currencies_fph_list = list_agent_currencies(agent_fph)
-    for currency_fph in currencies_fph_list:
-        print("\t" + fph_to_hrns(currency_fph))
-print()
-print("="*160)
+    thick_line()
 
-# List each fake currency's accounts:
-print("\nList the fake currencies' accounts:\n")
-
-for currency_fph in l_currencies:
-    print(currency_fph + " :: " + fph_to_hrns(currency_fph))
-    accounts_fph_list, m = list_currency_accounts(currency_fph)
-    for account_fph in accounts_fph_list:
-        print("\t" + account_fph + " :: " + fph_to_hrns(account_fph))
-
-print()
-print("="*160)
-print()
-
-print("Testing get_entity_type(entity_fph) function:")
-
-print("\nNamespaces:")
-for namespace_fph in l_namespaces:
-    entity_type, m = get_entity_type(namespace_fph)
-    print("\t" + fph_to_hrns(namespace_fph) + " (" + namespace_fph + ")", end="")
-    if entity_type != "namespace":
-        print(" misidentified as " + entity_type + " (" + m + ")")
-    else:
-        print(" identified correctly as " + entity_type)
-
-print("\nCurrencies:")
-for currency_fph in l_currencies:
-    entity_type, m = get_entity_type(currency_fph)
-    print("\t" + fph_to_hrns(currency_fph) + " (" + currency_fph + ")", end="")
-    if entity_type != "currency":
-        print(" misidentified as " + entity_type + " (" + m + ")")
-    else:
-        print(" identified correctly as " + entity_type)
-
-print("\nAgents:")
-for agent_fph in l_agents:
-    entity_type, m = get_entity_type(agent_fph)
-    print("\t" + fph_to_hrns(agent_fph) + " (" + agent_fph + ")", end="")
-    if entity_type != "agent":
-        print(" misidentified as " + entity_type + " (" + m + ")")
-    else:
-        print(" identified correctly as " + entity_type)
-
-print("\nAccounts:")
-for account_fph in l_accounts:
-    entity_type, m = get_entity_type(account_fph)
-    print("\t" + fph_to_hrns(account_fph) + " (" + account_fph + ")", end="")
-    if entity_type != "account":
-        print(" misidentified as " + entity_type + " (" + m + ")")
-    else:
-        print(" identified correctly as " + entity_type)
+if yN("List the fake entities' relationships from test lists?"):
+    list_fake_entities_relationships_from_test_lists()
 
 #==============================================================================
-# The full set of fake entities is now listed againfrom the SQLite database:
+# Check that each entity's type can be identified correctly from the database.
 
-with sqlite3.connect(ENTITIES_DB) as conn:
-    cursor = conn.cursor()
+def check_get_entity_type_function():
 
-    cursor.execute("SELECT * FROM namespaces;")
-    namespace_list = cursor.fetchall()
-    print("\nnamespaces:\n")
-    for namespace in namespace_list:
-        print(namespace)
+    title_line("Testing get_entity_type(entity_fph) function")
 
-    cursor.execute("SELECT * FROM agents;")
-    agent_list = cursor.fetchall()
-    print("\nagents:\n")
-    for agent in agent_list:
-        print(agent)
+    thin_title_line("Namespaces")
+    for namespace_fph in l_namespaces:
+        entity_type, m = get_entity_type(namespace_fph)
+        r = "{:<100}".format(namespace_fph + " > " + fph_to_hrns(namespace_fph))
+        if entity_type != "namespace":
+            r += " misidentified as " + entity_type + " (" + m + ")"
+        else:
+            r += " correct (" + entity_type + ")"
+        print(r)
 
-    cursor.execute("SELECT * FROM currencies;")
-    currency_list = cursor.fetchall()
-    print("\ncurrencies:\n")
-    for currency in currency_list:
-        print(currency)
+    thin_title_line("Currencies")
+    for currency_fph in l_currencies:
+        entity_type, m = get_entity_type(currency_fph)
+        r = "{:<100}".format(currency_fph + " > " + fph_to_hrns(currency_fph))
+        if entity_type != "currency":
+            r += " misidentified as " + entity_type + " (" + m + ")"
+        else:
+            r += " correct (" + entity_type + ")"
+        print(r)
 
-    cursor.execute("SELECT * FROM accounts;")
-    account_list = cursor.fetchall()
-    print("\naccounts:\n")
-    for account in account_list:
-        print(account)
+    thin_title_line("Agents (primids)")
+    for primid_fph in l_primids:
+        entity_type, m = get_entity_type(primid_fph)
+        r = "{:<100}".format(primid_fph + " > " + fph_to_hrns(primid_fph))
+        if entity_type != "primid":
+            r += " misidentified as " + entity_type + " (" + m + ")"
+        else:
+            r += " correct (" + entity_type + ")"
+        print(r)
 
-    cursor.close()
+    thin_title_line("Accounts")
+    for account_fph in l_accounts:
+        entity_type, m = get_entity_type(account_fph)
+        r = "{:<100}".format(account_fph + " > " + fph_to_hrns(account_fph))
+        if entity_type != "account":
+            r += " misidentified as " + entity_type + " (" + m + ")"
+        else:
+            r += " correct (" + entity_type + ")"
+        print(r)
 
-print()
-print("="*160)
-print()
+    thin_line()
+    return
+
+if yN("Do you want to test the entity type query function?"):
+    check_get_entity_type_function()
+
+#==============================================================================
+# The full set of fake entities is listed againfrom the SQLite database:
+
+def list_fake_entities_raw():
+
+    with sqlite3.connect(ENTITIES_DB) as conn:
+        cursor = conn.cursor()
+
+        cursor.execute("SELECT * FROM namespaces;")
+        namespace_list = cursor.fetchall()
+        thin_title_line("namespaces")
+        for namespace in namespace_list:
+            print(namespace)
+
+        cursor.execute("SELECT * FROM primids;")
+        primid_list = cursor.fetchall()
+        thin_title_line("primids")
+        for primid in primid_list:
+            print(primid)
+
+        cursor.execute("SELECT * FROM currencies;")
+        currency_list = cursor.fetchall()
+        thin_title_line("currencies")
+        for currency in currency_list:
+            print(currency)
+
+        cursor.execute("SELECT * FROM accounts;")
+        account_list = cursor.fetchall()
+        thin_title_line("accounts")
+        for account in account_list:
+            print(account)
+
+        cursor.close()
+
+    thick_line()
+
+
+if yN("Do you want to list the fake entities' raw database entries?"):
+    list_fake_entities_raw()
+
 
 #==============================================================================
 # Now that we have a usefully large collection of fake accounts, we can run
 # some payment tests:
 
+#pause()
+
 def test_payment_function():
-    print("="*160)
-    print("Testing payment function:\n")
+    #thick_line()
+    #print("="*160)
+    #print("Testing payment function:\n")
+    title_line("Testing the payment( ) function")
     for currency_fph in l_currencies:
         accounts_fph_list, m = list_currency_accounts(currency_fph)
         n_accounts = len(accounts_fph_list)
@@ -592,70 +846,218 @@ def test_payment_function():
                     p_row.append(annotation)
                     p_rows.append(p_row)
             p_table.align = "r"
+            p_table.align["annotation"] = "l"
             p_table.add_rows(p_rows[1:])
             print(p_table)
+
+#==============================================================================
+def show_accounts_status(account_list):
+
+    title_line("Show accounts' status")
+
+    acct_rows = []
+    acct_table = PrettyTable()
+    acct_table.field_names = [
+                               "account HRNS",
+                               "exists",
+                               "active",
+                               "currency",
+                               "owner",
+                               "balance",
+                               "error message"
+                             ]
+    acct_table.align = "l"
+
+    for account_fph in account_list:
+        #print("account_fph = " + account_fph)
+        account_exists, \
+        account_active, \
+        account_currency_fph, \
+        account_owner_fph, \
+        account_balance, \
+        m = account_status(account_fph)
+        acct_row = []
+        acct_row.append(fph_to_hrns(account_fph))
+        acct_row.append(yesno(account_exists))
+        acct_row.append(yesno(account_active))
+        acct_row.append(fph_to_hrns(account_currency_fph))
+        acct_row.append(fph_to_hrns(account_owner_fph))
+        acct_row.append(integer_to_money_format(account_balance))
+        acct_row.append(m)
+        acct_rows.append(acct_row)
+
+    acct_table.add_rows(acct_rows[1:])
+    print(acct_table)
+
+    thick_line()
+    pause()
+    return
+
+
+if yN("Show the status of the accounts in the l_accounts list?"):
+    show_accounts_status(l_accounts)
 
 
 
 #test_payment_function()
 
-def list_accounts(dtype="tuple"):
+def list_accounts():
     # Now let's take another look at the accounts:
     with sqlite3.connect(ENTITIES_DB) as conn:
         cursor = conn.cursor()
-        cursor.execute("SELECT * FROM accounts;")
-        account_list = list(cursor.fetchall())
+        #cursor.execute("SELECT entity_fph FROM accounts")
+        cursor.execute("SELECT * FROM accounts")
+        #account_list = list(cursor.fetchall())
+        account_list = cursor.fetchall()
+        #print("account_list has type = " + str(type(account_list)))
         cursor.close()
-    print("\naccounts:\n")
 
-    if dtype == "tuple":
-        #acct_rows = []
-        for account in account_list:
-            print(account)
-    elif dtype == "table":
-        acct_rows = []
-        for account in account_list:
-            ar = list(account)
-            acct_row = []
-            acct_row.append(fph_to_hrns(ar[0]))
-            acct_row.append(fph_to_hrns(ar[1]))
-            acct_row.append(fph_to_hrns(ar[3]))
-            acct_row.append(fph_to_hrns(ar[4]))
-            acct_row.append(integer_to_money_format(ar[5]))
-            acct_rows.append(acct_row)
-        acct_table = PrettyTable()
-        acct_table.field_names = [
-                                   "account HRNS",
-                                   "parent namespace HRNS",
-                                   "owner HRNS",
-                                   "currency HRNS",
-                                   "balance"
-                                 ]
-        acct_table.align = "r"
-        #acct_table.align["account_balance"] = "r"
-        acct_table.add_rows(acct_rows[1:])
-        print(acct_table)
+    if yN("(Show raw database row for accounts?)"):
+        for account_row in account_list:
+            print(account_row)
+        thin_line()
 
 
-list_accounts("table")
+
+
+
+    title_line("List accounts")
+    acct_rows = []
+
+
+    #for account_fph in account_list:
+    for account_row in account_list:
+        account_fph = account_row[0]
+        #account_fph = list(account_row[0])
+        account_exists, \
+        account_active, \
+        account_currency_fph, \
+        account_owner_fph, \
+        account_balance, \
+        m = account_status(account_fph)
+        #ar = list(account)
+        acct_row = []
+        acct_row.append(fph_to_hrns(account_fph))   # account HRNS
+        acct_row.append(yesno(account_exists))
+        acct_row.append(yesno(account_active))
+        acct_row.append(fph_to_hrns(account_currency_fph))
+        acct_row.append(fph_to_hrns(account_owner_fph))
+        acct_row.append(integer_to_money_format(account_balance))
+        acct_row.append(m)
+        acct_rows.append(acct_row)
+
+    acct_table = PrettyTable()
+    acct_table.field_names = [
+                               "account HRNS",
+                               "exists",
+                               "active",
+                               "currency HRNS",
+                               "owner HRNS",
+                               "balance",
+                               "error message"
+                              ]
+    acct_table.align = "l"
+    acct_table.align["balance"] = "r"
+    acct_table.add_rows(acct_rows[1:])
+    print(acct_table)
+    thick_line()
+    return
+
+#pause()
+if yN("List accounts?"):
+    list_accounts()
 #list_accounts()
+print(
+    "\nAt this point the balances will all be 0, the accounts having only" \
+    + " just been created.\n"
+)
+
 test_payment_function()
 
-list_accounts("table")
+if yN("List accounts?"):
+    list_accounts()
 #list_accounts()
-
-
+print(
+    "\nSome of the account balances will no longer be 0, payments of random" \
+    + " value having been made between some randomly-selected accounts in" \
+    + " the same currency.\n"
+)
 
 #==============================================================================
 #
 
 def show_payments_for_test_currencies():
-    print("\nPayments in each currency\n")
+    title_line("Show payments made in each currency")
     for currency_fph in l_currencies:
-        print(currency_fph + " :: " + fph_to_hrns(currency_fph))
+        print(currency_fph + " > " + fph_to_hrns(currency_fph))
         dump_currency_payments(currency_fph)
 
-#show_payments_for_test_currencies()
+if yN("List the payments that have been made in each currency?"):
+    show_payments_for_test_currencies()
+
+#==============================================================================
+
+def test_steward_add_remove():
+
+    title_line("Testing steward adding/removal")
+
+    test_entities = []
+    test_primids = []
+
+    for i in range(100):
+        if random.choice([True, False]):
+            entity_fph = select_available_namespace()
+        else:
+            entity_fph = select_available_currency()
+
+        primid_fph = select_available_primid()
+        test_entities.append(entity_fph)
+        test_primids.append(primid_fph)
+        add_steward(entity_fph, primid_fph)
+
+    title_line("List stewards")
+
+    for entity_fph in test_entities:
+        print(fph_to_hrns(entity_fph))
+        stewards, m = list_stewards(entity_fph)
+        if m:
+            print(m)
+        for steward_fph in stewards:
+            print("\t" + steward_fph + " > " + fph_to_hrns(steward_fph))
+
+    return
+
+if yN("Test steward adding/removal?"):
+    test_steward_add_remove()
+    thick_line()
+    pause()
+
+#==============================================================================
+
+if yN("Check consistency of FPH>HRNS and HRNS>FPH mapping?"):
+    check_maps()
+    thick_line()
+    pause()
+
+#==============================================================================
+
+def list_active_primids_from_database():
+
+    title_line("Listing active primids from database")
+
+    primid_fph_list, m = list_primids("active")
+    if m:
+        print(m)
+    for primid_fph in primid_fph_list:
+        print(fph_to_hrns(primid_fph))
+
+    thick_line()
+
+
+if yN("List active primids from database?"):
+    list_active_primids_from_database()
+    thick_line()
+    pause()
 
 
 
@@ -663,40 +1065,106 @@ def show_payments_for_test_currencies():
 #==============================================================================
 
 
-print("\nTesting steward adding/removal\n")
+def list_stewardships_from_database():
 
-test_entities = []
-test_agents = []
+    title_line("Listing stewardships held by each primid")
 
-for i in range(100):
-    if random.choice([True, False]):
-        entity_fph = select_available_namespace()
-    else:
-        entity_fph = select_available_currency()
-
-    agent_fph = select_available_agent()
-    test_entities.append(entity_fph)
-    test_agents.append(agent_fph)
-    add_steward(entity_fph, agent_fph)
-
-print("\nStewards\n")
-
-for entity_fph in test_entities:
-    print(fph_to_hrns(entity_fph))
-    stewards, m = list_stewards(entity_fph)
+    primid_fph_list, m = list_primids("active")
     if m:
         print(m)
-    for steward_fph in stewards:
-        print(fph_to_hrns("\t" + steward_fph))
+    for primid_fph in primid_fph_list:
+        print(fph_to_hrns(primid_fph))
+        stewardships, m = list_stewardships(primid_fph)
+        if m:
+            print(m)
+        for entity_fph in stewardships:
+            print("\t" + entity_fph + " > " + fph_to_hrns(entity_fph))
 
-print("\nStewardships\n")
+    thick_line()
+    pause()
+    return
 
-for agent_fph in test_agents:
-    print(fph_to_hrns(agent_fph))
-    stewardships, m = list_stewardships(agent_fph)
+if yN("List stewardships?"):
+    list_stewardships_from_database()
+
+#==============================================================================
+# The access credentials of the primids recorded in the database are checked
+# against those in the primid_credentials dictionary created earlier.
+
+def check_access_credentials():
+
+    title_line(
+        "The fake and seed primids' access credentials will now be checked"
+    )
+
+    primid_table = PrettyTable()
+    primid_table.field_names = [
+                                 "primid FPH",
+                                 "primid HRNS",
+                                 "password",
+                                 "access_token"
+                               ]
+    primid_table.align = "r"
+    primid_rows = []
+
+    print("Authenticating access for: ")
+
+    for primid_fph in primid_credentials.keys():
+
+        hrns = get_test_primid_hrns(primid_fph)
+        password = get_test_primid_password(primid_fph)
+        pin = get_test_primid_pin(primid_fph)
+        access_token = get_test_primid_access_token(primid_fph)
+
+        print("\t" + hrns)
+
+        auth_dict, m = get_auth_data(primid_fph)
+        if m:
+            print(m)
+        password_hash = auth_dict["password_hash"]
+        pin = auth_dict["pin"]
+        access_token_hash = auth_dict["access_token_hash"]
+
+        primid_row = []
+        primid_row.append(primid_fph)
+        primid_row.append(hrns)
+
+        if check_auth_hash(password, password_hash):
+            primid_row.append("authenticated")
+        else:
+            primid_row.append("rejected")
+
+        if check_auth_hash(access_token, access_token_hash):
+            primid_row.append("authenticated")
+        else:
+            primid_row.append("rejected")
+
+        primid_rows.append(primid_row)
+
+    primid_table.add_rows(primid_rows[1:])
+    print(primid_table)
+
+    thick_line()
+    pause()
+    return
+
+if yN("Check the fake primids' access credentials?"):
+    check_access_credentials()
+
+#==============================================================================
+
+
+if yN("List the active namespaces from database?"):
+
+    title_line("Listing the active namespaces from the database")
+
+    namespace_fph_list, m = list_active_namespaces()
     if m:
         print(m)
-    for entity_fph in stewardships:
-        print("\t" + fph_to_hrns(entity_fph))
+    for fph in namespace_fph_list:
+        #print(fph_to_hrns(fph) + "   ", end="")
+        print("\t" + fph_to_hrns(fph))
+    print("\n")
+    thick_line()
 
-#remove_steward(entity_fph, agent_fph)
+#==============================================================================

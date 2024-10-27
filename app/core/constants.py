@@ -1,4 +1,9 @@
-# Last modified: 2023-08-14 22.200 JW
+# Last modified: 2024-10-13 17.20 JW
+
+import xxhash
+#from .common import nshash
+def nshash(name): # Defined again here to avoid circular import from common.py
+    return xxhash.xxh3_128_hexdigest(name.strip())
 
 SLATE_DATA_ROOT     = '/var/slate/data/'
 SLATE_DATA          = '/var/slate/data/active/'
@@ -47,3 +52,5 @@ FPH_TO_HRNS_MAP     = "/var/slate/maps/FPH_to_HRNS_map.dbm"
 HRNS_C_FPH_MAP      = "/var/slate/maps/FPH_to_HRNS_collision_map.dbm"
 #FPH_TO_HRNS_MAP     = "/var/slate/db/FPH_to_HRNS_map.dbm"
 #HRNS_C_FPH_MAP      = "/var/slate/db/FPH_to_HRNS_collision_map.dbm"
+
+UNIVERSAL_ROOT_FPH  = nshash("")

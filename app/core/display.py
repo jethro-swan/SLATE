@@ -3,3 +3,74 @@
 # pence (sterling) to be the smallest value.
 def integer_to_money_format(amount):
     return "{:10.2f}".format(amount/100)
+
+
+def thick_line():
+    print("\n" + "="*160 + "\n")
+
+def thin_line():
+    print("\n" + "-"*160 + "\n")
+
+def title_line(title):
+    print("\n=== " + title + " " + "="*(155 - len(title)) + "\n")
+
+def thin_title_line(title):
+    print("\n--- " + title + " " + "-"*(155 - len(title)) + "\n")
+
+
+
+
+def pause():
+    input("\nPress ENTER to continue...\n")
+
+
+def yN(prompt):
+    r = input(prompt + " [yN] ")
+    if (len(r) > 0) and (r[0].lower() == "y"):
+        return True
+    else:
+        return False
+
+
+def Yn(prompt):
+    r = input(prompt + " [Yn] ")
+    if (len(r) == 0) or (r[0].lower() == "n"):
+        return False
+    else:
+        return True
+
+
+def yesno(b):
+    if b:
+        return "yes"
+    else:
+        return "no"
+
+
+def get_cli_number_input(prompt_message, min_num, max_num, default_num):
+    input_value = input(prompt_message)
+    try:
+        number_given = int(input_value)
+        if number_given < min_num:
+            number_given = min_num
+            print(
+                "This has been increased to " + str(min_num) + ". Any fewer " \
+                + "would be too few.\n"
+            )
+        elif number_given > max_num:
+            number_given = max_num
+            print(
+                "This has been decreased to " + str(max_num) + ". Any more " \
+                + "would be too many.\n"
+            )
+    except ValueError:
+        number_given = default_num
+        if input_value:
+            print("Invalid ", end="")
+        else:
+            print("No ", end="")
+        print(
+            "value entered. Therefore using the default value " \
+            + str(default_num) + ".\n"
+        )
+    return number_given

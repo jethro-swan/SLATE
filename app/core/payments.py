@@ -57,16 +57,24 @@ def create_payments_db():
 
 def payment(payer_fph, payee_fph, amount, annotation):
 
-    exists, active, payer_currency_fph, owner_fph, m = account_status(payer_fph)
-    if not exists:
+    payer_exists, \
+    payer_active, \
+    payer_currency_fph, \
+    payer_account_owner_fph, \
+    payer_balance, m = account_status(payer_fph)
+    if not payer_exists:
         return "Payer account " + payer_fph + " does not exist"
-    if not active:
+    if not payer_active:
         return "Payer account " + payer_fph + " is inactive"
 
-    exists, active, payee_currency_fph, owner_fph, m = account_status(payer_fph)
-    if not exists:
+    payee_exists, \
+    payee_active, \
+    payee_currency_fph, \
+    payee_account_owner_fph, \
+    payee_balance, m = account_status(payee_fph)
+    if not payee_exists:
         return "Payee account " + payee_fph + " does not exist"
-    if not active:
+    if not payee_active:
         return "Payee account " + payee_fph + " is inactive"
 
     if not re_pvalue.match(str(amount)):
@@ -75,62 +83,28 @@ def payment(payer_fph, payee_fph, amount, annotation):
         return "Accounts " + payer_fph + " and " + payee_fph + " are not in " \
                "the same currency"
 
-    #if debugging:
-    #    print(
-    #        "payment from " + fph_to_hrns(payer_fph) \
-    #        + " to " + fph_to_hrns(payee_fph) \
-    #        + " of " + integer_to_money_format(amount) \
-    #        + " for " + annotation
-    #    )
-
     #--------------------------------------------------------------------------
     # First the balances are adjusted:
+    #
+    payer_balance -= amount
+    payee_balance += amount
     #
     with sqlite3.connect(ENTITIES_DB) as conn:
         cursor = conn.cursor()
         # First the balances are adjusted:
-        #
-        # The payee account is debited:
-        cursor.execute(
-            "SELECT * FROM accounts WHERE entity_fph = ?",
-            (payee_fph,)
-        )
-        account_details = cursor.fetchone()
-        if account_details == None:
-            return "Something very wrong with payee account"
-        payee_balance = account_details[5] + amount
-        cursor.execute(
-            "UPDATE accounts SET account_balance = ? WHERE entity_fph = ?",
-            (payee_balance, payee_fph)
-        )
-        #
-        # The payer account is credited:
-        cursor.execute(
-            "SELECT * FROM accounts WHERE entity_fph = ?",
-            (payer_fph,)
-        )
-        account_details = cursor.fetchone()
-        if account_details == None:
-            return "Something very wrong with payer account"
-        payer_balance = account_details[5] - amount
         cursor.execute(
             "UPDATE accounts SET account_balance = ? WHERE entity_fph = ?",
             (payer_balance, payer_fph)
+        )
+        cursor.execute(
+            "UPDATE accounts SET account_balance = ? WHERE entity_fph = ?",
+            (payee_balance, payee_fph)
         )
         conn.commit()
         cursor.close()
 
     #--------------------------------------------------------------------------
     # Then the payment is recorded in the journal:
-    #
-    #print(
-    #    payer_fph + " (" + fph_to_hrns(payer_fph) + ") > "
-    #    + payee_fph + " (" + fph_to_hrns(payee_fph) + ") | "
-    #    + payer_currency_fph + " (" + fph_to_hrns(payer_currency_fph) + ") | "
-    #    + integer_to_money_format(amount) + " | "
-    #    + annotation
-    #)
-
 
     with sqlite3.connect(PAYMENTS_DB) as conn:
         cursor = conn.cursor()
@@ -174,18 +148,24 @@ def dump_currency_payments(currency_fph, optype="text_table", edtype="fph"):
     currency_hrns = fph_to_hrns(currency_fph)
 
     payment_rows = []
-    payment_rows.append(["payment number",
-                         "payer FPH", "payer HRNS",
-                         "payee FPH", "payee HRNS",
-                         "amount",
-                         "annotation"
-                        ])
+#    payment_rows.append(["payment number",
+#                         "payer FPH",
+#                         "payer HRNS",
+#                         "payee FPH",
+#                         "payee HRNS",
+#                         "amount",
+#                         "annotation"
+#                        ])
 
     with sqlite3.connect(PAYMENTS_DB) as conn:
         cursor = conn.cursor()
         # Read transactions for specified currency:
         cursor.execute(
-            "SELECT * FROM payments WHERE currency_fph = ?",
+            """
+            SELECT payment_id, payer_fph, payee_fph, currency_fph, amount,
+                   annotation
+            FROM payments WHERE currency_fph = ?
+            """,
             (currency_fph,)
         )
         all_payments = cursor.fetchall()
@@ -196,13 +176,16 @@ def dump_currency_payments(currency_fph, optype="text_table", edtype="fph"):
         for payment in all_payments:
             payment_row = []
             p = list(payment)
-            payment_row.append(str(p[0]).zfill(8))       # payment number
-            payment_row.append(p[1])                     # payer FPH
-            payment_row.append(fph_to_hrns(payer_fph))   # payer HRNS
-            payment_row.append(p[2])                     # payee FPH
+            payment_row.append(str(p[0]).zfill(8))   # payment number
+            payment_row.append(p[1])                 # payer FPH
+            payment_row.append(fph_to_hrns(p[1]))    # payer HRNS
+            payment_row.append(p[2])                 # payee FPH
+            payment_row.append(fph_to_hrns(p[2]))    # payee HRNS
             # p[3] currency_fph
-            payment_row.append(str(p[4]//100))           # amount paid
-            payment_row.append(p[5])                     # annotation
+            #payment_row.append(str(p[4]//100))      # amount paid
+            amount_paid = integer_to_money_format(str(p[4]))
+            payment_row.append(amount_paid)          # amount paid
+            payment_row.append(p[5])                 # annotation
             if p[3] == currency_fph:
                 payment_rows.append(payment_row)
                 print(":".join(payment_row))

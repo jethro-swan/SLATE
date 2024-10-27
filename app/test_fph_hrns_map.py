@@ -13,12 +13,17 @@ from core.constants import FNAME_DATETIME_FMT
 #from common import hrns_to_fph, fph_to_hrns
 #from fph_hrns_maps import create_maps, hrns_to_fph, fph_to_hrns
 #from common import dbm_fetch, dbm_store
-from core.fph_hrns_maps import hrns_to_fph, fph_to_hrns, create_maps, update_mapping
+from core.fph_hrns_maps import hrns_to_fph, fph_to_hrns, create_maps
+from core.fph_hrns_maps import update_mapping
 from core.common import nshash
 from core.common import filename_timestamp as timestamp
 #from slate_core import create_maps
 from core.regexp_list import re_fph, re_hrns
 #from test import random_hrns, fake_hrns
+
+from core.display import thin_line, thick_line, title_line, thin_title_line
+from core.display import yN, Yn, get_cli_number_input, pause
+
 
 # ... but, for reasons not yet identified at 2024-08-25, importing from test.py
 # creates havoc via slate_core.py
@@ -49,7 +54,13 @@ create_maps()
 
 print("\nSome randomly-generated HRNS fakes and their corresponding FPH:\n")
 
-N = 100
+N = get_cli_number_input(
+        "How many fake HRNS should be created? ",
+        50, 500, 100
+    )
+
+
+#N = 1000
 l_fph = []
 l_hrns = []
 
@@ -58,18 +69,22 @@ for n in range(N):
     l_hrns.append(hrns)
     fph, m = hrns_to_fph(hrns)
     l_fph.append(fph)
-    print("\t" + fph + " :: " + hrns)
+    print("\t" + fph + " < " + hrns)
 
+thin_line()
+pause()
 print("\nThe same HRNS fakes retrieved from the FPH>HRNS map:\n")
 
 l2_hrns = []
 for fph in l_fph:
     hrns_ = fph_to_hrns(fph)
     l2_hrns.append(hrns_)
-    print("\t" + fph + " :: " + hrns_)
-#    print(hrns_)
+    print("\t" + fph + " > " + hrns_)
 
+thin_line()
+pause()
 print("\nComparing the set of retrieved HRNS fakes with the generated set:\n")
+#pause()
 
 mismatch_found = False
 for hrns in l_hrns:
@@ -79,6 +94,8 @@ for hrns in l_hrns:
 if not mismatch_found:
     print("\tNo mismatch found")
 
+thin_line()
+pause()
 print("\nTesting map updating:\n")
 
 entity_new_hrns = fake_hrns()
@@ -94,3 +111,4 @@ if fph_to_hrns(test_fph) == entity_new_hrns:
     print("\tRe-mapping successful")
 
 print()
+thin_line()

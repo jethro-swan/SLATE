@@ -216,32 +216,23 @@ def entity_is_active(entity_id):
 #==============================================================================
 # Get the entity type:
 
-def get_entity_type(entity_fph):
+def get_entity_type(entity_id):
 
-    if not re_fph.match(entity_fph):
-        return "", entity_fph + " is not an FPH"
+    entity_fph, entity_hrns, entity_type, m = identify_entity(entity_id)
+    if m:
+        return "", "", "", False, m
 
-    with sqlite3.connect(ENTITIES_DB) as conn:
-        cursor = conn.cursor()
-        cursor.execute(
-            """
-            SELECT entity_type FROM entities_common WHERE entity_fph = ?
-            """,
-            (entity_fph,)
-        )
-        result = cursor.fetchone()
-        cursor.close()
-        if result is not None:
-            entity_type = result[0]
-            if entity_type in [
-                                "namespace",
-                                "currency",
-                                "primid",
-                                "secid"
-                                "account"
-                              ]:
-                return entity_type, ""
-        return "", "Type cannot be identified for " + entity_fph
+#    if not re_fph.match(entity_fph):
+#        return "", "Invalid FPH: " + entity_fph
+
+#    entity_fph, \
+#    parent_namespace_fph, \
+#    entity_type, \
+#    active, \
+#    m = get_entity_common_properties(entity_fph)
+
+    return entity_type, m
+
 
 #------------------------------------------------------------------------------
 # MOVE THIS
@@ -268,6 +259,159 @@ def add_account_to_currency(
 
     return
 
+#------------------------------------------------------------------------------
+# This is used only when the primid is created. Subsequently, the primid update
+# functions are used.
+
+def add_primid_specific_properties(
+        primid_fph,
+        primid_realname,
+        primid_email_1,
+        primid_email_2,
+        initial_account_hrns,           # HRNS of initial account
+        initial_account_currency_fph,   # FPH of initial account's currency
+        stewardship_fph,                # FPH for initial stewardship, if any.
+        password,
+        pin,
+        access_token
+    ):
+    errors = ""
+    if not re_fph.match(primid_fph):
+        errors += primid_fph + " is not an FPH\n"
+        return errors
+    etype, m = get_entity_type(primid_fph)
+    if m:
+        errors += m + "\n"
+    if etype != "primid":
+        errors += primid_fph + " is not a primid\n"
+        return errors
+    needed = False
+    insert_str = "INSERT INTO primids (entity_fph = ?, "
+    places_str = "VALUES (?, "
+    values_str = "(entity_fph, "
+    if primid_realname and re_realname.match(primid_realname):
+        insert_str += "primid_realname = ?, "
+        places_str += "?, "
+        values_str += "primid_realname, "
+        needed = True
+    else:
+        errors += primid_realname + " is not a valid name\n"
+    if primid_email_1 and re_email.match(primid_email_1):
+        insert_str += "primid_email_1 = ?, "
+        places_str += "?, "
+        values_str += "primid_email_1, "
+        needed = True
+    else:
+        errors += primid_email_1 + " is not a valid email address\n"
+    if primid_email_2:
+        if re_email.match(primid_email_2):
+            insert_str += "primid_email_2 = ?, "
+            places_str += "?, "
+            values_str += "primid_email_2, "
+            needed = True
+        else:
+            errors += primid_email_2 + " is not a valid email address\n"
+    if password:
+        password_hash = auth_hash(password)
+        insert_str += "password_hash = ?, "
+        places_str += "?, "
+        values_str += "password_hash, "
+        needed = True
+    else:
+        errors += password + " is not a valid password\n"
+    if pin:
+        if re_pin.match(pin):
+            insert_str += "pin = ?, "
+            places_str += "?, "
+            values_str += "pin, "
+            needed = True
+        else:
+            errors += pin + " is not a valid PIN\n"
+    else:
+        errors += "No PIN provided\n"
+    if access_token:
+        if re_access_token.match(access_token):
+            access_token_hash = auth_hash(access_token)
+            insert_str += "access_token_hash = ?, "
+            places_str += "?, "
+            values_str += "access_token_hash, "
+            needed = True
+        else:
+            errors += access_token  + " is not a valid access token\n"
+    else:
+        errors += "No access token provided\n"
+    # Add an initial account:
+    account_created = False
+    accounts_fph_list = []
+    if re_hrns.match(initial_account_hrns):
+        if re_fph.match(initial_account_currency_fph):
+            etype, m = get_entity_type(initial_account_currency_fph)
+            if etype == "currency":
+                account_fph, account_hrns, m = new_account(
+                                                   initial_account_hrns,
+                                                   primid_fph,
+                                                   initial_account_currency_fph
+                                               )
+                if m:
+                    errors += m + "\n"
+                else:
+                    accounts_fph_list.append(account_fph)
+                    accounts_fph_blob = pickle.dumps(accounts_fph_list)
+                    insert_str += "accounts_fph_list ?, "
+                    places_str += "?, "
+                    values_str += "accounts_fph_blob, "
+                    needed = True
+                    account_created = True
+            else:
+                errors += initial_account_currency_fph + " is not a currency\n"
+        else:
+            errors += initial_account_currency_fph + " is not a valid FPH\n"
+    if not account_created:
+        errors += "Account " + initial_account_hrns + " in currency " \
+               + initial_account_currency_fph + " could not be created. " \
+               + "Therefore this agent (primid) currently has no accounts.\n"
+    # Add an initial stewardship if required:
+    if stewardship_fph:
+        if re_fph.match(stewardship_fph):
+            etype, m = get_entity_type(stewardship_fph)
+            if m:
+                errors += m
+            if (etype == "namespace") or (etype == "currency"):
+                # Only if this steward can be added for the specified entity
+                # will this stewardship be added here:
+                m = add_stewards(stewardship_fph, primid_fph) ##############
+                if m:
+                    errors += m
+                    errors += stewardship_fph + " stewardship not added\n"
+                else:
+                    stewardships_fph_blob = pickle.dumps([stewardship_fph])
+                    insert_str += "stewardships_fph_list = ?, "
+                    places_str += "?, "
+                    values_str += "stewardships_fph_blob, "
+                    needed = True
+            else:
+                errors += stewardship_fph + " is " + etype \
+                       + " so has no stewards\n"
+        else:
+            errors += stewardships_fph + " is not an FPH\n"
+    if needed:
+        insert_str += ") "
+        insert_str = insert_str.replace(", ) ", ") ") # remove the final comma
+        places_str += "), "
+        places_str = places_str.replace(", ), ", "), ") # remove the final comma
+        values_str += ")"
+        values_str = values_str.replace(", )", ")") # remove the final comma
+        sqlite_str = insert_str + places_str + values_str
+        print("sqlite_str = " + sqlite_str)
+        print("errors:\n" + errors)
+        with sqlite3.connect(ENTITIES_DB) as conn:
+            cursor = conn.cursor()
+            cursor.execute(sqlite_str)
+            conn.commit()
+            cursor.close()
+    else:
+        errors += "No valid values were provided\n"
+    return errors
 
 #------------------------------------------------------------------------------
 # Update the primid contact details:
@@ -448,6 +592,95 @@ def add_primid_stewardships(
 
 #------------------------------------------------------------------------------
 
+def add_currency_specific_properties(
+        entity_fph,
+        currency_prefix,
+        currency_suffix,
+        accounts_fph_list,
+        stewards_fph_list
+    ):
+    with sqlite3.connect(ENTITIES_DB) as conn:
+        cursor = conn.cursor()
+        cursor.execute(
+            """
+            INSERT INTO currencies (
+                entity_fph,
+                currency_prefix,
+                currency_suffix,
+                stewards_fph_list
+            )
+            VALUES (?, ?, ?, ?)
+            """,
+            (
+                entity_fph,
+                currency_prefix,
+                currency_suffix,
+                stewards_fph_list
+            )
+        )
+        conn.commit()
+        cursor.close()
+
+    return
+
+#------------------------------------------------------------------------------
+
+def add_namespace_specific_properties(
+        namespace_fph,
+        stewards_fph_blob
+    ):
+    with sqlite3.connect(ENTITIES_DB) as conn:
+        cursor = conn.cursor()
+        cursor.execute(
+            """
+            INSERT INTO namespaces (
+                entity_fph,
+                stewards_fph_list
+            )
+            VALUES (?, ?)
+            """,
+            (
+                namespace_fph,
+                stewards_fph_blob
+            )
+        )
+        conn.commit()
+        cursor.close()
+
+    return
+
+#------------------------------------------------------------------------------
+
+def add_account_specific_properties(
+        entity_fph,
+        account_owner_fph,
+        account_currency_fph,
+        account_balance
+    ):
+    with sqlite3.connect(ENTITIES_DB) as conn:
+        cursor = conn.cursor()
+
+        cursor.execute(
+            """
+            INSERT INTO accounts (
+                entity_fph,
+                account_owner_fph,
+                account_currency_fph,
+                account_balance
+            )
+            VALUES (?, ?, ?, ?)
+            """,
+            (
+                entity_fph,
+                account_owner_fph,
+                account_currency_fph,
+                account_balance
+            )
+        )
+        conn.commit()
+        cursor.close()
+
+    return
 
 #------------------------------------------------------------------------------
 
@@ -533,7 +766,8 @@ def namespace_status(namespace_fph):
     return True, active, stewards_list, ""
 
 #==============================================================================
-# A new *primid* is created in the specified namespace.
+# A new primid is created in the specified namespace.
+# An account is created for that primid in the currency specified.
 
 def new_primid(
         username,
@@ -542,27 +776,18 @@ def new_primid(
         email_address_1,
         email_address_2,
         password,
-        pin
+        pin,
+        initial_account_hrns,
+        initial_currency_fph,
+        initial_stewardship_fph
     ):
 
-    #if not re_fph.match(parent_namespace_fph):
-    #    return "", "", "", "Invalid parent namespace: " + parent_namespace_fph
-    errors = ""
+    if not re_fph.match(parent_namespace_fph):
+        return "", "", "", "Invalid parent namespace: " + parent_namespace_fph
 
-    #if re_password.match(password):
-    #    password_hash = auth_hash(password)
-    password_hash = auth_hash(password)
-    #else:
-    #    return "", "", "", "Invalid password provided."
+    if not re_fph.match(initial_currency_fph):
+        return "", "", "", "Invalid currency: " + initial_currency_fph
 
-    if not re_pin.match(pin):
-        return "", "", "", "Invalid PIN provided."
-
-    etype, m = get_entity_type(parent_namespace_fph)
-    if m:
-        return "", "", "", m # parent_namespace_fph is invalid
-    if etype != "namespace":
-        return "", "", "", parent_namespace_fph + " is not a namespace"
     namespace_hrns = fph_to_hrns(parent_namespace_fph)
     primid_hrns = username + "." + namespace_hrns
 
@@ -570,33 +795,24 @@ def new_primid(
         return "", "", "", "collision:  " + primid_hrns
 
     primid_fph, m = hrns_to_fph(primid_hrns)
-    if m:
-        return "", "", "", m
 
-    if not re_realname.match(realname):
-        errors += "Invalid real name \"" + realname + "\" discarded " \
-               + "so the primid has been created without a real name.\n"
-        primid_realname = ""
-
-    # The *primid* cannot be created if no valid primary email address has been
-    # provided:
-    if not email_address_1:
-        return "", "", "", "No email address provided"
     if not re_email.match(email_address_1):
-        return "", "", "", "Invalid entry: primary email address"
+        return  "", "", "", "Invalid address  " + email_address_1 \
+                + " so primid cannot be created."
 
-    # If an invalid secondary email address has been provided it is discarded
-    # and the *primid* is created with only a primary email address:
     if email_address_2:
         if not re_email.match(email_address_2):
-            errors += "Invalid email address " + email_address_2 \
-                   + " has been discarded.\n"
-            email_address_2 = ""
+            m = "Invalid email address " + email_address_2 + " discarded"
 
-    accounts_fph_blob = pickle.dumps([])
+    password_hash = auth_hash(password)
 
-    # The access authentication details are now added:
+    account_fph, account_hrns, m = new_account(
+                                       initial_account_hrns,
+                                       primid_fph,
+                                       initial_currency_fph
+                                   )
 
+    accounts_fph_list = pickle.dumps([account_fph])
     stewardships_fph_list = pickle.dumps([])
 
     access_token = generate_access_token()
@@ -609,37 +825,17 @@ def new_primid(
         True
     )
 
-    with sqlite3.connect(ENTITIES_DB) as conn:
-        cursor = conn.cursor()
-        cursor.execute(
-            """
-            INSERT INTO primids (
-                entity_fph,
-                primid_realname,
-                primid_email_1,
-                primid_email_2,
-                accounts_fph_list,
-                stewardships_fph_list,
-                password_hash,
-                pin,
-                access_token_hash
-            )
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-            """,
-            (
-                primid_fph,
-                realname,
-                email_address_1,
-                email_address_2,
-                pickle.dumps([]),
-                pickle.dumps([]),
-                auth_hash(password),
-                pin,
-                auth_hash(access_token),
-            )
-        )
-        conn.commit()
-        cursor.close()
+    add_primid_specific_properties(
+        primid_fph,
+        realname,
+        email_address_1,
+        email_address_2,
+        accounts_fph_list,
+        stewardships_fph_list,
+        password_hash,
+        pin,
+        access_token_hash
+    )
 
     return primid_fph, primid_hrns, access_token, m
 
@@ -708,7 +904,7 @@ def new_namespace(
 
     namespace_fph, m = hrns_to_fph(namespace_hrns)
 
-    #stewards_fph_blob = pickle.dumps(list([initial_steward_fph]))
+    stewards_fph_blob = pickle.dumps(list([initial_steward_fph]))
 
     add_entity_common_properties(
         namespace_fph,
@@ -717,23 +913,10 @@ def new_namespace(
         True
     )
 
-    with sqlite3.connect(ENTITIES_DB) as conn:
-        cursor = conn.cursor()
-        cursor.execute(
-            """
-            INSERT INTO namespaces (
-                entity_fph,
-                stewards_fph_list
-            )
-            VALUES (?, ?)
-            """,
-            (
-                namespace_fph,
-                pickle.dumps([initial_steward_fph])
-            )
-        )
-        conn.commit()
-        cursor.close()
+    add_namespace_specific_properties(
+        namespace_fph,
+        stewards_fph_blob
+    )
 
     return namespace_fph, namespace_hrns, ""
 
@@ -774,32 +957,17 @@ def new_currency(
     add_entity_common_properties(
         currency_fph,
         parent_namespace_fph,
-        "currency",             # entity type
-        True                    # active flag
+        "currency",
+        True
     )
 
-    # Now add currency specific properties:
-    with sqlite3.connect(ENTITIES_DB) as conn:
-        cursor = conn.cursor()
-        cursor.execute(
-            """
-            INSERT INTO currencies (
-                entity_fph,
-                currency_prefix,
-                currency_suffix,
-                stewards_fph_list
-            )
-            VALUES (?, ?, ?, ?)
-            """,
-            (
-                currency_fph,
-                currency_prefix,
-                currency_suffix,
-                pickle.dumps([initial_steward_fph])
-            )
-        )
-        conn.commit()
-        cursor.close()
+    add_currency_specific_properties(
+        currency_fph,
+        currency_prefix,
+        currency_suffix,
+        stewards_fph_list,
+        True
+    )
 
     return currency_fph, currency_hrns, ""
 
@@ -835,29 +1003,12 @@ def new_account(
         True
     )
 
-    # Now add account specific properties:
-    with sqlite3.connect(ENTITIES_DB) as conn:
-        cursor = conn.cursor()
-
-        cursor.execute(
-            """
-            INSERT INTO accounts (
-                entity_fph,
-                account_owner_fph,
-                account_currency_fph,
-                account_balance
-            )
-            VALUES (?, ?, ?, ?)
-            """,
-            (
-                account_fph,
-                agent_fph,      # Owner may be either *primid* or *secid"
-                currency_fph,
-                0
-            )
-        )
-        conn.commit()
-        cursor.close()
+    add_account_specific_properties(
+        account_fph,
+        agent_fph,      # Owner may be either *primid* or *secid"
+        currency_fph,
+        0
+    )
 
     add_account_to_currency(
         account_fph,
@@ -868,6 +1019,218 @@ def new_account(
         return "", "", m
     else:
         return account_fph, account_hrns, ""
+
+#==============================================================================
+# The initial (minimal) set of entities created in a SLATE node are constrained
+# by dependency rules similar to those in NESTS although slightly simpler
+# because
+# (a) there atr two classes of agent (primid and secid);
+# (b) there is only one namespace separator (".");
+# (c) only the Latin alphabet is used; and
+# (b) there is only one class of currency (money).
+# (see https://nests.lrc.org.uk/entity_dependencies.html
+#
+# Every SLATE or NESTS installation must be provided with a minimal set of
+# pre-existing entities:
+#
+# - A namespace to be the parent both of the initial agents and the initial
+#   currencies. For simplicity, this is given the name "global".
+#
+#   A primid (primary identity) to serve as the initial steward of the first
+#   namespace or currency created after installation.
+#
+#   This primid is also the initial steward of all of the the geographical root
+#   namespaces create during installation. It belongs (at least initially) to
+#   the system adminstrator who creates the NESTS hub.
+#
+#   The default name (HRNS) of this primid is "gaia.global".
+#
+# - A currency (global in scope) which can be can be used to create the initial
+#   accounts for the first new primids created. The default name (HRNS) of this
+#   currency is "hours.global" and its default initial steward's HRNS for this
+#   is "gaia.global".
+#
+# - When the initial primid "gaia.global" is created, an account with HRNS
+#   "hours.gaia.global" is created for it in the currency "hours.global" (the
+#   default currency for identities created within the "global" namespace).
+
+def create_seed_entities():
+
+    # A note on namespaces:
+    #
+    # The name of every entity, of whatever type, is contained within a
+    # namespace.
+    #
+    # Namespaces fall into three categories:
+    # (1) The term *namespace* is generally used to mean a non-terminal
+    #     namespace that can contain the name of any type of entity.
+    # (2) The name of an agent (whether a *primid* or a *secid*) identifies a
+    #     special type of namespace (a "terminal" *namespace*) that can contain
+    #     only the names of *accounts*.
+    # (3) A *root namespace* is one the name of which is not contained within
+    #     a named *namespace*. Such *root namespace* all share an unnamed
+    #     namespace ("") which contains only the names of *root namespaces*,
+    #     which include (typically) geographical containers (such as "uk",
+    #     "ca", "es", "de", "fr", etc.) or containers having a different
+    #     significance.
+    #     The first *root namespace* created (the "seed namespace") is named
+    #     "global".
+
+    # Seed entities (see https://nests.lrc.org.uk/entity_dependencies.html)
+    # by HRNS:
+    root_hrns = ""          # The nameless namespace from which all others
+                            # ramify.
+    seed_namespace_hrns     = "global"
+                            # parent namespace:     ""
+                            # initial steward:      "gaia.global"
+
+    seed_currency_hrns      = "hours.global"
+    seed_currency_fph, m    = hrns_to_fph(seed_currency_hrns)
+    seed_currency_parent_ns = "global"
+                            # initial steward:      "gaia.global"
+
+    seed_primid_hrns        = "gaia.global"
+    seed_primid_fph, m      = hrns_to_fph(seed_primid_hrns)
+    seed_primid_parent_ns   = "global"
+                            # initial account:      "hours.gaia.global"
+                            # stewardships:         "global" (namespace)
+                            #                       "hours.global" (currency)
+
+    seed_account_hrns       = "hours.gaia.global"
+    seed_account_fph, m     = hrns_to_fph(seed_account_hrns)
+    seed_account_parent_ns  = "gaia.global"
+                            # owned by:             "gaia.global"
+                            # in currency:          "hours.global"
+
+    # Seed entities by FPH:
+    root_fph = nshash("")   # The nameless namespace from which all others
+                            # ramify. This has already been added to the
+                            # FPH>HRNS map (at the point of its creation).
+                            #
+                            # The seed entities are now mapped to their FPH and
+                            # added to the FPH>HRNS map:
+    seed_namespace_fph, m   = hrns_to_fph(seed_namespace_hrns)
+    seed_currency_fph, m    = hrns_to_fph(seed_currency_hrns)
+    seed_primid_fph, m      = hrns_to_fph(seed_primid_hrns)
+    #seed_acct_fph, m        = hrns_to_fph(seed_account_hrns)
+
+    # Every *namespace* or *currency* needs a set of stewards. At this point
+    # only one *primid* ("gaia.global") exists so, for the time being, this
+    # must serve as the sole steward for the "global" *namespace* and the
+    # "hours.global" *currency*.
+    stewards_fph_list       = [seed_primid_fph]
+    stewards_fph_blob       = pickle.dumps(stewards_fph_list)
+    #
+    # The these stewardships must be added to the seed *primid* ("gaia.global"):
+    stewardships_fph_list   = [seed_namespace_hrns, seed_currency_hrns]
+    stewardships_fph_blob   = pickle.dumps(stewardships_fph_list)
+    #
+    # (These FPH lists are saved in SQLite as blobs, for which reason they must
+    # be serialized.)
+
+    # The seed *account* ("hours.gaia.global") is in the seed *currency*
+    # ("hours.global"):
+    account_currency_fph    = seed_currency_fph
+    # An *account* can obviously have only one *currency*, so this does not
+    # have to be saved as a serialized list.
+    #
+    # At this point, the seed *currency* ("hours.global") has only one
+    # *account* ("hours.gaia.global"):
+    currency_accts_fph_list = [seed_account_fph]
+    currency_accts_fph_blob = pickle.dumps(currency_accts_fph_list)
+
+    # (In due course, the default values for the follwing will be read from a
+    # configuration file.)
+    sa_realname             = "Gaia"
+    sa_email_1              = "gaia@lrc.org.uk"
+    sa_email_2              = ""
+    sa_password             = "Gl0balM3ltd0wn"
+    #sa_password_hash        = auth_hash(sa_password)
+    sa_pin                  = "123456"
+    sa_access_token         = "1a1b2c3d5e8f13e21f34d55c89b144ff"
+    #sa_access_token_hash    = auth_hash(sa_access_token)
+    # Seed primid's initial account:
+    #sa_account_hrns         = "hours.gaia.global"
+
+    sa_account_currency_fph = seed_currency_fph
+    #seed_primid_accts_fph, m = hrns_to_fph(seed_primid_acct_hrns)
+    sa_initial_stwrdshp_fph = seed_namespace_fph
+    sa_accts_fph_list       = [seed_account_fph]
+    sa_accts_fph_blob       = pickle.dumps(sa_accts_fph_list)
+
+    # NB  There is no need for a seed *secid*
+
+    # First the common proprties entries are created:
+
+    add_entity_common_properties(
+        seed_primid_fph,
+        nshash(seed_primid_parent_ns),
+        "primid",
+        True
+    )
+
+    add_entity_common_properties(
+        seed_currency_fph,
+        nshash(seed_currency_parent_ns),
+        "currency",
+        True
+    )
+
+    add_entity_common_properties(
+        seed_namespace_fph,     # NB  The namespace "global" is a special case
+        root_fph,               #     in that it has no parent namespace.
+        "namespace",
+        True
+    )
+
+    add_entity_common_properties(
+        seed_account_fph,
+        nshash(seed_account_parent_ns),
+        "account",
+        True
+    )
+
+    # Then the type-specific properties are added:
+
+    add_primid_specific_properties(
+        seed_primid_fph,
+        sa_realname,
+        sa_email_1,
+        sa_email_2,
+        seed_account_hrns,
+        seed_currency_fph,
+        seed_namespace_fph,
+        sa_password,
+        sa_pin,
+        sa_access_token
+    )
+
+    add_currency_specific_properties(
+        seed_currency_fph,
+        "",
+        "h",
+        currency_accts_fph_blob,
+        stewards_fph_blob
+    )
+
+    add_namespace_specific_properties(
+        seed_namespace_fph,
+        stewards_fph_blob
+    )
+
+    add_account_specific_properties(
+        seed_account_fph,
+        seed_primid_fph,
+        seed_currency_fph,
+        0
+    )
+
+
+
+#==============================================================================
+#def get_currency_hrns(currency_fph):
+#    return fph_to_hrns(currency_fph)
+
 
 #==============================================================================
 def get_currency_name(currency_fph):
@@ -899,6 +1262,49 @@ def primid_update_email(primid_fph, new_email):
 def primid_update_login(primid_fph, new_password, new_pin):
 
     return new_access_token, ""
+
+
+#==============================================================================
+# A set of "pseudo-TLD" root namespaces, each having the same null parent
+# nameaspace ("": root_fph) and the same initial steward ("gaia.global":
+# seed_primid_fph):
+
+def create_quasitld_set(full = False, display = False):
+
+    if full:
+        cctld_list_here = cctld_list
+    else:
+        cctld_list_here = cctld_reduced_list
+
+    # This is a crude progress counter to indicate the sequence in which random
+    # entities are created or an HRNS collision detected.
+    progress_count = 80
+
+    root_fph = nshash("")
+    seed_primid_fph = nshash("gaia.global")
+    for tld in cctld_list_here:
+        namespace_fph, namespace_hrns, m = new_namespace(
+                                               tld,
+                                               root_fph,
+                                               seed_primid_fph
+                                           )
+        if debugging:
+            message = ""
+            if m:
+                message = " | " + m
+            if display:
+                print(namespace_fph + " > " + namespace_hrns + message)
+            else:
+                sys.stdout.write(".")
+                sys.stdout.flush()
+                progress_count -= 1
+                if progress_count == 0:
+                    progress_count = 80
+                    sys.stdout.write("\n")
+                    sys.stdout.flush()
+
+    if display:
+        print("\n" + "="*160 + "\n")
 
 
 #==============================================================================
@@ -1006,6 +1412,91 @@ def list_all_namespaces(root_namespace_fph):
     return namespace_fph_list # list
 
 #==============================================================================
+# Get the entity type:
+#def get_entity_type(entity_fph):
+#
+#    if not re_fph.match(entity_fph):
+#        return "", "Invalid FPH: " + entity_fph
+#
+#    entity_fph = "'" + entity_fph + "'" # wrapped to enable SQLite to accept it.
+#
+#    with sqlite3.connect(ENTITIES_DB) as conn:
+#        cursor = conn.cursor()
+#        cursor.execute(
+#            """
+#            SELECT entity_type FROM entities_common WHERE entity_fph = ?
+#            """,
+#            (entity_fph,)
+#        )
+#        result = cursor.fetchone()
+#        cursor.close()
+#    entity_type = result[0] # entity_type
+#    if entity_type:
+#        return entity_type, ""
+#    else:
+#        return "", "Entity type unidentifiable"
+
+#==============================================================================
+
+#def account_status(account_fph): # returns: exists (boolean), active (boolean),
+#                                 # currency (FPH), owner (FPH), error message
+#    if not re_fph.match(account_fph):
+#        return False, False, "", "", 0, "Invalid FPH: " + account_fph
+#
+#    account_fph = "'" + account_fph + "'" # wrapped to enable SQLite to accept it.
+#
+#    entity_fph, \
+#    parent_namespace_fph, \
+#    entity_type, \
+#    active, \
+#    m = get_entity_common_properties(account_fph)
+
+
+
+
+
+#    with sqlite3.connect(ENTITIES_DB) as conn:
+#        cursor = conn.cursor()
+#        cursor.execute(
+#            """
+#            SELECT entity_type, account_owner_fph, account_currency_fph,
+#                   account_balance, active
+#            FROM accounts WHERE entity_fph = ?
+#            """,
+#            (account_fph,)
+#        )
+#        result = cursor.fetchone()
+#        cursor.close()
+#    if result is not None:
+#        entity_type = result[0]
+#        owner_fph = result[1]
+#        currency_fph = result[2]
+#        balance = result[3]
+#        active = result[4]
+#    else: # no record for account_fph
+#        return False, False, "", "", 0, "Account not found"
+#
+#    if not re_fph.match(owner_fph):
+#        return False, False, "", "", 0, "Invalid owner FPH: " + owner_fph
+#
+#    if not re_fph.match(currency_fph):
+#        return False, False, "", "", 0, "Invalid currency FPH: " + currency_fph
+#
+#    if not entity_type == "account":
+#        return False, False, "", "", 0, account_fph + " is not an account"
+#
+#    if not active:
+#        return True, False, currency_fph, owner_fph, balance, \
+#               "Account " + account_fph + " inactive"
+#    else:
+#        return True, True, currency_fph, owner_fph, balance, ""
+
+
+
+
+
+
+#==============================================================================
 # List all currencies named within the specified namespace:
 
 def list_currencies_in_namespace(namespace_fph = ""):
@@ -1100,7 +1591,7 @@ def identify_entity(entity_identifier): # HRNS or FPH
         else:
             return "", "", "", "Entity " + entity_hrns + " does not exist"
     else: # this is not an entity
-        return "", "", "", entity_identifier + " is not an entity"
+        return "", "", "", entity_hrns + " is not an entity"
 
 #==============================================================================
 # An entity may have several stewards (primids) and a primid may have several
@@ -1278,7 +1769,7 @@ def list_stewards(entity_fph):
     return stewards_fph_list, ""
 
 #------------------------------------------------------------------------------
-# List stewardships of a *primid*:
+# List stewardships of aprimid:
 
 def list_stewardships(primid_fph):
 
@@ -1301,6 +1792,127 @@ def list_stewardships(primid_fph):
 
     return stewardships, ""
 
+
+#==============================================================================
+# Authentication and login managemenet:
+
+def register_authenticated_login(agent_fph): # (agent may be primid or secid)
+    if not re_fph.match(agent_fph):
+        return False, "", agent_fph + " is not an FPH"
+    entity_type , m = get_entity_type(agent_fph)
+    if entity_type == "secid":
+        primid_fph = get_primid(agent_fph)
+        login_id_fph = agent_fph
+    elif entity_type == "primid":
+        primid_fph = agent_fph
+        login_id_fph = agent_fph
+    else:
+        return False, "", agent_fph + " is FPH of neither primid nor secid"
+    with sqlite3.connect(ENTITIES_DB) as conn:
+        cursor = conn.cursor()
+        cursor.execute(
+            """
+            INSERT INTO logins (primid_fph, login_id_fph, login_authenticated)
+            VALUES (?, ?, ?)
+            """,
+            (primid_fph, login_id_fph, True)
+        )
+        conn.commit()
+        cursor.close()
+    return primid_fph, login_id_fph, "" # The login_id_fph may be either that
+                                        # of the primid or that of a secid
+                                        # acting as an alias of it.
+
+
+#------------------------------------------------------------------------------
+def deregister_authenticated_login(agent_fph):
+    if not re_fph.match(agent_fph):
+        return False, "", agent_fph + " is not an FPH"
+    entity_type , m = get_entity_type(agent_fph)
+    if entity_type == "secid":
+        primid_fph = get_primid(agent_fph)
+        login_id_fph = agent_fph
+    elif entity_type == "primid":
+        primid_fph = agent_fph
+        login_id_fph = agent_fph
+    else:
+        return False, "", "", agent_fph + " is FPH of neither primid nor secid"
+    with sqlite3.connect(ENTITIES_DB) as conn:
+        cursor = conn.cursor()
+        cursor.execute("DELETE FROM login WHERE agent_fph = ?", (agent_fph,))
+        conn.commit()
+        cursor.close()
+    #return primid_fph, login_id_fph
+    return True, primid_fph, login_id_fph, ""
+
+
+#------------------------------------------------------------------------------
+def check_authenticated_login(agent_fph):
+    if not re_fph.match(agent_fph):
+        return False, "", "", agent_fph + " is not an FPH"
+    entity_type , m = get_entity_type(agent_fph)
+    if entity_type == "secid":
+        primid_fph = get_primid(agent_fph)
+        login_id_fph = agent_fph
+    elif entity_type == "primid":
+        primid_fph = agent_fph
+        login_id_fph = agent_fph
+    else:
+        #return False
+        return False, "", "", agent_fph + " is FPH of neither primid nor secid"
+    with sqlite3.connect(ENTITIES_DB) as conn:
+        cursor = conn.cursor()
+        cursor.execute(
+            """
+            SELECT login_authenticated FROM login WHERE agent_fph = ?
+            """,
+            (primid_fph,)
+        )
+        result = cursor.fetchone()
+        login_authenticated = result[0]
+        #login_id_fph = result[1]
+    return login_authenticated, primid_fph, login_id_fph, ""
+
+
+
+#------------------------------------------------------------------------------
+
+def get_auth_data(primid_fph):
+
+    auth_dict = {}
+    auth_dict["password_hash"] = ""
+    auth_dict["pin"] = ""
+    auth_dict["access_token_hash"] = ""
+
+    if not re_fph.match(primid_fph):
+        return auth_dict, primid_fph + " is not an FPH"
+
+    entity_type, m = get_entity_type(primid_fph)
+    if m:
+        return auth_dict, m
+    #print("entity_type = " + entity_type)
+    if entity_type != "primid":
+        return auth_dict, primid_fph + " is not a primid"
+
+    with sqlite3.connect(ENTITIES_DB) as conn:
+        cursor = conn.cursor()
+        cursor.execute(
+            """
+            SELECT password_hash, pin, access_token_hash
+            FROM primids WHERE entity_fph = ?
+            """,
+            (primid_fph,)
+        )
+#        auth_dict = {}
+        result = cursor.fetchone()
+#    if result[0] not in ["primid", "secid"]:
+#        return {}, primid_fph + " is not an FPH"
+#    auth_dict["entity_type"] = result[0]
+    auth_dict = {}
+    auth_dict["password_hash"] = result[0]
+    auth_dict["pin"] = result[1]
+    auth_dict["access_token_hash"] = result[2]
+    return auth_dict, ""
 
 
 #==============================================================================
@@ -1354,30 +1966,6 @@ def list_active_namespaces(ancestor_namespace_identifier = ""):
 #            if namespace_hrns.replace("." + ancestor_hrns, "") != "":
 #                namespace_fph_list.append(result[0])
     return return_fph_list, ""
-
-
-#==============================================================================
-# Get the *primid* to whicha a *secid* belongs:
-
-def get_primid(secid_id):
-    secid_fph, secid_hrns, entity_type, m = identify_entity(secid_id)
-    if m:
-        return "", m
-    with sqlite3.connect(ENTITIES_DB) as conn:
-        cursor = conn.cursor()
-        cursor.execute(
-            """
-            SELECT primid_fph FROM primids WHERE entity_fph = ?
-            """,
-            (secid_fph,)
-        )
-        result = cursor.fetchone()
-        if result is not None:
-            secid_fph = result[0]
-            return secid_fph, ""
-        else:
-            return "", "No primid was found for " + secid_id
-
 
 
 #==============================================================================

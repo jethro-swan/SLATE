@@ -46,7 +46,7 @@ def list_password_characters():
            + "   lower case letters\n" \
            + "   numbers\n" \
            + "   !#$%&()*+,-./:;<=>?@[\]^_`{|}~\n" \
-           + "and must contain at least one of each type. " \
+           + "and must contain at least one of each type."  \
            + "It must be at least 16 characters in length."
 
 # Regular expression to validate such a password:

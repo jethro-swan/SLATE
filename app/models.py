@@ -11,6 +11,10 @@ from app.core.fph_hrns_maps import hrns_to_fph
 #from app.core.auth import set_web_password_hash, authenticate_web_access
 from app.core.auth import authenticate_web_access
 
+from app.core.slate_core import register_authenticated_login
+from app.core.slate_core import deregister_authenticated_login
+from app.core.slate_core import check_authenticated_login
+
 # Flask components: -----------------------------------------------------------
 
 from flask import Flask, Response
@@ -42,27 +46,39 @@ class User(UserMixin):
         return self.id
 
     def is_authenticated(self):
-        print("is_authenticated: self.id = " + self.id)
-        fpath = fph_to_dpath(self.id) + "/.authenticated"
-        print("is_authenticated: fpath = " + fpath)
-        if os.path.exists(fpath):
-            return True
-        else:
-            return False
+        #print("is_authenticated: self.id = " + self.id)
+        #fpath = fph_to_dpath(self.id) + "/.authenticated"
+        #print("is_authenticated: fpath = " + fpath)
+        #if os.path.exists(fpath):
+        #    return True
+        #else:
+        #    return False
+        return check_authenticated_login(self)
+
+    # When logged in (always authenticated as primid), it is necessary to know
+    # as which specific identity and whether as a primid or a secid:
 
     def mark_authenticated(self):
-        print("mark_authenticated: self.id = " + self.id)
-        fpath = fph_to_dpath(self.id) + "/.authenticated"
-        print("mark_authenticated: fpath = " + fpath)
-        if not os.path.exists(fpath):
-            Path(fpath).touch()
+        #print("mark_authenticated: self.id = " + self.id)
+        #fpath = fph_to_dpath(self.id) + "/.authenticated"
+        #print("mark_authenticated: fpath = " + fpath)
+        #if not os.path.exists(fpath):
+        #    Path(fpath).touch()
+        primid_fph, login_id_fph, m = register_authenticated_login(self)
+        return primid_fph, login_id_fph
 
     def mark_unauthenticated(self):
-        print("mark_unauthenticated: self.id = " + self.id)
-        fpath = fph_to_dpath(self.id) + "/.authenticated"
-        print("mark_unauthenticated: fpath = " + fpath)
-        if os.path.exists(fpath):
-            os.remove(fpath)
+        #print("mark_unauthenticated: self.id = " + self.id)
+        #fpath = fph_to_dpath(self.id) + "/.authenticated"
+        #print("mark_unauthenticated: fpath = " + fpath)
+        #if os.path.exists(fpath):
+        #    os.remove(fpath)
+        deregister_authenticated_login(self)
+        #primid_fph, login_id_fph, m = deregister_authenticated_login(self)
+        #return primid_fph, login_id_fph
+
+
+
 
 
 #@login.user_loader

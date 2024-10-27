@@ -1,0 +1,25 @@
+2024-10-21:
+
+Move 
+	def add_account_to_currency( ) 
+to within 
+	def new_account( )
+
+
+The function
+	add_primid_specific_properties( )
+can probably be moved to within
+	def new_primid( )
+
+Change
+	def add_primid_stewardships(primid_fph, stewardship_fph_to_add)	
+to
+	def add_stewardship(primid_identifier, entity_identifier)
+because all stewardships are held only by *primid*s for a single*namespace* or *currency*.
+
+
+
+
+
+
+

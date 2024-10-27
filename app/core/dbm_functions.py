@@ -43,8 +43,11 @@ def dbm_keys(dbm_file):
 
 # List the key:value pairs in the specified DBM file:
 def dbm_list_entries(dbm_file):
+    dbm_entries = {}
     with dbm.open(dbm_file, 'r') as db:
         for k in db.keys():
             key = k.decode("utf-8")
             value = db[k].decode("utf-8")
-            print(key + " \t" + value)
+            dbm_entries[key] = value
+            #print(key + " \t" + value)
+    return dbm_entries
