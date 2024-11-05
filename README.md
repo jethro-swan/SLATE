@@ -93,10 +93,10 @@ administrator**.
 Each **account** has an associated journal in which all _payments_ and
 _receipts_ are recorded.
 
-Each **agent** (_agent_) has access to at least one **account** (generally
-more), and a separate ledger for each of these. The **account**s' ledgers list
-all transaction (_payments_ and _receipts_). These ledgers each comprise fields
-listing
+Each **primd** or **secid** (_agent_) has access to at least one **account** 
+(generally more), and a separate ledger for each of these. The **account**s' 
+ledgers list all transaction (_payments_ and _receipts_). These ledgers each 
+comprise fields listing
   - the name of the other **account** (whether a _payer_ or a _payee_)
   - the _amount_ paid or received (+ or -)
   - the _balance_ following this payment
@@ -107,8 +107,8 @@ For each payment made
   - the _payee's_ balance  in this **currency** is increased by _amount_
   - the payment is recorded in the this **currency**'s _journal_
 
-Each **agent** (_agent_) can export its own **accounts**' ledgers, each
-**account** being in a distinct **currency**.
+Each **primd** or **secid** (_agent_) can export its own **accounts**' ledgers,
+each **account** being in a distinct **currency**.
 
 ----
 ## The agent interface
@@ -116,14 +116,15 @@ Each **agent** (_agent_) can export its own **accounts**' ledgers, each
 The _SLATE_ screens form a subset those used in _NESTS_, with minimal, if any,
 modification.
 
-### Agent screens
+### Primid screens
 
   - **Registration**  
-    Once registered, the **agent** has access to (an **account** in) every
-    **currency** within that **namespace** to which the _stewards_ of both
-    have authorized access (a matter of policy).
+    Once registered, the **primid** has access to an **account** in every
+    **currency** for which it has been authorized (by the _stewards_ of both
+    the **currency** and the **namespace** in which it is anchored (a matter
+    of policy).
     - **namespace** (selected from a drop-down list)
-    - **agent** name (entered in a text box)
+    - **primid** name (entered in a text box)
     - real name (entered in a text box) (optional)
     - _email address_(es) (entered in a text box)
     - password (entered in a text box)
@@ -156,6 +157,17 @@ modification.
 
 This screen can be reached either when already logged in or via a _password
 reset_ received by email.
+
+### Secid screens
+
+These are accessible only by the **primid** to which a **secid** belongs. They 
+allow the following:
+  - Creation of a **secid** (where authorized by the _stewards_ of the
+    **namespace** in which it is to be anchored.
+  - Suspension of a **secid**
+  - Re-enabling a **secid**
+  - Requesting deletion of a **secid** by a _steward_ of the **namespace** in
+    which it is anchored.
 
 ### Namespace stewards
 
