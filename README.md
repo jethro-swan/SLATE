@@ -14,19 +14,28 @@ those of the fully-nested (and much more capable) _NESTS_ software.
 ### Entity categories
 
 There are four categories of _entity_:
-  - **namespaces** (a.k.a. _network_ or _island_) in which _names_ of all _entities_ (including other **namespaces**) are contained.
-  - **primary identities** (**primds** - which anchor an _agent_ both within a **namespace** and to the real world).
-  - **secondary identities** (**secids** - aliases of **primids** - which can anchor that same _agent_  within any number of **namespace**s).
-  - **currencies** (limited to scalar values of type _money_, in contrast to those supported by _NESTS_) - a set of **accounts**.
-  - **accounts** (_variables_) each of which is a member of one **currency** (set).
+  - **namespaces** (a.k.a. _network_ or _island_) in which _names_ of all
+    _entities_ (including other **namespaces**) are contained.
+  - **primary identities** (**primds** - which anchor an _agent_ both
+    within a **namespace** and to the real world).
+  - **secondary identities** (**secids** - aliases of **primids** - which
+    can anchor that same _agent_  within any number of **namespace**s).
+  - **currencies** (limited to scalar values of type _money_, in contrast
+    to those supported by _NESTS_) - a set of **accounts**.
+  - **accounts** (_variables_) each of which is a member of one **currency**
+    (set).
 
 ### Agent categories
 
 There are four categories of _agent_:
-  - A general _agent_ - the set to which _all_ **primids** and **secids** belong.[^2]
-  - A **namespace**'s _steward_, a **primid** assigned this role either by another **primd** already holding it or by a _global system administrator_.
-  - A **currency**'s _steward_, a **primid** assigned this role either by another **primd** already holding it or by a _global system administrator_.
-  - A _global system administrator_, assigned this role at setup or by an existing _global system administrator_.
+  - A general _agent_ - the set to which _all_ **primids** and **secids**
+    belong.
+  - A **namespace**'s _steward_, a **primid** assigned this role either by
+    another **primd** already holding it or by a _global system administrator_.
+  - A **currency**'s _steward_, a **primid** assigned this role either by
+    another **primd** already holding it or by a _global system administrator_.
+  - A _global system administrator_, assigned this role at setup or by an
+    existing _global system administrator_.
 
 ----
 ### Internal representation
@@ -52,13 +61,13 @@ As in _NESTS_, each entity (**namespace**, **currency**, **agent** or
 **account**) is identified by a human-readable name string (HRNS) placing it
 within a **namespace**.
 
-Each **namespace** contains the names of **namespaces**, **currencies** and
-**agents** but, in contrast to _NESTS_, the names of **accounts** are contained
-only within the _private namespaces_ of the **agent** to which the **accounts**
-belong. This provides a sufficient entry point into a network fully compatible
-with [open money](https://openmoney.github.io/specification) (although notably
-lacking provision for the construction of the rich governance system that
-_NESTS_ is intended to support).
+Each **namespace** contains the names of **namespaces**, **currencies**, 
+**primds** and **secids** and, as in _NESTS_, the names of **accounts** may 
+contained within any **namespace** (subject to authorization by its
+_stewards_. This provides a sufficient entry point into a network fully 
+compatible with [open money](https://openmoney.github.io/specification) 
+(although notably lacking provision for the construction of the rich 
+governance system that _NESTS_ is intended to support).
 
 The compatibility of the _entity_ names is sufficient to enable convenient and
 complete migration from _SLATE_ to _NESTS_ in due course.
@@ -110,15 +119,17 @@ modification.
 ### Agent screens
 
   - **Registration**  
-    Once registered, the **agent** has access to (an **account** in) every **currency** within that **namespace**.
+    Once registered, the **agent** has access to (an **account** in) every
+    **currency** within that **namespace** to which the _stewards_ of both
+    have authorized access (a matter of policy).
     - **namespace** (selected from a drop-down list)
     - **agent** name (entered in a text box)
     - real name (entered in a text box) (optional)
-    - _email address_ (entered in a text box)
+    - _email address_(es) (entered in a text box)
     - password (entered in a text box)
     - PIN (entered in a text box)
   - **Login recovery**
-    A recovery link is sent by email.
+    A recovery link is sent by email.[^2]
     - _email address_ or **agent name** (entered in a text box)
   - **Payment**
     Each _payment_ is recorded in the **currency**'s journal
@@ -176,18 +187,22 @@ see the following additional links in its _home screen_:
   - _add steward_
   - _add new **currency**_
   - _confirm pending registration_
-  - _suspend **agent**_
-  - _re-enable **agent**_
-  - _export journal_
-  - _post reversing transaction_
+  - _suspend **primd** or **secid**_
+  - _re-enable **primd** or **secid**_
+  - _export journal_ (the record of payments)
+  - _post a reversing transaction_
 
 Therefore the following additional screens are required:
   - **Add steward** for this **currency**
     - _steward_ **name**
-  - **Suspend agent**
-    - **agent** name (entered in a text box)
-  - **Re-enable agent**
-    - **agent** name (selected from drop-down list)
+  - **Suspend primid**
+    - **primid** name (entered in a text box)
+  - **Re-enable primid**
+    - **primid** name (selected from drop-down list)
+  - **Suspend secid**
+    - **secid** name (entered in a text box)
+  - **Re-enable secid**
+    - **secid** name (selected from drop-down list)
   - **Export journal**
     - **currency** name (selected from drop-down list)
   - **Post reversing transaction**[^3]
@@ -197,24 +212,28 @@ Therefore the following additional screens are required:
 
 ### Global administrators
 
-When logged in, any **agent** registered as a _global administrator_ will see
+When logged in, any **primid** registered as a _global administrator_ will see
 the following additional links in its **home screen**:
   - _add new **namespace**_
   - _add global administrator_
   - _confirm pending registration_
-  - _suspend **agent**_
-  - _re-enable **agent**_
+  - _suspend **primid**/**secid**_
+  - _re-enable **primid**/**secid**_
   - _export journal_ (for any **currency**)
 
 Therefore the following additional screens are required:
   - **Add new namespace**
     - **namespace** name (entered in a text box)
   - **Add global administrator**
-    - **agent** name (entered in a text box)
-  - **Suspend agent**
-    - **agent** name (entered in a text box)
-  - **Re-enable agent**
-    - **agent** name (selected from drop-down list of disabled **agent**s)
+    - **primid** name (entered in a text box)
+  - **Suspend primid**[^4]
+    - **primid** name (entered in a text box)
+  - **Re-enable primid**
+    - **primid** name (selected from drop-down list of disabled **primids**s)
+  - **Suspend secid**[^5]
+    - **secid** name (entered in a text box)
+  - **Re-enable secid**
+    - **secid** name (selected from drop-down list of disabled **secds**s)
   - **Export journal**
     - **currency** name (selected from drop-down list)
     - File download location (file dialogue)
@@ -226,12 +245,20 @@ Therefore the following additional screens are required:
 namespace delimiter whereas _NESTS_ names and the namespace delimiter may be
 any UTF-8 character.
 
-[^2]: In contrast to _NESTS_, no distinction is made between _primary_ and
-_secondary_ **agents** (**identities**).
+[^2]: The password is not stored. Instead, a crypotographic hash of the password
+is stored against which the access-recovery password entered can be authenticated.
 
 [^3]: NB, this does not remove the original transaction from the journal.
 Instead, it posts a reversing transaction.
 
+[^4]: When a **primid** is suspended, all of its **secids** are also suspended.
+
+[^5]: When a **secid** is suspended, its **secids** are will not necessarily also
+be suspended (although that may happen where the _stewards_ of the **namespaces**
+have configured such a policy).
+
+
+
 ----
 
-Most recently updated: 2024/09/08
+Most recently updated: 2024/11/05
