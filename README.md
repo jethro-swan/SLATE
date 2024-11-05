@@ -31,9 +31,9 @@ There are four categories of _agent_:
   - A general _agent_ - the set to which _all_ **primids** and **secids**
     belong.
   - A **namespace**'s _steward_, a **primid** assigned this role either by
-    another **primd** already holding it or by a _global system administrator_.
+    another **primid** already holding it or by a _global system administrator_.
   - A **currency**'s _steward_, a **primid** assigned this role either by
-    another **primd** already holding it or by a _global system administrator_.
+    another **primid** already holding it or by a _global system administrator_.
   - A _global system administrator_, assigned this role at setup or by an
     existing _global system administrator_.
 
