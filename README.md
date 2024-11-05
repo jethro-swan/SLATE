@@ -14,24 +14,19 @@ those of the fully-nested (and much more capable) _NESTS_ software.
 ### Entity categories
 
 There are four categories of _entity_:
-  - **namespaces** (a.k.a. _network_ or _island_) in which _names_ of all
-    entities (including other **namespaces**) are contained.
-  - **agents** (equivalent to **identities**).
-  - **currencies** (limited to scalar values of type _money_, in contrast to
-    those supported by _NESTS_) - a set of **accounts**.
-  - **accounts** (_variables_) each of which is a member of one **currency**
-    (set).
+  - **namespaces** (a.k.a. _network_ or _island_) in which _names_ of all _entities_ (including other **namespaces**) are contained.
+  - **primary identities** (**primds** - which anchor an _agent_ both within a **namespace** and to the real world).
+  - **secondary identities** (**secids** - aliases of **primids** - which can anchor that same _agent_  within any number of **namespace**s).
+  - **currencies** (limited to scalar values of type _money_, in contrast to those supported by _NESTS_) - a set of **accounts**.
+  - **accounts** (_variables_) each of which is a member of one **currency** (set).
 
 ### Agent categories
 
-There are four categories of **agent**:
-  - A general **agent** - the set to which _all_ **agents** belong.[^2]
-  - A **namespace** _steward_, assigned this role by an **agent** already
-    holding it or by a _global system administrator_.
-  - A **currency** _steward_ - a _steward_ of a **currency**, assigned this role
-    an **agent** already holding it or by a _global system administrator_.
-  - A _global system administrator_, assigned this role at setup or by an
-    existing _global system administrator_.
+There are four categories of _agent_:
+  - A general _agent_ - the set to which _all_ **primids** and **secids** belong.[^2]
+  - A **namespace**'s _steward_, a **primid** assigned this role either by another **primd** already holding it or by a _global system administrator_.
+  - A **currency**'s _steward_, a **primid** assigned this role either by another **primd** already holding it or by a _global system administrator_.
+  - A _global system administrator_, assigned this role at setup or by an existing _global system administrator_.
 
 ----
 ### Internal representation
