@@ -13,7 +13,7 @@ those of the fully-nested (and much more capable) _NESTS_ software.
 ----
 ### Entity categories
 
-There are four categories of _entity_:
+There are five categories of _entity_:
   - **namespaces** (a.k.a. _network_ or _island_) in which _names_ of all
     _entities_ (including other **namespaces**) are contained.
   - **primary identities** (**primds** - which anchor an _agent_ both
@@ -40,8 +40,8 @@ There are four categories of _agent_:
 ----
 ### Internal representation
 
-For convenience, each _entity_ (**namespace**, **agent**, **currency** or
-**account**) is identified internally by a unique number (_FPH_) serving as the
+For convenience, each _entity_ (**namespace**, **primid**, **secid**, **currency**
+or **account**) is identified internally by a unique number (_FPH_) serving as the
 primary key in an _SQLite_ table. (NB, these numbers are _not_ fully compatible
 with the _FPH_ (_Full Path Hash_) used in _NESTS_.
 
@@ -57,13 +57,13 @@ These global mappings are:
   - **account**: _account_hrns_ &rarr; _account_fph_
   - **account**: _account_fph_ &rarr; _account_hrns_
 
-As in _NESTS_, each entity (**namespace**, **currency**, **agent** or
-**account**) is identified by a human-readable name string (HRNS) placing it
+As in _NESTS_, each entity (**namespace**, **currency**, **primid**, **secid**
+or **account**) is identified by a human-readable name string (HRNS) placing it
 within a **namespace**.
 
 Each **namespace** contains the names of **namespaces**, **currencies**, 
 **primds** and **secids** and, as in _NESTS_, the names of **accounts** may 
-contained within any **namespace** (subject to authorization by its
+be contained within any **namespace** (subject to authorization by its
 _stewards_. This provides a sufficient entry point into a network fully 
 compatible with [open money](https://openmoney.github.io/specification) 
 (although notably lacking provision for the construction of the rich 
@@ -146,8 +146,8 @@ modification.
       - transaction history in each **currency**
       - export link for the _ledger_ in each **currency**
       - a link to the _parabola plots_ for each **currency**
-      - a **agent update** screen
-  - **Agent update** screen allowing changes to
+      - a **primid**/**secid** update screen
+  - **primid update** screen allowing changes to
     - **agent name** (entered in a text box)
     - real name (entered in a text box) (optional)
     - _email address_ (entered in a text box)
@@ -164,8 +164,10 @@ see the following additional links in its _home screen_:
   - _add steward_
   - _add new **currency**_
   - _confirm pending registration_
-  - _suspend **agent**_
-  - _re-enable **agent**_
+  - _suspend **primid**_
+  - _re-enable **primid**_
+  - _suspend **secid**_
+  - _re-enable **secid**_
 
 Therefore the following additional screens are required:
   - **Add steward** for this **namespace**
@@ -175,9 +177,11 @@ Therefore the following additional screens are required:
     - **currency** prefix (entered in a text box) (optional)
     - **currency** suffix (entered in a text box) (optional)
     - initial _steward_ **name** (entered in a text box)
-  - **Suspend agent**
-    - **agent** name (entered in a text box)
-  - **Re-enable agent**
+  - **Suspend primid**
+    - **primid** name (entered in a text box)
+  - **Re-enable secid**
+    - **agent** name (selected from drop-down list)
+  - **Re-enable secid**
     - **agent** name (selected from drop-down list)
 
 ### Currency stewards
@@ -233,7 +237,7 @@ Therefore the following additional screens are required:
   - **Suspend secid**[^5]
     - **secid** name (entered in a text box)
   - **Re-enable secid**
-    - **secid** name (selected from drop-down list of disabled **secds**s)
+    - **secid** name (selected from drop-down list of disabled **secdis**s)
   - **Export journal**
     - **currency** name (selected from drop-down list)
     - File download location (file dialogue)
