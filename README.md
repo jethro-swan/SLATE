@@ -41,8 +41,10 @@ These global mappings are:
   - **namespace**: _namespace_fph_ &rarr; _namespace_hrns_
   - **currency**: _currency_hrns_ &rarr; _currency_fph_
   - **currency**: _currency_fph_ &rarr; _currency_hrns_
-  - **agent**: _agent_hrns_ &rarr; _agent_fph_
-  - **agent**: _agent_fph_ &rarr; _agent_hrns_
+  - **primid**: _primid_hrns_ &rarr; _primid_fph_
+  - **agent**: _primid_fph_ &rarr; _primid_hrns_
+  - **agent**: _secid_hrns_ &rarr; _secid_fph_
+  - **agent**: _secid_fph_ &rarr; _secid_hrns_
   - **account**: _account_hrns_ &rarr; _account_fph_
   - **account**: _account_fph_ &rarr; _account_hrns_
 
