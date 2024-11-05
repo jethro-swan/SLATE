@@ -245,11 +245,11 @@ Therefore the following additional screens are required:
   - **Suspend primid**[^4]
     - **primid** name (entered in a text box)
   - **Re-enable primid**
-    - **primid** name (selected from drop-down list of disabled **primids**s)
+    - **primid** name (selected from drop-down list of disabled **primid**s)
   - **Suspend secid**[^5]
     - **secid** name (entered in a text box)
   - **Re-enable secid**
-    - **secid** name (selected from drop-down list of disabled **secdis**s)
+    - **secid** name (selected from drop-down list of disabled **secid**s)
   - **Export journal**
     - **currency** name (selected from drop-down list)
     - File download location (file dialogue)
