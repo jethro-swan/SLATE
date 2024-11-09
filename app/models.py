@@ -9,11 +9,11 @@ from app.core.common import unixtime_str, timestamp
 #from app.core.common import enabled, pending
 from app.core.fph_hrns_maps import hrns_to_fph
 #from app.core.auth import set_web_password_hash, authenticate_web_access
-from app.core.auth import authenticate_web_access
+#from app.core.auth import authenticate_web_access
 
-from app.core.slate_core import register_authenticated_login
-from app.core.slate_core import deregister_authenticated_login
-from app.core.slate_core import check_authenticated_login
+from app.core.slate_login import register_authenticated_login
+from app.core.slate_login import deregister_authenticated_login
+from app.core.slate_login import check_authenticated_login
 
 # Flask components: -----------------------------------------------------------
 

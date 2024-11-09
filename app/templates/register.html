@@ -1,35 +1,6 @@
 {% extends "base.html" %}
 
 {% block content %}
-<!--
-<p style="color:red">
-  Complete and test this form next before proceeding to the others.
-</p>
-<p style="color:red" style="color:red">
-  Add
-  <ul>
-    <li class="compact2" style="color:red">
-      Drop-down Q lists for the recovery answers
-    </li>
-    <li class="compact2" style="color:red">
-      A drop-down list of countries
-    </li>
-    <li class="compact2" style="color:red">
-      RegExp validators for
-      <ul>
-        <li class="compact2" style="color:red">HRNS</li>
-        <li class="compact2" style="color:red">namespace</li>
-        <li class="compact2" style="color:red">phone numbers</li>
-      </ul>
-    </li>
-  </ul>
-</p>
-<p style="color:red">
-  Also, create a recovery form to allow login access to be recovered using
-  the Q:A pairs.
-</p>
-<hr />
--->
 
   <form action="" method="post" novalidate>
     {{ form.hidden_tag() }}
@@ -75,66 +46,13 @@
         <span style="color: red;">[{{ error }}]</span>
       {% endfor %}
     </p>
-    <!-- location details -->
-    {% if country_included %}
     <p>
-      {{ form.country.label }}<br />
-      {{ form.country(size=42) }}
-      {% for error in form.country.errors %}
+      {{ form.realname.label }} (real name)<br />
+      {{ form.realname(size=42) }}
+      {% for error in form.realname.errors %}
         <span style="color: red;">[{{ error }}]</span>
       {% endfor %}
     </p>
-    {% endif %}
-    {% if address_details_included %}
-      <!-- address details -->
-      <p>
-        {{ form.county.label }}<br />
-        {{ form.county(size=42) }}
-      </p>
-      <p>
-        {{ form.town.label }}<br />
-        {{ form.town(size=42) }}
-      </p>
-      <p>
-        {{ form.village.label }}<br />
-        {{ form.village(size=42) }}
-      </p>
-      <p>
-        {{ form.bld_number.label }}<br />
-        {{ form.bld_number(size=42) }}
-      </p>
-      <p>
-        {{ form.bld_name.label }}<br />
-        {{ form.bld_name(size=42) }}
-      </p>
-      <p>
-        {{ form.flat_number.label }}<br />
-        {{ form.flat_number(size=42) }}
-      </p>
-      <p>
-        {{ form.room_number.label }}<br />
-        {{ form.room_number(size=42) }}
-      </p>
-      <p>
-        {{ form.postal_code.label }}<br />
-        {{ form.postal_code(size=42) }}
-      </p>
-      <!-- end address details -->
-    {% endif %}
-    {% if location_details_included %}
-    <p>
-      {{ form.grid_ref.label }}<br />
-      {{ form.grid_ref(size=32) }}
-    </p>
-    <p>
-      {{ form.olc.label }}<br />
-      {{ form.olc(size=32) }}
-    </p>
-    <p>
-      {{ form.utm_coord.label }}<br />
-      {{ form.utm_coord(size=32) }}
-    </p>
-    {% endif %}
     <p>
       {{ form.email_1.label }}<br />
       {{ form.email_1(size=42) }}
@@ -151,26 +69,6 @@
     {% if notification_option_included %}
     <p>
       {{ form.save_email_2 }} {{ form.save_email_2.label }}
-    </p>
-    {% endif %}
-    {% if phone_details_included %}
-    <p>
-      {{ form.phone_1.label }}<br />
-      {{ form.phone_1(size=32) }}
-    </p>
-    <p>
-      {{ form.phone_2.label }}<br />
-      {{ form.phone_2(size=42) }}
-    </p>
-    {% endif %}
-    {% if recovery_questions_included %}
-    <p>
-      {{ form.recovery_a_1.label }}<br />
-      {{ form.recovery_a_1(size=42) }}
-    </p>
-    <p>
-      {{ form.recovery_a_2.label }}<br />
-      {{ form.recovery_a_2(size=32) }}
     </p>
     {% endif %}
     <!-- password -->
@@ -236,14 +134,6 @@
     <em>local£.fred.someneighbourhood.sometown.somewhere</em>
   </li>
   </ul>
-<p class="footnote">
-  If you were to specify your <em>username</em> as <em>fred.flintstone</em>
-  then the intermediate <strong>namespace</strong> <em>flintstone</em> would
-  be created for you, assigning you its initial <em>stewardship</em>. This
-  might be useful, for example, when creating a <strong>namespace</strong> for
-  a town, a neighbourhood, an organization or a family. It would then be your
-  responsibility to assign additional <em>stewards</em> to these new
-  <strong>namespaces</strong>.
 </p>
 <p class="footnote">
   You will not be able to use any <em>name</em> that already exists within a

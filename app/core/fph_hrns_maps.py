@@ -30,13 +30,15 @@ def create_maps(): # MDB map
 
     # These two DBM maps are created initially to ensure that the DB type can
     # be identified correctly by the first read operation.
-    null_fph = nshash("")
-    ##print("null_fph = " + null_fph)
-    dbm_store(FPH_TO_HRNS_MAP, null_fph, "") # FPH>HRNS map
-    # The first ("root") entity created (the "global" namespace) has no parent
-    # namespace, so a vacuum (an empty string) is used in place of a valid HRNS
-    # string. The corresponding FPH must have a valid format.
-    dbm_store(HRNS_C_FPH_MAP, "", null_fph) # FPH collision map
+    substrate_fph = nshash("")
+    ##print("substrate_fph = " + substrate_fph)
+    dbm_store(FPH_TO_HRNS_MAP, substrate_fph, "") # FPH>HRNS map
+    # The first "root" entity created (the "global" namespace) has no named
+    # parent namespace, its parent namespace being the nameless "substrate".
+    # Although this contains no names, and is therefore not a *namespace*, it
+    # does have some of the properties of such. In particular, it must have a
+    # valid FPH corresponding to an empty string.
+    dbm_store(HRNS_C_FPH_MAP, "", substrate_fph) # FPH collision map
     # Although no collision is likely to occur, there is nothing to be lost by
     # creating the reverse mapping in this specific instance.
     return

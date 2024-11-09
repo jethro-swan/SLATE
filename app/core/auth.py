@@ -9,6 +9,7 @@ import sys
 import json
 import os
 import sys
+import sqlite3
 
 from .dbm_functions import dbm_store, dbm_fetch, dbm_delete
 from .regexp_list import re_email
@@ -25,15 +26,10 @@ def auth_hash(password):
 def check_auth_hash(password, pwd_hash):
     return bcrypt.checkpw(password.encode("utf-8"), pwd_hash.encode("utf-8"))
 
-def authenticate_web_access(fph, auth_code):
-    properties = get_properties(fph)
-    pwd_hash_decoded = properties["auth"]["web_password_hash"].decode("utf-8")
-    return check_auth_hash(auth_code, pwd_hash_decoded)
-
-def authenticate_cli_access(fph, auth_code):
-    properties = get_properties(fph)
-    pwd_hash_decoded = properties["auth"]["cli_password_hash"].decode("utf-8")
-    return check_auth_hash(auth_code, pwd_hash_decoded)
+#def authenticate_cli_access(fph, auth_code):
+#    properties = get_properties(fph)
+#    pwd_hash_decoded = properties["auth"]["cli_password_hash"].decode("utf-8")
+#    return check_auth_hash(auth_code, pwd_hash_decoded)
 
 # (1) For "normal" passwords:
 
@@ -80,9 +76,11 @@ def generate_password(min_length):
 
 def list_url_safe_password_characters():
     return "The password may contain the following characters:\n" \
-           + "   upper case letters\n   lower case letters\n   numbers\n" \
+           + "   upper case letters\n" \
+           + "   lower case letters\n" \
+           + "   numbers\n" \
            + "   '-' or '_'\n" \
-           + "and must contain at least one of each type. " \
+           + "and must contain at least one of each type.\n" \
            + "It must be at least 16 characters in length."
 
 # Regular expression to validate such a password:

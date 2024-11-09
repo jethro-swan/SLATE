@@ -31,10 +31,11 @@ def yN(prompt):
     else:
         return False
 
-
 def Yn(prompt):
     r = input(prompt + " [Yn] ")
-    if (len(r) == 0) or (r[0].lower() == "n"):
+    if (len(r) == 0):
+        return True
+    elif r[0].lower() == "n":
         return False
     else:
         return True
@@ -54,21 +55,21 @@ def get_cli_number_input(prompt_message, min_num, max_num, default_num):
         if number_given < min_num:
             number_given = min_num
             print(
-                "This has been increased to " + str(min_num) + ". Any fewer " \
-                + "would be too few.\n"
+                "\nThis has been increased to " + str(min_num) + ". Any " \
+                + "fewer would be too few.\n"
             )
         elif number_given > max_num:
             number_given = max_num
             print(
-                "This has been decreased to " + str(max_num) + ". Any more " \
-                + "would be too many.\n"
+                "\nThis has been decreased to " + str(max_num) + ". Any " \
+                + "more would be unmanageably many.\n"
             )
     except ValueError:
         number_given = default_num
         if input_value:
             print("Invalid ", end="")
         else:
-            print("No ", end="")
+            print("\nNo ", end="")
         print(
             "value entered. Therefore using the default value " \
             + str(default_num) + ".\n"

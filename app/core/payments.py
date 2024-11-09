@@ -19,6 +19,7 @@ from .unix_functions import fcopy
 from .slate_core import account_status
 from .slate_core import list_currencies_in_common_by_fph
 from .slate_core import list_currencies_in_common_by_hrns
+from .slate_core import identify_entity
 from .display import integer_to_money_format
 
 
@@ -39,7 +40,8 @@ def create_payments_db():
     with sqlite3.connect(PAYMENTS_DB) as conn:
         cursor = conn.cursor()
         # Create payments table:
-        cursor.execute("""
+        cursor.execute(
+            """
             CREATE TABLE IF NOT EXISTS payments (
                 payment_id INTEGER PRIMARY KEY AUTOINCREMENT,
                 payer_fph TEXT NOT NULL,
@@ -47,7 +49,8 @@ def create_payments_db():
                 currency_fph TEXT NOT NULL,
                 amount INTEGER NOT NULL,
                 annotation TEXT
-            );"""
+            );
+            """
         )
         conn.commit()
         cursor.close()
@@ -79,6 +82,7 @@ def payment(payer_fph, payee_fph, amount, annotation):
 
     if not re_pvalue.match(str(amount)):
         return str(amount) + " is not a valid payment"
+
     if payer_currency_fph != payee_currency_fph:
         return "Accounts " + payer_fph + " and " + payee_fph + " are not in " \
                "the same currency"
@@ -108,15 +112,29 @@ def payment(payer_fph, payee_fph, amount, annotation):
 
     with sqlite3.connect(PAYMENTS_DB) as conn:
         cursor = conn.cursor()
-        cursor.execute("""
+        cursor.execute(
+            """
             INSERT INTO payments (
-                payer_fph, payee_fph, currency_fph, amount, annotation
+                payer_fph,
+                payee_fph,
+                currency_fph,
+                amount,
+                annotation
             )
-            VALUES (?, ?, ?, ?, ?)""",
-            (payer_fph, payee_fph, payer_currency_fph, amount, annotation)
+            VALUES (?, ?, ?, ?, ?)
+            """,
+            (
+                payer_fph,
+                payee_fph,
+                payer_currency_fph,
+                amount,
+                annotation
+            )
         )
         conn.commit()
         cursor.close()
+
+    return ""
 
 #==============================================================================
 
@@ -143,96 +161,140 @@ def list_currencies_in_common_as_html(a1_fph, a2_fph):
 #==============================================================================
 
 
-def dump_currency_payments(currency_fph, optype="text_table", edtype="fph"):
+def list_payments_in_currency(currency_identifier):
 
-    currency_hrns = fph_to_hrns(currency_fph)
-
-    payment_rows = []
-#    payment_rows.append(["payment number",
-#                         "payer FPH",
-#                         "payer HRNS",
-#                         "payee FPH",
-#                         "payee HRNS",
-#                         "amount",
-#                         "annotation"
-#                        ])
+    currency_fph, \
+    currency_hrns, \
+    entity_type, \
+    m = identify_entity(currency_identifier)
 
     with sqlite3.connect(PAYMENTS_DB) as conn:
         cursor = conn.cursor()
         # Read transactions for specified currency:
         cursor.execute(
             """
-            SELECT payment_id, payer_fph, payee_fph, currency_fph, amount,
-                   annotation
-            FROM payments WHERE currency_fph = ?
+            SELECT payment_id, payer_fph, payee_fph, amount, annotation
+            FROM payments
+            WHERE currency_fph = ?
             """,
             (currency_fph,)
         )
         all_payments = cursor.fetchall()
         cursor.close()
 
-        payment_rows = []
-        # Create column headers as the first row:
-        for payment in all_payments:
-            payment_row = []
-            p = list(payment)
-            payment_row.append(str(p[0]).zfill(8))   # payment number
-            payment_row.append(p[1])                 # payer FPH
-            payment_row.append(fph_to_hrns(p[1]))    # payer HRNS
-            payment_row.append(p[2])                 # payee FPH
-            payment_row.append(fph_to_hrns(p[2]))    # payee HRNS
-            # p[3] currency_fph
-            #payment_row.append(str(p[4]//100))      # amount paid
-            amount_paid = integer_to_money_format(str(p[4]))
-            payment_row.append(amount_paid)          # amount paid
-            payment_row.append(p[5])                 # annotation
-            if p[3] == currency_fph:
-                payment_rows.append(payment_row)
-                print(":".join(payment_row))
+    if all_payments is None:
+        return []
 
-        #----------------------------------------------------------------------
-        if optype == "csv":
-            # CSV header row:
-            print("payment number:payer FPH:payee FPH:amount:annotation")
+    payments_list = []
+    # Create column headers as the first row:
+    for payment in all_payments:
+        payment_row = []
+        #p = payment
+        p = list(payment)
+        #print(p)
+        payment_row.append(str(p[0]).zfill(8))              # payment number
+        payment_row.append(p[1])                            # payer FPH
+        #payment_row.append(fph_to_hrns(p[1]))               # payer HRNS
+        payment_row.append(p[2])                            # payee FPH
+        #payment_row.append(fph_to_hrns(p[2]))               # payee HRNS
+        payment_row.append(integer_to_money_format(p[3]))   # amount paid
+        payment_row.append(p[4])                            # annotation
+        #print(payment_row)
+        payments_list.append(payment_row)
+    #print("***** End of loop *****")
+    #print(payments_list)
+    return payments_list
+
+#------------------------------------------------------------------------------
+def dump_currency_payments_csv(currency_identifier, output_file_path):
+    payment_rows = list_payments_in_currency(currency_identifier)
+    if output_file_path and os.path.exists(output_file_path):
+        with open(output_file_path, "w") as csv_f:
+            csv_f.write("payment number:payer FPH:payee FPH:amount:annotation")
             for row in payment_rows:
-                print(":".join(row))
-#                for c in range(len(row)-1):
-#                    print(row[c] + ":", end="")
-#                print(row[-1]) # add line feed
+                csv_f.write(":".join(row))
+    return payment_rows
 
-        #----------------------------------------------------------------------
-        elif optype == "text_table":
-            text_table = PrettyTable()
-            text_table.align = "l"
-            text_table.field_names = [
-                                        "payment number",
-                                        "payer FPH",
-                                        "payee FPH",
-                                        "amount",
-                                        "annotation"
-                                     ]
-            text_table.add_rows(payment_rows[1:])
-            print(text_table)
+#==============================================================================
+##
 
-        #----------------------------------------------------------------------
-        elif optype == "html":
-            # HTML table header:
-            print('<table class="dump_table">', end="")
-            print('<tr>', end="")
-            print('<th>payment number</th>', end="")
-            print('<th>payer HRNS</th>', end="")
-            print('<th>payer FPH</th>', end="")
-            print('<th>payee HRNS</th>', end="")
-            print('<th>payee FPH</th>', end="")
-            print('<th>amount</th>', end="")
-            print('<th>annotation</th>', end="")
-            print('</tr>')
-            for row in payment_rows:
-                print('<tr>', end="")
-                for row_field in row:
-                    print('<td>' + row[row_field] + '</td>', end="")
-                print('</tr>')
-            print('</table>')
+def dump_currency_payments_table(currency_identifier, output_file_path):
+
+    payment_rows = list_payments_in_currency(currency_identifier)
+    payments_table = PrettyTable()
+    #print(payments_table)
+    payments_table.align = "l"
+    payments_table.field_names = [
+                                    "payment number",
+                                    "payer HRNS",
+                                    "payee HRNS",
+                                    "amount",
+                                    "annotation"
+                                 ]
+    table_rows = []
+    for row in payment_rows:
+        table_row = []
+        table_row.append(row[0])                        # payment ID
+        table_row.append(fph_to_hrns(row[1]))           # payer HRNS
+        table_row.append(fph_to_hrns(row[2]))           # payee HRNS
+        table_row.append(row[3])                        # amount paid
+        table_row.append(row[4])                        # annotation
+        table_rows.append(table_row)
+
+    payments_table.add_rows(table_rows[1:])
+
+
+
+    if output_file_path and os.path.exists(output_file_path):
+        with open(output_file_path, "w") as table_f:
+            table_f.write(text_table)
+
+    return payments_table
+
+#------------------------------------------------------------------------------
+def dump_currency_payments(currency_fph):
+
+    payments_table = dump_currency_payments_table(currency_fph)
+
+    return
+
+#------------------------------------------------------------------------------
+def dump_currency_payments_html(currency_identifier, output_file_path):
+    payment_rows = list_payments_in_currency(currency_identifier)
+
+    html_str = "<table class=\"dump_table\">\n" \
+             + "<tr>" \
+             + "<th>payment number</th>" \
+             + "<th>payer HRNS</th>" \
+             + "<th>payee HRNS</th>" \
+             + "<th>amount</th>" \
+             + "<th>annotation</th>" \
+             + "</tr>\n"
+    for row in payment_rows:
+        html_str = []
+        html_str += "<tr>"
+        # payment ID:
+        html_str += "<td>" + row[0] + "</td>"
+        # payer HRNS (with link to FPH):
+        html_str += "<td><a href=\"" + row[1] + "\">" \
+                 + fph_to_hrns(row[1]) \
+                 + "\"></td>"
+        # payee HRNS (with link to FPH):
+        html_str += "<td><a href=\"" + row[2] + "\">" \
+                 + fph_to_hrns(row[2]) \
+                 + "\"></td>"
+        # amount paid
+        html_str += "<td>" + row[3] + "></td>"
+        # annotation
+        html_str += "<td>" + row[4] + "></td>"
+        html_str += "</tr>\n"
+    html_str += "</table>\n"
+
+    if output_file_path and os.path.exists(output_file_path):
+        with open(output_file_path, "w") as html_f:
+            html_f.write(html_str)
+
+    return html_str
 
 #==============================================================================
 
@@ -244,8 +306,10 @@ def dump_agent_payments(currency_fph, optype="csv", edtype="fph"):
         cursor = conn.cursor()
 
         # Read transactions for specified currency:
-        cursor.execute("""
-            SELECT * FROM payments WHERE currency_fph = ?""",
+        cursor.execute(
+            """
+            SELECT * FROM payments WHERE currency_fph = ?
+            """,
             (currency_fph,)
         )
         all_payments = cursor.fetchall()

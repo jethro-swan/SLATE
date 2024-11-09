@@ -1,6 +1,6 @@
 import sqlite3
 #import random
-#import os
+import os
 import pickle
 
 from .constants import ENTITIES_DB
@@ -10,6 +10,7 @@ from .slate_core import hrns_to_fph
 from .slate_core import add_entity_common_properties
 from .slate_core import new_account
 from .slate_core import new_namespace
+from .auth import auth_hash
 #from .slate_core import add_namespace_specific_properties
 #from .slate_core import add_account_specific_properties
 from .cctld_list import *
@@ -54,12 +55,33 @@ def create_seed_entities():
 
     # (In due course, the default values for the following will be read from a
     # configuration file.)
+
+    # Default values:
     seed_primid_realname        = "Gaia"
     seed_primid_email_1         = "gaia@lrc.org.uk"
     seed_primid_email_2         = ""
     seed_primid_password        = "Gl0balM3ltd0wn"
     seed_primid_pin             = "123456"
     seed_primid_access_token    = "1a1b2c3d5e8f13e21f34d55c89b144ff"
+
+    # Override values if defined:
+    fname = os.getcwd() + "/seed_primid_details.txt"
+    with open(fname, "r") as f:
+        primid_details = f.readlines()
+    for line in primid_details:
+        l = line.split("=")
+        if l[0].strip() == "seed_primid_realname":
+            seed_primid_realname = l[1].strip()
+        elif l[0].strip() == "seed_primid_email_1":
+            seed_primid_email_1 = l[1].strip()
+        elif  l[0].strip() == "seed_primid_email_2":
+            seed_primid_email_2 = l[1].strip()
+        elif  l[0].strip() == "seed_primid_password":
+            seed_primid_password = l[1].strip()
+        elif l[0].strip() == "seed_primid_pin":
+            seed_primid_pin = l[1].strip()
+        elif l[0].strip() == "seed_primid_access_token":
+            seed_primid_access_token = l[1].strip()
 
 
     # A note on namespaces:
@@ -84,40 +106,39 @@ def create_seed_entities():
 
     # Seed entities (see https://nests.lrc.org.uk/entity_dependencies.html)
     # by HRNS:
-    root_hrns = ""          # The nameless namespace from which all others
-                            # ramify.
     seed_namespace_hrns     = "global"
-                            # parent namespace:     ""
-                            # initial steward:      "gaia.global"
-
     seed_currency_hrns      = "hours.global"
-    seed_currency_fph, m    = hrns_to_fph(seed_currency_hrns)
-    seed_currency_parent_ns = "global"
-                            # initial steward:      "gaia.global"
-
     seed_primid_hrns        = "gaia.global"
-    seed_primid_fph, m      = hrns_to_fph(seed_primid_hrns)
-    seed_primid_parent_ns   = "global"
-                            # initial account:      "hours.gaia.global"
-                            # stewardships:         "global" (namespace)
-                            #                       "hours.global" (currency)
-
     seed_account_hrns       = "hours.gaia.global"
-    seed_account_fph, m     = hrns_to_fph(seed_account_hrns)
-    seed_account_parent_ns  = "gaia.global"
-                            # owned by:             "gaia.global"
-                            # in currency:          "hours.global"
 
-    # Seed entities by FPH:
-    root_fph = nshash("")   # The nameless namespace from which all others
-                            # ramify. This has already been added to the
-                            # FPH>HRNS map (at the point of its creation).
-                            #
-                            # The seed entities are now mapped to their FPH and
-                            # added to the FPH>HRNS map:
-    seed_namespace_fph, m   = hrns_to_fph(seed_namespace_hrns)
-    seed_currency_fph, m    = hrns_to_fph(seed_currency_hrns)
-    seed_primid_fph, m      = hrns_to_fph(seed_primid_hrns)
+
+    # The *substrate* is the nameless *namespace* from which all others ramify,
+    # the parent *namespace* of all "root" *namespace* (such as "global"). This
+    # has already been added to the FPH>HRNS map (at the point of its creation
+    # - see fph_hrns_maps.py).
+    substrate_hrns = ""
+    substrate_fph = nshash("")
+
+    # The seed entities are now added to the FPH>HRNS map:
+
+    seed_namespace_fph, m       = hrns_to_fph(seed_namespace_hrns)
+                                # parent namespace: "" (the *substrate*)
+                                # initial steward:  "gaia.global"
+
+    seed_currency_fph, m        = hrns_to_fph(seed_currency_hrns)
+    seed_currency_parent_hrns   = "global"
+                                # initial steward:  "gaia.global"
+
+    seed_primid_fph, m          = hrns_to_fph(seed_primid_hrns)
+    seed_primid_parent_hrns     = "global"
+                                # initial account:  "hours.gaia.global"
+                                # stewardships:     "global" (namespace)
+                                #                   "hours.global" (currency)
+
+    seed_account_fph, m         = hrns_to_fph(seed_account_hrns)
+    seed_account_parent_hrns    = "gaia.global"
+                                # owned by:         "gaia.global"
+                                # in currency:      "hours.global"
 
     # Every *namespace* or *currency* needs a set of stewards. At this point
     # only one *primid* ("gaia.global") exists so, for the time being, this
@@ -130,8 +151,8 @@ def create_seed_entities():
     #stewardships_fph_list   = [seed_namespace_hrns, seed_currency_hrns]
     #stewardships_fph_blob   = pickle.dumps(stewardships_fph_list)
     #
-    # (These FPH lists are saved in SQLite as blobs, for which reason they must
-    # be serialized.)
+    # (In SLATE, these FPH lists are saved in SQLite as blobs, for which reason
+    # they must be serialized. In NESTS, they are saved as simple text files.
 
     # The seed *account* ("hours.gaia.global") is in the seed *currency*
     # ("hours.global"):
@@ -150,7 +171,7 @@ def create_seed_entities():
     seed_stewardship_2_fph  = seed_currency_fph
 
     #seed_primid_account_fph = [seed_account_fph]
-    seed_primid_account_fph = seed_account_fph
+#    seed_primid_account_fph = seed_account_fph
     #seed_primid_accts_fph_blob   = pickle.dumps(seed_primid_accts_fph_list)
 
     # NB  There is no need for a seed *secid*
@@ -158,10 +179,14 @@ def create_seed_entities():
     # First the common proprties entries are created:
 
     #--------------------------------------------------------------------------
-    # Seed *namespace*:
+    # Seed *namespace*: "global"
+    #
+    # NB  The *namespace* "global" is a "root" *namespace*. Therefore it has no
+    #     named parent *namespace*.
+    #
     add_entity_common_properties(
-        seed_namespace_fph,     # NB  The namespace "global" is a special case
-        root_fph,               #     in that it has no parent namespace.
+        seed_namespace_fph,
+        substrate_fph,
         "namespace",
         True
     )
@@ -187,7 +212,7 @@ def create_seed_entities():
     # Seed *currency*:
     add_entity_common_properties(
         seed_currency_fph,
-        nshash(seed_currency_parent_ns),
+        nshash(seed_currency_parent_hrns),
         "currency",
         True
     )
@@ -210,6 +235,9 @@ def create_seed_entities():
                 pickle.dumps([seed_primid_fph])   # first steward added to list
             )
         )
+        # NB: The following may not be needed, given that the *currency* and
+        #     *account* FPH are both stored in the "accounts" table, but for
+        #     the time being there is no need to remove this step.
         cursor.execute(
             """
             INSERT INTO currency_accounts (
@@ -226,49 +254,83 @@ def create_seed_entities():
         conn.commit()
         cursor.close()
 
+
+    #--------------------------------------------------------------------------
+    # Seed *account*:
+    add_entity_common_properties(
+        seed_account_fph,
+        nshash(seed_account_parent_hrns),
+        "account",
+        True
+    )
+    # Then the type-specific properties are added:
+    with sqlite3.connect(ENTITIES_DB) as conn:
+        cursor = conn.cursor()
+        cursor.execute(
+            """
+            INSERT INTO accounts (
+                entity_fph,
+                account_owner_fph,
+                account_currency_fph,
+                account_balance
+            )
+            VALUES (?, ?, ?, ?)
+            """,
+            (
+                seed_account_fph,
+                seed_primid_fph,
+                seed_currency_fph,
+                0
+            )
+        )
+        conn.commit()
+        cursor.close()
+
+
+
+
     #--------------------------------------------------------------------------
     # Seed *primid*:
     add_entity_common_properties(
         seed_primid_fph,
-        nshash(seed_primid_parent_ns),
+        nshash(seed_primid_parent_hrns),
         "primid",
         True
     )
     # Then the type-specific properties are added:
+    accounts_fph_list = []
+    accounts_fph_list.append(seed_account_fph)
 
-    # The seed *account* is created
-    # in the seed *currency*
-    # FOR the seed *primid*:
-    seed_account_fph, \
-    seed_account_hrns, \
-    m = new_account(seed_account_hrns, seed_primid_fph, seed_currency_fph)
-    if m:
-        return m
+    stewardships_fph_list = []
+    stewardships_fph_list.append(seed_namespace_fph)
+    stewardships_fph_list.append(seed_currency_fph)
 
     with sqlite3.connect(ENTITIES_DB) as conn:
         cursor = conn.cursor()
         cursor.execute(
             """
             INSERT INTO primids (
-                entity_fph = ?,
-                primid_realname = ?,
-                primid_email_1 = ?,
-                primid_email_2 = ?,
-                accounts_fph_list = ?,
-                stewardships_fph_list = ?,
-                password_hash = ?,
-                pin = ?,
-                access_token_hash = ?
+                entity_fph,
+                primid_realname,
+                primid_email_1,
+                primid_email_2,
+                secids_fph_list,
+                accounts_fph_list,
+                stewardships_fph_list,
+                password_hash,
+                pin,
+                access_token_hash
             )
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """,
             (
                 seed_primid_fph,
                 seed_primid_realname,
                 seed_primid_email_1,
                 seed_primid_email_2,
-                pickle.dumps([seed_account_fph]),
-                pickle.dumps([seed_namespace_fph, seed_currency_fph]),
+                pickle.dumps([]),
+                pickle.dumps(accounts_fph_list),
+                pickle.dumps(stewardships_fph_list),
                 auth_hash(seed_primid_password),
                 seed_primid_pin,
                 auth_hash(seed_primid_access_token)
@@ -278,46 +340,37 @@ def create_seed_entities():
         cursor.close()
 
 
+
+
+
+
+
 #==============================================================================
 # A set of "pseudo-TLD" root namespaces, each having the same null parent
-# nameaspace ("": root_fph) and the same initial steward ("gaia.global":
+# nameaspace ("": substrate_fph) and the same initial steward ("gaia.global":
 # seed_primid_fph):
 
-def create_quasitld_set(full = False, display = False):
+def create_quasitld_set(full = False):
 
     if full:
         cctld_list_here = cctld_list
     else:
         cctld_list_here = cctld_reduced_list
 
-    # This is a crude progress counter to indicate the sequence in which random
-    # entities are created or an HRNS collision detected.
-    progress_count = 80
-
-    root_fph = nshash("")
+    # These are recreated here in case it is necessary to callthis function
+    # before create_seed_entities( ).
+    substrate_fph = nshash("")
     seed_primid_fph = nshash("gaia.global")
-    for tld in cctld_list_here:
-        namespace_fph, namespace_hrns, m = new_namespace(
-                                               tld,
-                                               root_fph,
-                                               seed_primid_fph
-                                           )
-        if debugging:
-            message = ""
-            if m:
-                message = " | " + m
-            if display:
-                print(namespace_fph + " > " + namespace_hrns + message)
-            else:
-                sys.stdout.write(".")
-                sys.stdout.flush()
-                progress_count -= 1
-                if progress_count == 0:
-                    progress_count = 80
-                    sys.stdout.write("\n")
-                    sys.stdout.flush()
 
-    if display:
-        print("\n" + "="*160 + "\n")
+    errors = "\n"
+    tld_fph_list = []
+    for tld in cctld_list_here:
+        namespace_fph, \
+        namespace_hrns, \
+        m = new_namespace(tld, substrate_fph, seed_primid_fph)
+        errors += m + "\n"
+        tld_fph_list.append(namespace_fph)
+
+    return tld_fph_list, errors
 
 #==============================================================================

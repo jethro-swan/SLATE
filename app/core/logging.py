@@ -1,9 +1,9 @@
-# Last modified: 2023-07-12 18.50 JW
+# Last modified: 2024-11-07 23.00 JW
 
 import datetime
 import os
 
-from constants import SLATE_LOGS, LOG_DATETIME_FMT
+from .constants import SLATE_LOGS, LOG_DATETIME_FMT
 
 #from core.constants import *
 
@@ -17,10 +17,11 @@ def log_event(category, summary, details):
                             "debug",
                             "entity_history",
                             "error",
-                            "tests"]):
+                            "tests"
+                           ]):
         return False
     timestamp = datetime.datetime.now().strftime(LOG_DATETIME_FMT)
-    with open(SLATE_LOGS + "/" + category + ".log", "a") as log_file:
+    with open(SLATE_LOGS + category + ".log", "a") as log_file:
         log_file.write(timestamp + "\t" + summary + "\n")
         log_file.write(details + "\n")
 

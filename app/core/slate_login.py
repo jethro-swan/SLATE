@@ -18,7 +18,7 @@ debugging = True
 #==============================================================================
 # Authentication and login managemenet:
 
-def register_authenticated_login(agent_fph): # (agent may be primid or secid)
+def register_authenticated_login(agent_fph): # (agent is *primid* or *secid*)
     if not re_fph.match(agent_fph):
         return False, "", agent_fph + " is not an FPH"
     entity_type , m = get_entity_type(agent_fph)
@@ -112,7 +112,6 @@ def get_auth_data(primid_fph):
     entity_type, m = get_entity_type(primid_fph)
     if m:
         return auth_dict, m
-    #print("entity_type = " + entity_type)
     if entity_type != "primid":
         return auth_dict, primid_fph + " is not a primid"
 
@@ -125,11 +124,7 @@ def get_auth_data(primid_fph):
             """,
             (primid_fph,)
         )
-#        auth_dict = {}
         result = cursor.fetchone()
-#    if result[0] not in ["primid", "secid"]:
-#        return {}, primid_fph + " is not an FPH"
-#    auth_dict["entity_type"] = result[0]
     auth_dict = {}
     auth_dict["password_hash"] = result[0]
     auth_dict["pin"] = result[1]

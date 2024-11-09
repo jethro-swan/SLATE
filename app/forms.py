@@ -219,6 +219,7 @@ class RegistrationForm(FlaskForm):
     # The following two are not assigned validators because one or both values
     # may be provided via the URL:
     namespace       = StringField("namespace")
+    realname        = StringField("real name")
     currency        = StringField("currency")
 
     # The drop-down version commented out below works, but is more trouble than
@@ -253,11 +254,11 @@ class RegistrationForm(FlaskForm):
 
     # The [[country]] specified determines certain geographically specific
     # actions or constraints:
-    country         = StringField(
-                        "country"
-                        #"country",
-                        #validators=[DataRequired("required")]
-                       )
+#    country         = StringField(
+#                        "country"
+#                        #"country",
+#                        #validators=[DataRequired("required")]
+#                       )
     #country       = StringField("country")
     # The [[country]] field will normally be pre-filled from the root namespace
     # specified in [[namespace]] but may be replaced where the substitution is
@@ -276,30 +277,30 @@ class RegistrationForm(FlaskForm):
     #       are managed in a way compliant with GDPR or whatever other rules
     #       apply locally.
     #
-    county              = StringField("county")
-    town                = StringField("county/city")
-    village             = StringField("village/neighbourhood")
-    bld_number          = StringField("building number")
-    bld_name            = StringField("building name")
-    flat_number         = StringField("flat number")
-    room_number         = StringField("room number")
-    postal_code         = StringField("postcode")
+#    county              = StringField("county")
+#    town                = StringField("county/city")
+#    village             = StringField("village/neighbourhood")
+#    bld_number          = StringField("building number")
+#    bld_name            = StringField("building name")
+#    flat_number         = StringField("flat number")
+#    room_number         = StringField("room number")
+#    postal_code         = StringField("postcode")
     #
-    grid_ref            = StringField("grid reference")
-    olc                 = StringField("Open Location Code")
-    utm_coord           = StringField("UTM coordinate")
+#    grid_ref            = StringField("grid reference")
+#    olc                 = StringField("Open Location Code")
+#    utm_coord           = StringField("UTM coordinate")
     #
     # Email addresses are not stored by default but the identity's owner may
     # choose to use them to receive notifications:
     #email_1         = StringField("email address 1",
     #                    validators=[DataRequired("required"), Email()])
     email_1             = StringField("email address 1")
-    save_email_1        = BooleanField("save for notifications")
+#    save_email_1        = BooleanField("save for notifications")
     #email_2         = StringField(
     #                    "email address 2",
     #                    validators=[Email()])
     email_2             = StringField("email address 2")
-    save_email_2        = BooleanField("save for notifications")
+#    save_email_2        = BooleanField("save for notifications")
     # By default, a hash of the email addressis stored instead. This enables
     # the email addresses to be used for access-recovery purposes.
     #
@@ -309,16 +310,16 @@ class RegistrationForm(FlaskForm):
     # SMS to be used for this urpose given that charges will be incurred, but
     # in some cases an arrangement may be made to account for these using one
     # of the identity's local money accounts.
-    phone_1             = StringField("mobile number 1")
+#    phone_1             = StringField("mobile number 1")
     #save_phone_1    = BooleanField("use for notifications")
-    phone_2             = StringField("mobile number 2")
+#    phone_2             = StringField("mobile number 2")
     #save_phone_2    = BooleanField("use for notifications")
     # By default, a hash of the mobile number is stored instead. This enables
     # the mobile number to be used for access-recovery purposes.
     #
-    recovery_a_1        = StringField("recovery answer 1")
+#    recovery_a_1        = StringField("recovery answer 1")
     #recovery_q_1   = StringField("")
-    recovery_a_2        = StringField("recovery answer 2")
+#    recovery_a_2        = StringField("recovery answer 2")
     #recovery_q_2   = StringField("")
     password            = PasswordField(
                             "password",
@@ -341,9 +342,9 @@ class RegistrationForm(FlaskForm):
                                 Length(min=6, max=6)
                             ]
                           )
-    ssh_pubkey          = StringField(
-                            "SSH public key"
-                          )
+#    ssh_pubkey          = StringField(
+#                            "SSH public key"
+#                          )
     #recaptcha       = RecaptchaField("recaptcha", validators=[DataRequired("required")])
     submit              = SubmitField("register")
 

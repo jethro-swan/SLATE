@@ -8,16 +8,10 @@ import sys
 from app.core.constants import NSS
 from app.core.fph_hrns_maps import hrns_to_fph, fph_to_hrns
 from app.core.slate_core import get_entity_type, get_account_currency
-from app.core.slate_core import identify_entity, get_primid
-from app.core.slate_core import new_primid
-from app.core.slate_core import retrieve_primid_access_details
+from app.core.slate_core import identify_entity
 from app.core.regexp_list import re_fph, re_hrns, re_email
-from app.core.slate_login import get_auth_data
 from app.core.auth import pin_random_ord, pin_prompt_message
-from app.core.auth import check_auth_hash, authenticate_pin
-from app.core.logging import log_event
-
-#, authenticate_web_access
+from app.core.auth import authenticate_pin, authenticate_web_access
 #from app.core.auth import set_web_password_hash
 
 
@@ -87,6 +81,77 @@ def register():
     #   /register?c_fph=0c75584102039b93&ns_fph=95a5467fed65bbac
     #   /register?ns_fph=95a5467fed65bbac
 
+    initial_namespace_fph = ""
+    initial_currency_fph = ""
+
+    url_parent_namespace_fph = request.args.get("ns_fph")
+    if url_parent_namespace_fph:
+        if type(url_parent_namespace_fph) is str:
+            parent_namespace_fph, \
+            parent_namespace_hrns, \
+            etype, \
+            m = identify_entity(url_parent_namespace_fph)
+            if m:
+                flash(m)
+                redirect("/register")
+            if etype != "namespace":
+                flash("Not a namespace")
+                redirect("/register")
+
+    url_initial_currency_fph = request.args.get("c_fph")
+    if url_initial_currency_fph:
+        if type(url_initial_currency_fph) is str:
+            initial_currency_fph, \
+            initial_currency_hrns, \
+            etype, \
+            m = identify_entity(url_initial_currency_fph)
+            if m:
+                flash(m)
+                redirect("/register")
+            if etype != "namespace":
+                flash("Not a currency")
+                redirect("/register")
+
+#    url_parent_namespace_fph, \
+#    url_parent_namespace_hrns, \
+#    etype, \
+#    m = identify_entity(url_parent_namespace_fph)
+#    if m:
+#        flash(m)
+#        redirect("/register")
+#    if etype != "namespace":
+#        flash(url_parent_namespace_fph + " is not a namespace")
+#        redirect("/register")
+
+
+#   url_initial_currency_fph, \
+#    url_initial_currency_hrns, \
+#    etype, \
+#    m = identify_entity(url_initial_currency_identifier)
+#    if m:
+#        flash(m)
+#        redirect("/register")
+#    if etype != "currency":
+#        flash(url_initial_currency_fph + " is not a currency")
+#        redirect("/register")
+
+#    entity_fph, \
+#    parent_namespace_fph, \
+#    entity_type, \
+#    active, \
+#    m = get_entity_common_properties(url_initial_currency_identifier)
+#    if m:
+#        log_event("error", "currency", m)
+#        flash("The currency does not exist.")
+#        redirect("/register")
+#    if entity_type != "currency":
+#        log_event("error", "", url_initial_currency_identifier)
+#        flash(url_initial_currency_identifier + " is not a currency")
+#        redirect("/register")
+#    if not active:
+#        flash("The currency exists but is not active.")
+#        redirect("/register")
+
     # The following variables are used to determine which menu subsets are
     # displayed:
     page = "registration"
@@ -109,24 +174,6 @@ def register():
     country_included = False
     ssh_public_key_allowed = False
     #--------------------------------------------------------------------------
-
-    url_currency_identifier = request.args.get("c_fph")
-    initial_currency_fph, \
-    initial_currency_hrns, \
-    etype, \
-    m = identify_entity(url_currency_identifier)
-    if not (initial_currency_fph and (etype == "currency")):
-        initial_currency_fph = ""
-        initial_currency_hrns = ""
-
-    initial_namespace_identifier = request.args.get("ns_fph")
-    initial_namespace_fph, \
-    initial_namespace_hrns, \
-    etype, \
-    m = identify_entity(initial_namespace_identifier)
-    if not (initial_namespace_fph and (etype == "namespace")):
-        initial_namespace_fph = ""
-        initial_namespace_hrns = ""
 
     form = RegistrationForm()
 
@@ -155,9 +202,10 @@ def register():
         # At this point the initial currency may have been specified in either
         # the URL or the form. If the currency FPH was specified in the URL,
         # the currency HRNS field will not have been displayed.
-
-        currency_identifier = form.currency.data  # from form
-        # The identify_entity( ) function determines whether either is valid.
+        if form.currency.data:
+            currency_identifier = form.currency.data  # from form
+        else:
+            initial_currency_fph = request.args.get("c_fph")
         currency_fph, \
         currency_hrns, \
         etype, \
@@ -167,50 +215,99 @@ def register():
             flash("Unknown error (logged)")
             redirect("/register")
         if not currency_fph:
-            flash("No valid currency identifier provided")
+            flash("No valid currency identifier provided"")
             redirect("/register")
         if etype != "currency":
             flash(currency_identifier + " is not a currency")
             redirect("/register")
 
+
+
+
+
+
+
+
+
+#        if not initial_currency_fph:
+#            if form.currency.data:
+#                currency_identifier = form.currency.data  # from form
+#                currency_fph, \
+#                currency_hrns, \
+#                etype, \
+#                m = identify_entity(currency_identifier)
+#                if m:
+#                    log_event("error", "currency", m)
+#                    flash("Unknown error (logged)")
+#                    redirect("/register")
+ #               if etype != "currency":
+ #                   flash(currency_identifier + " is not a currency")
+ #                   redirect("/register")
+ #               if not currency_fph:
+ #                   flash(currency_identifier + " does not exist")
+ #                   redirect("/register")
+#                # If control reaches this point then the currency specified in
+#                # the form is valid.
+#        elif initial_currency_fph and  initial_currency_hrns:
+#            currency_fph = initial_currency_fph # already validated
+#            currency_hrns = initial_currency_hrns
+#
+#        else:
+#            flash("No valid currency identifier provided")
+#            redirect("/register")
+
+
         # Similarly, at this point the parent namespace may have been specified
         # in either the URL or the form. If the parent namespace FPH was
         # specified in the URL, the currency HRNS field will not have been
         # displayed.
+        if form.namespace.data:
+            parent_namespace_identifier = form.namespace.data
+        else:
+            url_parent_namespace_fph = request.args.get("ns_fph")
+            
+            namespace_identifier = form.currency.data  # from form
+            parent_namespace_fph, \
+            parent_namespace_hrns, \
+            etype, \
+            m = identify_entity(namespace_identifier)
+            if m:
+                log_event("error", "namespace", m)
+                flash("Unknown error (logged)")
+                redirect("/register")
+            if etype != "namespace":
+                flash(namespace_identifier + " is not a namespace")
+                redirect("/register")
+            if not namespace_fph:
+                flash(namespace_identifier + " does not exist")
+                redirect("/register")
+                # If control reaches this point then the namespace specified in
+                # the form exists.
+        elif initial_namespace_fph and initial_namespace_hrns:
+            parent_namespace_fph = initial_namespace_fph # already validated
+            parent_namespace_hrns = initial_namespace_hrns # already validated
+        else:
+            flash("No valid namespace identifier provided")
+            redirect("/register")
+        initial_namespace_fph = parent_namespace_fph # for form
+        initial_namespace_hrns = parent_namespace_hrns # for form
 
-        namespace_identifier = form.namespace.data
-        # The identify_entity( ) function determines whether either is valid.
-        namespace_fph, \
-        namespace_hrns, \
-        etype, \
-        m = identify_entity(namespace_identifier)
-        if m:
-            log_event("error", "namespace", m)
-            flash("Unknown error (logged)")
-            redirect("/register")
-        if not namespace_fph:
-            flash(namespace_identifier + " does not exist")
-            redirect("/register")
-        if etype != "namespace":
-            flash(namespace_identifier + " is not a namespace")
-            redirect("/register")
-        # If control reaches this point then either the *namespace* specified
-        # in the form or the  *namespace* specified in the URL exists.
+        #initial_currency_fph = default
 
         primid_fph, \
         primid_hrns, \
         access_token, \
         m = new_primid(
-                form.username.data,
-                namespace_fph,
-                form.realname.data,
+                username,
+                parent_namespace_fph,
+                realname,
                 form.email_1.data,
                 form.email_2.data,
                 form.password.data,
                 form.pin.data
             )
         if m:
-            log_event("error", "primid creation", m)
+            log_event("error", m)
             flash("The primid cannot be created. See error log.")
             return redirect("/register")
 
@@ -253,117 +350,86 @@ def login():
     #form = LoginForm(pro=pro, pin_prompt=pin_prompt)
     form = LoginForm()
     if form.validate_on_submit():
-
-        agent_identifier = form.identity.data # HRNS or FPH
+        identity_hrns = form.identity.data
         identity_email = form.email.data
 
-        if (agent_identifier == "") and (email == ""): # neither provided
+        print("identity_hrns = [" + identity_hrns + "]")
+
+        identity_fph = identity_fph_2 = ""
+
+        if (identity_hrns == "") and (identity_email == ""): # neither provided
             flash("Either an identity or an email address must be provided")
             return redirect(url_for("login"))
-
-        primid_has_been_identified_from_identity = False
-        primid_has_been_identified_from_email = False
-
-        identity_fph, \
-        identity_hrns, \
-        etype, \
-        m = identify_entity(form.identity.data)
-        if m:
-            flash(m)
-            return redirect(url_for("login"))
-        if (etype != "primid") and (etype != "secid"):
-            flash("Invalid identity entered")
-            return redirect(url_for("login"))
-        if etype == "secid": # authentication requires primary *identity*
-            identity_fph = get_primid(identity_fph)
-            if m:
-                flash(m)
+        if identity_hrns:
+            if not re_hrns.match(identity_hrns):
+                flash("The identity HRNS is invalid.")
                 return redirect(url_for("login"))
             else:
-                identity_hrns = fph_to_hrns(identity_fph)
-        if not identity_fph:
-            flash("This identity is not registered here.")
-            #return redirect(url_for("login"))
+                identity_fph = hrns_to_fph(identity_hrns)
+                print("identity_fph = " + identity_fph + " > " + identity_hrns)
+                # Returns "" if the identity is not registered.
 
-        print("identity = " + identity_fph + " = [" + identity_hrns + "]")
+                identity_fip = fph_to_fip(identity_fph)
 
-        # If control reaches this point and the FPH exists, we have a valid
-        # *primid* for the HRNS or FPH entered.
-        if identity_fph:
-            flash(
-                identity_hrns + " = [" + identity_fph + "] has " \
-                + "been identified from the agent identifier."
-            )
-            primid_identified_has_been_from_identity = True
+                if not identity_fip: # SOMETHING WRONG/MISSING HERE!!!!
+                #if not identity_fph: # SOMETHING WRONG/MISSING HERE!!!!
+                    flash("This identity is not registered here.")
+                    return redirect(url_for("login"))
+                else:
+                    dpath = ROOTS + "/" + identity_fip
 
+                print("identity_hrns > identity_fph = " + identity_fph)
+
+        # If control reaches this point, we have a valid identity for the
+        # HRNS entered.
         if identity_email:
             if not re_email.match(identity_email):
                 flash("The email address is invalid.")
                 return redirect(url_for("login"))
             else:
-                identity_fph_from_email = email_to_primid(identity_email)
-                # Returns "" if the email address not mapped to *primid* FPH.
-                if not identity_fph_from_email:
-                    flash("This email address is not registered here.")
+                identity_fph_2 = email_to_fph(identity_email)
+                # Returns "" if the email address is not mapped to an identity
+                # FPH.
+                if not identity_fph_2:
+                    flash("This email is not registered here.")
                     return redirect(url_for("login"))
-                else:
-                    primid_has_been_identified_from_email = True
-                    if primid_has_been_identified_from_identity:
-                        if primid_identified_from_email != identity_fph:
-                            flash(
-                                "The email address provided here is not " \
-                                + "consistent with the user identity " \
-                                + "already validated."
-                            )
-                            return redirect(url_for("login"))
-                    else:
-                        identity_fph = identity_fph_from_email
-                        identity_hrns = fph_to_hrns(identity_fph)
-                        flash(
-                            identity_hrns + " = [" + identity_fph + "] has " \
-                            + "been identified from the email address."
-                        )
+        # If control reaches this point, we have a valid identity for the
+        # email address entered.
 
-            # If control reaches this point, we have a valid identity for the
-            # email address entered.
-
-        # Whether from the agent field (*primid*|*secid*) or from an email
-        # address, we have now identified the *primid*.
-        print("identity = " + identity_fph + " = [" + identity_hrns + "]")
-
-        auth_dict, m = get_auth_data(identity_fph)
-        if m:
-            flash(m)
-            return redirect(url_for("login"))
-        password_hash = auth_dict["password_hash"]
-        pin = auth_dict["pin"]
-        access_token_hash = auth_dict["access_token_hash"]
-
-        print("password hash = " + password_hash)
-        print("PIN = " + pin)
-        print("access_token_hash = " + access_token_hash)
+        if identity_fph and identity_fph_2: # both have been provided
+            if identity_fph != identity_fph_2:
+                flash("The email address does not belong to this identity.")
+                return redirect(url_for("login"))
+        #elif identity_fph_2:
+        #    identity_fph = identity_fph_2
 
 
-
-#        password_hash, \
-#        pin, \
-#        access_token_hash, \
-#        m = retrieve_primid_access_details(identity_fph)
+#        print(">>>>>>> identity_fph = " + identity_fph)
+#        dpath = fph_to_dpath(identity_fph)
+#        print(">>>>>>> dpath = " + dpath)
+        # Exit if this FPH does not exist in the entity map:
+#        if not dpath:
+#            flash("Invalid identity")
+#            return redirect(url_for("login"))
 
         # Retrieve the user object:
         user = User(identity_fph)
 
+        with open(dpath + "/.type", "r") as type_f:
+            type = type_f.read()
+        if type == "secid":
+            with open(dpath + "/.primid", "r") as primid_f:
+                primid = primid_f.read()
+            if not primid:
+                flash("Apparently not a primid")
+                return redirect(url_for("login"))
+        elif type != "primid":
+            # If the entity type is neither a secondary identity nor a primary
+            # identity then we need to exit:
+            flash("Invalid username")
+            return redirect(url_for("login"))
 
-        password = form.password.data
-        print("form.password.data = " + form.password.data)
-        password2 = form.password.data.strip()
-        print("password strip()ped = " + form.password.data)
-        if password != password2:
-            print("password messed up")
-
-        #if not authenticate_web_access(identity_fph, form.password.data):
-        if not check_auth_hash(password_hash, password):
-        #if not check_auth_hash(password_hash, form.password.data):
+        if not authenticate_web_access(identity_fph, form.password.data):
             flash("Incorrect password")
             return redirect(url_for("login"))
 
@@ -371,8 +437,10 @@ def login():
             flash("Incorrect PIN digits")
             return redirect(url_for("login"))
 
-        # Register the authenticated login:
-        register_authenticated_login(identiy_fph)
+        # Set the .authenticated flag:
+        fpath = fph_to_dpath(identity_fph) + "/.authenticated"
+        if not os.path.exists(fpath):
+            Path(fpath).touch()
 
         login_user(user, remember=form.remember_me.data)
 
