@@ -10,10 +10,12 @@ import json
 import os
 import sys
 import sqlite3
+#import logging
 
 from .dbm_functions import dbm_store, dbm_fetch, dbm_delete
 from .regexp_list import re_email
 from .common import nshash
+from .logging import log_event
 
 #------------------------------------------------------------------------------
 # Used to authenticate both passwords and recovery details (email addresses or
@@ -24,7 +26,24 @@ def auth_hash(password):
     return hash_bytes.decode("utf-8")
 
 def check_auth_hash(password, pwd_hash):
-    return bcrypt.checkpw(password.encode("utf-8"), pwd_hash.encode("utf-8"))
+#    return bcrypt.checkpw(password.encode("utf-8"), pwd_hash.encode("utf-8"))
+    try:
+        password_authenticated = bcrypt.checkpw(
+                                            password.encode("utf-8"),
+                                            pwd_hash.encode("utf-8")
+                                        )
+    except Exception as exception:
+        #logging.exception('') # using Python logging module
+        log_event("errors", "auth_hash( _)", exception)
+        print(exception)
+        return False
+    else:
+        return password_authenticated
+
+
+
+
+
 
 #def authenticate_cli_access(fph, auth_code):
 #    properties = get_properties(fph)

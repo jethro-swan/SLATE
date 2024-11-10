@@ -1249,12 +1249,25 @@ def check_access_credentials():
 
         print("\t" + hrns)
 
-        auth_dict, m = get_auth_data(primid_fph)
+#        auth_dict, m = get_auth_data(primid_fph)
+#        if m:
+#            print(m)
+#        password_hash = auth_dict["password_hash"]
+#        pin = auth_dict["pin"]
+#        access_token_hash = auth_dict["access_token_hash"]
+
+        password_hash, \
+        pin, \
+        access_token_hash, \
+        m = get_auth_data(primid_fph)
         if m:
-            print(m)
-        password_hash = auth_dict["password_hash"]
-        pin = auth_dict["pin"]
-        access_token_hash = auth_dict["access_token_hash"]
+            flash(m)
+            return redirect(url_for("login"))
+
+
+
+
+
 
         print("password hash = " + password_hash)
         print("PIN = " + pin)

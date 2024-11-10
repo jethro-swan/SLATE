@@ -5,7 +5,7 @@ import pickle
 from pathlib import Path
 from string import ascii_lowercase
 
-#from flask_bcrypt import Bcrypt # 2024-11-10: Try this out to resolve problem
+from flask-bcrypt import Brypt  # 2024-11-10: Try this out to resolve problem
                                 # with check_auth_hash( )
                                 # ("ValueError: Invalid salt")
 
@@ -21,8 +21,6 @@ from .auth import auth_hash, generate_access_token
 from .regexp_list import *
 from .unix_functions import fcopy
 from .cctld_list import *
-
-#from app import bcrypt  # added 2024-11-10
 
 #------------------------------------------------------------------------------
 # In NESTS the FPH has so far been formed as the hash of the FIP, but making it
@@ -424,8 +422,7 @@ def account_status(account_fph):
     if not re_fph.match(account_fph):
         return "", "", 0, "Invalid FPH: " + account_fph
 
-    #account_fph = "'" + account_fph + "'"
-    # wrapped to enable SQLite to accept it.
+    #account_fph = "'" + account_fph + "'" # wrapped to enable SQLite to accept it.
 
     entity_fph, \
     parent_namespace_fph, \
@@ -479,7 +476,6 @@ def new_primid(
         realname,
         email_address_1,
         email_address_2,
-#        password_already_hashed,
         password,
         pin
     ):
@@ -490,7 +486,7 @@ def new_primid(
 
     #if re_password.match(password):
     #    password_hash = auth_hash(password)
-    password_hash = auth_hash(password) # restored 2024-11-10 19.50
+    password_hash = auth_hash(password)
     #else:
     #    return "", "", "", "Invalid password provided."
 
@@ -577,8 +573,7 @@ def new_primid(
                 pickle.dumps(secids_fph_list),          # empty list
                 pickle.dumps(accounts_fph_list),        # empty list
                 pickle.dumps(stewardships_fph_list),    # empty list
-                #password_already_hashed,    # restored 2024-11-10 19.50
-                auth_hash(password),        # restored 2024-11-10 19.50
+                auth_hash(password),
                 pin,
                 auth_hash(access_token),
             )

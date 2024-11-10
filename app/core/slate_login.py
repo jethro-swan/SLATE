@@ -101,20 +101,22 @@ def check_authenticated_login(agent_fph):
 
 def get_auth_data(primid_fph):
 
-    auth_dict = {}
-    auth_dict["password_hash"] = ""
-    auth_dict["pin"] = ""
-    auth_dict["access_token_hash"] = ""
+#    auth_dict = {}
+#    auth_dict["password_hash"] = ""
+#    auth_dict["pin"] = ""
+#    auth_dict["access_token_hash"] = ""
 
     if not re_fph.match(primid_fph):
-        return auth_dict, primid_fph + " is not an FPH"
-
+#        return auth_dict, primid_fph + " is not an FPH"
+        return  "", "", "", primid_fph + " is not an FPH"
+        
     entity_type, m = get_entity_type(primid_fph)
     if m:
-        return auth_dict, m
+#        return auth_dict, m
+        return "", "", "", m
     if entity_type != "primid":
-        return auth_dict, primid_fph + " is not a primid"
-
+#        return auth_dict, primid_fph + " is not a primid"
+        return "", "", "", primid_fph + " is not a primid"
     with sqlite3.connect(ENTITIES_DB) as conn:
         cursor = conn.cursor()
         cursor.execute(
@@ -125,11 +127,11 @@ def get_auth_data(primid_fph):
             (primid_fph,)
         )
         result = cursor.fetchone()
-    auth_dict = {}
-    auth_dict["password_hash"] = result[0]
-    auth_dict["pin"] = result[1]
-    auth_dict["access_token_hash"] = result[2]
-    return auth_dict, ""
-
+#    auth_dict = {}
+#    auth_dict["password_hash"] = result[0]
+#    auth_dict["pin"] = result[1]
+#    auth_dict["access_token_hash"] = result[2]
+#    return auth_dict, ""
+    return result[0], result[1], result[2], ""
 
 #==============================================================================

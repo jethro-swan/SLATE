@@ -3,9 +3,9 @@ import json
 from pathlib import Path
 import sys
 
-#from flask_bcrypt import Bcrypt # 2024-11-10: Try this out to resolve problem
-#                                # with check_auth_hash( )
-#                                # ("ValueError: Invalid salt")
+from flask-bcrypt import Brypt  # 2024-11-10: Try this out to resolve problem
+                                # with check_auth_hash( )
+                                # ("ValueError: Invalid salt")
 
 # SLATE components: -----------------------------------------------------------
 
@@ -23,7 +23,7 @@ from app.core.logging import log_event
 
 from app.core.display import yesno
 
-#from app import bcrypt # added 2024-11-10
+
 
 #, authenticate_web_access
 #from app.core.auth import set_web_password_hash
@@ -205,16 +205,6 @@ def register():
         # If control reaches this point then either the *namespace* specified
         # in the form or the  *namespace* specified in the URL exists.
 
-        if form.password_repeat.data != form.password.data:
-            flash("The passwords not not match")
-            redirect("/register")
-
-
-        # Try hashing password here using flask_bcrypt instead of
-        # core.auth.auth_hash( )
-
-
-        #pwh = bcrypt.generate_password_hash(form.password.data).decode('utf-8')
         primid_fph, \
         primid_hrns, \
         access_token, \
@@ -224,7 +214,6 @@ def register():
                 form.realname.data,
                 form.email_1.data,
                 form.email_2.data,
-                #pwh,
                 form.password.data,
                 form.pin.data
             )
@@ -393,35 +382,30 @@ def login():
 
 
 # Some test stuff ...
-#
-#        import bcrypt
-#        salt = password_hash[:29]
-#        print("salt (d)  = ", end="")
-#        print(salt)
-#        print("salt (e)  = ", end="")
-#        print(salt.encode("utf-8"))
-#        pwhe = password_hash.encode("utf-8")
-#        pw2e = password2.encode("utf-8")
-#        print("password  = " + password)
-#        print("password2 = " + password2)
-#        print("pwhe      = " + str(pwhe))
-#        print("pw2e      = " + str(pw2e))
-#        r = bcrypt.checkpw(pwhe, pw2e)
-#        print("checkpw ... " + yesno(r))
+
+        import bcrypt
+        salt = password_hash[:29]
+        print("salt (d)  = ", end="")
+        print(salt)
+        print("salt (e)  = ", end="")
+        print(salt.encode("utf-8"))
+        pwhe = password_hash.encode("utf-8")
+        pw2e = password2.encode("utf-8")
+        print("password  = " + password)
+        print("password2 = " + password2)
+        print("pwhe      = " + str(pwhe))
+        print("pw2e      = " + str(pw2e))
+        r = bcrypt.checkpw(pwhe, pw2e)
+        print("checkpw ... " + yesno(r))
 
 
 
-        password_hash_encoded_utf8 = password
 
 
 
 
         #if not authenticate_web_access(identity_fph, form.password.data):
-        if not bcrypt.check_password_hash(
-                          password_hash_encoded_utf8,
-                          password_hash
-                      ):
-#        if not check_auth_hash(password_hash, password):
+        if not check_auth_hash(password_hash, password):
         #if not check_auth_hash(password_hash, form.password.data):
             flash("Incorrect password")
             return redirect(url_for("login"))
