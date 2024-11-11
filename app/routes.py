@@ -411,18 +411,18 @@ def login():
 
 
 
-        password_hash_encoded_utf8 = password
+#        password_hash_encoded_utf8 = password
 
 
 
 
-        #if not authenticate_web_access(identity_fph, form.password.data):
-        if not bcrypt.check_password_hash(
-                          password_hash_encoded_utf8,
-                          password_hash
-                      ):
+#        #if not authenticate_web_access(identity_fph, form.password.data):
+#        if not bcrypt.check_password_hash(
+#                          password_hash_encoded_utf8,
+#                          password_hash
+#                      ):
 #        if not check_auth_hash(password_hash, password):
-        #if not check_auth_hash(password_hash, form.password.data):
+        if not check_auth_hash(password_hash, form.password.data):
             flash("Incorrect password")
             return redirect(url_for("login"))
 
@@ -477,8 +477,8 @@ def login_recover():
                 form.email.data
             )
         )
-        identity_hrns = form.identity.data
-        identity_fph = form.fph.data
+        identity_hrns = form.identity.data  # Get rid of these and replace with
+        identity_fph = form.fph.data        # agent_identifier (HRNS or FPH)
         identity_email = form.email.data
 
         # (Most of the following chunk of code has been re-used from /login so
@@ -499,24 +499,20 @@ def login_recover():
         # At this point, whether derived from the HRNS or entered directly as
         # an FPH, we have something that looks like an FPH. It must now be
         # determind whether this actually represents a registered identity.
-        identity_fip = fph_to_fip(identity_fph)
-        # Returns "" if the identity is not registered.
-        if not identity_fip: # no email > FPH mapping found
-            flash("This identity is not registered here.")
+        entity_fph, \
+        entity_hrns, \
+        etype, \
+        m = identify_entity(agent_identifier)
+
+        # m = identify_entity(identity_fph)   # This should be agent_identifier,
+                                            # so change it ...
+        # If control has recahed this point, this is a registered entity of
+        # some type, but is it a *primid*?
+        if etype != "primid":
+            flash(agent_identifier + " is not a primary identity.")
             return redirect(url_for("login"))
-        dpath = ROOTS + identity_fip
-        with open(dpath + "/.type", "r") as type_f:
-            type = type_f.read()
-        if not ((type == "primd") or (type == "secid")):
-            flash("This is not registered identity.")
-            return redirect(url_for("login"))
-        elif (type == "secid"):
-            with open(dpath + "/.primd", "r") as primid_f:
-                primid_fph = primid_f.read()
-        else:
-            primid_fph = identity_fph
-        # If control reaches this point, we have a valid identity for the HRNS
-        # entered.
+        # If control reaches this point, the entity identifier entered has been
+        # identified as a registered *primid*.
         if not identity_email:
             flash("Login recovery is not possible without an email address.")
             return redirect(url_for("login"))
@@ -524,8 +520,8 @@ def login_recover():
             flash("The email address is invalid.")
             return redirect(url_for("login"))
         else:
-            identity_fph_2 = email_to_fph(identity_email)
-            # Returns "" if the email address is not mapped to an identity FPH.
+            identity_fph_2 = email_to_primid(identity_email)
+            # Returns "" if the email address is not mapped to a *primid*.
             if not identity_fph_2:
                 flash("This email is not registered here.")
                 return redirect(url_for("login"))
@@ -553,20 +549,6 @@ def login_recover():
 # NB, for (2), use of auth_hash() to take advantage of Bcrypt's salt feature,
 # would make it more challenging to create a "web safe" URL string and is
 # probably not worth the trouble.
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
         return redirect("/login")
     return render_template(
@@ -604,11 +586,19 @@ def home():
     # a primid:
     primid_iff_needed = fph_to_primid_iff_needed(identity_fph)
 
-    # Since a user may have accounts scattered across an arbitrary number of
-    # namespaces, it is necessary to maintain a list of these:
-    dpath = fph_to_dpath(identity_fph)
-    with open(dpath + "/.accounts") as accounts_f:
-        account_list = accounts_f.read()
+    # Since a user may have *accounts* scattered across an arbitrary number of
+    # *namespaces*, it is necessary to maintain a list of these:
+
+    if identity_type == "primid":   # should probably be using etype here
+        accounts_list = list_primid_accounts(identity_fph)
+    elif identity_type == "secid":
+        accounts_list = list_secid_accounts(identity_fph)
+    else:
+        log_event("error", "identity misidentified")
+        flash("Internal error logged") # this should never happen
+        return redirect(url_for("home"))
+
+    # List the identity's *accounts*:
     accounts_a = account_list.split("\n")
     accounts = []
     for s in accounts_a:
@@ -619,9 +609,10 @@ def home():
             account["hrns"] = fph_to_hrns(s)
             accounts.append(account)
 
-    dpath = fph_to_dpath(identity_fph)
-    with open(dpath + "/.secid_list") as secids_f:
-        secid_list = secids_f.read()
+    # If this is a *primid*, fetch a list of its *secid*s:
+    if etype = "primid":
+    secid_list = list_secids(primid_fph)    # This function probably doesn't
+                                            # exist yet ...
     secids_a = secid_list.split("\n")
     secids = []
     for s in secids_a:
@@ -667,37 +658,20 @@ def account_details(account_fph=None):
     identity_type = fph_to_display_type(identity_fph)
 
     if account_fph is not None:
-
         #account_fph = request.args.get("a_fph")
         if not re_fph.match(account_fph):
-            flash(
-                account_fph + " is not a valid FPH"
-            )
+            flash(account_fph + " is not a valid FPH")
             return redirect("/home")
         account_hrns = fph_to_hrns(account_fph)
         if not account_hrns:
-            flash(
-                "There is no account with FPH " + account_fph
-            )
+            flash("There is no account with FPH " + account_fph)
             return redirect("/home")
-        dpath = fph_to_dpath(account_fph)
-        with open(dpath + "/.type", "r") as type_f:
-            type = type_f.read()
-        if not type == "account":
-            flash(
-                account_fph + " is not an account"
-            )
+        if not etype == "account":
+            flash(account_fph + " is not an account")
             return redirect("/home")
-
     else:
-
-        flash(
-            "No account FPH specified."
-        )
+        flash("No account FPH specified.")
         return redirect("/home")
-
-
-
 
     return render_template(
                 #"home_account_details.html",
@@ -1103,10 +1077,7 @@ def manage_own_identities():
     identity_hrns = fph_to_hrns(identity_fph)
     identity_type = fph_to_display_type(identity_fph)
 
-    dpath = fph_to_dpath(identity_fph)
-    with open(dpath + "/.secid_list") as secids_f:
-        secid_list = secids_f.read()
-    secids_a = secid_list.split("\n")
+    secids_a = list_secids(primid_fph)
     secids = []
     for s in secids_a:
         if s != "":
@@ -1115,10 +1086,6 @@ def manage_own_identities():
             secid["fph"] = s
             secid["hrns"] = fph_to_hrns(s)
             secids.append(secid)
-
-
-
-
 
     return render_template(
                 "identities_manage.html",
@@ -1211,10 +1178,7 @@ def manage_accounts():
 
     # Since a user may have accounts scattered across an arbitrary number of
     # namespaces, it is necessary to maintain a list of these:
-    dpath = fph_to_dpath(identity_fph)
-    with open(dpath + "/.accounts") as accounts_f:
-        account_list = accounts_f.read()
-    accounts_a = account_list.split("\n")
+    accounts_a = list_accounts(agent_identifier)
     accounts = []
     for s in accounts_a:
         if s != "":
@@ -1224,9 +1188,6 @@ def manage_accounts():
             account["hrns"] = fph_to_hrns(s)
             accounts.append(account)
     # (This duplicates code in /home so, like much else, need to be factorized.)
-
-
-
 
     return render_template(
                 "accounts_manage.html",
@@ -1698,7 +1659,7 @@ def balances_others():
 
 
 # transaction loop ------------------------------------------------------------
-@app.route("/admin/tloop")
+@app.route("/admin/tloop")   ### IGNORE THIS: it applies only to NESTS
 @login_required
 def tloop():
     page = "tloop"

@@ -15,6 +15,13 @@ app/core/deflists
 app/20241004_flaskbits
 _app
 zzz
+fake_entities_list.txt
+fake_primids_access_credentials.txt
+seed_primid_details_test.py
+seed_primid_details.txt
+whereused2.txt
+whereused.txt
+coredefs.sh
 
 
 __pycache__

@@ -15,6 +15,7 @@ from .constants import SUBSTRATE_FPH
 from .common import filename_timestamp as timestamp
 from .common import nshash
 from .fph_hrns_maps import hrns_to_fph, fph_to_hrns, create_maps
+from .fph_hrns_maps import delete_fph_from_map
 from .dbm_functions import dbm_store, dbm_fetch, dbm_delete, dbm_keys
 from .dbm_functions import dbm_create_map
 from .auth import auth_hash, generate_access_token
@@ -64,6 +65,23 @@ def create_entities_db():
             """
         )
         # Create primids table:
+#        cursor.execute(
+#            """
+#    	    CREATE TABLE IF NOT EXISTS primids (
+#                entity_fph TEXT PRIMARY KEY,
+#                primid_realname TEXT,
+#                primid_email_1 TEXT NOT NULL,
+#                primid_email_2 TEXT,
+#                secids_fph_list BLOB,
+#                accounts_fph_list BLOB,
+#                stewardships_fph_list BLOB,
+#                password_hash TEXT NOT NULL,
+#                pin TEXT,
+#                access_token_hash TEXT
+#            );
+#            """
+#        )
+        # Create primids table:
         cursor.execute(
             """
     	    CREATE TABLE IF NOT EXISTS primids (
@@ -74,9 +92,9 @@ def create_entities_db():
                 secids_fph_list BLOB,
                 accounts_fph_list BLOB,
                 stewardships_fph_list BLOB,
-                password_hash TEXT NOT NULL,
+                password_hash BLOB NOT NULL,
                 pin TEXT,
-                access_token_hash TEXT
+                access_token_hash BLOB
             );
             """
         )
@@ -490,7 +508,7 @@ def new_primid(
 
     #if re_password.match(password):
     #    password_hash = auth_hash(password)
-    password_hash = auth_hash(password) # restored 2024-11-10 19.50
+#    password_hash = auth_hash(password) # restored 2024-11-10 19.50
     #else:
     #    return "", "", "", "Invalid password provided."
 
@@ -510,6 +528,7 @@ def new_primid(
 
     primid_fph, m = hrns_to_fph(primid_hrns)
     if m:
+        delete_fph_from_map(primid_fph)
         return "", "", "", m
 
     if not re_realname.match(realname):
@@ -520,8 +539,10 @@ def new_primid(
     # The *primid* cannot be created if no valid primary email address has been
     # provided:
     if not email_address_1:
+        delete_fph_from_map(primid_fph)
         return "", "", "", "No email address provided"
     if not re_email.match(email_address_1):
+        delete_fph_from_map(primid_fph)
         return "", "", "", "Invalid entry: primary email address"
 
     # If an invalid secondary email address has been provided it is discarded
