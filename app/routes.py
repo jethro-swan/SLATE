@@ -610,18 +610,18 @@ def home():
             accounts.append(account)
 
     # If this is a *primid*, fetch a list of its *secid*s:
-    if etype = "primid":
-    secid_list = list_secids(primid_fph)    # This function probably doesn't
-                                            # exist yet ...
-    secids_a = secid_list.split("\n")
-    secids = []
-    for s in secids_a:
-        if s != "":
-            print(s)
-            secid = {}
-            secid["fph"] = s
-            secid["hrns"] = fph_to_hrns(s)
-            secids.append(secid)
+    if identity_type == "primid":
+        secid_list = list_secids(primid_fph)    # This function probably
+                                                # doesn't exist yet ...
+        secids_a = secid_list.split("\n")
+        secids = []
+        for s in secids_a:
+            if s != "":
+                #print(s)
+                secid = {}
+                secid["fph"] = s
+                secid["hrns"] = fph_to_hrns(s)
+                secids.append(secid)
 
     return render_template(
                 "home.html",
