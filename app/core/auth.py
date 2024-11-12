@@ -128,6 +128,41 @@ def generate_access_token():
 
 # This is used mainly for command line (over SSH) access.
 
+
+
+
+#------------------------------------------------------------------------------
+# Content of primary identity .auth file:
+json_auth_tpl   =   {
+                        "CLI_auth_hash": "",    # duplicated in .auth file
+                        "web_password_hash": "",
+                        "PIN": "",              # 6-digit PIN for SWI access.
+                        "SSL_pubkey": [""]      # Any number of keys. Searched
+                                                # in sequence until a valid
+                                                # entry is found.
+                    }
+
+## The following function definitions have been recovered from a version of
+## auth.py duplicated at the following locations:
+##      NESTS_Python/NESTS_core2/nests_core/api/entities/auth.py
+##      NESTS_Python/NESTS_core2/nests_core/entities/auth.py
+##      NESTS_Python/NESTS_core2/nests_core/api/entities/auth.py
+##      NESTS_Python/NESTS_core/nests/api/entities/auth.py
+##      NESTS_Python/NESTS_core/nests/entities/auth.py
+##
+## These must now be adapted for use in SLATE (and possibly future versions of
+## NESTS).
+
+# Initialize the .auth file for primary identity identified by FIP:
+#def auth_initialize(fph):
+#    dpath = fph_to_dpath(fph)
+#    with open(dpath + "/.auth", "w") as auth_f:
+#        json.dump(json_auth_tpl, auth_f)
+#
+# This function defined aove is obsolete.
+
+
+
 #------------------------------------------------------------------------------
 # Generate an array of three random digits, increasing and non-repeating:
 def pin_random_ord():
@@ -145,9 +180,8 @@ def pin_prompt_message(psi):
     message += str(psi[2] + 1) + " of your PIN."
     return message
 
-def authenticate_pin(user_fph, pse, psi):
-    auth = auth_read(user_fph)
-    pin_a = [char for char in auth["PIN"]]
+def authenticate_pin(pin, pse, psi):
+    pin_a = [char for char in pin]
     pse_a = [char for char in pse]
     validated = True
     for c in pse_a:

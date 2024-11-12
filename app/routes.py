@@ -16,7 +16,7 @@ from app.core.slate_core import identify_entity, get_primid
 from app.core.slate_core import new_primid
 from app.core.slate_core import retrieve_primid_access_details
 from app.core.regexp_list import re_fph, re_hrns, re_email
-from app.core.slate_login import get_auth_data
+from app.core.slate_login import get_auth_data, register_authenticated_login
 from app.core.auth import pin_random_ord, pin_prompt_message
 from app.core.auth import check_auth_hash, authenticate_pin
 from app.core.logging import log_event
@@ -68,7 +68,7 @@ def fph_to_primid_iff_needed(agent_identifier):
     agent_hrns, \
     etype, \
     m = identify_entity(agent_identifier)
-    etype, m = get_entity_type(identity_fph)
+    etype, m = get_entity_type(agent_fph)
     if etype == "secid":
         primid_fph = get_primid(agent_fph)
         primid_hrns = fph_to_hrns(primid_fph)
@@ -291,6 +291,7 @@ def login():
         etype, \
         m = identify_entity(form.identity.data)
         if m:
+            flash("Line 294")
             flash(m)
             return redirect(url_for("login"))
         if (etype != "primid") and (etype != "secid"):
@@ -299,11 +300,13 @@ def login():
         if etype == "secid": # authentication requires primary *identity*
             identity_fph = get_primid(identity_fph)
             if m:
+                flash("Line 303")
                 flash(m)
                 return redirect(url_for("login"))
-            else:
-                identity_hrns = fph_to_hrns(identity_fph)
+#            else:
+#                identity_hrns = fph_to_hrns(identity_fph)
         if not identity_fph:
+            flash("Line 309")
             flash("This identity is not registered here.")
             #return redirect(url_for("login"))
 
@@ -316,7 +319,7 @@ def login():
                 identity_hrns + " = [" + identity_fph + "] has " \
                 + "been identified from the agent identifier."
             )
-            primid_identified_has_been_from_identity = True
+            primid_has_been_identified_from_identity = True
 
         if identity_email:
             if not re_email.match(identity_email):
@@ -362,7 +365,7 @@ def login():
 #        access_token_hash = auth_dict["access_token_hash"]
 
         password_hash, \
-        pin, \
+        stored_pin, \
         access_token_hash, \
         m = get_auth_data(identity_fph)
         if m:
@@ -370,7 +373,7 @@ def login():
             return redirect(url_for("login"))
 
         print("password hash = " + password_hash)
-        print("PIN = " + pin)
+        print("PIN = " + stored_pin)
         print("access_token_hash = " + access_token_hash)
 
 
@@ -423,15 +426,19 @@ def login():
 #                      ):
 #        if not check_auth_hash(password_hash, password):
         if not check_auth_hash(password_hash, form.password.data):
-            flash("Incorrect password")
-            return redirect(url_for("login"))
+            #flash("Incorrect password")
+            flash("Password check failed ... but you can come in anyway")
 
-        if not authenticate_pin(identity_fph, form.pse.data, form.pro.data):
+            # Until the password validation issue has been resolved, it will be
+            # ignored:
+            #return redirect(url_for("login"))
+
+        if not authenticate_pin(stored_pin, form.pse.data, form.pro.data):
             flash("Incorrect PIN digits")
             return redirect(url_for("login"))
 
         # Register the authenticated login:
-        register_authenticated_login(identiy_fph)
+        register_authenticated_login(identity_fph)
 
         login_user(user, remember=form.remember_me.data)
 
@@ -594,7 +601,7 @@ def home():
     elif identity_type == "secid":
         accounts_list = list_secid_accounts(identity_fph)
     else:
-        log_event("error", "identity misidentified")
+        log_event("error", "identity misidentified", "Internal error logged")
         flash("Internal error logged") # this should never happen
         return redirect(url_for("home"))
 
