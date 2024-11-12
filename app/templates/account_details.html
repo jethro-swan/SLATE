@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+
+<hr />
+
+{% block content %}
+  <table>
+    <tr>
+      <td>account HRNS</td>
+      <td>{{ account_hrns }}</td>
+    <tr>
+    <tr>
+      <td>account FPH</td>
+      <td>{{ account_fph }}</td></td>
+    <tr>
+    <tr>
+      <td>currency</td>
+      <td>{{ currency_fph }} [{{ currency_fph }}]</td></td>
+    <tr>
+    <tr>
+      <td>account balance</td>
+      <td>{{ currency_prefix }}{{ account_balance }}{{ currency_suffix }}</td>
+    <tr>
+    <tr>
+      <td>account balance</td>
+      <td>{{ account_balance }}</td></td>
+    <tr>
+  </table>
+  <hr />
+{% endblock %}

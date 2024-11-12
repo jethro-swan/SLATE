@@ -660,25 +660,42 @@ def account_details(account_fph=None):
     paying = False
     logged_in = current_user.is_authenticated
 
+    # The *primid* (or its alias *secid*) logged in currently:
     identity_fph = current_user.get_id()
     identity_hrns = fph_to_hrns(identity_fph)
+
+    # (This uses the identify_entity( ) function:)
     identity_type = fph_to_display_type(identity_fph)
 
+    # If an *account* has been specified (by FPH) in the URL slug,
     if account_fph is not None:
-        #account_fph = request.args.get("a_fph")
-        if not re_fph.match(account_fph):
-            flash(account_fph + " is not a valid FPH")
-            return redirect("/home")
-        account_hrns = fph_to_hrns(account_fph)
-        if not account_hrns:
-            flash("There is no account with FPH " + account_fph)
-            return redirect("/home")
-        if not etype == "account":
-            flash(account_fph + " is not an account")
-            return redirect("/home")
-    else:
+        # This should never happen (unless someone has entered gibberish in the
+        # slug or the URL).
         flash("No account FPH specified.")
         return redirect("/home")
+
+    else:
+        #account_fph = request.args.get("a_fph")
+        entity_fph, \
+        entity_hrns, \
+        etype, \
+        m = identify_entity(account_fph)
+
+        if not entity_fph:
+            flash("The FPH in the URL cannot be identified.")
+            return redirect("/home")
+        elif etype != "account":
+            flash("The FPH in the URL does not identify an account.")
+            return redirect("/home")
+        else:
+            # These are not necessary but aid in readability:
+            account_fph = entity_fph
+            account_hrns = entity_hrns
+            # currency_steward =
+            currency_fph = get_account_currency(account_fph)
+            currency_hrns = fph_to_hrns(currency_fph)
+
+
 
     return render_template(
                 #"home_account_details.html",
@@ -691,10 +708,13 @@ def account_details(account_fph=None):
                 identity_hrns=identity_hrns,
                 development_mode=development_mode,
                 logged_in=logged_in,
-                namespace_steward=namespace_steward,
-                currency_steward=currency_steward,
-                account_fph=account_fph,
-                account_hrns=account_hrns
+                currency_prefix=currency_prefix,    # just added
+                currency_suffix=currency_suffix,    # just added
+                currency_fph=currency_fph,          # just added
+                currency_hrns=currency_hrns         # just added
+                account_fph=account_fph,            # just added
+                account_hrns=account_hrns,          # just added
+                account_balance=account_balance     # just added
            )
 
 # stewardships page ----------------------------------------------------------
@@ -1072,7 +1092,7 @@ def manage():
 @app.route("/identities/manage", methods=["GET", "POST"])
 @login_required
 def manage_own_identities():
-    page = "identities_manage"
+    page = "manage_identities"
     group = "management"
     namespace_steward = True
     currency_steward = True
@@ -1112,7 +1132,7 @@ def manage_own_identities():
 @app.route("/identity/manage", methods=["GET", "POST"])
 @login_required
 def manage_identity():
-    page = "identity_manage"
+    page = "manage_identity"
     group = "management"
     #identity_fph = current_user
     #identity_hrns = fph_to_hrns(identity_fph)
@@ -1172,7 +1192,7 @@ def create_secondary_identity():
 @app.route("/accounts/manage", methods=["GET", "POST"])
 @login_required
 def manage_accounts():
-    page = "accounts_manage"
+    page = "manage_accounts"
     group = "management"
     namespace_steward = True
     currency_steward = True
@@ -1214,7 +1234,7 @@ def manage_accounts():
 @app.route("/account/manage", methods=["GET", "POST"])
 @login_required
 def manage_account():
-    page = "account_manage"
+    page = "manage_account"
     group = "management"
     namespace_steward = True
     currency_steward = True
@@ -1272,7 +1292,7 @@ def create_account():
 @app.route("/currencies/manage", methods=["GET", "POST"])
 @login_required
 def manage_currencies():
-    page = "currencies_manage"
+    page = "manage_currencies"
     group = "management"
     namespace_steward = True
     currency_steward = True
@@ -1301,7 +1321,7 @@ def manage_currencies():
 @app.route("/currency/manage", methods=["GET", "POST"])
 @login_required
 def manage_currency():
-    page = "currency_manage"
+    page = "manage_currency"
     group = "management"
     namespace_steward = True
     currency_steward = True
@@ -1330,7 +1350,7 @@ def manage_currency():
 @app.route("/currency/create", methods=["GET", "POST"])
 @login_required
 def create_currency():
-    page = "currency_create"
+    page = "create_currency"
     group = "management"
     namespace_steward = False
     currency_steward = False
@@ -1362,7 +1382,7 @@ def create_currency():
         )
         return redirect("/home")
     return render_template(
-                "currency_create.html",
+                "create_currency.html",
                 title="Create a currency",
                 logged_in=logged_in,
                 page=page,
@@ -1380,7 +1400,7 @@ def create_currency():
 @app.route("/namespaces/manage", methods=["GET", "POST"])
 @login_required
 def manage_namespaces():
-    page = "namespaces_manage"
+    page = "manage_namespaces"
     group = "management"
     namespace_steward = True
     currency_steward = True
@@ -1392,7 +1412,7 @@ def manage_namespaces():
     identity_type = fph_to_display_type(identity_fph)
 
     return render_template(
-                "namespaces_manage.html",
+                "manage_namespaces.html",
                 title="Manage namespaces",
                 logged_in=logged_in,
                 page=page,
@@ -1409,7 +1429,7 @@ def manage_namespaces():
 @app.route("/namespace/manage", methods=["GET", "POST"])
 @login_required
 def manage_namespace():
-    page = "namespace_manage"
+    page = "manage_namespace"
     group = "management"
     namespace_steward = True
     currency_steward = True
@@ -1438,7 +1458,7 @@ def manage_namespace():
 @app.route("/namespace/create", methods=["GET", "POST"])
 @login_required
 def create_namespace():
-    page = "namespace_create"
+    page = "create_namespace"
     group = "management"
     namespace_steward = True
     currency_steward = True

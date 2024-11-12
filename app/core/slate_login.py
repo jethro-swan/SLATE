@@ -13,9 +13,6 @@ debugging = True
 #max_hrns_depth = 0
 
 #==============================================================================
-
-
-#==============================================================================
 # Authentication and login managemenet:
 
 def register_authenticated_login(agent_fph): # (agent is *primid* or *secid*)
