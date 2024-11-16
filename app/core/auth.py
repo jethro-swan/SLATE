@@ -165,26 +165,64 @@ json_auth_tpl   =   {
 
 #------------------------------------------------------------------------------
 # Generate an array of three random digits, increasing and non-repeating:
-def pin_random_ord():
-    psi = []
-    psi.append(random.randrange(0,4))
-    psi.append(random.randrange(psi[0]+1,5))
-    psi.append(random.randrange(psi[1]+1,6))
-    return psi # list
+def pin_subset_prompt():
+##def pin_random_ord():
+    pin_subset_indices = [] # list of digit positions
+#    psi.append(random.randrange(0,4))
+#    psi.append(random.randrange(psi[0]+1,5))
+#    psi.append(random.randrange(psi[1]+1,6))
+    pin_subset_indices.append(random.randrange(0,3))
+    pin_subset_indices.append(random.randrange(pin_subset_indices[0]+1,4))
+    pin_subset_indices.append(random.randrange(pin_subset_indices[1]+1,5))
+    print("pin_subset_indices type ", end="")
+    print(type(pin_subset_indices))
+##    return pin_subset_indices # list
 
 # Generate message for PIN subset entry:
-def pin_prompt_message(psi):
+##def pin_prompt_message(pin_subset_indices):
     message = "Please enter digits "
-    message += str(psi[0] + 1) + ", "
-    message += str(psi[1] + 1) + " and "
-    message += str(psi[2] + 1) + " of your PIN."
-    return message
+    message += str(pin_subset_indices[0] + 1) + ", "
+    message += str(pin_subset_indices[1] + 1) + " and "
+    message += str(pin_subset_indices[2] + 1) + " of your PIN."
+##    return message
+    return message, pin_subset_indices # list
 
-def authenticate_pin(pin, pse, psi):
-    pin_a = [char for char in pin]
-    pse_a = [char for char in pse]
+def authenticate_pin(
+        pin_from_db,        # PIN retrived from database
+        pin_subset_entered, # Subset of pin digits entered in login form
+        pin_subset_indices  # The positions of the digits in the PIN subset
+    ):
+
+    print("authenticate_pin( ) ...")
+    print("PIN       = " + pin_from_db)
+    print("subset    = " + pin_subset_entered)
+    print("positions = ", end="")
+    for i in range(len(pin_subset_indices)):
+#        print(str(i + 1) + "\t", end="")
+        print(str(pin_subset_indices[i]), end="")
+    print()
+
+
+    #pin_a = [char for char in pin]
+    #pse_a = [char for char in pse]
+
+    pin_a = pin_from_db.split()
+    pse_a = pin_subset_entered.split()
+
     validated = True
-    for c in pse_a:
-        if c != pin_a[int(c)-1]:
+    for p in range(len(pin_subset_indices)): # the subset digit positions
+        i = int(p)
+        if pse_a[i] != pin_a[int(pin_subset_indices[i])]:
             validated = False
+            break
     return validated
+
+
+
+#    pin_a = [char for char in pin]
+#    pse_a = [char for char in pse]
+#    validated = True
+#    for c in pse_a:
+#        if c != pin_a[int(c)-1]:
+#            validated = False
+#    return validated

@@ -143,7 +143,7 @@ def create_entities_db():
         cursor.execute(
             """
             CREATE TABLE IF NOT EXISTS login (
-                primid_fph TEXT,
+                entity_fph TEXT,
                 login_id_fph TEXT,
                 login_authenticated INTEGER NOT NULL DEFAULT 0
             );
@@ -899,7 +899,9 @@ def list_secid_accounts(secid_fph):
         cursor = conn.cursor()
         cursor.execute(
             """
-            SELECT accounts_fph_list FROM secids WHERE entity_fph = ?
+            SELECT accounts_fph_list
+            FROM secids
+            WHERE entity_fph = ?
             """,
             (secid_fph,)
         )
@@ -909,6 +911,18 @@ def list_secid_accounts(secid_fph):
         #print(results)
 
     if result is None:
+        accounts_fph_list = []
+        accounts_fph_blob = pickle.dumps(accounts_fph_list)
+        cursor.execute(
+            """
+            UPDATE secids
+            SET accounts_fph_list = ?
+            WHERE entity_fph = ?
+            """,
+            (accounts_fph_blob, secid_fph)
+        )
+        conn.commit()
+        cursor.close()
         return [], "The secid " + secid_fph + " has no accounts."
     else:
         accounts_fph_blob = result[0]
@@ -936,7 +950,7 @@ def list_agent_accounts(agent_fph):
 
     with sqlite3.connect(ENTITIES_DB) as conn:
         cursor = conn.cursor()
-        cursor.execute(sstr, (secid_fph,))
+        cursor.execute(sstr, (agent_fph,))
         result = cursor.fetchone()
         if result is None:
             accounts_fph_list = []
@@ -956,7 +970,11 @@ def get_account_currency(account_fph):
     with sqlite3.connect(ENTITIES_DB) as conn:
         cursor = conn.cursor()
         cursor.execute(
-            "SELECT account_currency_fph FROM accounts WHERE entity_fph = ?",
+            """
+            SELECT account_currency_fph
+            FROM accounts
+            WHERE entity_fph = ?
+            """,
             (account_fph,)
         )
         currency_fph = cursor.fetchone()[0]
@@ -1069,6 +1087,32 @@ def list_secid_currencies(secid_fph): # in which an primid has accounts
     for account_fph in accounts_fph_list:
         currencies_fph_list.append(get_account_currency(account_fph))
     return currencies_fph_list    # list
+
+
+#==============================================================================
+#
+
+def list_secids(primid_fph):
+
+    with sqlite3.connect(ENTITIES_DB) as conn:
+        cursor = conn.cursor()
+        # Retrieve the list of *secids* for this *primid*:
+        cursor.execute(
+            """
+            SELECT secids_fph_list
+            FROM primids
+            WHERE entity_fph = ?
+            """,
+            (primid_fph,)
+        )
+        result = cursor.fetchone()
+        if result is None:
+            secids_fph_list = []
+        else:
+            secids_fph_list = pickle.loads(result[0])
+        return secids_fph_list
+
+
 
 
 
@@ -1199,7 +1243,8 @@ def get_account_specific_properties(account_fph):
         cursor.execute(
             """
             SELECT account_owner_fph, account_currency_fph, account_balance
-            FROM accounts WHERE entity_fph = ?
+            FROM accounts
+            WHERE entity_fph = ?
             """,
             (account_fph,)
         )

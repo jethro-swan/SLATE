@@ -48,6 +48,20 @@ def yesno(b):
         return "no"
 
 
+def entity_type_verbose(etype):
+    if not (etype in ["namespace", "currency", "account", "primid", "secid"]):
+        return ""
+    if etype == "primid":
+        return "primary identity"
+    if etype == "secid":
+        return "secondary identity"
+    else:
+        return etype
+
+
+
+
+
 def get_cli_number_input(prompt_message, min_num, max_num, default_num):
     input_value = input(prompt_message)
     try:

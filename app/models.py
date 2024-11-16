@@ -29,8 +29,8 @@ from app import login_manager
 
 class User(UserMixin):
 
-    def __init__(self, fph):
-        self.id = fph
+    def __init__(self, agent_fph):
+        self.id = agent_fph
 
     def is_active(self):
         #if enabled(self.fph) and not pending(self.fph):
@@ -55,8 +55,8 @@ class User(UserMixin):
         #    return False
         return check_authenticated_login(self)
 
-    # When logged in (always authenticated as primid), it is necessary to know
-    # as which specific identity and whether as a primid or a secid:
+    # When logged in (always authenticated as *primid*), it is necessary to
+    # know as which specific *identity* and whether as a *primid* or a *secid*:
 
     def mark_authenticated(self):
         #print("mark_authenticated: self.id = " + self.id)
@@ -64,8 +64,10 @@ class User(UserMixin):
         #print("mark_authenticated: fpath = " + fpath)
         #if not os.path.exists(fpath):
         #    Path(fpath).touch()
-        primid_fph, login_id_fph, m = register_authenticated_login(self)
-        return primid_fph, login_id_fph
+        agent_fph_fph, \
+        login_id_fph, \
+        m = register_authenticated_login(self.id)
+        return agent_fph, login_id_fph
 
     def mark_unauthenticated(self):
         #print("mark_unauthenticated: self.id = " + self.id)
@@ -73,15 +75,14 @@ class User(UserMixin):
         #print("mark_unauthenticated: fpath = " + fpath)
         #if os.path.exists(fpath):
         #    os.remove(fpath)
-        deregister_authenticated_login(self)
+        deregistered, \
+        m = deregister_authenticated_login(self.id)
+        return deregistered, m
         #primid_fph, login_id_fph, m = deregister_authenticated_login(self)
         #return primid_fph, login_id_fph
 
 
 
-
-
-#@login.user_loader
 @login_manager.user_loader
 def load_user(user_id):
     return User(user_id)

@@ -15,9 +15,11 @@ from app.core.slate_core import get_entity_type, get_account_currency
 from app.core.slate_core import identify_entity, get_primid
 from app.core.slate_core import new_primid
 from app.core.slate_core import retrieve_primid_access_details
+from app.core.slate_core import list_agent_accounts
 from app.core.regexp_list import re_fph, re_hrns, re_email
 from app.core.slate_login import get_auth_data, register_authenticated_login
-from app.core.auth import pin_random_ord, pin_prompt_message
+##from app.core.auth import pin_random_ord, pin_prompt_message
+from app.core.auth import pin_subset_prompt
 from app.core.auth import check_auth_hash, authenticate_pin
 from app.core.logging import log_event
 
@@ -139,10 +141,11 @@ def register():
     form = RegistrationForm()
 
     # The fields displayed depend upon the policy set by the stewards of the
-    # initial currency and namespace. For example, for some currencies (many
-    # perhaps) it may be considered very useful to have some information about
-    # the geographical location of the user's base (home or business address),
-    # particularly where this is going to be used to create a map overlay.
+    # initial *currency* and *namespace&. For example, for some *currencies*
+    # (many perhaps) it may be considered very useful to have some information
+    # about the geographical location of the user's base (home or business
+    # address), particularly where this is going to be used to create a map
+    # overlay.
 
     if form.validate_on_submit():
         flash(
@@ -160,11 +163,11 @@ def register():
                 form.pin.data
             )
         )
-        # At this point the initial currency may have been specified in either
-        # the URL or the form. If the currency FPH was specified in the URL,
-        # the currency HRNS field will not have been displayed.
+        # At this point the initial *currency* may have been specified in
+        # either the URL or the form. If the *currency* FPH was specified in
+        # the URL, the *currency* HRNS field will not have been displayed.
 
-        currency_identifier = form.currency.data  # from form
+        currency_identifier = form.currency.data  # (from the form)
         # The identify_entity( ) function determines whether either is valid.
         currency_fph, \
         currency_hrns, \
@@ -181,10 +184,10 @@ def register():
             flash(currency_identifier + " is not a currency")
             redirect("/register")
 
-        # Similarly, at this point the parent namespace may have been specified
-        # in either the URL or the form. If the parent namespace FPH was
-        # specified in the URL, the currency HRNS field will not have been
-        # displayed.
+        # Similarly, at this point the parent *namespace* may have been
+        # specified in either the URL or the form. If the parent *namespace*
+        # FPH was specified in the URL, the *currency* HRNS field will not have
+        # been displayed.
 
         namespace_identifier = form.namespace.data
         # The identify_entity( ) function determines whether either is valid.
@@ -202,19 +205,13 @@ def register():
         if etype != "namespace":
             flash(namespace_identifier + " is not a namespace")
             redirect("/register")
-        # If control reaches this point then either the *namespace* specified
-        # in the form or the  *namespace* specified in the URL exists.
+        # If control reaches this point then *namespace* (whether specified
+        # in the form or in the URL) exists.
 
         if form.password_repeat.data != form.password.data:
             flash("The passwords not not match")
             redirect("/register")
 
-
-        # Try hashing password here using flask_bcrypt instead of
-        # core.auth.auth_hash( )
-
-
-        #pwh = bcrypt.generate_password_hash(form.password.data).decode('utf-8')
         primid_fph, \
         primid_hrns, \
         access_token, \
@@ -224,7 +221,6 @@ def register():
                 form.realname.data,
                 form.email_1.data,
                 form.email_2.data,
-                #pwh,
                 form.password.data,
                 form.pin.data
             )
@@ -286,42 +282,38 @@ def login():
         primid_has_been_identified_from_identity = False
         primid_has_been_identified_from_email = False
 
-        identity_fph, \
-        identity_hrns, \
-        etype, \
-        m = identify_entity(form.identity.data)
-        if m:
-            flash("Line 294")
-            flash(m)
-            return redirect(url_for("login"))
-        if (etype != "primid") and (etype != "secid"):
-            flash("Invalid identity entered")
-            return redirect(url_for("login"))
-        if etype == "secid": # authentication requires primary *identity*
-            identity_fph = get_primid(identity_fph)
+        if agent_identifier:
+            identity_fph, \
+            identity_hrns, \
+            etype, \
+            m = identify_entity(form.identity.data)
             if m:
-                flash("Line 303")
                 flash(m)
                 return redirect(url_for("login"))
-#            else:
-#                identity_hrns = fph_to_hrns(identity_fph)
-        if not identity_fph:
-            flash("Line 309")
-            flash("This identity is not registered here.")
-            #return redirect(url_for("login"))
+            if (etype != "primid") and (etype != "secid"):
+                flash("Invalid identity entered")
+                return redirect(url_for("login"))
+            if etype == "secid": # authentication requires primary *identity*
+                identity_fph, m = get_primid(identity_fph)
+                if m:
+                    flash(m)
+                    log_event(
+                        "errors", "primid entification",
+                        "The primid cannot be identified from " + identity_fph
+                    )
+                    return redirect(url_for("login"))
+            if identity_fph:
+                # If control reaches this point and the FPH exists, we have a
+                # valid *primid* for the HRNS or FPH entered.
+                flash(
+                    identity_hrns + " = [" + identity_fph + "] has " \
+                    + "been identified from the agent identifier."
+                )
+                primid_has_been_identified_from_identity = True
+            else:
+                flash(identity_fph + " is not a registered identity.")
 
-        print("identity = " + identity_fph + " = [" + identity_hrns + "]")
-
-        # If control reaches this point and the FPH exists, we have a valid
-        # *primid* for the HRNS or FPH entered.
-        if identity_fph:
-            flash(
-                identity_hrns + " = [" + identity_fph + "] has " \
-                + "been identified from the agent identifier."
-            )
-            primid_has_been_identified_from_identity = True
-
-        if identity_email:
+        elif identity_email:
             if not re_email.match(identity_email):
                 flash("The email address is invalid.")
                 return redirect(url_for("login"))
@@ -349,20 +341,18 @@ def login():
                             + "been identified from the email address."
                         )
 
-            # If control reaches this point, we have a valid identity for the
-            # email address entered.
+        else:
+            flash("No valid identifier has been provided.")
+            return redirect(url_for("login"))
 
+
+        # If control reaches this point, we have a valid *identity* (which may
+        # be a *primid* or a *secid*) for the email address entered.
+        #
+        # Alternatively, the *primid*
         # Whether from the agent field (*primid*|*secid*) or from an email
         # address, we have now identified the *primid*.
         print("identity = " + identity_fph + " = [" + identity_hrns + "]")
-
-#        auth_dict, m = get_auth_data(identity_fph)
-#        if m:
-#            flash(m)
-#            return redirect(url_for("login"))
-#        password_hash = auth_dict["password_hash"]
-#        pin = auth_dict["pin"]
-#        access_token_hash = auth_dict["access_token_hash"]
 
         password_hash, \
         stored_pin, \
@@ -376,16 +366,8 @@ def login():
         print("PIN = " + stored_pin)
         print("access_token_hash = " + access_token_hash)
 
-
-
-#        password_hash, \
-#        pin, \
-#        access_token_hash, \
-#        m = retrieve_primid_access_details(identity_fph)
-
         # Retrieve the user object:
         user = User(identity_fph)
-
 
         password = form.password.data
         print("form.password.data = " + form.password.data)
@@ -394,45 +376,15 @@ def login():
         if password != password2:
             print("password corrupted")
 
-
-# Some test stuff ...
-#
-#        import bcrypt
-#        salt = password_hash[:29]
-#        print("salt (d)  = ", end="")
-#        print(salt)
-#        print("salt (e)  = ", end="")
-#        print(salt.encode("utf-8"))
-#        pwhe = password_hash.encode("utf-8")
-#        pw2e = password2.encode("utf-8")
-#        print("password  = " + password)
-#        print("password2 = " + password2)
-#        print("pwhe      = " + str(pwhe))
-#        print("pw2e      = " + str(pw2e))
-#        r = bcrypt.checkpw(pwhe, pw2e)
-#        print("checkpw ... " + yesno(r))
-
-
-
-#        password_hash_encoded_utf8 = password
-
-
-
-
-#        #if not authenticate_web_access(identity_fph, form.password.data):
-#        if not bcrypt.check_password_hash(
-#                          password_hash_encoded_utf8,
-#                          password_hash
-#                      ):
-#        if not check_auth_hash(password_hash, password):
         if not check_auth_hash(password_hash, form.password.data):
-            #flash("Incorrect password")
             flash("Password check failed ... but you can come in anyway")
 
             # Until the password validation issue has been resolved, it will be
             # ignored:
             #return redirect(url_for("login"))
+        #pro = form.pro_a.data ##########
 
+        #
         if not authenticate_pin(stored_pin, form.pse.data, form.pro.data):
             flash("Incorrect PIN digits")
             return redirect(url_for("login"))
@@ -460,11 +412,22 @@ def login():
 def logout():
 
     user = current_user.get_id()
-    print("current_user = " + user)
-    current_user.mark_unauthenticated()
+#    print("current_user.get_id() = " + user + " = " + fph_to_hrns(user))
+#    deregistered, m = current_user.mark_unauthenticated()
+#    if deregistered:
+#        logout_user() # a Flask function
+#        return redirect(url_for("login"))
+#    else:
+#        if m:
+#            flash(m)
+#        flash("Unable to log out (see error log)")
+#        log_event("errors", "logout problem", user + " unable to log out")
+#        return redirect(url_for("home"))
 
-    logout_user()
+    logout_user() # a Flask function
     return redirect(url_for("login"))
+
+
 
 # login recovery --------------------------------------------------------------
 @app.route("/login/recover", methods=["GET", "POST"])
@@ -558,9 +521,19 @@ def login_recover():
 # probably not worth the trouble.
 
         return redirect("/login")
+
     return render_template(
                 "login_recovery.html",
                 title="Login recovery",
+
+                #logged_in=logged_in,
+                #page=page,
+                group=group,
+                identity_type=identity_type,
+                identity_fph=identity_fph,
+                identity_hrns=identity_hrns,
+
+
                 form=form,
                 logged_in=logged_in,
                 page=page,
@@ -576,11 +549,7 @@ def login_recover():
 def home():
     page = "home"
     group = "home"
-    #identity_type = "primary" # User always logs in using primary identity
-    #identity_fph = "625f14ca724ce4fa" # jim.moriarty.gamma.delta.test
-    #identity_hrns = "jim.moriarty.gamma.delta.test"
-    #identity_fph = current_user
-    #identity_hrns = fph_to_hrns(identity_fph)
+
     namespace_steward = False
     currency_steward = False
     paying = False
@@ -589,46 +558,84 @@ def home():
     identity_fph = current_user.get_id()
     identity_hrns = fph_to_hrns(identity_fph)
     identity_type = fph_to_display_type(identity_fph)
+
     # The primary_identity string is "" if the current active identity is
-    # a primid:
-    primid_iff_needed = fph_to_primid_iff_needed(identity_fph)
+    # already a *primid*:
+    primid_fph, \
+    primid_hrns = fph_to_primid_iff_needed(identity_fph)
+
+    print("Currently in the /home endpoint")
+    print("identity_fph = " + identity_fph)
+    print("identity_hrns = " + identity_hrns)
+    print("identity_type = " + identity_type)
+    print("primid_fph = " + primid_fph)
+    print("primid_hrns = " + primid_hrns)
+
+
 
     # Since a user may have *accounts* scattered across an arbitrary number of
     # *namespaces*, it is necessary to maintain a list of these:
 
-    if identity_type == "primid":   # should probably be using etype here
-        accounts_list = list_primid_accounts(identity_fph)
-    elif identity_type == "secid":
-        accounts_list = list_secid_accounts(identity_fph)
-    else:
-        log_event("error", "identity misidentified", "Internal error logged")
-        flash("Internal error logged") # this should never happen
-        return redirect(url_for("home"))
+#    if identity_type == "primid":   # should probably be using etype here
+#        accounts_list, m = list_primid_accounts(identity_fph)
+#        if m:
+#            flash(m)
+#    elif identity_type == "secid":
+#        accounts_list, m = list_secid_accounts(identity_fph)
+#        if m:
+#            flash(m)
+#    else:
+#        flash("Invalid identity")
+
+    accounts_list, m = list_agent_accounts(identity_fph)
+    if m:
+        flash(m)
 
     # List the identity's *accounts*:
-    accounts_a = account_list.split("\n")
-    accounts = []
-    for s in accounts_a:
-        if s != "":
-            print(s)
+    accounts = [] # (list of dictionaries for iteration in template)
+    for account_fph in accounts_list:
+        if account_fph != "":
+            account_currency_fph, \
+            account_owner_fph, \
+            account_balance, \
+            m = get_account_specific_properties(account_fph)
+            print(account_fph)
             account = {}
-            account["fph"] = s
-            account["hrns"] = fph_to_hrns(s)
+            account["fph"] = account_fph
+            account["hrns"] = fph_to_hrns(account_fph)
+            account["balance"] = account_balance
             accounts.append(account)
 
     # If this is a *primid*, fetch a list of its *secid*s:
+    secids = []
+    stewardships = []
     if identity_type == "primid":
-        secid_list = list_secids(primid_fph)    # This function probably
-                                                # doesn't exist yet ...
-        secids_a = secid_list.split("\n")
+
+        secid_list = list_secids(primid_fph)
         secids = []
-        for s in secids_a:
-            if s != "":
-                #print(s)
+        for secid_fph in secids_list:
+            if secid_fph != "":
+                print(secid_fph)
                 secid = {}
-                secid["fph"] = s
-                secid["hrns"] = fph_to_hrns(s)
+                secid["fph"] = secid_fph
+                secid["hrns"] = fph_to_hrns(secid_fph)
                 secids.append(secid)
+
+        stewardships_list, m = list_stewardships(primid_fph)
+        for stewardship_fph in stewardships_list:
+            if stewardship_fph != "":
+                print(stewardship_fph)
+                stewardship = {}
+                entity_fph, \
+                entity_hrns, \
+                etype, \
+                m = identify_entity(stewardship_fph)
+                stewardship["fph"] = stewardship_fph
+                stewardship["hrns"] = entity_hrns
+                stewardship["etype"] = etype
+
+
+
 
     return render_template(
                 "home.html",
@@ -642,9 +649,11 @@ def home():
                 identity_type=identity_type,
                 identity_fph=identity_fph,
                 identity_hrns=identity_hrns,
-                primid_iff_needed=primid_iff_needed,
+                primid_fph=primid_fph,          # needed only if identity_type
+                primid_hrns=primid_hrns,        # immediately above is *secid*
                 accounts=accounts,
-                secids=secids
+                secids=secids,
+                stewardships=stewardships
            )
 
 # account details page --------------------------------------------------------
@@ -1076,7 +1085,7 @@ def manage():
 
     return render_template(
                 "manage.html",
-                title="Manage your NESTS",
+                title="Manage your SLATE settings",
                 logged_in=logged_in,
                 page=page,
                 group=group,

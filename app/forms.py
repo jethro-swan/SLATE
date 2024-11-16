@@ -4,7 +4,8 @@ import sys
 
 #from app.core.list_namespaces import build_namepace_list
 from app.core.fph_hrns_maps import hrns_to_fph
-from app.core.auth import pin_random_ord, pin_prompt_message
+#from app.core.auth import pin_random_ord, pin_prompt_message
+from app.core.auth import pin_subset_prompt
 
 
 # Flask components: -----------------------------------------------------------
@@ -160,22 +161,30 @@ class NamespaceCreateForm(FlaskForm):
 
 #------------------------------------------------------------------------------
 class LoginForm(FlaskForm):
+
     identity        = StringField(
                         "identity"
     #                    "identity",
     #                    validators=[DataRequired("required")]
                       )
+
     email           = StringField(
                         "email address"
                       )
+
     password        = PasswordField("password")
-    pro_a = pin_random_ord()
-    pin_prompt = pin_prompt_message(pro_a)
-    pro             = HiddenField(default=pro_a)
+
+    ##pro_a = pin_random_ord()
+    ##pin_prompt = pin_prompt_message(pro_a)
+
+    pin_prompt, pin_subset_indices = pin_subset_prompt()
+    pro             = HiddenField(pin_subset_indices)
+    #pro             = HiddenField(default=pro_a)
     pse             = PasswordField(
                          pin_prompt,
-                        validators=[DataRequired("required")]
+                         validators=[DataRequired("required")]
                       )
+
     remember_me     = BooleanField("remember me")
     #recaptcha = RecaptchaField("recaptcha", validators=[DataRequired("required")])
     submit          = SubmitField("log in")

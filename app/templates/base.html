@@ -11,7 +11,7 @@
   </head>
   <body>
 
-    <hr />
+    <!-- <hr /> -->
 
     <div class="clear-both"><!-- menu row 1 -->
 
@@ -20,19 +20,25 @@
     {% if page == "login" %}
       <div class="mba">log in</div>
     {% else %}
-      <div class="mb"><a href="/login">log in</a></div>
+      <div class="mb">
+        <a class="mb" href="/login">log in</a>
+      </div>
     {% endif %}
 
     {% if page == "login_recovery" %}
       <div class="mba">recover login</div>
     {% else %}
-      <div class="mb"><a href="/login/recover">recover login</a></div>
+      <div class="mb">
+        <a class="mb" href="/login/recover">recover login</a>
+      </div>
     {% endif %}
 
     {% if page == "registration" %}
       <div class="mba">register</div>
     {% else %}
-      <div class="mb"><a href="/register">register</a></div>
+      <div class="mb">
+        <a class="mb" href="/register">register</a>
+      </div>
     {% endif %}
 
   {% else %}<!-- logged_in -->
@@ -40,29 +46,39 @@
     {% if (page == "home") or (group == "home") %}
       <div class="mba">home</div>
     {% else %}
-      <div class="mb"><a href="/home">home</a></div>
+      <div class="mb">
+        <a class="mb" href="/home">home</a>
+      </div>
     {% endif %}
 
     {% if (group == "payment") %}
       <div class="mba">pay</div>
     {% else %}
-      <div class="mb"><a href="/pay">pay</a></div>
+      <div class="mb">
+        <a class="mb" href="/pay">pay</a>
+      </div>
     {% endif %}
 
     {% if (group == "management") %}
       <div class="mba">manage</div>
     {% else %}
-      <div class="mb"><a href="/manage">manage</a></div>
+      <div class="mb">
+        <a class="mb" href="/manage">manage</a>
+      </div>
     {% endif %}
 
-    <div class="mb"><a href="/logout">logout</a></div>
+    <div class="mb">
+      <a class="mb" href="/logout">logout</a>
+    </div>
 
   {% endif %}<!-- logged_in -->
 
   {% if page == "help" %}
     <div class="mba">help</div>
   {% else %}
-    <div class="mb"><a href="/help">help</a></div>
+    <div class="mb">
+      <a class="mb" href="/help">help</a>
+    </div>
   {% endif %}
 
 <!-- end menu row 1 -->
@@ -77,21 +93,27 @@
     {% if (group == "management") or (group=="home") %}
 
       {% if page == "accounts_manage" %}
-        <div class="mba">communities</div>
+        <div class="mb2a">communities</div>
       {% else %}
-        <div class="mb"><a href="/communities/manage">communities</a></div>
+        <div class="mb2">
+          <a class="mb" href="/communities/manage">communities</a>
+        </div>
       {% endif %}
 
       {% if page == "agents_manage" %}
-        <div class="mba">agents</div>
+        <div class="mb2a">agents</div>
       {% else %}
-        <div class="mb"><a href="/agents/manage">agents</a></div>
+        <div class="mb2">
+          <a class="mb" href="/agents/manage">agents</a>
+        </div>
       {% endif %}
 
       {% if page == "currencies_manage" %}
-        <div class="mba">currencies</div>
+        <div class="mb2a">currencies</div>
       {% else %}
-        <div class="mb"><a href="/currencies/manage">currencies</a></div>
+        <div class="mb2">
+          <a class="mb" href="/currencies/manage">currencies</a>
+        </div>
       {% endif %}
 
     {% endif %}<!-- group == home -->
@@ -99,10 +121,10 @@
     {% if group == "payment" %}
 
       {% if page == "pay" %}
-        <div class="mba">pay</div>
+        <div class="mb2a">pay</div>
       {% else %}
-        <div class="mb">
-          <a href="/pay">pay</a>
+        <div class="mb2">
+          <a class="mb" href="/pay">pay</a>
         </div>
       {% endif %}
 
@@ -136,8 +158,10 @@
   {% endwith %}
 
   {% if current_user.is_authenticated %}
-    current identity:
-    <span style="color:#008000; font-weight:bold;">{{ agent_hrns }}</span>
+    You are logged in as:
+    <span style="color:#008000; font-weight:bold;">{{ identity_hrns }}</span>
+    ({{ identity_type }})
+    [<span style="color:#006000; font-weight:normal;">{{ identity_fph }}</span>]
     <br />
 
     <hr />

@@ -3,8 +3,9 @@
 {% block content %}
 
   <strong>accounts</strong>
-  <a href="/account/create">+</a>
-  <a href="/account/create">(add new account)</a>
+  <a href="/account/create">
+    (add new <strong>account</strong>)
+  </a>
   <br />
   <ul>
   {% for account in accounts %}
@@ -21,10 +22,12 @@
   <strong>identities</strong>
 
   <a href="/identity/create/secondary">+</a>
-  <a href="/identity/create/secondary">(add secondary identity)</a>
+  <a href="/identity/create/secondary">
+    (add <strong>secondary identity</strong>)
+  </a>
   <br />
   <ul>
-  {% if primid_iff_needed %}
+  {% if primid_fph %}
     <li class="compact2">
       <a href="/primids/{{ primid.fph }}">
         {{ primid.hrns }} *
@@ -43,7 +46,8 @@
   <hr />
 
   <strong>stewardships</strong><br />
-  {% if identity_type == "primary identity" %}
+
+  {% if identity_type == "primid" %}
     <ul>
     {% for secid in secids %}
       <li class="compact2">

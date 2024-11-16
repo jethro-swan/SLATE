@@ -9,6 +9,8 @@ from .regexp_list import *
 from .slate_core import get_entity_type, get_primid
 #from .slate_login import get_auth_data
 
+from .slate_core import fph_to_hrns
+
 debugging = True
 #max_hrns_depth = 0
 
@@ -31,7 +33,7 @@ def register_authenticated_login(agent_fph): # (agent is *primid* or *secid*)
         cursor = conn.cursor()
         cursor.execute(
             """
-            INSERT INTO login (primid_fph, login_id_fph, login_authenticated)
+            INSERT INTO login (entity_fph, login_id_fph, login_authenticated)
             VALUES (?, ?, ?)
             """,
             (primid_fph, login_id_fph, True)
@@ -45,9 +47,11 @@ def register_authenticated_login(agent_fph): # (agent is *primid* or *secid*)
 
 #------------------------------------------------------------------------------
 def deregister_authenticated_login(agent_fph):
+    print("agent_fph = " + agent_fph + " = " + fph_to_hrns(agent_fph))
     if not re_fph.match(agent_fph):
-        return False, "", agent_fph + " is not an FPH"
-    entity_type , m = get_entity_type(agent_fph)
+        return False, agent_fph + " is not an FPH"
+#        return False, "", "", agent_fph + " is not an FPH"
+    entity_type, m = get_entity_type(agent_fph)
     if entity_type == "secid":
         primid_fph = get_primid(agent_fph)
         login_id_fph = agent_fph
@@ -55,14 +59,22 @@ def deregister_authenticated_login(agent_fph):
         primid_fph = agent_fph
         login_id_fph = agent_fph
     else:
-        return False, "", "", agent_fph + " is FPH of neither primid nor secid"
+        return False, agent_fph + " is FPH of neither primid nor secid"
+#        return False, "", "", agent_fph + " is FPH of neither primid nor secid"
     with sqlite3.connect(ENTITIES_DB) as conn:
         cursor = conn.cursor()
-        cursor.execute("DELETE FROM login WHERE agent_fph = ?", (agent_fph,))
+        cursor.execute(
+            """
+            DELETE FROM login
+            WHERE entity_fph = ?
+            """,
+            (agent_fph,)
+        )
         conn.commit()
         cursor.close()
     #return primid_fph, login_id_fph
-    return True, primid_fph, login_id_fph, ""
+    return True, ""
+#    return True, primid_fph, login_id_fph, ""
 
 
 #------------------------------------------------------------------------------

@@ -2,7 +2,7 @@ body, div, p, h1, h2, h3, a, li {
   font-family: Lucida Grande,Verdana,Helvetica,Arial,sans-serif;
 }
 body {
-  font-size: 13px;
+  font-size: 0.8em;
   /* background: #f4f8f4; */
   background: #f0f4f0;
   /* max-width: 720px; */
@@ -80,12 +80,12 @@ a:active { color:#008400; }
 a:hover { color:#20a020; }
 
 
-div.mb { /* menu button */
+div.mb { /* menu button - upper row */
   display: block;
-  background: #def7e7;
   border-width: 1px;
   border-style: solid;
   border-color: #008000;
+  background: #008000;
   padding-left: 4px;
   padding-right: 4px;
   padding-top: 2px;
@@ -97,11 +97,16 @@ div.mb { /* menu button */
   float: left;
 }
 div.mba { /* menu button active */
+  color: #ffffff;
   display: block;
-  background: #ffd010;
   border: 1px;
   border-style: solid;
-  border-color: #008000;
+  /*
+  border-color: #005000;
+  background: #005000;
+  */
+  border-color: #000000;
+  background: #000000;
   padding-left: 4px;
   padding-right: 4px;
   padding-top: 2px;
@@ -112,14 +117,47 @@ div.mba { /* menu button active */
   margin-bottom: 1px;
   float: left;
 }
+
+div.mb2 { /* menu button - lower row */
+  display: block;
+  border-width: 1px;
+  border-style: solid;
+  border-color: #000000;
+  background: #000000;
+  padding-left: 4px;
+  padding-right: 4px;
+  padding-top: 2px;
+  padding-bottom: 2px;
+  margin-left: 4px;
+  margin-right: 4px;
+  margin-top: 1px;
+  margin-bottom: 1px;
+  float: left;
+}
+div.mb2a { /* menu button active - lower row */
+  color: #ffffff;
+  display: block;
+  border: 1px;
+  border-style: solid;
+  border-color: #005000;
+  background: #005000;
+  padding-left: 4px;
+  padding-right: 4px;
+  padding-top: 2px;
+  padding-bottom: 2px;
+  margin-left: 4px;
+  margin-right: 4px;
+  margin-top: 1px;
+  margin-bottom: 1px;
+  float: left;
+}
+
+
 a.mb { text-decoration:none; font-size: 13px; }
-a.mb:link { color:#006000; }
-a.mb:visited { color:#006000; }
-a.mb:active { color:#008400; }
-a.mb:hover { color:#20a020; }
-
-
-
+a.mb:link { color:#ffffff; }
+a.mb:visited { color:#ffffff; }
+a.mb:active { color:#e0ffe0; }
+a.mb:hover { color:#ff8080; }
 
 
 .clear-both { clear: both; }
