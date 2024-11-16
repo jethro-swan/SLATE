@@ -45,7 +45,8 @@ from core.auth import list_password_characters, password_valid
 from core.auth import generate_password, list_url_safe_password_characters
 from core.auth import url_safe_password_valid, generate_url_safe_password
 from core.auth import generate_access_token
-from core.auth import pin_random_ord, pin_prompt_message, authenticate_pin
+#from core.auth import pin_random_ord, pin_prompt_message, authenticate_pin
+#from core.auth import pin_random_ord, pin_prompt_message, authenticate_pin
 from core.display import integer_to_money_format
 from core.display import thin_line, thick_line, title_line, thin_title_line
 from core.display import yN, Yn, yesno, get_cli_number_input, pause
@@ -1261,18 +1262,11 @@ def check_access_credentials():
         access_token_hash, \
         m = get_auth_data(primid_fph)
         if m:
-            flash(m)
-            return redirect(url_for("login"))
-
-
-
-
-
+            print(m)
 
         print("password hash = " + password_hash)
         print("PIN = " + pin)
         print("access_token_hash = " + access_token_hash)
-
 
         primid_row = []
         primid_row.append(primid_fph)

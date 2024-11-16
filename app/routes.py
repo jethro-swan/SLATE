@@ -3,6 +3,8 @@ import json
 from pathlib import Path
 import sys
 
+import bcrypt
+
 #from flask_bcrypt import Bcrypt # 2024-11-10: Try this out to resolve problem
 #                                # with check_auth_hash( )
 #                                # ("ValueError: Invalid salt")
@@ -24,6 +26,8 @@ from app.core.auth import check_auth_hash, authenticate_pin
 from app.core.logging import log_event
 
 from app.core.display import yesno
+
+
 
 #from app import bcrypt # added 2024-11-10
 
@@ -305,10 +309,10 @@ def login():
             if identity_fph:
                 # If control reaches this point and the FPH exists, we have a
                 # valid *primid* for the HRNS or FPH entered.
-                flash(
-                    identity_hrns + " = [" + identity_fph + "] has " \
-                    + "been identified from the agent identifier."
-                )
+#                flash(
+#                    identity_hrns + " = [" + identity_fph + "] has " \
+#                    + "been identified from the agent identifier."
+#                )
                 primid_has_been_identified_from_identity = True
             else:
                 flash(identity_fph + " is not a registered identity.")
@@ -376,15 +380,17 @@ def login():
         if password != password2:
             print("password corrupted")
 
-        if not check_auth_hash(password_hash, form.password.data):
-            flash("Password check failed ... but you can come in anyway")
+#        if not check_auth_hash(password_hash, form.password.data):
+#            flash("Password check failed ... but you can come in anyway")
 
-            # Until the password validation issue has been resolved, it will be
-            # ignored:
-            #return redirect(url_for("login"))
-        #pro = form.pro_a.data ##########
+        pwd = password
+        pwd_hash = password_hash
+        if not bcrypt.checkpw(pwd.encode("utf-8"), pwd_hash.encode("utf-8")):
+            #flash("Password check failed ... but you can come in anyway")
+            return redirect(url_for("login"))
+        #else:
+            #flash("Password check successful")
 
-        #
         if not authenticate_pin(stored_pin, form.pse.data, form.pro.data):
             flash("Incorrect PIN digits")
             return redirect(url_for("login"))

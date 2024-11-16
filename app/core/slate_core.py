@@ -894,7 +894,6 @@ def list_primid_accounts(primid_fph):
 ## List the *secid*'s accounts: #
 
 def list_secid_accounts(secid_fph):
-
     with sqlite3.connect(ENTITIES_DB) as conn:
         cursor = conn.cursor()
         cursor.execute(
@@ -906,10 +905,6 @@ def list_secid_accounts(secid_fph):
             (secid_fph,)
         )
         result = cursor.fetchone()
-        cursor.close()
-        #print("results = ", end="")
-        #print(results)
-
     if result is None:
         accounts_fph_list = []
         accounts_fph_blob = pickle.dumps(accounts_fph_list)

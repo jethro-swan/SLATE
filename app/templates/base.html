@@ -90,15 +90,48 @@
 
   {% if logged_in %}
 
-    {% if (group == "management") or (group=="home") %}
+    {% if current_user.is_authenticated %}
+    You are logged in as
+    <span style="color:#008000; font-weight:bold;">{{ identity_hrns }}</span>
+    ({{ identity_type }})
+    [<span style="color:#006000; font-weight:normal;">{{ identity_fph }}</span>]
+    <br />
+    <hr class="dashed" />
+    {% endif %}
 
-      {% if page == "accounts_manage" %}
-        <div class="mb2a">communities</div>
+    {% if (group=="home") %}
+
+      {% if page == "accounts_display" %}
+        <div class="mb2a">accounts</div>
       {% else %}
         <div class="mb2">
-          <a class="mb" href="/communities/manage">communities</a>
+          <a class="mb" href="/accounts/display">accounts</a>
         </div>
       {% endif %}
+
+      {% if page == "secids_display" %}
+        <div class="mb2a">secids</div>
+      {% else %}
+        <div class="mb2">
+          <a class="mb" href="/secids/display">secondary identities</a>
+        </div>
+      {% endif %}
+
+      {% if page == "stewardships_display" %}
+        <div class="mb2a">secids</div>
+      {% else %}
+        <div class="mb2">
+          <a class="mb" href="/stewardships/display">stewardships</a>
+        </div>
+      {% endif %}
+
+
+
+
+    {% endif %}<!-- group == home -->
+
+
+    {% if (group == "management") %}
 
       {% if page == "agents_manage" %}
         <div class="mb2a">agents</div>
@@ -116,7 +149,15 @@
         </div>
       {% endif %}
 
-    {% endif %}<!-- group == home -->
+      {% if page == "accounts_manage" %}
+        <div class="mb2a">communities</div>
+      {% else %}
+        <div class="mb2">
+          <a class="mb" href="/communities/manage">communities</a>
+        </div>
+      {% endif %}
+
+    {% endif %}<!-- group == management -->
 
     {% if group == "payment" %}
 
@@ -157,15 +198,6 @@
   {% endif %}
   {% endwith %}
 
-  {% if current_user.is_authenticated %}
-    You are logged in as:
-    <span style="color:#008000; font-weight:bold;">{{ identity_hrns }}</span>
-    ({{ identity_type }})
-    [<span style="color:#006000; font-weight:normal;">{{ identity_fph }}</span>]
-    <br />
-
-    <hr />
-    {% endif %}
 
     {% block content %}{% endblock %}
 

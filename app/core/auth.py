@@ -25,20 +25,15 @@ def auth_hash(password):
     hash_bytes = bcrypt.hashpw(password.encode("utf-8"), bcrypt.gensalt())
     return hash_bytes.decode("utf-8")
 
-def check_auth_hash(password, pwd_hash):
-#    return bcrypt.checkpw(password.encode("utf-8"), pwd_hash.encode("utf-8"))
+def check_auth_hash(pwd, pwd_hash):
     try:
-        password_authenticated = bcrypt.checkpw(
-                                            password.encode("utf-8"),
-                                            pwd_hash.encode("utf-8")
-                                        )
+        pw_auth = bcrypt.checkpw(pwd.encode("utf-8"), pwd_hash.encode("utf-8"))
     except Exception as exception:
-        #logging.exception('') # using Python logging module
-        log_event("errors", "auth_hash( _)", exception)
+        log_event("errors", "auth_hash( )", exception)
         print(exception)
         return False
     else:
-        return password_authenticated
+        return pw_auth
 
 
 
@@ -117,10 +112,9 @@ def generate_url_safe_password(n):
         pw = secrets.token_urlsafe(n)
     return pw
 
-
-
-#------------------------------------------------------------------------------
+#==============================================================================
 # Generate an access toke:
+
 def generate_access_token():
     # An access token is generated:
     ri = random.randint(0,9999999)
@@ -128,83 +122,30 @@ def generate_access_token():
 
 # This is used mainly for command line (over SSH) access.
 
+#==============================================================================
+# PIN authetication functions:
 
+def pin_subset_prompt(): # used in app/forms.py
 
-
-#------------------------------------------------------------------------------
-# Content of primary identity .auth file:
-json_auth_tpl   =   {
-                        "CLI_auth_hash": "",    # duplicated in .auth file
-                        "web_password_hash": "",
-                        "PIN": "",              # 6-digit PIN for SWI access.
-                        "SSL_pubkey": [""]      # Any number of keys. Searched
-                                                # in sequence until a valid
-                                                # entry is found.
-                    }
-
-## The following function definitions have been recovered from a version of
-## auth.py duplicated at the following locations:
-##      NESTS_Python/NESTS_core2/nests_core/api/entities/auth.py
-##      NESTS_Python/NESTS_core2/nests_core/entities/auth.py
-##      NESTS_Python/NESTS_core2/nests_core/api/entities/auth.py
-##      NESTS_Python/NESTS_core/nests/api/entities/auth.py
-##      NESTS_Python/NESTS_core/nests/entities/auth.py
-##
-## These must now be adapted for use in SLATE (and possibly future versions of
-## NESTS).
-
-# Initialize the .auth file for primary identity identified by FIP:
-#def auth_initialize(fph):
-#    dpath = fph_to_dpath(fph)
-#    with open(dpath + "/.auth", "w") as auth_f:
-#        json.dump(json_auth_tpl, auth_f)
-#
-# This function defined aove is obsolete.
-
-
-
-#------------------------------------------------------------------------------
-# Generate an array of three random digits, increasing and non-repeating:
-def pin_subset_prompt():
-##def pin_random_ord():
+    # Generate an array of three random digits, increasing and non-repeating:
     pin_subset_indices = [] # list of digit positions
-#    psi.append(random.randrange(0,4))
-#    psi.append(random.randrange(psi[0]+1,5))
-#    psi.append(random.randrange(psi[1]+1,6))
     pin_subset_indices.append(random.randrange(0,3))
     pin_subset_indices.append(random.randrange(pin_subset_indices[0]+1,4))
     pin_subset_indices.append(random.randrange(pin_subset_indices[1]+1,5))
-    print("pin_subset_indices type ", end="")
-    print(type(pin_subset_indices))
-##    return pin_subset_indices # list
 
-# Generate message for PIN subset entry:
-##def pin_prompt_message(pin_subset_indices):
+    # Then generate a prompt message for PIN subset entry:
     message = "Please enter digits "
     message += str(pin_subset_indices[0] + 1) + ", "
     message += str(pin_subset_indices[1] + 1) + " and "
     message += str(pin_subset_indices[2] + 1) + " of your PIN."
-##    return message
+
     return message, pin_subset_indices # list
 
-def authenticate_pin(
+def authenticate_pin( # used in app/routes.py
         pin_from_db,        # PIN retrived from database
         pin_subset_entered, # Subset of pin digits entered in login form
         pin_subset_indices  # The positions of the digits in the PIN subset
     ):
-
-    print("authenticate_pin( ) ...")
-    print("PIN       = " + pin_from_db)
-    print("subset    = " + pin_subset_entered)
-    print("positions = ", end="")
-    for i in range(len(pin_subset_indices)):
-#        print(str(i + 1) + "\t", end="")
-        print(str(pin_subset_indices[i]), end="")
-    print()
-
-
-    #pin_a = [char for char in pin]
-    #pse_a = [char for char in pse]
 
     pin_a = pin_from_db.split()
     pse_a = pin_subset_entered.split()
@@ -217,12 +158,4 @@ def authenticate_pin(
             break
     return validated
 
-
-
-#    pin_a = [char for char in pin]
-#    pse_a = [char for char in pse]
-#    validated = True
-#    for c in pse_a:
-#        if c != pin_a[int(c)-1]:
-#            validated = False
-#    return validated
+#==============================================================================
