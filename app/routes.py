@@ -18,6 +18,7 @@ from app.core.slate_core import identify_entity, get_primid
 from app.core.slate_core import new_primid
 from app.core.slate_core import retrieve_primid_access_details
 from app.core.slate_core import list_agent_accounts
+from app.core.slate_core import get_currency_specific_properties
 from app.core.regexp_list import re_fph, re_hrns, re_email
 from app.core.slate_login import get_auth_data, register_authenticated_login
 ##from app.core.auth import pin_random_ord, pin_prompt_message
@@ -561,23 +562,37 @@ def home():
     paying = False
     logged_in = current_user.is_authenticated
 
-    identity_fph = current_user.get_id()
+    identity_fph = current_user.get_id() # *primid* as which logged in
     identity_hrns = fph_to_hrns(identity_fph)
     identity_type = fph_to_display_type(identity_fph)
 
+    # The user logs in as the *primid*, even if indirectly as one of its
+    # *secid*s, but once logged in may switch the focus between its various
+    # *identities* (aliases). Therefore that *identity* must also be made
+    # persistent within the session.
+    #
+    # NOT YET IMPLEMENTED
+
+    ## This may not be needed if the "home" screen displays all *identities* of
+    ## the *primid* alongside its *accounts*. That way there will be no need
+    ## to switch display between the *primid* and any of its *secids* (although
+    ## the table may be made sortable).
+
     # The primary_identity string is "" if the current active identity is
     # already a *primid*:
-    primid_fph, \
-    primid_hrns = fph_to_primid_iff_needed(identity_fph)
+    #primid_fph, \
+    #primid_hrns = fph_to_primid_iff_needed(identity_fph)
 
     print("Currently in the /home endpoint")
     print("identity_fph = " + identity_fph)
     print("identity_hrns = " + identity_hrns)
     print("identity_type = " + identity_type)
-    print("primid_fph = " + primid_fph)
-    print("primid_hrns = " + primid_hrns)
+    #print("primid_fph = " + primid_fph)
+    #print("primid_hrns = " + primid_hrns)
 
-
+    #if primid_fph:
+    #    identity_fph = primid_fph
+    #    identity_hrns = identity_hrns
 
     # Since a user may have *accounts* scattered across an arbitrary number of
     # *namespaces*, it is necessary to maintain a list of these:
@@ -597,6 +612,23 @@ def home():
     if m:
         flash(m)
 
+    if len(accounts_list) == 0:
+        print(identity_hrns + " appears to have no accounts")
+    else:
+        for account_fph in accounts_list:
+            #currency_fph = get_account_currency(account_fph)
+            #currency_hrns = fph_to_hrns(currency_fph)
+            currency_fph, \
+            owner_fph, \
+            balance, \
+            m = get_account_specific_properties(account_fph)
+            print(
+                account_fph + " " \
+                + integer_to_money_format(balance)
+                + fph_to_hrns(account_fph)
+            )
+
+
     # List the identity's *accounts*:
     accounts = [] # (list of dictionaries for iteration in template)
     for account_fph in accounts_list:
@@ -605,18 +637,33 @@ def home():
             account_owner_fph, \
             account_balance, \
             m = get_account_specific_properties(account_fph)
-            print(account_fph)
-            account = {}
-            account["fph"] = account_fph
-            account["hrns"] = fph_to_hrns(account_fph)
-            account["balance"] = account_balance
-            accounts.append(account)
+            currency_fph, \
+            currency_hrns, \
+            prefix, \
+            suffix, \
+            stewards_list, \
+            m = get_currency_specific_properties(account_currency_fph)
+            a = {}
+            a["fph"] = account_fph
+            a["hrns"] = fph_to_hrns(account_fph)
+            a["owner_fph"] = account_owner_fph
+            a["owner_hrns"] = fph_to_hrns(account_owner_fph)
+            a["balance"] = account_balance
+            a["prefix"] = prefix
+            a["suffix"] = suffix
+            a["currency_fph"] = currency_fph
+            a["currency_hrns"] = currency_hrns
+            accounts.append(a)
 
-    # If this is a *primid*, fetch a list of its *secid*s:
+            for key in account.keys():
+                print(a[key])
+
+
+
+    # If this is a *primid*, fetch a list of its *secid*s and stewardships:
     secids = []
     stewardships = []
     if identity_type == "primid":
-
         secid_list = list_secids(primid_fph)
         secids = []
         for secid_fph in secids_list:
@@ -626,7 +673,6 @@ def home():
                 secid["fph"] = secid_fph
                 secid["hrns"] = fph_to_hrns(secid_fph)
                 secids.append(secid)
-
         stewardships_list, m = list_stewardships(primid_fph)
         for stewardship_fph in stewardships_list:
             if stewardship_fph != "":
@@ -640,9 +686,6 @@ def home():
                 stewardship["hrns"] = entity_hrns
                 stewardship["etype"] = etype
 
-
-
-
     return render_template(
                 "home.html",
                 title="Home",
@@ -655,11 +698,11 @@ def home():
                 identity_type=identity_type,
                 identity_fph=identity_fph,
                 identity_hrns=identity_hrns,
-                primid_fph=primid_fph,          # needed only if identity_type
-                primid_hrns=primid_hrns,        # immediately above is *secid*
-                accounts=accounts,
-                secids=secids,
-                stewardships=stewardships
+                #primid_fph=primid_fph,          # Needed only if identity_type
+                #primid_hrns=primid_hrns,        # immediately above is *secid*.
+                accounts=accounts,              # List of dictionaries.
+                secids=secids,                  # List of dictionaries.
+                stewardships=stewardships       # List of dictionaries.
            )
 
 # account details page --------------------------------------------------------
@@ -1225,10 +1268,10 @@ def manage_accounts():
     for s in accounts_a:
         if s != "":
             print(s)
-            account = {}
-            account["fph"] = s
-            account["hrns"] = fph_to_hrns(s)
-            accounts.append(account)
+            a = {}
+            a["fph"] = s
+            a["hrns"] = fph_to_hrns(s)
+            accounts.append(a)
     # (This duplicates code in /home so, like much else, need to be factorized.)
 
     return render_template(

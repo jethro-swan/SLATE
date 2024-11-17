@@ -786,13 +786,21 @@ def new_account(
 
     agent_fph, \
     agent_hrns, \
-    entity_type, \
+    agent_type, \
     m = identify_entity(agent_fph)
-    if ((entity_type != "primid") and (entity_type != "secid")):
+
+    if agent_type == "primid":
+        a_table = "primids"
+    elif agent_type == "secid":
+        a_table = "secids"
+    else:
         return "", "", agent_fph + " is not an agent"
 
-    currency_fph, currency_hrns, entity_type, m = identify_entity(currency_fph)
-    if (entity_type != "currency"):
+    currency_fph, \
+    currency_hrns, \
+    etype, \
+    m = identify_entity(currency_fph)
+    if (etype != "currency"):
         return "", "", currency_fph + " is not a currency"
 
     if fph_to_hrns(nshash(account_hrns)):
@@ -828,6 +836,27 @@ def new_account(
             )
         )
         conn.commit()
+
+        select_string = "SELECT accounts_fph_list" \
+                      + " FROM " + a_table \
+                      + " WHERE entity_fph = ?"
+        update_string = "UPDATE " + a_table \
+                      + " SET accounts_fph_list = ?" \
+                      + " WHERE entity_fph = ?"
+    #with sqlite3.connect(ENTITIES_DB) as conn:
+    #    cursor = conn.cursor()
+        cursor.execute(select_string, (agent_fph,))
+        result = cursor.fetchone()
+        accounts_fph_blob = result[0]
+        accounts_fph_list = pickle.loads(accounts_fph_blob)
+        accounts_fph_list.append(account_fph)
+        accounts_fph_blob = pickle.dumps(accounts_fph_list)
+        cursor.execute(update_string, (accounts_fph_blob, agent_fph))
+
+
+
+        conn.commit()
+
         cursor.close()
 
     #add_account_to_currency(
@@ -842,6 +871,41 @@ def new_account(
 
 #==============================================================================
 ##
+
+def get_currency_specific_properties(currency_identifier):
+
+    currency_fph, \
+    currency_hrns, \
+    entity_type, \
+    m = identify_entity(currency_identifier)
+    if m:
+        return "", "", "", "", "", m
+
+    with sqlite3.connect(ENTITIES_DB) as conn:
+        cursor = conn.cursor()
+        # Add the stewarded entity's FPH to the *primid*'s stewardships list:
+        cursor.execute(
+            """
+            SELECT currency_prefix, currency_suffix, stewards_fph_list
+            FROM currencies
+            WHERE entity_fph = ?
+            """,
+            (currency_fph,)
+        )
+        result = cursor.fetchone()
+    if result is None:
+        m = "Currency " + fph_to_hrns(currency_fph) + " not found"
+        return "", "", "", "", "", m
+    else:
+        prefix = result[0]
+        suffix = result[1]
+        stewards_fph_blob = result[2]
+        stewards_fph_list = pickle.loads(stewards_fph_blob)
+
+        return currency_fph, currency_hrns, prefix, suffix, stewards_list, ""
+
+
+
 
 def get_currency_name(currency_fph):
     hrns = fph_to_hrns(currency_fph)

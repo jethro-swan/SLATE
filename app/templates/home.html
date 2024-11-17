@@ -2,31 +2,53 @@
 
 {% block content %}
 
-  <strong>accounts</strong>
-  <a href="/account/create">
-    (add new <strong>account</strong>)
-  </a>
+  <div align="center">
+
+  <a href="/identity/change"><strong>change identity</strong></a>
+  |
+  <a href="/identity/create"><strong>new identity</strong></a>
+  |
+  <a href="/account/create"<strong>add account</strong></a>
   <br />
-  <ul>
+  <a href="/namespace/create"<strong>new namespace</strong></a>
+  |
+  <a href="/currency/create"><strong>new currency</strong></a>
+
+  </div>
+
+  <hr />
+
+  <strong>accounts</strong>
+  <a href="/account/create"><strong>+</strong></a>
+  <br />
+  <home>
   {% for account in accounts %}
-    <li class="compact2">
-      <a href="/account/{{ account.fph }}">
-        {{ account.hrns }}
-      </a>
-    </li>
+    <tr>
+      <td align="left">
+        <a href="/account/{{ account.fph }}">{{ account.a.hrns }}</a>
+      </td>
+      <td align="left">
+        <a href="/currency/{{ account.currency_fph }}">
+          {{ account.a.currency_hrns }}
+        </a>
+      </td>
+      <td align="right">
+        {{ account.a.prefix }}{{ account.a.balance }}{{ account.a.suffix }}
+      </td>
+    </tr>
   {% endfor %}
-  </ul>
+  </home>
 
   <hr />
 
   <strong>identities</strong>
 
-  <a href="/identity/create/secondary">+</a>
-  <a href="/identity/create/secondary">
-    (add <strong>secondary identity</strong>)
+  <a href="/identity/create/secondary"><strong>+</strong></a>
+  <a href="/identity/create/secondary">(add <strong>secondary identity</strong>)
   </a>
   <br />
   <ul>
+
   {% if primid_fph %}
     <li class="compact2">
       <a href="/primids/{{ primid.fph }}">
@@ -34,6 +56,7 @@
       </a>
     </li>
   {% endif %}
+
   {% for secid in secids %}
     <li class="compact2">
       <a href="/secids/{{ secid.fph }}">
@@ -41,6 +64,7 @@
       </a>
     </li>
   {% endfor %}
+
   </ul>
 
   <hr />
