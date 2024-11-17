@@ -16,9 +16,11 @@ from app.core.fph_hrns_maps import hrns_to_fph, fph_to_hrns
 from app.core.slate_core import get_entity_type, get_account_currency
 from app.core.slate_core import identify_entity, get_primid
 from app.core.slate_core import new_primid
+from app.core.slate_core import list_stewardships, list_stewards
 from app.core.slate_core import retrieve_primid_access_details
-from app.core.slate_core import list_agent_accounts
+from app.core.slate_core import list_agent_accounts, list_secids
 from app.core.slate_core import get_currency_specific_properties
+from app.core.slate_core import get_account_specific_properties
 from app.core.regexp_list import re_fph, re_hrns, re_email
 from app.core.slate_login import get_auth_data, register_authenticated_login
 ##from app.core.auth import pin_random_ord, pin_prompt_message
@@ -26,7 +28,7 @@ from app.core.auth import pin_subset_prompt
 from app.core.auth import check_auth_hash, authenticate_pin
 from app.core.logging import log_event
 
-from app.core.display import yesno
+from app.core.display import yesno, integer_to_money_format
 
 
 
@@ -623,8 +625,8 @@ def home():
             balance, \
             m = get_account_specific_properties(account_fph)
             print(
-                account_fph + " " \
-                + integer_to_money_format(balance)
+                account_fph + " \t " \
+                + integer_to_money_format(balance) + " \t " \
                 + fph_to_hrns(account_fph)
             )
 
@@ -648,43 +650,40 @@ def home():
             a["hrns"] = fph_to_hrns(account_fph)
             a["owner_fph"] = account_owner_fph
             a["owner_hrns"] = fph_to_hrns(account_owner_fph)
-            a["balance"] = account_balance
+            a["balance"] = integer_to_money_format(account_balance)
             a["prefix"] = prefix
             a["suffix"] = suffix
             a["currency_fph"] = currency_fph
             a["currency_hrns"] = currency_hrns
             accounts.append(a)
 
-            for key in account.keys():
-                print(a[key])
-
-
-
     # If this is a *primid*, fetch a list of its *secid*s and stewardships:
+    secid_list = list_secids(identity_fph)
     secids = []
+    print("secids for " + fph_to_hrns(identity_fph))
+    for secid_fph in secid_list:
+        if secid_fph != "":
+            print(identity_fph + " :: " + fph_to_hrns(secid_fph))
+            secid = {}
+            secid["fph"] = secid_fph
+            secid["hrns"] = fph_to_hrns(secid_fph)
+            secids.append(secid)
+
+    stewardships_list, m = list_stewardships(identity_fph)
     stewardships = []
-    if identity_type == "primid":
-        secid_list = list_secids(primid_fph)
-        secids = []
-        for secid_fph in secids_list:
-            if secid_fph != "":
-                print(secid_fph)
-                secid = {}
-                secid["fph"] = secid_fph
-                secid["hrns"] = fph_to_hrns(secid_fph)
-                secids.append(secid)
-        stewardships_list, m = list_stewardships(primid_fph)
-        for stewardship_fph in stewardships_list:
-            if stewardship_fph != "":
-                print(stewardship_fph)
-                stewardship = {}
-                entity_fph, \
-                entity_hrns, \
-                etype, \
-                m = identify_entity(stewardship_fph)
-                stewardship["fph"] = stewardship_fph
-                stewardship["hrns"] = entity_hrns
-                stewardship["etype"] = etype
+    print("stewardships for " + fph_to_hrns(identity_fph))
+    for stewardship_fph in stewardships_list:
+        if stewardship_fph != "":
+            print(identity_fph + " :: " + fph_to_hrns(stewardship_fph))
+            stewardship = {}
+            entity_fph, \
+            entity_hrns, \
+            etype, \
+            m = identify_entity(stewardship_fph)
+            stewardship["fph"] = stewardship_fph
+            stewardship["hrns"] = entity_hrns
+            stewardship["etype"] = etype
+            stewardships.append(stewardship)
 
     return render_template(
                 "home.html",
@@ -698,8 +697,6 @@ def home():
                 identity_type=identity_type,
                 identity_fph=identity_fph,
                 identity_hrns=identity_hrns,
-                #primid_fph=primid_fph,          # Needed only if identity_type
-                #primid_hrns=primid_hrns,        # immediately above is *secid*.
                 accounts=accounts,              # List of dictionaries.
                 secids=secids,                  # List of dictionaries.
                 stewardships=stewardships       # List of dictionaries.

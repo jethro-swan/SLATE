@@ -656,6 +656,31 @@ def new_secid(
                 pickle.dumps([])    # Empty list: accounts will be added later.
             )
         )
+        cursor.execute(
+            """
+            SELECT secids_fph_list
+            FROM primids
+            WHERE entity_fph = ?
+            """,
+            (primid_fph,)
+        )
+        result = cursor.fetchone()
+        if result is None:
+            secids_fph_list = []
+            #secids_fph_blob = pickle.dumps(secids_fph_list)
+        else:
+            secids_fph_blob = result[0]
+            secids_fph_list = pickle.loads(secids_fph_blob)
+        secids_fph_list.append(secid_fph)
+        secids_fph_blob = pickle.dumps(secids_fph_list)
+        cursor.execute(
+            """
+            UPDATE primids
+            SET secids_fph_list = ?
+            WHERE entity_fph = ?
+            """,
+            (secids_fph_blob, primid_fph)
+        )
         conn.commit()
         cursor.close()
 
@@ -900,7 +925,7 @@ def get_currency_specific_properties(currency_identifier):
         prefix = result[0]
         suffix = result[1]
         stewards_fph_blob = result[2]
-        stewards_fph_list = pickle.loads(stewards_fph_blob)
+        stewards_list = pickle.loads(stewards_fph_blob)
 
         return currency_fph, currency_hrns, prefix, suffix, stewards_list, ""
 
@@ -1169,6 +1194,10 @@ def list_secids(primid_fph):
             secids_fph_list = []
         else:
             secids_fph_list = pickle.loads(result[0])
+
+        for secid_fph in secids_fph_list :
+            print(secid_fph + " > " + fph_to_hrns(secid_fph))
+
         return secids_fph_list
 
 

@@ -89,7 +89,7 @@
 
     <div class="clear-both"><!-- menu row 2 -->
 
-  <!--{% if logged_in %}-->
+  {% if logged_in %}
 
     {% if current_user.is_authenticated %}
     You are logged in as
@@ -100,7 +100,7 @@
     <hr class="dashed" />
     {% endif %}
 
-  <!--{% else %}-->
+  {% else %}
 
     <!-- if there are no menu items to display (logged out), display the
     entry page banner instead. -->

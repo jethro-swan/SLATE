@@ -2,86 +2,78 @@
 
 {% block content %}
 
-  <div align="center">
-
-  <a href="/identity/change"><strong>change identity</strong></a>
-  |
-  <a href="/identity/create"><strong>new identity</strong></a>
-  |
-  <a href="/account/create"<strong>add account</strong></a>
-  <br />
-  <a href="/namespace/create"<strong>new namespace</strong></a>
-  |
-  <a href="/currency/create"><strong>new currency</strong></a>
-
-  </div>
-
-  <hr />
-
-  <strong>accounts</strong>
-  <a href="/account/create"><strong>+</strong></a>
-  <br />
-  <home>
+  <strong>accounts</strong> |
+  <a href="/account/create"><strong>add account</strong></a>
+  <br /><br />
+  <table>
+    <tr>
+      <td>
+        <strong>account HRNS</strong>
+      </td>
+      <td>
+        <strong>currency HRNS</strong>
+      </td>
+      <td>
+        <strong>account balance</strong>
+      </td>
+    </tr>
   {% for account in accounts %}
     <tr>
       <td align="left">
-        <a href="/account/{{ account.fph }}">{{ account.a.hrns }}</a>
+        <a href="/account/{{ account.fph }}">{{ account.hrns }}</a>
       </td>
       <td align="left">
         <a href="/currency/{{ account.currency_fph }}">
-          {{ account.a.currency_hrns }}
+          {{ account.currency_hrns }}
         </a>
       </td>
       <td align="right">
-        {{ account.a.prefix }}{{ account.a.balance }}{{ account.a.suffix }}
+        {{ account.prefix }}{{ account.balance }}{{ account.suffix }}
       </td>
+
     </tr>
   {% endfor %}
-  </home>
+  </table>
 
   <hr />
 
-  <strong>identities</strong>
-
-  <a href="/identity/create/secondary"><strong>+</strong></a>
-  <a href="/identity/create/secondary">(add <strong>secondary identity</strong>)
-  </a>
-  <br />
+  <strong>secondary identities</strong> |
+  <!-- <a href="/identity/change"><strong>change identity</strong></a> | -->
+  <a href="/identity/create"><strong>create new identity</strong></a>
+  <br /><br />
   <ul>
-
-  {% if primid_fph %}
-    <li class="compact2">
-      <a href="/primids/{{ primid.fph }}">
-        {{ primid.hrns }} *
-      </a>
-    </li>
-  {% endif %}
-
   {% for secid in secids %}
-    <li class="compact2">
-      <a href="/secids/{{ secid.fph }}">
-        {{ secid.hrns }}
-      </a>
-    </li>
+    <li><a href="/secid/manage/{{ secid.fph }}">{{ secid.hrns }}</a></li>
   {% endfor %}
-
   </ul>
 
   <hr />
 
-  <strong>stewardships</strong><br />
+  <strong>stewardships</strong>
+  <br /><br />
 
-  {% if identity_type == "primid" %}
-    <ul>
-    {% for secid in secids %}
-      <li class="compact2">
-        <a href="/secids/{{ secid.fph }}">
-          {{ secid.hrns }}
+  <table>
+    <tr>
+      <td>
+        <strong>stewarded entity HRNS</strong>
+      </td>
+      <td>
+        <strong>entity type</strong>
+      </td>
+    </tr>
+    {% for stewardship in stewardships %}
+    <tr>
+      <td class="compact2">
+        <a href="/secids/{{ stewardship.fph }}">
+          {{ stewardship.hrns }}
         </a>
-      </li>
+      </td>
+      <td>
+        {{ stewardship.etype }}
+      </td>
+    </tr>
     {% endfor %}
-    </ul>
-  {% endif %}
+  </table>
 
   <hr />
 
