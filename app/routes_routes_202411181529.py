@@ -725,7 +725,15 @@ def account_details(account_fph=None):
 
     # If an *account* has been specified (by FPH) in the URL slug
     print("Account " + account_fph)
+    #if account_fph is not None:
+#    if account_fph is None:
+#        # This should never happen (unless someone has entered gibberish in the
+#        # slug or the URL).
+#        flash("No account FPH specified.")
+#        return redirect("/home")
 
+#    else:
+        #account_fph = request.args.get("a_fph")
     payer_account_fph, \
     payer_account_hrns, \
     etype, \
@@ -767,11 +775,11 @@ def account_details(account_fph=None):
     if form.validate_on_submit():
         payee_identifier = form.to_account_id.data # HRNS or FPH
         #payee_identifier = form.payee_account_identifier.data # HRNS or FPH
-        amount = int(form.amount.data)
+        amount = form.amount.data
         annotation = form.annotation.data
 
-        payee_account_fph, \
-        payee_account_hrns, \
+        payee_fph, \
+        payee_hrns, \
         etype, \
         m = identify_entity(payee_identifier)
         if etype != "account":
@@ -781,7 +789,7 @@ def account_details(account_fph=None):
         payee_currency_fph, \
         payee_owner_fph, \
         payee_balance, \
-        m = get_account_specific_properties(payee_account_fph)
+        m = get_account_specific_properties(payee_fph)
 
         if payee_currency_fph != payer_currency_fph:
             flash(
@@ -791,31 +799,12 @@ def account_details(account_fph=None):
             )
             return redirect("/account")
 
-        print("payee balance before payment = " + str(payee_balance))
-        print("payer balance before payment = " + str(payer_balance))
-
-
         # If control reaches this point, the two *accounts* are in the same
         # *currency* so the payment can be made:
         m = payment(payer_account_fph, payee_account_fph, amount, annotation)
         if m:
             flash(m)
             return redirect("/account")
-
-        ## TESTSTUFF
-        
-        payer_currency_fph, \
-        payer_owner_fph, \
-        payer_balance, \
-        m = get_account_specific_properties(payer_account_fph)
-
-        payee_currency_fph, \
-        payee_owner_fph, \
-        payee_balance, \
-        m = get_account_specific_properties(payee_account_fph)
-
-        print("payee balance after payment = " + str(payee_balance))
-        print("payer balance after payment = " + str(payer_balance))
 
         flash("Payment submitted")
         return redirect("/home")
@@ -874,6 +863,317 @@ def stewardships(identity_fph):
                 namespace_steward=namespace_steward,
                 currency_steward=currency_steward
            )
+
+# PAYMENTS ====================================================================
+
+# make a payment --------------------------------------------------------------
+@app.route("/pay", methods=["GET", "POST"])
+@login_required
+def pay():
+    page = "pay"
+    group = "payment"
+    namespace_steward = True
+    currency_steward = True
+    paying = True
+    logged_in = current_user.is_authenticated
+
+    identity_fph = current_user.get_id()
+    identity_hrns = fph_to_hrns(identity_fph)
+    identity_type = fph_to_display_type(identity_fph)
+
+    return render_template(
+                "pay.html",
+                title="Make a payment",
+                logged_in=logged_in,
+                page=page,
+                group=group,
+                identity_type=identity_type,
+                identity_fph=identity_fph,
+                identity_hrns=identity_hrns,
+                development_mode=development_mode,
+                namespace_steward=namespace_steward,
+                currency_steward=currency_steward
+           )
+
+# payment to account ----------------------------------------------------------
+@app.route("/pay/account", methods=["GET", "POST"])
+@login_required
+def pay_account():
+    page = "pay_account"
+    group = "payment"
+    namespace_steward = True
+    currency_steward = True
+    paying = True
+    logged_in = current_user.is_authenticated
+
+    identity_fph = current_user.get_id()
+    identity_hrns = fph_to_hrns(identity_fph)
+    identity_type = fph_to_display_type(identity_fph)
+
+    form = PaymentToAccountForm()
+    if form.validate_on_submit():
+        flash(
+            "Payment submitted to account {}".format(
+                form.to_account_hrns.data,
+                form.to_account_fph.data,
+                form.amount.data,
+                form.annotation.data
+            )
+        )
+        return redirect("/home")
+    return render_template(
+                "pay_account.html",
+                title="Payment to known account",
+                form=form,
+                logged_in=logged_in,
+                page=page,
+                group=group,
+                identity_type=identity_type,
+                identity_fph=identity_fph,
+                identity_hrns=identity_hrns,
+                development_mode=development_mode,
+                namespace_steward=namespace_steward,
+                currency_steward=currency_steward
+           )
+
+# payment to account HRNS ----------------------------------------------------
+@app.route("/pay/account/hrns", methods=["GET", "POST"])
+@login_required
+def pay_account_hrns():
+    page = "pay_account_hrns"
+    group = "payment"
+    namespace_steward = True
+    currency_steward = True
+    paying = True
+    logged_in = current_user.is_authenticated
+
+    identity_fph = current_user.get_id()
+    identity_hrns = fph_to_hrns(identity_fph)
+    identity_type = fph_to_display_type(identity_fph)
+
+    form = PaymentToAccountHRNSForm()
+    if form.validate_on_submit():
+        flash(
+            "Payment submitted to account {}".format(
+                form.to_account_hrns.data,
+                form.amount.data,
+                form.annotation.data
+            )
+        )
+        return redirect("/home")
+    return render_template(
+                "pay_account_hrns.html",
+                title="Payment to known account (HRNS)",
+                form=form,
+                logged_in=logged_in,
+                page=page,
+                group=group,
+                identity_type=identity_type,
+                identity_fph=identity_fph,
+                identity_hrns=identity_hrns,
+                development_mode=development_mode,
+                namespace_steward=namespace_steward,
+                currency_steward=currency_steward
+           )
+
+# payment to account FPH ------------------------------------------------------
+@app.route("/pay/account/fph", methods=["GET", "POST"])
+@login_required
+def pay_account_fph():
+    page = "pay_account_fph"
+    group = "payment"
+    payer_fph = current_user.get_id()
+    namespace_steward = True
+    currency_steward = True
+    logged_in = current_user.is_authenticated
+
+    identity_fph = current_user.get_id()
+    identity_hrns = fph_to_hrns(identity_fph)
+    identity_type = fph_to_display_type(identity_fph)
+
+    form = PaymentToAccountFPHForm()
+    if form.validate_on_submit():
+        payee_fph = form.to_account_fph.data
+        amount = form.amount.data
+        annotation = form.annotation.data
+        if entity_type(payee_fph) != "account":
+            flash(payee_fph + " is not an account")
+            return redirect("/pay/account/fph")
+        currency_fph = account_currency(payee_fph)
+        accounts_list = currency_accounts(payer_fph)
+        usable_account_found = ""
+        for account_fph in accounts_list:
+            if account_currency(account_fph) == currency_fph:
+                usable_account_found = account_fph
+        if not usable_account_found:
+            flash("None of your accounts uses " + payee_fph + "'s currency." )
+            return redirect("/pay/account/fph")
+        schedule_payment(payer_fph, payee_fph, amount, annotation)
+        flash(
+            "Payment submitted to account {}".format(
+                form.to_account_fph.data,
+                form.amount.data,
+                form.annotation.data
+            )
+        )
+        return redirect("/home")
+    return render_template(
+                "pay_account_fph.html",
+                title="Payment to known account (FPH)",
+                form=form,
+                logged_in=logged_in,
+                page=page,
+                group=group,
+                identity_type=identity_type,
+                identity_fph=identity_fph,
+                identity_hrns=identity_hrns,
+                development_mode=development_mode,
+                namespace_steward=namespace_steward,
+                currency_steward=currency_steward
+           )
+
+# payment to identity ---------------------------------------------------------
+@app.route("/pay/identity", methods=["GET", "POST"])
+@login_required
+def pay_identity():
+    page = "pay_identity"
+    group = "payment"
+    namespace_steward = True
+    currency_steward = True
+    logged_in = current_user.is_authenticated
+
+    identity_fph = current_user.get_id()
+    identity_hrns = fph_to_hrns(identity_fph)
+    identity_type = fph_to_display_type(identity_fph)
+
+    form = PaymentToIdentityForm()
+    if form.validate_on_submit():
+        flash(
+            "Payment submitted to identity {}".format(
+                form.to_identity_hrns.data,
+                form.to_identity_fph.data,
+                form.currency_hrns.data,
+                form.currency_fph.data,
+                form.amount.data
+            )
+        )
+        return redirect("/home")
+    return render_template(
+                "pay_identity.html",
+                title="Payment to known identity",
+                form=form,
+                logged_in=logged_in,
+                page=page,
+                group=group,
+                identity_type=identity_type,
+                identity_fph=identity_fph,
+                identity_hrns=identity_hrns,
+                development_mode=development_mode,
+                namespace_steward=namespace_steward,
+                currency_steward=currency_steward
+           )
+
+# payment to identity HRNS ---------------------------------------------------
+@app.route("/pay/identity/hrns", methods=["GET", "POST"])
+@login_required
+def pay_identity_hrns():
+    page = "pay_identity_hrns"
+    group = "payment"
+    namespace_steward = True
+    currency_steward = True
+    logged_in = current_user.is_authenticated
+
+    identity_fph = current_user.get_id()
+    identity_hrns = fph_to_hrns(identity_fph)
+    identity_type = fph_to_display_type(identity_fph)
+
+    form = PaymentToIdentityHRNSForm()
+    if form.validate_on_submit():
+        flash(
+            "Payment submitted to identity {}".format(
+                form.to_identity_hrns.data,
+                form.amount.data
+            )
+        )
+        return redirect("/home")
+    return render_template(
+                "pay_identity_hrns.html",
+                title="Payment to known identity (HRNS)",
+                form=form,
+                logged_in=logged_in,
+                page=page,
+                group=group,
+                identity_type=identity_type,
+                identity_fph=identity_fph,
+                identity_hrns=identity_hrns,
+                development_mode=development_mode,
+                namespace_steward=namespace_steward,
+                currency_steward=currency_steward
+           )
+
+# payment to identity FPH -----------------------------------------------------
+@app.route("/pay/identity/fph", methods=["GET", "POST"])
+@login_required
+def pay_identity_fph():
+    page = "pay_identity_fph"
+    group = "payment"
+    namespace_steward = True
+    currency_steward = True
+    logged_in = current_user.is_authenticated
+
+    identity_fph = current_user.get_id()
+    identity_hrns = fph_to_hrns(identity_fph)
+    identity_type = fph_to_display_type(identity_fph)
+
+    form = PaymentToIdentityFPHForm()
+    if form.validate_on_submit():
+        flash(
+            "Payment submitted to identity {}".format(
+                form.to_identity_fph.data,
+                form.amount.data
+            )
+        )
+        return redirect("/home")
+    return render_template(
+                "pay_identity_fph.html",
+                title="Payment to known identity (FPH)",
+                form=form,
+                logged_in=logged_in,
+                page=page,
+                group=group,
+                identity_type=identity_type,
+                identity_fph=identity_fph,
+                identity_hrns=identity_hrns,
+                development_mode=development_mode,
+                namespace_steward=namespace_steward,
+                currency_steward=currency_steward
+           )
+
+# payment unsuccessful: account HRNS invalid ----------------------------------
+#@app.route("/pay/unsuccessful/hrns_invalid", methods=["GET", "POST"])
+#def payment_hrns_failure():
+#    page = "payment_hrns_invalid"
+#    mode = "payment"
+#    #identity_fph = current_user
+#    #identity_hrns = fph_to_hrns(identity_fph)
+#    namespace_steward = False
+#    currency_steward = False
+#    paying = True
+#    logged_in = current_user.is_authenticated
+#    return render_template(
+#                "payment_hrns_invalid.html",
+#                title="Payment account name (HRNS) is invalid",
+#                logged_in=logged_in,
+#                page=page,
+#                group=group,
+#                development_mode=development_mode,
+#                #identity_type=identity_type,
+#                #identity_fph=identity_fph,
+#                #identity_hrns=identity_hrns,
+#                namespace_steward=namespace_steward,
+#                currency_steward=currency_steward,
+#                paying=paying
+#           )
 
 # MANAGEMENT ==================================================================
 

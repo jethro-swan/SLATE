@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+  <table border="0">
+    <tr valign="top">
+      <td><strong>account</strong></td>
+      <td>{{ payer_account_hrns }}<br />[{{ payer_account_fph }}]</td>
+    </tr>
+    <tr valign="top">
+      <td><strong>currency</strong></td>
+      <td>{{ currency_hrns }}<br />[{{ currency_fph }}]</td>
+    </tr>
+    <tr valign="top">
+      <td><strong>balance</strong></td>
+      <td align="right">
+        {{ currency_prefix }}{{ account_balance }}{{ currency_suffix }}
+      </td>
+    </tr>
+  </table>
+  <hr />
+  <p>
+    Make a payment from this <strong>account</strong> to another in the same
+    <strong>currency</strong>.
+  </p>
+  <form action="" method="post" novalidate>
+  {{ form.hidden_tag() }}
+  <p>
+    {{ form.to_account_id.label }} (HRNS or FPH)<br />
+    {{ form.to_account_id(size=32) }}
+  </p>
+  <p>
+    {{ form.amount.label }}<br />
+    {{ form.amount(size=32) }}
+  </p>
+  <p>
+    {{ form.annotation.label }}<br />
+    {{ form.annotation(size=64) }}
+  </p>
+  <p>
+    {{ form.submit() }}
+  </p>
+  <hr />
+{% endblock %}
+
+<!--
+Add:
+- list of recent payments
+- link to complete (scrollable) list of payments
+- CSV export button
+
+
+
+-->
