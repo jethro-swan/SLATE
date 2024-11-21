@@ -1,21 +1,33 @@
+{% extends "bootstrap/base.html" %}
+<!-- Taking some guidance from:
+        https://pythonhosted.org/Flask-Bootstrap/basic-usage.html
+        https://bootstrap-flask.readthedocs.io/en/stable/basic
+-->
 <!doctype html>
 <html>
+
   <head>
-    {% if title %}
-      <title>{{ title }} - SLATE</title>
-    {% else %}
-      <title>SLATE</title>
-    {% endif %}
-    <link rel="stylesheet"
-    href="{{ url_for('static', filename='css/default.css') }}">
+  {% block head %}
+  {% if title %}
+    <title>{{ title }} - SLATE</title>
+  {% else %}
+    <title>SLATE</title>
+  {% endif %}
+  {% block styles %}
+
+  <link
+    rel="stylesheet"
+    href="{{ url_for('static', filename='css/slate.css') }}"
+  >
+  {% endblock %}<!-- styles -->
+  {% endblock %}<!-- head -->
   </head>
+
   <body>
 
-    <!-- <hr /> -->
-
-    <div class="clear-both"><!-- menu row 1 -->
-
-  {% if not current_user.is_authenticated %}
+  {% block navbar %}
+  <div class="clear-both"><!-- menu row 1 -->
+  {% if not current_user.is_authenticated %}<!-- user is not logged in -->
 
     {% if page == "login" %}
       <div class="mba">log in</div>
@@ -33,19 +45,23 @@
       </div>
     {% endif %}
 
-  {% else %}<!-- logged_in -->
+  {% else %}<!-- user is logged in -->
 
-    <div class="mb">
-      <a class="mb" href="/home">home</a>
-    </div>
+    {% if (page == "home") or (group == "home") %}
+      <div class="mba">home</div>
+    {% else %}
+      <div class="mb">
+        <a class="mb" href="/home">home</a>
+      </div>
+    {% endif %}
 
     <div class="mb">
       <a class="mb" href="/logout">logout</a>
     </div>
 
-  {% endif %}<!-- logged_in -->
+  {% endif %}<!-- logged in? -->
 
-  {% if page == "help" %}
+  {% if page == "help" %}<!-- displayed whether or not user is logged in? -->
     <div class="mba">help</div>
   {% else %}
     <div class="mb">
@@ -53,12 +69,12 @@
     </div>
   {% endif %}
 
-<!-- end menu row 1 -->
+  </div><!-- menu row 1 -->
 
-<br class="clear-both" />
-<hr class="dashed" />
+  <br class="clear-both" />
+  <hr class="dashed" />
 
-    <div class="clear-both"><!-- menu row 2 -->
+  <div class="clear-both"><!-- menu row 2 -->
 
   {% if logged_in %}
 
@@ -82,7 +98,7 @@
 
   {% endif %}<!-- logged_in -->
 
-<!-- end menu row 2 -->
+  </div><!-- end menu row 2 -->
 
   <br class="clear-both" />
 
@@ -98,8 +114,10 @@
   {% endif %}
   {% endwith %}
 
+  {% endblock %}<!-- navbar -->
 
-  {% block content %}{% endblock %}
+  {% block content %}{% endblock %}<!-- page content -->
 
   </body>
+
 </html>

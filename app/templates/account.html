@@ -5,16 +5,26 @@
   <table border="0">
     <tr valign="top">
       <td><strong>account</strong></td>
-      <td>{{ payer_account_hrns }}<br />[{{ payer_account_fph }}]</td>
+      <td>
+        <a href="/account_details/{{ payer_account_fph }}">
+          <strong>{{ payer_account_hrns }}</strong>
+        </a>
+      </td>
     </tr>
     <tr valign="top">
       <td><strong>currency</strong></td>
-      <td>{{ currency_hrns }}<br />[{{ currency_fph }}]</td>
+      <td>
+        <a href="/currency_details/{{ currency_fph }}">
+          <strong>{{ currency_hrns }}</strong>
+        </a>
+      </td>
     </tr>
     <tr valign="top">
       <td><strong>balance</strong></td>
       <td align="right">
-        {{ currency_prefix }}{{ account_balance }}{{ currency_suffix }}
+        {{ currency_prefix }}
+        <strong>{{ account_balance }}</strong>
+        {{ currency_suffix }}
       </td>
     </tr>
   </table>

@@ -25,6 +25,15 @@
       </div>
     {% endif %}
 
+    <!-- Move this link to the login form:
+    {% if page == "login_recovery" %}
+      <div class="mba">recover login</div>
+    {% else %}
+      <div class="mb">
+        <a class="mb" href="/login/recover">recover login</a>
+      </div>
+    {% endif %}
+  -->
     {% if page == "registration" %}
       <div class="mba">register</div>
     {% else %}
@@ -35,9 +44,29 @@
 
   {% else %}<!-- logged_in -->
 
-    <div class="mb">
-      <a class="mb" href="/home">home</a>
-    </div>
+    {% if (page == "home") or (group == "home") %}
+      <div class="mba">home</div>
+    {% else %}
+      <div class="mb">
+        <a class="mb" href="/home">home</a>
+      </div>
+    {% endif %}
+
+    {% if (group == "payment") %}
+      <div class="mba">pay</div>
+    {% else %}
+      <div class="mb">
+        <a class="mb" href="/pay">pay</a>
+      </div>
+    {% endif %}
+
+    {% if (group == "management") %}
+      <div class="mba">manage</div>
+    {% else %}
+      <div class="mb">
+        <a class="mb" href="/manage">manage</a>
+      </div>
+    {% endif %}
 
     <div class="mb">
       <a class="mb" href="/logout">logout</a>
@@ -99,7 +128,7 @@
   {% endwith %}
 
 
-  {% block content %}{% endblock %}
+    {% block content %}{% endblock %}
 
   </body>
 </html>

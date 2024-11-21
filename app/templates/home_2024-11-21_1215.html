@@ -2,13 +2,8 @@
 
 {% block content %}
 
-{% for id_fph in identities_list %}
-
-  <strong>{{ id.hrns }}</strong> ({ id.type })
-  <br /><br />
   <strong>accounts</strong> |
-  <a href="/account/create"><strong>add account</strong></a> for
-  <strong>{{ id.hrns }}</strong>
+  <a href="/account/create"><strong>add account</strong></a>
   <br /><br />
   <table>
     <tr>
@@ -17,7 +12,7 @@
       <th>balance</th>
       <th>unit</th>
     </tr>
-  {% for account in id_fph.accounts %}
+  {% for account in accounts %}
     <tr>
       <td align="left">
         <a href="/account/{{ account.fph }}">
@@ -42,7 +37,6 @@
     </tr>
   {% endfor %}
   </table>
-  {% endfor %}
 
   <hr />
 

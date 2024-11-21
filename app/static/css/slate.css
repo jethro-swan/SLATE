@@ -1,0 +1,25 @@
+body, div, p, h1, h2, h3, a, li {
+  font-family: Lucida Grande,Verdana,Helvetica,Arial,sans-serif;
+}
+
+@media (min-width:320px)  {
+  body {
+    font-size: 1.0em;
+    background: #f0f4f0;
+  }
+}
+@media (min-width:481px)  {
+
+}
+@media (min-width:641px)  {
+
+}
+@media (min-width:961px)  {
+
+}
+@media (min-width:1025px) {
+
+}
+@media (min-width:1281px) {
+
+}

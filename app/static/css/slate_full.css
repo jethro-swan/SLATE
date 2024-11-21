@@ -7,7 +7,7 @@ body {
   background: #f0f4f0;
   /* max-width: 720px; */
   /* max-width: 640px; */
-  max-width: 400px;
+  /* max-width: 400px; */
 }
 
 .footnote {
@@ -168,15 +168,12 @@ table {
   border-spacing: 0;
 }
 td {
-  font-size: 1.0em; background: #ffffff;
+  font-size: 0.8em; background: #ffffff;
   padding-top: 1px; padding-left: 4px; padding-right: 4px; padding-bottom: 1px;
   border: 1px solid #c0c0c0;
 }
 th {
-  font-size: 1.0em; background: #F0FFF0; font-weight: bold;
-  padding-top: 1px; padding-left: 4px; padding-right: 4px; padding-bottom: 1px; 
-  color: #000000; text-align: left;
-  border: 1px solid #c0c0c0;
+  color: #000000; background: #F0FFF0; font-weight: normal;
 }
 
 .dark-green-bold { color: #008000; font-weight: bold; }
@@ -205,12 +202,7 @@ p.shout {
   color: #00c000;
 }
 
-td.balpos {
-  color: #000000;
-}
-td.balneg {
-  color: #800000;
-}
+
 
 
 input[type="checkbox" i] {

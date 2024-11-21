@@ -994,24 +994,25 @@ def list_secid_accounts(secid_fph):
             (secid_fph,)
         )
         result = cursor.fetchone()
-    if result is None:
-        accounts_fph_list = []
-        accounts_fph_blob = pickle.dumps(accounts_fph_list)
-        cursor.execute(
-            """
-            UPDATE secids
-            SET accounts_fph_list = ?
-            WHERE entity_fph = ?
-            """,
-            (accounts_fph_blob, secid_fph)
-        )
-        conn.commit()
-        cursor.close()
-        return [], "The secid " + secid_fph + " has no accounts."
-    else:
-        accounts_fph_blob = result[0]
-        accounts_fph_list = pickle.loads(accounts_fph_blob)
-        return accounts_fph_list, ""    # list + message
+        if result is None:
+            accounts_fph_list = []
+            accounts_fph_blob = pickle.dumps(accounts_fph_list)
+            cursor.execute(
+                """
+                UPDATE secids
+                SET accounts_fph_list = ?
+                WHERE entity_fph = ?
+                """,
+                (accounts_fph_blob, secid_fph)
+            )
+            conn.commit()
+            cursor.close()
+            return [], "The secid " + secid_fph + " has no accounts."
+        else:
+            cursor.close()
+            accounts_fph_blob = result[0]
+            accounts_fph_list = pickle.loads(accounts_fph_blob)
+            return accounts_fph_list, ""    # list + message
 
 #==============================================================================
 ##
@@ -1614,19 +1615,31 @@ def list_stewardships(primid_fph):
             """,
             (primid_fph,)
         )
-        results = cursor.fetchone()
+        result = cursor.fetchone()
         #cursor.execute(select_str, (primid_fph,))
         #stewardships_fph_blob = cursor.fetchone()[0]
+    if result is None:
+        stewardships_fph_list = []
+        stewardships_fph_blob = pickle.dumps(stewardships_fph_list)
+        cursor.execute(
+            """
+            UPDATE primids
+            SET stewardships_fph_list = ?
+            WHERE entity_fph = ?
+            """,
+            (stewardships_fph_blob, primid_fph)
+        )
+        conn.commit()
         cursor.close()
-    stewardships_fph_blob = results[0]
-    stewardships_fph_list = pickle.loads(stewardships_fph_blob)
-    stewardships = []
-    for stewardhip_fph in stewardships_fph_list:
-        stewardships.append(stewardhip_fph)
-
+        return [], "The primid " + primid_fph + " has no stewardships."
+    else:
+        cursor.close()
+        stewardships_fph_blob = result[0]
+        stewardships_fph_list = pickle.loads(stewardships_fph_blob)
+        stewardships = []
+        for stewardhip_fph in stewardships_fph_list:
+            stewardships.append(stewardhip_fph)
     return stewardships, ""
-
-
 
 #==============================================================================
 # List existing namespaces, specifying optionally a parent namespace.
