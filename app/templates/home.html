@@ -25,9 +25,13 @@
         </a>
       </td>
       <td align="left">
+        {% if account.primid_currency_steward %}
         <a href="/currency/{{ account.currency_fph }}">
           <strong>{{ account.currency_hrns }}</strong>
         </a>
+        {% else %}
+          <strong>{{ account.currency_hrns }}</strong>
+        {% endif %}
       </td>
       {% if account.isneg %}
       <td align="right" class="balneg">
