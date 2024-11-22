@@ -605,7 +605,12 @@ def home():
 
         id["fph"] = id_fph
         id["hrns"] = fph_to_hrns(id_fph)
-        id["type"] = etype
+        if etype == "primid":
+            id["type"] = "primary identity"
+        elif etype == "secid":
+            id["type"] = "secondary identity"
+        else:
+            etype == "poltergeist" # something to be investigate
 
         accounts_list, m = list_agent_accounts(id_fph)
         if m:

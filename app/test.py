@@ -25,7 +25,7 @@ from core.slate_core import create_entities_db
 from core.slate_core import new_namespace, new_currency, new_account
 from core.slate_core import new_primid, new_secid
 from core.slate_core import identify_entity, get_currency_name
-from core.slate_core import list_primid_accounts
+from core.slate_core import list_primid_accounts, list_secid_accounts
 from core.slate_core import list_primid_currencies, list_secid_currencies
 from core.slate_core import list_accounts_in_currency
 from core.slate_core import get_entity_type
@@ -210,7 +210,10 @@ def select_available_primid():
     return random.choice(l_primids) # FPH
 
 def select_available_secid():
-    return random.choice(l_secids) # FPH
+    if len(l_secids) > 2:
+        return random.choice(l_secids) # FPH
+    else:
+        return ""
 
 def select_available_account():
     return random.choice(l_accounts) # FPH
@@ -424,13 +427,21 @@ def create_fake_entities(n, a):
     def create_test_account():
         account_namesapace_hrns = fph_to_hrns(select_available_namespace())
         account_hrns = random_name() + "." + account_namesapace_hrns
-        primid_fph = select_available_primid()
+        # In early iterations, the l_secids list may be empty so that must be
+        # checked:
+##        agent_fph = select_available_secid()
+        if random.choice([True, False]): # if not ""
+            agent_fph = select_available_primid()
+        else:
+            agent_fph = select_available_secid()
+            if not agent_fph:
+                agent_fph = select_available_primid()
         currency_fph = select_available_currency()
         account_fph, \
         account_hrns, \
         m = new_account(
                 account_hrns,
-                primid_fph,
+                agent_fph,
                 currency_fph
             )
         if m:
@@ -742,6 +753,20 @@ def list_fake_entities_relationships_from_test_lists():
         currencies_fph_list = list_primid_currencies(primid_fph)
         for currency_fph in currencies_fph_list:
             print("\t" + fph_to_hrns(currency_fph))
+
+    thin_line()
+    pause()
+
+    title_line("List the fake secids' accounts (from l_secids[ ] list)")
+
+    for secid_fph in l_secids:
+        print(secid_fph + " > " + fph_to_hrns(secid_fph))
+        accounts_fph_list, m = list_secid_accounts(secid_fph)
+        if m:
+            print("\t" + m)
+        else:
+            for account_fph in accounts_fph_list:
+                print("\t" + fph_to_hrns(account_fph))
 
     thin_line()
     pause()
