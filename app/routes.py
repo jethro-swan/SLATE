@@ -538,8 +538,9 @@ def login_recover():
 
                 #logged_in=logged_in,
                 #page=page,
-                group=group,
-                identity_type=identity_type,
+#                group=group,
+                identity_type=etype,
+#                identity_type=identity_type,
                 identity_fph=identity_fph,
                 identity_hrns=identity_hrns,
 
@@ -570,36 +571,16 @@ def home():
     identity_type = fph_to_display_type(identity_fph)
 
     # The user logs in as the *primid*, even if indirectly as one of its
-    # *secid*s, but once logged in may switch the focus between its various
-    # *identities* (aliases). Therefore that *identity* must also be made
-    # persistent within the session.
-    #
-    # NOT YET IMPLEMENTED
-
-    ## This may not be needed if the "home" screen displays all *identities* of
-    ## the *primid* alongside its *accounts*. That way there will be no need
-    ## to switch display between the *primid* and any of its *secids* (although
-    ## the table may be made sortable).
-
-    # The primary_identity string is "" if the current active identity is
-    # already a *primid*:
-    #primid_fph, \
-    #primid_hrns = fph_to_primid_iff_needed(identity_fph)
+    # *secid*s, but once logged in will see all of its *identities* along with
+    # a list of *accounts* belonging to each. The user will also see a list of
+    # entities over which it holds/shares stewardship.
 
     stewardships_list, m = list_stewardships(identity_fph)
-
-
 
     print("Currently in the /home endpoint")
     print("identity_fph = " + identity_fph)
     print("identity_hrns = " + identity_hrns)
     print("identity_type = " + identity_type)
-    #print("primid_fph = " + primid_fph)
-    #print("primid_hrns = " + primid_hrns)
-
-    #if primid_fph:
-    #    identity_fph = primid_fph
-    #    identity_hrns = identity_hrns
 
     # Since a user may have *accounts* scattered across an arbitrary number of
     # *namespaces*, it is necessary to maintain a list of these:
@@ -608,62 +589,82 @@ def home():
     identities_list = list_secids(identity_fph)
     identities_list.insert(0, identity_fph)
 
-    identities = [] # list of *identities* to pass to "home.html" template
+    identities = [] # list of *identities* to pass to "home.html" template as
+                    # dictionaries.
 
     for id_fph in identities_list:
 
-        id = {}
+        id = {} # the outer dictionary for this *identity*
+
+        id_fph, \
+        id_hrns, \
+        etype, \
+        m = identify_entity(id_fph)
+        if m:
+            flash(m)
+
         id["fph"] = id_fph
         id["hrns"] = fph_to_hrns(id_fph)
-        if id == identity_fph:
-            id["type"] = "primid"
-        else:
-            id["type"] = "secid"
+        id["type"] = etype
 
         accounts_list, m = list_agent_accounts(id_fph)
         if m:
             flash(m)
 
-        #id_accounts = {}
-
-        # List the *identity*'s *accounts*:
-        #accounts = [] # (list of dictionaries for iteration in template)
-        accounts = {} # (dictionary of dictionaries for iteration in template)
+        # List the *accounts* belonging to this *identity*:
+        accounts = [] # (second-level dictionary for iteration in template)
+        #accounts = {} # (second-level dictionary for iteration in template)
         for account_fph in accounts_list:
-            if account_fph != "":
-                account_currency_fph, \
-                account_owner_fph, \
-                account_balance, \
-                m = get_account_specific_properties(account_fph)
-                currency_fph, \
-                currency_hrns, \
-                prefix, \
-                suffix, \
-                stewards_list, \
-                m = get_currency_specific_properties(account_currency_fph)
-                a = {}
-                a["fph"] = account_fph
-                a["hrns"] = fph_to_hrns(account_fph)
-                a["owner_fph"] = account_owner_fph
-                a["owner_hrns"] = fph_to_hrns(account_owner_fph)
-                a["balance"] = integer_to_money_format(account_balance)
-                a["isneg"] = (account_balance < 0)
-                a["prefix"] = prefix
-                a["suffix"] = suffix
-                if currency_fph in stewardships_list:
-                    a["primid_is_currency_steward"] = True
-                else:
-                    a["primid_is_currency_steward"] = False
-                a["currency_fph"] = currency_fph
-                a["currency_hrns"] = currency_hrns
-                #accounts.append(a)
-                accounts[id_fph] = accounts
+            # Fetch account details:
+            account_currency_fph, \
+            account_owner_fph, \
+            account_balance, \
+            m = get_account_specific_properties(account_fph)
 
+            print("account_currency_fph  \t= " + account_currency_fph)
+            print("account_owner_fph  \t= " + account_owner_fph)
+            print("account_balance  \t= " + str(account_balance))
 
+            # Fetch currency details:
+            currency_fph, \
+            currency_hrns, \
+            prefix, \
+            suffix, \
+            stewards_list, \
+            m = get_currency_specific_properties(account_currency_fph)
 
+            print("currency_fph  \t= " + currency_fph)
+            print("currency_hrns  \t= " + currency_hrns)
+            print("stewards_list  \t= ", end="")
+            print(stewards_list)
 
+            # Assemble a dictonary of *account* properties:
+            a = {}
+            a["fph"] = account_fph
+            a["hrns"] = fph_to_hrns(account_fph)
+            a["owner_fph"] = account_owner_fph
+            a["owner_hrns"] = fph_to_hrns(account_owner_fph)
+            a["balance"] = integer_to_money_format(account_balance)
+            a["isneg"] = (account_balance < 0)
+            a["prefix"] = prefix
+            a["suffix"] = suffix
+            primid_currency_steward = currency_fph in stewardships_list
+            a["primid_is_currency_steward"] = primid_currency_steward
+            #if currency_fph in stewardships_list:
+            #    a["primid_is_currency_steward"] = True
+            #else:
+            #    a["primid_is_currency_steward"] = False
+            a["currency_fph"] = currency_fph
+            a["currency_hrns"] = currency_hrns
 
+            print("a  \t= ", end="")
+            print(a)
 
+            #accounts[account_fph] = a
+            accounts.append(a)
+
+        id["accounts"] = accounts
+        identities.append(id)
 
 
     # If this is a *primid*, fetch a list of its *secid*s and stewardships:
@@ -701,15 +702,19 @@ def home():
                 group=group,
                 development_mode=development_mode,
                 logged_in=logged_in,
-                namespace_steward=namespace_steward,
-                currency_steward=currency_steward,
+                #namespace_steward=namespace_steward,
+                #currency_steward=currency_steward,
+
+                # Variables passed for display in "base.html":
                 identity_type=identity_type,
                 identity_fph=identity_fph,
                 identity_hrns=identity_hrns,
-                identities_list=identities_list,
-                accounts=accounts,              # List of dictionaries.
-                secids=secids,                  # List of dictionaries.
-                stewardships=stewardships       # List of dictionaries.
+
+                # List of (nested) dictionaries for display in "home.html":
+                identities=identities,
+                #accounts=accounts,
+                secids=secids,
+                stewardships=stewardships
             )
 
 # account details page --------------------------------------------------------

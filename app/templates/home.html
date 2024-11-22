@@ -2,13 +2,13 @@
 
 {% block content %}
 
-{% for id_fph in identities_list %}
+{% for identity in identities %}<!-- list of dictionaries -->
 
-  <strong>{{ id.hrns }}</strong> ({ id.type })
-  <br /><br />
+  <strong>{{ identity.hrns }}</strong> ({{ identity.type }}) <br /><br />
+
   <strong>accounts</strong> |
   <a href="/account/create"><strong>add account</strong></a> for
-  <strong>{{ id.hrns }}</strong>
+  <strong>{{ identity.hrns }}</strong>
   <br /><br />
   <table>
     <tr>
@@ -17,7 +17,7 @@
       <th>balance</th>
       <th>unit</th>
     </tr>
-  {% for account in id_fph.accounts %}
+  {% for account in identity.accounts %}
     <tr>
       <td align="left">
         <a href="/account/{{ account.fph }}">
@@ -42,9 +42,10 @@
     </tr>
   {% endfor %}
   </table>
+  <hr />
   {% endfor %}
 
-  <hr />
+  <!-- <hr /> -->
 
   <strong>secondary identities</strong> |
   <!-- <a href="/identity/change"><strong>change identity</strong></a> | -->
