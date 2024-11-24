@@ -4,11 +4,9 @@
 
 {% for identity in identities %}<!-- list of dictionaries -->
 
-  <strong>{{ identity.hrns }}</strong> ({{ identity.type }}) <br /><br />
-
-  <strong>accounts</strong> |
-  <a href="/account/create"><strong>add account</strong></a> for
-  <strong>{{ identity.hrns }}</strong>
+  <div class="header">
+    <strong>{{ identity.hrns }}</strong> ({{ identity.type }})
+  </div>
   <br /><br />
   <table>
     <tr>
@@ -46,50 +44,10 @@
     </tr>
   {% endfor %}
   </table>
-  <hr />
+  <a href="/account/create"><strong>add account</strong></a> for
+  <strong>{{ identity.hrns }}</strong>
+  <br /><br />
 {% endfor %}
-
-  <!-- <hr /> -->
-
-  <strong>secondary identities</strong> |
-  <!-- <a href="/identity/change"><strong>change identity</strong></a> | -->
-  <a href="/identity/create"><strong>create new identity</strong></a>
-  <br /><br />
-  <ul>
-  {% for secid in secids %}
-    <li>
-      <a href="/secid/manage/{{ secid.fph }}">
-        <strong>{{ secid.hrns }}</strong>
-      </a>
-    </li>
-  {% endfor %}
-  </ul>
-
   <hr />
-
-  <strong>stewardships</strong>
-  <br /><br />
-
-  <table>
-    <tr>
-      <th>stewarded entity</th>
-      <th>entity type</th>
-    </tr>
-    {% for stewardship in stewardships %}
-    <tr>
-      <td class="compact2">
-        <a href="/stewardship/{{ stewardship.fph }}">
-          <strong>{{ stewardship.hrns }}</strong>
-        </a>
-      </td>
-      <td>
-        {{ stewardship.etype }}
-      </td>
-    </tr>
-    {% endfor %}
-  </table>
-
-  <hr />
-
 
 {% endblock %}

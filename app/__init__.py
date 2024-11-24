@@ -11,6 +11,14 @@ login_manager = LoginManager(app)
 
 bootstrap = Bootstrap(app)
 
+# See https://stackoverflow.com/questions/
+#     55503515/flask-jinja-template-format-a-string-to-currency
+#@app.template_filter()
+#def currencyFormat(value):
+#    value = float(value)
+#    return "${:,.2f}".format(value)
+
+
 from app import routes, errors
 
 # * see https://pypi.org/project/Flask-Bcrypt/

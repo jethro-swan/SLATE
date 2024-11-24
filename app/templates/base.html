@@ -2,12 +2,24 @@
 <html>
   <head>
     {% if title %}
-      <title>{{ title }} - SLATE</title>
+      <title>SLATE - {{ title }}</title>
     {% else %}
       <title>SLATE</title>
     {% endif %}
+
     <link rel="stylesheet"
     href="{{ url_for('static', filename='css/default.css') }}">
+
+    <script
+      src="http://ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"
+      type="text/javascript">
+    </script>
+    <!--
+	  <script
+      src="jquery.maskMoney.js" type="text/javascript">
+    </script>
+    -->
+
   </head>
   <body>
 
@@ -58,8 +70,6 @@
 <br class="clear-both" />
 <hr class="dashed" />
 
-    <div class="clear-both"><!-- menu row 2 -->
-
   {% if logged_in %}
 
     {% if current_user.is_authenticated %}
@@ -81,6 +91,33 @@
     <span class="entry-page-banner">SLATE LoCuS</span>
 
   {% endif %}<!-- logged_in -->
+
+  <div class="clear-both"><!-- menu row 2 -->
+
+
+  {% if logged_in %}
+
+    {% if current_user.is_authenticated %}
+
+    {% if page == "secids" %}
+      <div class="mba">secondary identities</div>
+    {% else %}
+      <div class="mb">
+        <a class="mb" href="/secids">secondary identities</a>
+      </div>
+    {% endif %}
+
+    {% if page == "stewardships" %}
+      <div class="mba">stewardships</div>
+    {% else %}
+      <div class="mb">
+        <a class="mb" href="/stewardships">stewardships</a>
+      </div>
+    {% endif %}
+
+    {% endif %}
+
+  {% endif %}
 
 <!-- end menu row 2 -->
 

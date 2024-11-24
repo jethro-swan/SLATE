@@ -80,6 +80,27 @@ a:active { color:#008400; }
 a:hover { color:#20a020; }
 
 
+div.header {
+  display: block;
+  border-width: 1px;
+  border-style: solid;
+  border-color: #c8e0c8;
+  background: #c8e0c8;
+  padding-left: 4px;
+  padding-right: 4px;
+  padding-top: 2px;
+  padding-bottom: 2px;
+  margin-left: 4px;
+  margin-right: 4px;
+  margin-top: 1px;
+  margin-bottom: 1px;
+  float: left;
+  width: 100%;
+
+}
+
+
+
 div.mb { /* menu button - upper row */
   display: block;
   border-width: 1px;
@@ -174,7 +195,7 @@ td {
 }
 th {
   font-size: 1.0em; background: #F0FFF0; font-weight: bold;
-  padding-top: 1px; padding-left: 4px; padding-right: 4px; padding-bottom: 1px; 
+  padding-top: 1px; padding-left: 4px; padding-right: 4px; padding-bottom: 1px;
   color: #000000; text-align: left;
   border: 1px solid #c0c0c0;
 }

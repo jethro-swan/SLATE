@@ -723,11 +723,11 @@ def home():
             )
 
 # account details page --------------------------------------------------------
-#@app.route("/account/")
 @app.route("/account/<account_fph>", methods=["GET", "POST"])
 @login_required
-def account_details(account_fph=None):
-    page = "account_details"
+def account(account_fph):
+#def account(account_fph=None):
+    page = "account"
     group = "home"
     #mode = ""
 #    namespace_steward = False  ## ???
@@ -752,10 +752,11 @@ def account_details(account_fph=None):
 
     if not account_fph:
         flash("The FPH in the URL cannot be identified.")
-        return redirect("/home")
+#        return redirect("/home")
+        return redirect("/account")
     elif etype != "account":
         flash("The FPH in the URL does not identify an account.")
-        return redirect("/home")
+#        return redirect("/home")
 
     payer_currency_fph, \
     payer_owner_fph, \
@@ -763,13 +764,14 @@ def account_details(account_fph=None):
     m = get_account_specific_properties(payer_account_fph)
     if m:
         flash(m)
-        return redirect("/home")
+        #return redirect("/home")
+        return redirect("/account")
     if payer_owner_fph != identity_fph:
         flash(
-            "Account " + account_hrns + " does not belong to " \
+            "Account " + payer_account_hrns + " does not belong to " \
             + identity_hrns
         )
-        return redirect("/home")
+#        return redirect("/home")
 
     #currency_hrns = fph_to_hrns(payer_currency_fph)
     currency_fph, \
@@ -784,18 +786,41 @@ def account_details(account_fph=None):
     #
     form = PaymentToAccountForm()
     if form.validate_on_submit():
+
         payee_identifier = form.to_account_id.data # HRNS or FPH
         #payee_identifier = form.payee_account_identifier.data # HRNS or FPH
-        amount = int(form.amount.data)
+#        amount = int(form.amount.data)
+        amount_entered = form.amount.data
+#        amount = int((form.amount.data)*100)
         annotation = form.annotation.data
+
+        print("payee_identifier     = " + payee_identifier)
+        #print("amount_entered       = " + amount_entered)
+        print("amount_entered       = " + str(amount_entered))
+        amount = int(round(float(amount_entered)*100))
+        print("amount               = " + str(amount))
+        print("annotation           = " + annotation)
 
         payee_account_fph, \
         payee_account_hrns, \
         etype, \
         m = identify_entity(payee_identifier)
+
+        if m:
+            print("m                = " + m)
+
         if etype != "account":
             flash(payee_id + " is not an account")
-            return redirect("/account")
+            return redirect("/account/" + payer_account_fph)
+
+        print("payee_account_fph    = " + payee_account_fph)
+        print("payee_account_hrns   = " + payee_account_hrns)
+        print("etype                = " + etype)
+
+        if payee_account_fph == payer_account_fph:
+            flash("An account cannot pay to itself")
+            return redirect("/account/" + payer_account_fph)
+
 
         payee_currency_fph, \
         payee_owner_fph, \
@@ -808,7 +833,7 @@ def account_details(account_fph=None):
                 + "payee account  " + payee_hrns \
                 + "  are not in the same currency."
             )
-            return redirect("/account")
+            return redirect("/account/" + payer_account_fph)
 
         print("payee balance before payment = " + str(payee_balance))
         print("payer balance before payment = " + str(payer_balance))
@@ -819,7 +844,7 @@ def account_details(account_fph=None):
         m = payment(payer_account_fph, payee_account_fph, amount, annotation)
         if m:
             flash(m)
-            return redirect("/account")
+            return redirect("/account/" + payer_account_fph)
 
         ## TESTSTUFF
 
@@ -836,15 +861,21 @@ def account_details(account_fph=None):
         print("payee balance after payment = " + str(payee_balance))
         print("payer balance after payment = " + str(payer_balance))
 
-        flash("Payment submitted")
-        return redirect("/home")
+        flash(
+            "Payment submitted: " \
+            + currency_prefix \
+            + integer_to_money_format(amount) \
+            + currency_suffix
+        )
+        #return redirect("/home")
+        return redirect("/account/" + payer_account_fph)
 
         #payer_balance = integer_to_money_format(payer_balance)
 
     return render_template(
                 #"home_account_details.html",
                 "account.html",
-                title="Accounts",
+                title="Account",
                 form=form,
                 page=page,
                 group=group,
@@ -864,6 +895,90 @@ def account_details(account_fph=None):
                 #account_hrns=account_hrns,          # just added
                 payer_balance=payer_balance     # just added
            )
+
+# account details page --------------------------------------------------------
+#@app.route("/account_details/<account_fph>", methods=["GET", "POST"])
+#@login_required
+#def account_details(account_fph=None):
+#    page = "account_details"
+#    group = "home"
+
+#    paying = False
+#    logged_in = current_user.is_authenticated
+
+    # The *primid* (or its alias *secid*) logged in currently:
+#    identity_fph = current_user.get_id()
+#    identity_hrns = fph_to_hrns(identity_fph)
+
+    # (This uses the identify_entity( ) function:)
+#    identity_type = fph_to_display_type(identity_fph)
+
+    # If an *account* has been specified (by FPH) in the URL slug
+#    print("Account " + account_fph)
+
+#    payer_account_fph, \
+#    payer_account_hrns, \
+#    etype, \
+#    m = identify_entity(account_fph)
+
+#    if not account_fph:
+#        flash("The FPH in the URL cannot be identified.")
+#        return redirect("/account")
+#    elif etype != "account":
+#        flash("The FPH in the URL does not identify an account.")
+#        return redirect("/account")
+
+#    payer_currency_fph, \
+#    payer_owner_fph, \
+#    payer_balance, \
+#    m = get_account_specific_properties(payer_account_fph)
+#    if m:
+#        flash(m)
+#        return redirect("/account")
+#    if payer_owner_fph != identity_fph:
+#        flash(
+#            "Account " + account_hrns + " does not belong to " \
+#            + identity_hrns
+#        )
+#        return redirect("/account")
+
+    #currency_hrns = fph_to_hrns(payer_currency_fph)
+#    currency_fph, \
+#    currency_hrns, \
+#    currency_prefix, \
+#    currency_suffix, \
+#    stewards_list, \
+#    m = get_currency_specific_properties(payer_currency_fph)
+
+
+
+
+
+
+
+
+
+#    return render_template(
+                #"home_account_details.html",
+#                "account_details.html",
+#                title="Account details",
+#                form=form,
+#                page=page,
+#                group=group,
+#                identity_type=identity_type,
+#                identity_fph=identity_fph,
+#                identity_hrns=identity_hrns,
+#                payer_account_fph=payer_account_fph,
+#                payer_account_hrns=payer_account_hrns,
+#                account_balance=integer_to_money_format(payer_balance),
+                #development_mode=development_mode,
+#                logged_in=logged_in,
+#                currency_prefix=currency_prefix,    # just added
+#                currency_suffix=currency_suffix,    # just added
+#                currency_fph=currency_fph,          # just added
+#                currency_hrns=currency_hrns,        # just added
+#                payer_balance=payer_balance     # just added
+#           )
 
 # stewardships page ----------------------------------------------------------
 @app.route("/stewardships/<identity_fph>")

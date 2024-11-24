@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+{% for identity in identities %}<!-- list of dictionaries -->
+
+  <div class="header">
+    <strong>{{ identity.hrns }}</strong> ({{ identity.type }})
+  </div>
+  <br /><br />
+
+  <strong>secondary identities</strong> |
+  <!-- <a href="/identity/change"><strong>change identity</strong></a> | -->
+  <a href="/identity/create"><strong>create new identity</strong></a>
+  <br /><br />
+  <ul>
+  {% for secid in secids %}
+    <li>
+      <a href="/secid/manage/{{ secid.fph }}">
+        <strong>{{ secid.hrns }}</strong>
+      </a>
+    </li>
+  {% endfor %}
+  </ul>
+
+  <hr />
+
+{% endblock %}

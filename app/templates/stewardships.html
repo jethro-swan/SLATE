@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+{% for identity in identities %}<!-- list of dictionaries -->
+
+  <div class="header">
+    <strong>{{ identity.hrns }}</strong> ({{ identity.type }})
+  </div>
+  <br /><br />
+  <hr />
+
+  <strong>stewardships</strong>
+  <br /><br />
+
+  <table>
+    <tr>
+      <th>stewarded entity</th>
+      <th>entity type</th>
+    </tr>
+    {% for stewardship in stewardships %}
+    <tr>
+      <td class="compact2">
+        <a href="/stewardship/{{ stewardship.fph }}">
+          <strong>{{ stewardship.hrns }}</strong>
+        </a>
+      </td>
+      <td>
+        {{ stewardship.etype }}
+      </td>
+    </tr>
+    {% endfor %}
+  </table>
+
+  <hr />
+
+
+{% endblock %}

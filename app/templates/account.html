@@ -41,15 +41,37 @@
   </p>
   <p>
     {{ form.amount.label }}<br />
+    <!--
     {{ form.amount(size=32) }}
+    -->
+    <!--
+    <input type="number" placeholder="Enter a payment value here" />
+    -->
+    <input
+      type="currency"
+      name="amount"
+      value="0.00"
+      id="pence"
+      min="0.00"
+      max="9999.99"
+      step="0.01"
+      size="10"
+      placeholder="Enter a payment value here"
+    />
+
   </p>
   <p>
     {{ form.annotation.label }}<br />
-    {{ form.annotation(size=64) }}
+    {{ form.annotation(size=128) }}
   </p>
+  <p>
+    <input type="submit" value="PAY">
+  </p>
+  <!--
   <p>
     {{ form.submit() }}
   </p>
+  -->
   <hr />
 {% endblock %}
 

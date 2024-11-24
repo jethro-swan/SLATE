@@ -11,96 +11,31 @@ from app.core.auth import pin_subset_prompt
 # Flask components: -----------------------------------------------------------
 
 from flask_wtf import FlaskForm, RecaptchaField
-from flask_wtf import Form ###
+#from flask_wtf import Form ###
 from wtforms import StringField, PasswordField, BooleanField, SubmitField
 #from wtforms import TextField, TextAreaField, SelectField, RadioField
-from wtforms import TextAreaField, SelectField, RadioField
-from wtforms import IntegerField, DecimalField, HiddenField
+from wtforms import TextAreaField, SelectField, RadioField, HiddenField
+from wtforms import IntegerField, DecimalField, FloatField
 from wtforms.validators import DataRequired, InputRequired, Email
 from wtforms.validators import Length, EqualTo
 
 # payments --------------------------------------------------------------------
 
-class PaymentToAccountHRNSForm(FlaskForm):
-    to_account_hrns = StringField(
-                        "account name",
-                        validators=[DataRequired("required")]
-                      )
-    amount          = DecimalField(
-                        "amount",
-                        validators=[DataRequired("required")]
-                      )
-    annotation      = TextAreaField("annotation")
-    submit          = SubmitField("pay")
-
-# OBSOLETE
-#class PaymentToAccountFPHForm(FlaskForm):
-#    to_account_fph  = StringField(
-#                          "account FPH",
-#                          validators=[DataRequired("required")]
-#                      )
-#    amount          = DecimalField(
-#                          "amount",
-#                          validators=[DataRequired("required")]
-#                      )
-#    annotation      = TextAreaField("annotation")
-#    submit          = SubmitField("pay")
-
-# OBSOLETE
-#class PaymentToAccountForm(FlaskForm):
-#    to_account_hrns = StringField("account name")
-#    to_account_fph  = StringField("account FPH")
-#    amount          = DecimalField(
-#                        "amount",
-#                        validators=[DataRequired("required")]
-#                      )
-#    annotation      = TextAreaField("annotation")
-#    submit          = SubmitField("pay")
-
+#class PaymentToAccountForm(Form):
 class PaymentToAccountForm(FlaskForm):
-    #to_account_hrns = StringField("account name")
-    #to_account_fph  = StringField("account FPH")
     to_account_id   = StringField("account identifier")
-#    amount          = DecimalField(
-#                          "amount",
-#                          validators=[DataRequired("required")]
-#                      )
     amount          = StringField(
+    #amount          = DecimalField(
+    #amount          = FloatField(
+    #amount          = IntegerField(
                           "amount",
+                          #places=2,
                           validators=[DataRequired("required")]
                       )
     annotation      = TextAreaField("annotation")
     submit          = SubmitField("pay")
 
 
-
-#class PaymentToIdentityHRNSForm(FlaskForm):
-#    to_id_hrns      = StringField(
-#                        "payee name",
-#                        validators=[DataRequired("required")]
-#                      )
-#    #currency_hrns   = StringField("currency name")
-#    #currency_fph    = StringField("currency FPH")
-#    amount          = DecimalField(
-#                        "amount",
-#                        validators=[DataRequired("required")]
-#                      )
-#    annotation      = TextAreaField("annotation")
-#    submit          = SubmitField("pay")
-
-#class PaymentToIdentityFPHForm(FlaskForm):
-#    to_id_fph       = StringField(
-#                        "payee FPH",
-#                        validators=[DataRequired("required")]
-#                      )
-#    #currency_hrns   = StringField("currency name")
-#    #currency_fph    = StringField("currency FPH")
-#    amount          = DecimalField(
-#                        "amount",
-#                        validators=[DataRequired("required")]
-#                      )
-#    annotation      = TextAreaField("annotation")
-#    submit          = SubmitField("pay")
 
 class PaymentToIdentityForm(FlaskForm):
     to_id_hrns      = StringField("payee name")

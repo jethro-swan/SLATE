@@ -297,8 +297,50 @@ def dump_currency_payments_html(currency_identifier, output_file_path):
     return html_str
 
 #==============================================================================
+#
 
-def dump_agent_payments(currency_fph, optype="csv", edtype="fph"):
+def dump_account_payments(account_fph):
+
+    account_hrns = fph_to_hrns(account_fph)
+
+    with sqlite3.connect(PAYMENTS_DB) as conn:
+        cursor = conn.cursor()
+
+        # Read transactions for specified currency:
+        cursor.execute(
+            """
+            SELECT payment_id, payer_fph, payee_fph, amount, annotation
+            FROM payments
+            WHERE payer_fph = ? OR payee_fph = ?
+            """,
+            (account_fph, account_fph)
+        )
+        payments = cursor.fetchall()
+        cursor.close()
+        if payments is None:
+            return [], "No payments yet in currency " + currency_hrns
+        all_payments = []
+        for payment in payments:
+            p = {}
+            if account_fph == results[1]:
+                p["direction"] = "payment"
+            elif account_fph == results[2]:
+                p["direction"] = "receipt"
+            else:
+                p["direction"] = "gremlin alert" # something very wrong
+            p["payment_id"] = results[0]
+            p["payer_fph"] = results[1]
+            p["payee_fph"] = results[2]
+            p["amount"] = results[3]
+            p["annotation"] = results[4]
+            all_payments.append(p)
+        return all_payments, ""     # Returned as a list of dictionaries for
+                                    # convenience of processin by Jinja2.
+
+#==============================================================================
+#
+
+def dump_currency_payments(currency_fph):
 
     currency_hrns = fph_to_hrns(currency_fph)
 
@@ -308,22 +350,26 @@ def dump_agent_payments(currency_fph, optype="csv", edtype="fph"):
         # Read transactions for specified currency:
         cursor.execute(
             """
-            SELECT * FROM payments WHERE currency_fph = ?
+            SELECT payment_id, payer_fph, payee_fph, amount, annotation
+            FROM payments
+            WHERE currency_fph = ?
             """,
             (currency_fph,)
         )
-        all_payments = cursor.fetchall()
-        #conn.commit()
+        payments = cursor.fetchall()
         cursor.close()
-
-
-        #payment_id INTEGER PRIMARY KEY AUTOINCREMENT,
-        #payer_fph TEXT NOT NULL,
-        #payee_fph TEXT NOT NULL,
-        #amount INTEGER NOT NULL,
-        #annotation TEXT
-
-
-
+        if payments is None:
+            return [], "No payments yet in currency " + currency_hrns
+        all_payments = []
+        for payment in payments:
+            p = {}
+            p["payment_id"] = results[0]
+            p["payer_fph"] = results[1]
+            p["payee_fph"] = results[2]
+            p["amount"] = results[3]
+            p["annotation"] = results[4]
+            all_payments.append(p)
+        return all_payments, ""     # Returned as a list of dictionaries for
+                                    # convenience of processin by Jinja2.
 
 #==============================================================================
