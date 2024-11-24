@@ -100,10 +100,10 @@
     {% if current_user.is_authenticated %}
 
     {% if page == "secids" %}
-      <div class="mba">secondary identities</div>
+      <div class="mba">identities</div>
     {% else %}
       <div class="mb">
-        <a class="mb" href="/secids">secondary identities</a>
+        <a class="mb" href="/secids">identities</a>
       </div>
     {% endif %}
 
@@ -112,6 +112,14 @@
     {% else %}
       <div class="mb">
         <a class="mb" href="/stewardships">stewardships</a>
+      </div>
+    {% endif %}
+
+    {% if page == "create_entity" %}
+      <div class="mba">new</div>
+    {% else %}
+      <div class="mb">
+        <a class="mb" href="/create_entity/{{ identity_fph }}">new</a>
       </div>
     {% endif %}
 

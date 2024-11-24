@@ -226,10 +226,10 @@ p.shout {
   color: #00c000;
 }
 
-td.balpos {
+.balpos {
   color: #000000;
 }
-td.balneg {
+.balneg {
   color: #800000;
 }
 

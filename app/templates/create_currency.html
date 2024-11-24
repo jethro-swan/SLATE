@@ -4,6 +4,18 @@
 
 <h2>create currency</h2>
 
+<p>
+  Available namespaces (a temporary solution):
+</p>
+<ul>
+  {% for namespace in available_namespaces %}
+  <li>
+    {{ namespace.hrns }}
+  </li>
+  {% endfor %}
+</ul>
+
+
 <form action="" method="post" novalidate>
   {{ form.hidden_tag() }}
   <p>

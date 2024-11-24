@@ -315,24 +315,37 @@ def dump_account_payments(account_fph):
             """,
             (account_fph, account_fph)
         )
-        payments = cursor.fetchall()
+        results = cursor.fetchall()
         cursor.close()
-        if payments is None:
-            return [], "No payments yet in currency " + currency_hrns
+        if results is None:
+            return [], "No payments yet in currency " \
+                       + fph_to_hrns(currency_hrns)
+        #payments = list(results[0])
+        payments = results
         all_payments = []
         for payment in payments:
             p = {}
-            if account_fph == results[1]:
-                p["direction"] = "payment"
-            elif account_fph == results[2]:
-                p["direction"] = "receipt"
+            #print("Payments history")
+            #for i in range(len(payments)):
+            #    print(payments[i])
+            #print()
+            #if account_fph == payments[1]:
+            #    p["direction"] = "payment"
+            #elif account_fph == payments[2]:
+            #    p["direction"] = "receipt"
+            #else:
+            #    p["direction"] = "gremlin alert" # something very wrong
+            p["payment_id"] = str(payment[0]).zfill(6)
+            p["payer_fph"] = payment[1]
+            if isinstance(payment[1], str):
+                p["payer_hrns"] = fph_to_hrns(payment[1])
             else:
-                p["direction"] = "gremlin alert" # something very wrong
-            p["payment_id"] = results[0]
-            p["payer_fph"] = results[1]
-            p["payee_fph"] = results[2]
-            p["amount"] = results[3]
-            p["annotation"] = results[4]
+                p["payer_hrns"] = "record corrupted"
+            p["payee_fph"] = payment[2]
+            if isinstance(payment[2], str):
+                p["payee_hrns"] = fph_to_hrns(payment[2])
+            p["amount"] = integer_to_money_format(payment[3])
+            p["annotation"] = payment[4]
             all_payments.append(p)
         return all_payments, ""     # Returned as a list of dictionaries for
                                     # convenience of processin by Jinja2.

@@ -60,6 +60,7 @@ def create_entities_db():
             """
             CREATE TABLE IF NOT EXISTS namespaces (
                 entity_fph TEXT PRIMARY KEY,
+                default_currency_fph TEXT DEFAULT '',
                 stewards_fph_list BLOB
             );
             """
@@ -1218,10 +1219,45 @@ def list_child_namespaces(namespace_fph):
     return namespace_fph_list # list
 
 #==============================================================================
-# List all namespaces anywhere in the tree below the specified root namespace:
-def list_all_namespaces(root_namespace_fph):
+# List all namespaces:
+def list_all_namespaces():
 
-    return namespace_fph_list # list
+    with sqlite3.connect(ENTITIES_DB) as conn:
+        cursor = conn.cursor()
+        #cursor.execute(
+        #    """
+        #    SELECT entity_fph, default_currency_fph
+        #    FROM namespaces
+        #    """
+        #)
+        cursor.execute(
+            """
+            SELECT entity_fph
+            FROM namespaces
+            """
+        )
+        result_list = cursor.fetchall()
+        if result_list is None:
+            return [], "Gremlin alert"
+        active_namespaces = []
+        for namespace in result_list:
+            namespace_fph = namespace[0]
+            #print(namespace_fph)
+            cursor.execute(
+                """
+                SELECT active
+                FROM entities_common
+                WHERE entity_fph = ?
+                """,
+                (namespace_fph,)
+            )
+            result = cursor.fetchone()
+            #print(result)
+            if result[0]:
+                active_namespaces.append(namespace_fph)
+        cursor.close()
+
+    return active_namespaces, ""
 
 #==============================================================================
 # List all currencies named within the specified namespace:

@@ -21,7 +21,6 @@ from app.core.slate_core import retrieve_primid_access_details
 from app.core.slate_core import list_agent_accounts, list_secids
 from app.core.slate_core import get_currency_specific_properties
 from app.core.slate_core import get_account_specific_properties
-from app.core.slate_core import list_all_namespaces
 from app.core.regexp_list import re_fph, re_hrns, re_email
 from app.core.slate_login import get_auth_data, register_authenticated_login
 ##from app.core.auth import pin_random_ord, pin_prompt_message
@@ -1044,13 +1043,270 @@ def manage():
                 currency_steward=currency_steward
            )
 
+# manage own identities -------------------------------------------------------
+@app.route("/identities/manage", methods=["GET", "POST"])
+@login_required
+def manage_own_identities():
+    page = "manage_identities"
+    group = "management"
+    namespace_steward = True
+    currency_steward = True
+    paying = False
+
+    logged_in = current_user.is_authenticated
+
+    identity_fph = current_user.get_id()
+    identity_hrns = fph_to_hrns(identity_fph)
+    identity_type = fph_to_display_type(identity_fph)
+
+    secids_a = list_secids(primid_fph)
+    secids = []
+    for s in secids_a:
+        if s != "":
+            print(s)
+            secid = {}
+            secid["fph"] = s
+            secid["hrns"] = fph_to_hrns(s)
+            secids.append(secid)
+
+    return render_template(
+                "identities_manage.html",
+                title="Manage own identities",
+                logged_in=logged_in,
+                page=page,
+                group=group,
+                identity_type=identity_type,
+                identity_fph=identity_fph,
+                identity_hrns=identity_hrns,
+                development_mode=development_mode,
+                namespace_steward=namespace_steward,
+                currency_steward=currency_steward
+           )
+
+# manage another's identities -------------------------------------------------
+@app.route("/identity/manage", methods=["GET", "POST"])
+@login_required
+def manage_identity():
+    page = "manage_identity"
+    group = "management"
+    #identity_fph = current_user
+    #identity_hrns = fph_to_hrns(identity_fph)
+    namespace_steward = True
+    currency_steward = True
+    paying = False
+    logged_in = current_user.is_authenticated
+
+    identity_fph = current_user.get_id()
+    identity_hrns = fph_to_hrns(identity_fph)
+    identity_type = fph_to_display_type(identity_fph)
+
+    return render_template(
+                "identity_manage.html",
+                title="manage an identity",
+                logged_in=logged_in,
+                page=page,
+                group=group,
+                identity_type=identity_type,
+                identity_fph=identity_fph,
+                identity_hrns=identity_hrns,
+                development_mode=development_mode,
+                namespace_steward=namespace_steward,
+                currency_steward=currency_steward
+           )
+
+# create a new secondary identity ---------------------------------------------
+@app.route("/identity/create/secondary", methods=["GET", "POST"])
+@login_required
+def create_secondary_identity():
+    page = "identity_create_secondary"
+    group = "management"
+    namespace_steward = True
+    currency_steward = True
+    paying = False
+    logged_in = current_user.is_authenticated
+
+    identity_fph = current_user.get_id()
+    identity_hrns = fph_to_hrns(identity_fph)
+    identity_type = fph_to_display_type(identity_fph)
+
+    return render_template(
+                "identity_create_secondary.html",
+                title="Create a new secondary identity",
+                logged_in=logged_in,
+                page=page,
+                group=group,
+                identity_type=identity_type,
+                identity_fph=identity_fph,
+                identity_hrns=identity_hrns,
+                development_mode=development_mode,
+                namespace_steward=namespace_steward,
+                currency_steward=currency_steward
+            )
+
+# manage own accounts ---------------------------------------------------------
+@app.route("/accounts/manage", methods=["GET", "POST"])
+@login_required
+def manage_accounts():
+    page = "manage_accounts"
+    group = "management"
+    namespace_steward = True
+    currency_steward = True
+
+    logged_in = current_user.is_authenticated
+
+    identity_fph = current_user.get_id()
+    identity_hrns = fph_to_hrns(identity_fph)
+    identity_type = fph_to_display_type(identity_fph)
+
+    # Since a user may have accounts scattered across an arbitrary number of
+    # namespaces, it is necessary to maintain a list of these:
+    accounts_a = list_accounts(agent_identifier)
+    accounts = []
+    for s in accounts_a:
+        if s != "":
+            print(s)
+            a = {}
+            a["fph"] = s
+            a["hrns"] = fph_to_hrns(s)
+            accounts.append(a)
+    # (This duplicates code in /home so, like much else, need to be factorized.)
+
+    return render_template(
+                "accounts_manage.html",
+                title="Manage own accounts",
+                logged_in=logged_in,
+                page=page,
+                group=group,
+                identity_type=identity_type,
+                identity_fph=identity_fph,
+                identity_hrns=identity_hrns,
+                development_mode=development_mode,
+                namespace_steward=namespace_steward,
+                currency_steward=currency_steward
+           )
+
+# manage another's account ----------------------------------------------------
+@app.route("/account/manage", methods=["GET", "POST"])
+@login_required
+def manage_account():
+    page = "manage_account"
+    group = "management"
+    namespace_steward = True
+    currency_steward = True
+    paying = True
+    logged_in = current_user.is_authenticated
+
+    identity_fph = current_user.get_id()
+    identity_hrns = fph_to_hrns(identity_fph)
+    identity_type = fph_to_display_type(identity_fph)
+
+    return render_template(
+                "account_manage.html",
+                title="Manage own account",
+                logged_in=logged_in,
+                page=page,
+                group=group,
+                identity_type=identity_type,
+                identity_fph=identity_fph,
+                identity_hrns=identity_hrns,
+                development_mode=development_mode,
+                namespace_steward=namespace_steward,
+                currency_steward=currency_steward
+           )
+
+# create a new account --------------------------------------------------------
+@app.route("/account/create", methods=["GET", "POST"])
+@login_required
+def create_account():
+    page = "account_create"
+    group = "management"
+    namespace_steward = True
+    currency_steward = True
+    paying = False
+    logged_in = current_user.is_authenticated
+
+    identity_fph = current_user.get_id()
+    identity_hrns = fph_to_hrns(identity_fph)
+    identity_type = fph_to_display_type(identity_fph)
+
+    return render_template(
+                "account_create.html",
+                title="Create a new account",
+                logged_in=logged_in,
+                page=page,
+                group=group,
+                identity_type=identity_type,
+                identity_fph=identity_fph,
+                identity_hrns=identity_hrns,
+                development_mode=development_mode,
+                namespace_steward=namespace_steward,
+                currency_steward=currency_steward
+           )
+
+# manage own currencies -------------------------------------------------------
+@app.route("/currencies/manage", methods=["GET", "POST"])
+@login_required
+def manage_currencies():
+    page = "manage_currencies"
+    group = "management"
+    namespace_steward = True
+    currency_steward = True
+    paying = False
+    logged_in = current_user.is_authenticated
+
+    identity_fph = current_user.get_id()
+    identity_hrns = fph_to_hrns(identity_fph)
+    identity_type = fph_to_display_type(identity_fph)
+
+    return render_template(
+                "currencies_manage.html",
+                title="Manage currencies",
+                logged_in=logged_in,
+                page=page,
+                group=group,
+                identity_type=identity_type,
+                identity_fph=identity_fph,
+                identity_hrns=identity_hrns,
+                development_mode=development_mode,
+                namespace_steward=namespace_steward,
+                currency_steward=currency_steward
+           )
+
+# manage a currency -----------------------------------------------------------
+@app.route("/currency/manage", methods=["GET", "POST"])
+@login_required
+def manage_currency():
+    page = "manage_currency"
+    group = "management"
+    namespace_steward = True
+    currency_steward = True
+    paying = False
+    logged_in = current_user.is_authenticated
+
+    identity_fph = current_user.get_id()
+    identity_hrns = fph_to_hrns(identity_fph)
+    identity_type = fph_to_display_type(identity_fph)
+
+    return render_template(
+                "currency_manage.html",
+                title="Manage a currency",
+                logged_in=logged_in,
+                page=page,
+                group=group,
+                identity_type=identity_type,
+                identity_fph=identity_fph,
+                identity_hrns=identity_hrns,
+                development_mode=development_mode,
+                namespace_steward=namespace_steward,
+                currency_steward=currency_steward
+           )
 
 # create a currency -----------------------------------------------------------
-@app.route("/create_currency", methods=["GET", "POST"])
+@app.route("/currency/create", methods=["GET", "POST"])
 @login_required
 def create_currency():
     page = "create_currency"
-    group = "home"
+    group = "management"
     namespace_steward = False
     currency_steward = False
     paying = True
@@ -1060,26 +1316,6 @@ def create_currency():
     identity_fph = current_user.get_id()
     identity_hrns = fph_to_hrns(identity_fph)
     identity_type = fph_to_display_type(identity_fph)
-
-
-    active_namespaces, m = list_all_namespaces()
-    if m:
-        flash(m)
-    available_namespaces = []
-    for namespace in active_namespaces:
-        print(namespace)
-        n = {}
-        n["fph"] = namespace
-        n["hrns"] = fph_to_hrns(namespace)
-        #n["default_currency_fph"] = namespace[1]
-        #n["default_currency_hrns"] = fph_to_hrns(namespace[1])
-        available_namespaces.append(n)
-
-#    for namespace in namespaces:
-#        print(namespace["fph"] + " > ", end="")
-#        print(namespace["hrns"] + " | ", end="")
-        #print(namespace["default_currency_fph"] + " | ", end="")
-        #print(namespace["default_currency_hrns"])
 
     form = CurrencyCreateForm()
     if form.validate_on_submit():
@@ -1111,12 +1347,344 @@ def create_currency():
                 identity_fph=identity_fph,
                 identity_hrns=identity_hrns,
                 development_mode=development_mode,
-                #
-                available_namespaces=available_namespaces,
-                #
                 namespace_steward=namespace_steward,
                 currency_steward=currency_steward
            )
+
+# manage own namespaces -------------------------------------------------------
+@app.route("/namespaces/manage", methods=["GET", "POST"])
+@login_required
+def manage_namespaces():
+    page = "manage_namespaces"
+    group = "management"
+    namespace_steward = True
+    currency_steward = True
+    paying = False
+    logged_in = current_user.is_authenticated
+
+    identity_fph = current_user.get_id()
+    identity_hrns = fph_to_hrns(identity_fph)
+    identity_type = fph_to_display_type(identity_fph)
+
+    return render_template(
+                "manage_namespaces.html",
+                title="Manage namespaces",
+                logged_in=logged_in,
+                page=page,
+                group=group,
+                identity_type=identity_type,
+                identity_fph=identity_fph,
+                identity_hrns=identity_hrns,
+                development_mode=development_mode,
+                namespace_steward=namespace_steward,
+                currency_steward=currency_steward
+           )
+
+# manage a namespace ----------------------------------------------------------
+@app.route("/namespace/manage", methods=["GET", "POST"])
+@login_required
+def manage_namespace():
+    page = "manage_namespace"
+    group = "management"
+    namespace_steward = True
+    currency_steward = True
+    paying = False
+    logged_in = current_user.is_authenticated
+
+    identity_fph = current_user.get_id()
+    identity_hrns = fph_to_hrns(identity_fph)
+    identity_type = fph_to_display_type(identity_fph)
+
+    return render_template(
+                "namespace_manage.html",
+                title="Manage a namespace",
+                logged_in=logged_in,
+                page=page,
+                group=group,
+                identity_type=identity_type,
+                identity_fph=identity_fph,
+                identity_hrns=identity_hrns,
+                development_mode=development_mode,
+                namespace_steward=namespace_steward,
+                currency_steward=currency_steward
+           )
+
+# create a namespace ----------------------------------------------------------
+@app.route("/namespace/create", methods=["GET", "POST"])
+@login_required
+def create_namespace():
+    page = "create_namespace"
+    group = "management"
+    namespace_steward = True
+    currency_steward = True
+    paying = False
+    logged_in = current_user.is_authenticated
+
+    identity_fph = current_user.get_id()
+    identity_hrns = fph_to_hrns(identity_fph)
+    identity_type = fph_to_display_type(identity_fph)
+
+    form = NamespaceCreateForm()
+    if form.validate_on_submit():
+        flash(
+            "Namespace created"
+        )
+        return redirect("/home")
+    return render_template(
+                "namespace_create.html",
+                title="Create a namespace",
+                logged_in=logged_in,
+                page=page,
+                group=group,
+                form=form,
+                identity_type=identity_type,
+                identity_fph=identity_fph,
+                identity_hrns=identity_hrns,
+                development_mode=development_mode,
+                namespace_steward=namespace_steward,
+                currency_steward=currency_steward
+           )
+
+# account balances ------------------------------------------------------------
+@app.route("/accounts/view", methods=["GET", "POST"])
+@login_required
+def balances():
+    page = "accounts_view"
+    group = "accounts_view"
+    namespace_steward = True
+    currency_steward = True
+    paying = False
+    logged_in = current_user.is_authenticated
+
+    identity_fph = current_user.get_id()
+    identity_hrns = fph_to_hrns(identity_fph)
+    identity_type = fph_to_display_type(identity_fph)
+
+    return render_template(
+                "balances.html",
+                title="account balances",
+                logged_in=logged_in,
+                page=page,
+                group=group,
+                identity_type=identity_type,
+                identity_fph=identity_fph,
+                identity_hrns=identity_hrns,
+                development_mode=development_mode,
+                namespace_steward=namespace_steward,
+                currency_steward=currency_steward
+           )
+
+# account balances (LTE)  -----------------------------------------------------
+@app.route("/accounts/view/lte", methods=["GET", "POST"])
+@login_required
+def balances_lte():
+    page = "accounts_view_lte"
+    group = "accounts_view"
+    namespace_steward = True
+    currency_steward = True
+    paying = False
+    logged_in = current_user.is_authenticated
+    user = "Phineas Form-Tester"
+    accounts = [
+        {
+            "account_name": "wrenkled.strin",
+            "currency": "cardboard.replica",
+            "prefix": "G£",
+            "suffix": "",
+            "balance": "9876.54"
+        },
+        {
+            "account_name": "green.eggs.suess",
+            "currency": "geggs.crossword.clue",
+            "prefix": "G£",
+            "suffix": "",
+            "balance": "347.82"
+        }
+    ]
+    return render_template(
+                "balances_lte.html",
+                title="account balances (legal tender equivalent)",
+                accounts=accounts,
+                logged_in=logged_in,
+                page=page,
+                group=group,
+                development_mode=development_mode,
+                namespace_steward=namespace_steward,
+                currency_steward=currency_steward
+           )
+
+# account balances (time) -----------------------------------------------------
+@app.route("/accounts/view/htime", methods=["GET", "POST"])
+@login_required
+def balances_htime():
+    page = "accounts_view_htime"
+    group = "accounts_view"
+    namespace_steward = True
+    currency_steward = True
+    paying = False
+    logged_in = current_user.is_authenticated
+    user = "Phineas Form-Tester"
+    accounts = [
+        {
+            "account_name": "human-hours.tomorrow.today.yesterday",
+            "currency": "hours.here.now",
+            "prefix": "",
+            "suffix": "h",
+            "balance": "347.82"
+        },
+        {
+            "account_name": "the.time.is.out.of.joint.o.cursed.spite",
+            "currency": "that.ever.i.was.born.to.set.it.right",
+            "prefix": "",
+            "suffix": "h",
+            "balance": "666.88"
+        },
+        {
+            "account_name": "repent.harlequin",
+            "currency": "said.the.ticktock.man",
+            "prefix": "",
+            "suffix": "h",
+            "balance": "76543.21"
+        },
+    ]
+    return render_template(
+                "balances_htime.html",
+                title="account balances (legal tender equivalent)",
+                user=user,
+                accounts=accounts,
+                logged_in=logged_in,
+                page=page,
+                group=group,
+                development_mode=development_mode,
+                namespace_steward=namespace_steward
+           )
+
+# account balances (time) -----------------------------------------------------
+@app.route("/accounts/view/energy", methods=["GET", "POST"])
+@login_required
+def balances_energy():
+    page = "accounts_view_energy"
+    group = "accounts_view"
+    namespace_steward = True
+    currency_steward = True
+    paying = False
+    logged_in = current_user.is_authenticated
+    user = "Phineas Form-Tester"
+    accounts = [
+        {
+            "account_name": "human-hours.tomorrow.today.yesterday",
+            "currency": "hours.here.now",
+            "prefix": "",
+            "suffix": "kWh",
+            "balance": "347.82"
+        },
+        {
+            "account_name": "oer.seas.that.have.no.beaches",
+            "currency": "to.end.their.waves.upon",
+            "prefix": "",
+            "suffix": "GeV",
+            "balance": "3.1415926"
+        },
+        {
+            "account_name": "i.travelled.with.twelve.peaches",
+            "currency": "a.sofa.and.a.swan",
+            "prefix": "",
+            "suffix": "GeV",
+            "balance": "73.21"
+        },
+    ]
+    return render_template(
+                "balances_energy.html",
+                title="account balances (energy)",
+                user=user,
+                accounts=accounts,
+                logged_in=logged_in,
+                page=page,
+                group=group,
+                development_mode=development_mode,
+                namespace_steward=namespace_steward,
+                currency_steward=currency_steward
+           )
+
+# account balances (others) ---------------------------------------------------
+@app.route("/accounts/view/others", methods=["GET", "POST"])
+@login_required
+def balances_others():
+    page = "accounts_view_others"
+    group = "accounts_view"
+    namespace_steward = True
+    currency_steward = True
+    paying = False
+    logged_in = current_user.is_authenticated
+    user = "Phineas Form-Tester"
+    accounts = [
+        {
+            "account_name": "knots.crun.clun",
+            "currency": "knotted.string",
+            "prefix": "",
+            "suffix": "h",
+            "balance": "111"
+        }    ]
+    return render_template(
+                "balances_others.html",
+                title="account balances (legal tender equivalent)",
+                user=user,
+                accounts=accounts,
+                logged_in=logged_in,
+                page=page,
+                group=group,
+                development_mode=development_mode,
+                namespace_steward=namespace_steward,
+                currency_steward=currency_steward
+           )
+
+
+
+# transaction loop ------------------------------------------------------------
+@app.route("/admin/tloop")   ### IGNORE THIS: it applies only to NESTS
+@login_required
+def tloop():
+    page = "tloop"
+    group = "admin"
+    namespace_steward = False
+    currency_steward = False
+    paying = False
+    logged_in = current_user.is_authenticated
+
+    identity_fph = current_user.get_id()
+
+#    if is_administrator(identity_fph):
+#        flash("You do not have the necessary privileges to access this page.")
+#        return redirect(url_for("home"))
+#    else:
+#        transaction_processing_is_active = transaction_processing_active()
+    tloop_is_active = transaction_processing_active()
+
+    form = TQueueForm()
+    if form.validate_on_submit():
+        activity = form.activity.data
+        if activity == "deactivite_loop":
+            disable_transaction_processing()
+        elif activity == "activite_loop":
+            enable_transaction_processing()
+        else:
+            print("Something wrong in 'tloop()'")
+        return redirect(url_for("home"))
+
+
+    return render_template(
+                "tloop.html",
+                title="transaction loop",
+                logged_in=logged_in,
+                page=page,
+                group=group,
+                form=form,
+                tloop_is_active=tloop_is_active,
+                development_mode=development_mode,
+                namespace_steward=namespace_steward,
+                currency_steward=currency_steward
+           )
+
 
 
 # help ------------------------------------------------------------------------
