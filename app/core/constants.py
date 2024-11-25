@@ -32,7 +32,7 @@ ACTIVITY_LOG        = SLATE_LOGS + '/activity.log'
 NS_SEPARATOR        = '.'
 NSS                 = '.'
 TIMESTAMP_FMT       = "%Y-%m-%d %H:%M (%A)"
-FNAME_DATETIME_FMT  = "%Y%m%d%H%M%S%f"
+FNAME_DATETIME_FMT  = "%Y-%m-%d_%H%M%S%f"
 LOG_DATETIME_FMT    = "%Y-%m-%d %H:%M:%S:%f"
 LEDGER_DATETIME_FMT = "%Y-%m-%d %H:%M:%S:%f"
 

@@ -12,13 +12,10 @@ import secrets
 from prettytable import PrettyTable
 from wonderwords import RandomWord
 
-# While the *agent* type is being systematically replaced with *secid*, paving
-# the way for the introduction of the *secid*, some functions are imported as
-# aliases.
-
 from core.constants import ENTITIES_DB, PAYMENTS_DB, DB_DIR, FPH_TO_HRNS_MAP
 from core.constants import HRNS_C_FPH_MAP
 from core.common import nshash
+from core.common import filename_timestamp as timestamp
 from core.fph_hrns_maps import hrns_to_fph, fph_to_hrns, create_maps
 from core.dbm_functions import dbm_list_entries, dbm_keys
 from core.slate_core import create_entities_db
@@ -656,7 +653,8 @@ def list_fake_primids_from_temporary_list():
     fa_table.add_rows(fa_rows[1:])
     print(fa_table)
 
-    fname = os.getcwd() + "/fake_primids_access_credentials.txt"
+    fname = os.getcwd() \
+          + "/fake_primids_access_credentials_" + timestamp() + ".txt"
     with open(fname, "w") as f:
         f.write("\n" + str(fa_table) + "\n\n")
     print("\nA copy of the table above has been written to " + fname + "\n")
@@ -944,8 +942,8 @@ def test_payment_function():
             n_payments = n_accounts * random.randint(15,30) # arbitrary number
                                                             # of test payments
             print(
-                "Please be patient while a set " + str(n_payments) \
-                + " of payments is made between pairs selected at random " \
+                "Please be patient while a set of " + str(n_payments) \
+                + " payments is made between pairs selected at random " \
                 + "from the set of accounts in currency \"" \
                 + fph_to_hrns(currency_fph) + "\" (" + currency_fph + ")."
             )
@@ -1041,7 +1039,7 @@ else:
 
 #test_payment_function()
 
-def list_accounts():
+def list_accounts(save):
     thin_title_line("These are the accounts:")
     # Now let's take another look at the accounts:
     with sqlite3.connect(ENTITIES_DB) as conn:
@@ -1098,12 +1096,19 @@ def list_accounts():
     acct_table.align["balance"] = "r"
     acct_table.add_rows(acct_rows[1:])
     print(acct_table)
+
+    if save:
+        fname = os.getcwd() + "/fake_accounts_list_" + timestamp() + ".txt"
+        with open(fname, "w") as f:
+            f.write("\n" + str(acct_table) + "\n\n")
+        print("\nA copy of this table has been written to " + fname + "\n")
+
     thick_line()
     return
 
 #pause()
 if Yn("List accounts?"):
-    list_accounts()
+    list_accounts(False) # before payments
 #list_accounts()
 print(
     "\nAt this point the balances will all be 0, the accounts having only" \
@@ -1113,7 +1118,7 @@ print(
 test_payment_function()
 
 if Yn("List accounts?"):
-    list_accounts()
+    list_accounts(True) # after payments
 else:
     print("\n")
 #list_accounts()
@@ -1340,3 +1345,123 @@ else:
     print("\n")
 
 #==============================================================================
+if yN("Check  identify_entity( )  consistency?"):
+
+    errors = []
+
+    for namespace_fph in l_namespaces:
+        a_entity_fph, \
+        a_entity_hrns, \
+        a_etype, \
+        m = identify_entity(namespace_fph)
+        if m:
+            errors.append(m)
+        print(a_etype + " \t " + a_entity_fph + " > " + a_entity_hrns)
+        b_entity_fph, \
+        b_entity_hrns, \
+        b_etype, \
+        m = identify_entity(a_entity_hrns)
+        if m:
+            errors.append(m)
+        print(b_etype + " \t " + b_entity_fph + " < " + b_entity_hrns)
+        if a_entity_fph != b_entity_fph:
+            print("FPH mismatch: " + a_entity_fph + " and " + b_entity_fph)
+        if a_entity_hrns != b_entity_hrns:
+            print("FPH mismatch: " + a_entity_hrns + " and " + b_entity_hrns)
+        if a_etype != b_etype:
+            print("Entity type mismatch: " + a_etype + " and " + b_etype)
+
+    for currency_fph in l_currencies:
+        a_entity_fph, \
+        a_entity_hrns, \
+        a_etype, \
+        m = identify_entity(currency_fph)
+        if m:
+            errors.append(m)
+        print(a_etype + " \t " + a_entity_fph + " > " + a_entity_hrns)
+        b_entity_fph, \
+        b_entity_hrns, \
+        b_etype, \
+        m = identify_entity(a_entity_hrns)
+        if m:
+            errors.append(m)
+        print(b_etype + " \t " + b_entity_fph + " < " + b_entity_hrns)
+        if a_entity_fph != b_entity_fph:
+            print("FPH mismatch: " + a_entity_fph + " and " + b_entity_fph)
+        if a_entity_hrns != b_entity_hrns:
+            print("FPH mismatch: " + a_entity_hrns + " and " + b_entity_hrns)
+        if a_etype != b_etype:
+            print("Entity type mismatch: " + a_etype + " and " + b_etype)
+
+    for account_fph in l_accounts:
+        a_entity_fph, \
+        a_entity_hrns, \
+        a_etype, \
+        m = identify_entity(account_fph)
+        if m:
+            errors.append(m)
+        print(a_etype + " \t " + a_entity_fph + " > " + a_entity_hrns)
+        b_entity_fph, \
+        b_entity_hrns, \
+        b_etype, \
+        m = identify_entity(a_entity_hrns)
+        if m:
+            errors.append(m)
+        print(b_etype + " \t " + b_entity_fph + " < " + b_entity_hrns)
+        if a_entity_fph != b_entity_fph:
+            print("FPH mismatch: " + a_entity_fph + " and " + b_entity_fph)
+        if a_entity_hrns != b_entity_hrns:
+            print("FPH mismatch: " + a_entity_hrns + " and " + b_entity_hrns)
+        if a_etype != b_etype:
+            print("Entity type mismatch: " + a_etype + " and " + b_etype)
+
+    for primid_fph in l_primids:
+        a_entity_fph, \
+        a_entity_hrns, \
+        a_etype, \
+        m = identify_entity(primid_fph)
+        if m:
+            errors.append(m)
+        print(a_etype + " \t\t " + a_entity_fph + " > " + a_entity_hrns)
+        b_entity_fph, \
+        b_entity_hrns, \
+        b_etype, \
+        m = identify_entity(a_entity_hrns)
+        if m:
+            errors.append(m)
+        print(b_etype + " \t\t " + b_entity_fph + " < " + b_entity_hrns)
+        if a_entity_fph != b_entity_fph:
+            print("FPH mismatch: " + a_entity_fph + " and " + b_entity_fph)
+        if a_entity_hrns != b_entity_hrns:
+            print("FPH mismatch: " + a_entity_hrns + " and " + b_entity_hrns)
+        if a_etype != b_etype:
+            print("Entity type mismatch: " + a_etype + " and " + b_etype)
+
+    for secid_fph in l_secids:
+        a_entity_fph, \
+        a_entity_hrns, \
+        a_etype, \
+        m = identify_entity(secid_fph)
+        if m:
+            errors.append(m)
+        print(a_etype + " \t\t " + a_entity_fph + " > " + a_entity_hrns)
+        b_entity_fph, \
+        b_entity_hrns, \
+        b_etype, \
+        m = identify_entity(a_entity_hrns)
+        if m:
+            errors.append(m)
+        print(b_etype + " \t\t " + b_entity_fph + " < " + b_entity_hrns)
+        if a_entity_fph != b_entity_fph:
+            print("FPH mismatch: " + a_entity_fph + " and " + b_entity_fph)
+        if a_entity_hrns != b_entity_hrns:
+            print("FPH mismatch: " + a_entity_hrns + " and " + b_entity_hrns)
+        if a_etype != b_etype:
+            print("Entity type mismatch: " + a_etype + " and " + b_etype)
+
+    print("\nErrors:\n")
+    for i in range(len(errors)):
+        print(errors[i])
+    print()
+
+    thick_line()

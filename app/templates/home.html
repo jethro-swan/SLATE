@@ -44,10 +44,14 @@
     </tr>
   {% endfor %}
   </table>
-  <a href="/account/create"><strong>add account</strong></a> for
+  <a href="/create_account"><strong>add account</strong></a> for
   <strong>{{ identity.hrns }}</strong>
   <br /><br />
 {% endfor %}
   <hr />
+
+  <a href="/create_namespace"><strong>create new namespace</strong></a>
+  |
+  <a href="/create_currency"><strong>create new currency</strong></a>
 
 {% endblock %}

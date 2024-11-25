@@ -52,25 +52,28 @@ class PaymentToIdentityForm(FlaskForm):
 #------------------------------------------------------------------------------
 
 class CurrencyCreateForm(FlaskForm):
-    currency_hrns   = StringField(
+    currency_name   = StringField(
                         "currency name",
                         validators=[DataRequired("required")]
                       )
-    currency_type   = RadioField(
-                        "currency type",
-                        choices = [
-                            ("money", "money"),
-                            ("scalar", "scalar"),
-                            ("count", "count"),
-                            ("vector", "vector"),
-                            ("matrix", "matrix"),
-                            ("time_series", "time series"),
-                            ("trigger", "trigger")
-                            #,
-                            #("ACP_ratios", "A:C:P ratio")
-                        ],
+    namespace_id    = StringField(
+                        "parent namespace",
                         validators=[DataRequired("required")]
                       )
+#    currency_type   = RadioField(
+#                        "currency type",
+#                        choices = [
+#                            ("money", "money"),
+#                            ("scalar", "scalar"),
+#                            ("count", "count"),
+#                            ("vector", "vector"),
+#                            ("matrix", "matrix"),
+#                            ("time_series", "time series"),
+#                            ("trigger", "trigger"),
+#                            ("ACP_ratio", "A:C:P ratio")
+#                        ],
+#                        validators=[DataRequired("required")]
+#                      )
     prefix_symbol   = StringField(
                         "currency prefix symbol"
                       )

@@ -5,10 +5,6 @@ import pickle
 from pathlib import Path
 from string import ascii_lowercase
 
-#from flask_bcrypt import Bcrypt # 2024-11-10: Try this out to resolve problem
-                                # with check_auth_hash( )
-                                # ("ValueError: Invalid salt")
-
 from .constants import ENTITIES_DB, PAYMENTS_DB, DB_DIR, DB_BKP_DIR
 from .constants import FPH_TO_HRNS_MAP, HRNS_C_FPH_MAP
 from .constants import SUBSTRATE_FPH
@@ -22,8 +18,6 @@ from .auth import auth_hash, generate_access_token
 from .regexp_list import *
 from .unix_functions import fcopy
 from .cctld_list import *
-
-#from app import bcrypt  # added 2024-11-10
 
 #------------------------------------------------------------------------------
 # In NESTS the FPH has so far been formed as the hash of the FIP, but making it
@@ -1336,19 +1330,23 @@ def list_currencies_in_common_by_hrns(a1_fph, a2_fph):
 
 def identify_entity(entity_identifier): # HRNS or FPH
     if not isinstance(entity_identifier, str):
-        return "", "", "", ""
+        return "", "", "", "Invalid identifier.\n"
     if re_fph.match(entity_identifier): # this is an FPH
         entity_fph = entity_identifier
         entity_hrns = fph_to_hrns(entity_fph).strip()
         #entity_hrns = fph_to_hrns(entity_fph)
         if entity_hrns: # entity exists
             entity_type , m = get_entity_type(entity_fph)
+            if m:
+                return "", "", "", m
             return entity_fph, entity_hrns, entity_type, ""
         else:
             return "", "", "", "Entity " + entity_fph + " does not exist.\n"
     elif re_hrns.match(entity_identifier): # this is an HRNS
         entity_hrns = entity_identifier
         entity_fph, m = hrns_to_fph(entity_identifier)
+        if m:
+            return "", "", "", m
         if entity_fph: # entity exists
             entity_type , m = get_entity_type(entity_fph)
             return entity_fph, entity_hrns, entity_type, ""
@@ -1846,3 +1844,20 @@ def email_to_primid(email):
             return ""
 
 #==============================================================================
+
+
+def hrns_to_name_and_namespace(hrns):
+    if not re_hrns.match(hrns):
+        return "", "", "", hrns + " is not an HRNS"
+    n = hrns.split(".")
+    name = n.pop([0])
+    namespace_hrns = ".".join(n)
+    namespace_fph, \
+    namespace_hrns, \
+    etype, \
+    m = identify_entity(namespace_hrns)
+    if m:
+        return "", "", "", m
+    if not namespace_fph:
+        return "", "", "", hrns + " does not include a valid parent namespace"
+    return name, namespace_fph, namespace_hrns

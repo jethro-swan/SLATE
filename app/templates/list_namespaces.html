@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<h2>list available namespaces</h2>
+
+<p>
+  Available namespaces (a temporary solution):
+</p>
+<ul>
+  {% for namespace in available_namespaces %}
+  <li>
+    {{ namespace.hrns }}
+  </li>
+  {% endfor %}
+</ul>
+
+
+
+<hr />
+
+{% endblock %}

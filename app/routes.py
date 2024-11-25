@@ -15,13 +15,15 @@ from app.core.constants import NSS
 from app.core.fph_hrns_maps import hrns_to_fph, fph_to_hrns
 from app.core.slate_core import get_entity_type, get_account_currency
 from app.core.slate_core import identify_entity, get_primid
-from app.core.slate_core import new_primid
+from app.core.slate_core import new_primid, new_secid
+from app.core.slate_core import new_namespace, new_currency
 from app.core.slate_core import list_stewardships, list_stewards
 from app.core.slate_core import retrieve_primid_access_details
 from app.core.slate_core import list_agent_accounts, list_secids
 from app.core.slate_core import get_currency_specific_properties
 from app.core.slate_core import get_account_specific_properties
 from app.core.slate_core import list_all_namespaces
+from app.core.slate_core import hrns_to_name_and_namespace
 from app.core.regexp_list import re_fph, re_hrns, re_email
 from app.core.slate_login import get_auth_data, register_authenticated_login
 ##from app.core.auth import pin_random_ord, pin_prompt_message
@@ -362,7 +364,7 @@ def login():
         # Alternatively, the *primid*
         # Whether from the agent field (*primid*|*secid*) or from an email
         # address, we have now identified the *primid*.
-        print("identity = " + identity_fph + " = [" + identity_hrns + "]")
+#        print("identity = " + identity_fph + " = [" + identity_hrns + "]")
 
         password_hash, \
         stored_pin, \
@@ -372,17 +374,17 @@ def login():
             flash(m)
             return redirect(url_for("login"))
 
-        print("password hash = " + password_hash)
-        print("PIN = " + stored_pin)
-        print("access_token_hash = " + access_token_hash)
+#        print("password hash = " + password_hash)
+#        print("PIN = " + stored_pin)
+#        print("access_token_hash = " + access_token_hash)
 
         # Retrieve the user object:
         user = User(identity_fph)
 
         password = form.password.data
-        print("form.password.data = " + form.password.data)
+#        print("form.password.data = " + form.password.data)
         password2 = form.password.data.strip()
-        print("password strip()ped = " + form.password.data)
+#        print("password strip()ped = " + form.password.data)
         if password != password2:
             print("password corrupted")
 
@@ -579,10 +581,10 @@ def home():
 
     stewardships_list, m = list_stewardships(identity_fph)
 
-    print("Currently in the /home endpoint")
-    print("identity_fph = " + identity_fph)
-    print("identity_hrns = " + identity_hrns)
-    print("identity_type = " + identity_type)
+#    print("Currently in the /home endpoint")
+#    print("identity_fph = " + identity_fph)
+#    print("identity_hrns = " + identity_hrns)
+#    print("identity_type = " + identity_type)
 
     # Since a user may have *accounts* scattered across an arbitrary number of
     # *namespaces*, it is necessary to maintain a list of these:
@@ -628,9 +630,9 @@ def home():
             account_balance, \
             m = get_account_specific_properties(account_fph)
 
-            print("account_currency_fph  \t= " + account_currency_fph)
-            print("account_owner_fph  \t= " + account_owner_fph)
-            print("account_balance  \t= " + str(account_balance))
+#            print("account_currency_fph  \t= " + account_currency_fph)
+#            print("account_owner_fph  \t= " + account_owner_fph)
+#            print("account_balance  \t= " + str(account_balance))
 
             # Fetch currency details:
             currency_fph, \
@@ -640,10 +642,10 @@ def home():
             stewards_list, \
             m = get_currency_specific_properties(account_currency_fph)
 
-            print("currency_fph  \t= " + currency_fph)
-            print("currency_hrns  \t= " + currency_hrns)
-            print("stewards_list  \t= ", end="")
-            print(stewards_list)
+#            print("currency_fph  \t= " + currency_fph)
+#            print("currency_hrns  \t= " + currency_hrns)
+#            print("stewards_list  \t= ", end="")
+#            print(stewards_list)
 
             # Assemble a dictonary of *account* properties:
             a = {}
@@ -664,8 +666,8 @@ def home():
             a["currency_fph"] = currency_fph
             a["currency_hrns"] = currency_hrns
 
-            print("a  \t= ", end="")
-            print(a)
+#            print("a  \t= ", end="")
+#            print(a)
 
             #accounts[account_fph] = a
             accounts.append(a)
@@ -677,7 +679,7 @@ def home():
     # If this is a *primid*, fetch a list of its *secid*s and stewardships:
     secid_list = list_secids(identity_fph)
     secids = []
-    print("secids for " + fph_to_hrns(identity_fph))
+#    print("secids for " + fph_to_hrns(identity_fph))
     for secid_fph in secid_list:
         if secid_fph != "":
             print(identity_fph + " :: " + fph_to_hrns(secid_fph))
@@ -688,7 +690,7 @@ def home():
 
     #stewardships_list, m = list_stewardships(identity_fph)
     stewardships = []
-    print("stewardships for " + fph_to_hrns(identity_fph))
+#    print("stewardships for " + fph_to_hrns(identity_fph))
     for stewardship_fph in stewardships_list:
         if stewardship_fph != "":
             print(identity_fph + " :: " + fph_to_hrns(stewardship_fph))
@@ -745,7 +747,7 @@ def account(account_fph):
     identity_type = fph_to_display_type(identity_fph)
 
     # If an *account* has been specified (by FPH) in the URL slug
-    print("Account " + account_fph)
+#    print("Account " + account_fph)
 
     payer_account_fph, \
     payer_account_hrns, \
@@ -797,12 +799,12 @@ def account(account_fph):
 #        amount = int((form.amount.data)*100)
         annotation = form.annotation.data
 
-        print("payee_identifier     = " + payee_identifier)
+#        print("payee_identifier     = " + payee_identifier)
         #print("amount_entered       = " + amount_entered)
-        print("amount_entered       = " + str(amount_entered))
+#        print("amount_entered       = " + str(amount_entered))
         amount = int(round(float(amount_entered)*100))
-        print("amount               = " + str(amount))
-        print("annotation           = " + annotation)
+#        print("amount               = " + str(amount))
+#        print("annotation           = " + annotation)
 
         payee_account_fph, \
         payee_account_hrns, \
@@ -816,9 +818,9 @@ def account(account_fph):
             flash(payee_id + " is not an account")
             return redirect("/account/" + payer_account_fph)
 
-        print("payee_account_fph    = " + payee_account_fph)
-        print("payee_account_hrns   = " + payee_account_hrns)
-        print("etype                = " + etype)
+#        print("payee_account_fph    = " + payee_account_fph)
+#        print("payee_account_hrns   = " + payee_account_hrns)
+#        print("etype                = " + etype)
 
         if payee_account_fph == payer_account_fph:
             flash("An account cannot pay to itself")
@@ -838,8 +840,8 @@ def account(account_fph):
             )
             return redirect("/account/" + payer_account_fph)
 
-        print("payee balance before payment = " + str(payee_balance))
-        print("payer balance before payment = " + str(payer_balance))
+#        print("payee balance before payment = " + str(payee_balance))
+#        print("payer balance before payment = " + str(payer_balance))
 
 
         # If control reaches this point, the two *accounts* are in the same
@@ -861,8 +863,8 @@ def account(account_fph):
         payee_balance, \
         m = get_account_specific_properties(payee_account_fph)
 
-        print("payee balance after payment = " + str(payee_balance))
-        print("payer balance after payment = " + str(payer_balance))
+#        print("payee balance after payment = " + str(payee_balance))
+#        print("payer balance after payment = " + str(payer_balance))
 
 
 
@@ -1061,6 +1063,92 @@ def create_currency():
     identity_hrns = fph_to_hrns(identity_fph)
     identity_type = fph_to_display_type(identity_fph)
 
+    form = CurrencyCreateForm()
+    if form.validate_on_submit():
+        namespace_fph, \
+        namespace_hrns, \
+        etype, \
+        m = identify_entity(form.namespace_id.data)
+        if m:
+            flash(m)
+            #return redirect("/home")
+            return redirect("/create_currency")
+        if not namespace_fph:
+            flash("Parent namespace does not exist")
+            #return redirect("/home")
+            return redirect("/create_currency")
+
+        currency_name = form.currency_name.data
+        # Check whether an entity with the proposed HRNS exists already.
+        proposed_hrns = currency_name + "." + namespace_hrns
+        entity_fph, \
+        entity_hrns, \
+        etype, \
+        m = identify_entity(proposed_hrns)
+        if m:
+            flash(m)
+            #return redirect("/home")
+            return redirect("/create_currency")
+        if entity_fph:
+            print(proposed_hrns)
+            print(entity_fph)
+            print(entity_hrns)
+            print(etype)
+            print(entity_fph + " > " + entity_hrns)
+            flash(proposed_hrns + " exists already (" + etype + ")")
+            #return redirect("/home")
+            return redirect("/create_currency")
+        currency_fph, \
+        currency_hrns,\
+        m = new_currency(
+                currency_name,
+                namespace_fph,
+                identity_fph,
+                form.prefix_symbol.data,
+                form.suffix_symbol.data
+            )
+        flash(
+            "Currency {} [ {} ] created".format(
+                currency_hrns,
+                currency_fph
+            )
+        )
+        return redirect("/create_currency")
+        #return redirect("/home")
+
+    return render_template(
+                "create_currency.html",
+                title="Create a currency",
+                logged_in=logged_in,
+                page=page,
+                group=group,
+                form=form,
+                identity_type=identity_type,
+                identity_fph=identity_fph,
+                identity_hrns=identity_hrns,
+                development_mode=development_mode,
+                #
+                namespace_steward=namespace_steward,
+                currency_steward=currency_steward
+           )
+
+#
+# create a currency -----------------------------------------------------------
+@app.route("/list_namespaces", methods=["GET", "POST"])
+@login_required
+def list_namespaces():
+    page = "list_namespaces"
+    group = "home"
+    namespace_steward = False
+    currency_steward = False
+    #paying = True
+    logged_in = current_user.is_authenticated
+
+    #user = User(identity_fph) # Retrieve the user object
+    identity_fph = current_user.get_id()
+    identity_hrns = fph_to_hrns(identity_fph)
+    identity_type = fph_to_display_type(identity_fph)
+
 
     active_namespaces, m = list_all_namespaces()
     if m:
@@ -1075,48 +1163,20 @@ def create_currency():
         #n["default_currency_hrns"] = fph_to_hrns(namespace[1])
         available_namespaces.append(n)
 
-#    for namespace in namespaces:
-#        print(namespace["fph"] + " > ", end="")
-#        print(namespace["hrns"] + " | ", end="")
-        #print(namespace["default_currency_fph"] + " | ", end="")
-        #print(namespace["default_currency_hrns"])
 
-    form = CurrencyCreateForm()
-    if form.validate_on_submit():
-        currency_fph = currency_create(
-                          form.currency_hrns.data,
-                          form.currency_type.data,
-                          form.prefix_symbol.data,
-                          form.suffix_symbol.data,
-                          form.acct_same_name.data,
-                          form.acct_id_parent.data,
-                          form.acct_immdt_crtn.data,
-                          identity_fph
-                       )
-        flash(
-            "Currency {} [ {} ] created".format(
-                form.currency_hrns.data,
-                currency_fph
-            )
-        )
-        return redirect("/home")
     return render_template(
-                "create_currency.html",
-                title="Create a currency",
+                "list_namespaces.html",
+                title="List available namespaces",
                 logged_in=logged_in,
                 page=page,
                 group=group,
-                form=form,
                 identity_type=identity_type,
                 identity_fph=identity_fph,
                 identity_hrns=identity_hrns,
-                development_mode=development_mode,
                 #
-                available_namespaces=available_namespaces,
-                #
-                namespace_steward=namespace_steward,
-                currency_steward=currency_steward
+                available_namespaces=available_namespaces
            )
+
 
 
 # help ------------------------------------------------------------------------
