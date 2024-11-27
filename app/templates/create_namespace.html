@@ -2,16 +2,31 @@
 
 {% block content %}
 
-<h2>create namespace</h2>
+<h2>create a new namespace</h2>
 <hr />
 
 <form action="" method="post" novalidate>
   {{ form.hidden_tag() }}
+  <div>
+    <div style="float:left; margin:2px;">
+      {{ form.namespace_name.label }}<br />
+      {{ form.namespace_name(size=12, placeholder="name") }}
+    </div>
+    <div style="float:left; margin:2px;">
+      <br />.
+    </div>
+    <div style="float:left; margin:2px;">
+      {{ form.parent_namespace_id.label }}<br />
+      {{ form.parent_namespace_id(size=30,
+      placeholder="parent namespace identifier") }}
+    </div>
+  </div>
+
   <p>
-    {{ form.namespace_hrns.label }} (full namespace path)<br />
-    {{ form.namespace_hrns(size=48,
-       placeholder="enter the full namespace path (HRNS)") }}
-    {% for error in form.namespace_hrns.errors %}
+    {% for error in form.namespace_name.errors %}
+      <span style="color: red;">[{{ error }}]</span>
+    {% endfor %}
+    {% for error in form.parent_namespace_id.errors %}
       <span style="color: red;">[{{ error }}]</span>
     {% endfor %}
   </p>

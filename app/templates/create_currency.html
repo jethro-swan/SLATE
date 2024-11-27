@@ -2,54 +2,63 @@
 
 {% block content %}
 
-<h2>create currency</h2>
-
-<p style="color:red">NOT YET COMPLETE</p>
+<h2>create a new currency</h2>
 
 <form action="" method="post" novalidate>
   {{ form.hidden_tag() }}
-  <p>
+  <div>
+    <div style="float:left; margin:2px;">
     {{ form.currency_name.label }}<br />
-    {{ form.currency_name(size=16,
-       placeholder="enter the full name of the new currency") }}
+    {{ form.currency_name(size=12, placeholder="name") }}
+    </div>
+    <div style="float:left; margin:2px;">
+      <br />.
+    </div>
+    <div style="float:left; margin:2px;">
+      {{ form.namespace_id.label }}<br />
+      {{ form.namespace_id(size=30, placeholder="parent namespace") }}
+    </div>
+  </div>
+  <div>
+    {{ form.prefix_symbol.label }}<br />
+    {{ form.prefix_symbol(size=1) }} (any UTF-8 character)
+  </div>
+  <div>
+    {{ form.suffix_symbol.label }}<br />
+    {{ form.suffix_symbol(size=1) }} (any UTF-8 character)
+  </div>
+  <div>
+    <p>
+      {{ form.acct_same_name }} {{ form.acct_same_name.label }}
+    </p>
+    <p>
+      {{ form.acct_id_parent }} {{ form.acct_id_parent.label }}
+    </p>
+    <p>
+      {{ form.acct_immdt_crtn }} {{ form.acct_immdt_crtn.label }}
+    </p>
+    <p>
+      {{ form.create_currency() }}
+    </p>
+  </div>
+
+  <hr />
+
+  <p>
     {% for error in form.currency_name.errors %}
       <span style="color: red;">[{{ error }}]</span>
     {% endfor %}
-  </p>
-  <p>
-    {{ form.namespace_id.label }} (parent namespace)<br />
-    {{ form.namespace_id(size=48,
-       placeholder="enter the parent namespace (HRNS or FPH)") }}
     {% for error in form.namespace_id.errors %}
       <span style="color: red;">[{{ error }}]</span>
     {% endfor %}
-  </p>
-  <p>
-    {{ form.prefix_symbol.label }}<br />
-    {{ form.prefix_symbol(size=1) }} (any UTF-8 character)
     {% for error in form.prefix_symbol.errors %}
       <span style="color: red;">[{{ error }}]</span>
     {% endfor %}
-  </p>
-  <p>
-    {{ form.suffix_symbol.label }}<br />
-    {{ form.suffix_symbol(size=1) }} (any UTF-8 character)
     {% for error in form.suffix_symbol.errors %}
       <span style="color: red;">[{{ error }}]</span>
     {% endfor %}
   </p>
-  <p>
-    {{ form.acct_same_name }} {{ form.acct_same_name.label }}
-  </p>
-  <p>
-    {{ form.acct_id_parent }} {{ form.acct_id_parent.label }}
-  </p>
-  <p>
-    {{ form.acct_immdt_crtn }} {{ form.acct_immdt_crtn.label }}
-  </p>
-  <p>
-    {{ form.create_currency() }}
-  </p>
+
 </form>
 
 <hr />

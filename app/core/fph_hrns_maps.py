@@ -55,6 +55,10 @@ def fph_to_hrns(fph):
 
 fph_exists = fph_to_hrns # function alias
 
+def hrns_exists_already(hrns):
+    fph = nshash(hrns)
+    return (fph_to_hrns(fph) == hrns)
+
 # Most frequently (e.g. when mapping a known HRNS to its FPH), this function
 # will not add anything to the FPH>HRNS map. Only when an unknown HRNS is
 # passed will the FPH>HRNS map be affected.

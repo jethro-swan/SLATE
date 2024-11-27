@@ -82,7 +82,7 @@ class CurrencyCreateForm(FlaskForm):
                       )
     # Account creation policies:
     acct_same_name  = BooleanField(
-                        "Use currency name for initial accounts.",
+                        "Use currency name by default for initial accounts.",
                         default="checked"
                       )
     acct_id_parent  = BooleanField(
@@ -97,13 +97,36 @@ class CurrencyCreateForm(FlaskForm):
 
 #------------------------------------------------------------------------------
 
+class AccountCreateForm(FlaskForm):
+    account_name    = StringField(
+                        "currency name",
+                        validators=[DataRequired("required")]
+                      )
+    namespace_id    = StringField(
+                        "parent namespace",
+                        validators=[DataRequired("required")]
+                      )
+#    owner_id        = StringField(
+##                        "account owner",
+#                        validators=[DataRequired("required")]
+#                      )
+    currency_id     = StringField(
+                        "account currency",
+                        validators=[DataRequired("required")]
+                      )
+    create_account   = SubmitField("create account")
 
 
+#------------------------------------------------------------------------------
 
 class NamespaceCreateForm(FlaskForm):
-    namespace_hrns   = StringField(
+    namespace_name  = StringField(
                         "namespace name",
                         validators=[DataRequired("required")]
+                      )
+    parent_namespace_id = StringField(
+                       "parent namespace identifier",
+                       validators=[DataRequired("required")]
                       )
     create_namespace = SubmitField("create namespace")
 
@@ -320,6 +343,6 @@ class RegistrationForm(FlaskForm):
 #------------------------------------------------------------------------------
 # administration --------------------------------------------------------------
 
-class TQueueForm(FlaskForm):
-    activate_loop   = SubmitField("activate transaction loop")
-    deactivate_loop = SubmitField("deactivate transaction loop")
+#class TQueueForm(FlaskForm):
+#    activate_loop   = SubmitField("activate transaction loop")
+#    deactivate_loop = SubmitField("deactivate transaction loop")

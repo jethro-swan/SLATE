@@ -1332,9 +1332,9 @@ def identify_entity(entity_identifier): # HRNS or FPH
     if not isinstance(entity_identifier, str):
         return "", "", "", "Invalid identifier.\n"
     if re_fph.match(entity_identifier): # this is an FPH
-        entity_fph = entity_identifier
-        entity_hrns = fph_to_hrns(entity_fph).strip()
-        #entity_hrns = fph_to_hrns(entity_fph)
+        entity_fph = entity_identifier.strip()
+        #entity_hrns = fph_to_hrns(entity_fph).strip()
+        entity_hrns = fph_to_hrns(entity_fph)
         if entity_hrns: # entity exists
             entity_type , m = get_entity_type(entity_fph)
             if m:
@@ -1343,12 +1343,14 @@ def identify_entity(entity_identifier): # HRNS or FPH
         else:
             return "", "", "", "Entity " + entity_fph + " does not exist.\n"
     elif re_hrns.match(entity_identifier): # this is an HRNS
-        entity_hrns = entity_identifier
+        entity_hrns = entity_identifier.strip()
         entity_fph, m = hrns_to_fph(entity_identifier)
         if m:
             return "", "", "", m
         if entity_fph: # entity exists
             entity_type , m = get_entity_type(entity_fph)
+            if m:
+                return "", "", "", m
             return entity_fph, entity_hrns, entity_type, ""
         else:
             return "", "", "", "Entity " + entity_hrns + " does not exist.\n"

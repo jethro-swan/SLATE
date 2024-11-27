@@ -13,6 +13,7 @@ import bcrypt
 
 from app.core.constants import NSS
 from app.core.fph_hrns_maps import hrns_to_fph, fph_to_hrns
+from app.core.fph_hrns_maps import hrns_exists_already
 from app.core.slate_core import get_entity_type, get_account_currency
 from app.core.slate_core import identify_entity, get_primid
 from app.core.slate_core import new_primid, new_secid
@@ -56,7 +57,9 @@ from app.forms import PaymentToAccountForm, PaymentToIdentityForm
 #from app.forms import PaymentToAccountHRNSForm, PaymentToIdentityHRNSForm
 #from app.forms import PaymentToAccountFPHForm, PaymentToIdentityFPHForm
 from app.forms import CurrencyCreateForm
-from app.forms import TQueueForm
+from app.forms import AccountCreateForm
+from app.forms import NamespaceCreateForm
+#from app.forms import TQueueForm
 from markupsafe import escape
 
 #------------------------------------------------------------------------------
@@ -1060,8 +1063,10 @@ def create_currency():
 
     #user = User(identity_fph) # Retrieve the user object
     identity_fph = current_user.get_id()
-    identity_hrns = fph_to_hrns(identity_fph)
-    identity_type = fph_to_display_type(identity_fph)
+    identity_fph, \
+    identity_hrns, \
+    identity_type, \
+    m = identify_entity(identity_fph)
 
     form = CurrencyCreateForm()
     if form.validate_on_submit():
@@ -1071,33 +1076,18 @@ def create_currency():
         m = identify_entity(form.namespace_id.data)
         if m:
             flash(m)
-            #return redirect("/home")
             return redirect("/create_currency")
         if not namespace_fph:
             flash("Parent namespace does not exist")
-            #return redirect("/home")
             return redirect("/create_currency")
 
         currency_name = form.currency_name.data
         # Check whether an entity with the proposed HRNS exists already.
         proposed_hrns = currency_name + "." + namespace_hrns
-        entity_fph, \
-        entity_hrns, \
-        etype, \
-        m = identify_entity(proposed_hrns)
-        if m:
-            flash(m)
-            #return redirect("/home")
+        if hrns_exists_already(proposed_hrns):
+            flash(proposed_hrns + " is already registered")
             return redirect("/create_currency")
-        if entity_fph:
-            print(proposed_hrns)
-            print(entity_fph)
-            print(entity_hrns)
-            print(etype)
-            print(entity_fph + " > " + entity_hrns)
-            flash(proposed_hrns + " exists already (" + etype + ")")
-            #return redirect("/home")
-            return redirect("/create_currency")
+
         currency_fph, \
         currency_hrns,\
         m = new_currency(
@@ -1108,10 +1098,8 @@ def create_currency():
                 form.suffix_symbol.data
             )
         flash(
-            "Currency {} [ {} ] created".format(
-                currency_hrns,
-                currency_fph
-            )
+            "A new currency has been created, identified as \n" \
+            + currency_hrns + " [" + currency_fph + "]"
         )
         return redirect("/create_currency")
         #return redirect("/home")
@@ -1132,8 +1120,173 @@ def create_currency():
                 currency_steward=currency_steward
            )
 
-#
-# create a currency -----------------------------------------------------------
+
+
+# create an account -----------------------------------------------------------
+@app.route("/create_account", methods=["GET", "POST"])
+@login_required
+def create_account():
+    page = "create_account"
+    group = "home"
+    namespace_steward = False
+    currency_steward = False
+    paying = True
+    logged_in = current_user.is_authenticated
+
+    #user = User(identity_fph) # Retrieve the user object
+    identity_fph = current_user.get_id()
+    identity_fph, \
+    identity_hrns, \
+    identity_type, \
+    m = identify_entity(identity_fph)
+
+    form = AccountCreateForm()
+    if form.validate_on_submit():
+        namespace_fph, \
+        namespace_hrns, \
+        etype, \
+        m = identify_entity(form.namespace_id.data) # parent *namespace*
+        if m:
+            flash(m)
+            return redirect("/create_account")
+        if not namespace_fph:
+            flash("Parent namespace does not exist")
+            return redirect("/create_account")
+
+        account_name = form.account_name.data
+        # Check whether an entity with the proposed HRNS exists already.
+        proposed_hrns = account_name + "." + namespace_hrns
+        if hrns_exists_already(proposed_hrns):
+            flash(proposed_hrns + " is already registered")
+            return redirect("/create_account")
+
+        currency_id = form.currency_id.data
+
+        currency_fph, \
+        currency_hrns, \
+        etype, \
+        m = identify_entity(currency_id)
+        if m:
+            flash(m)
+            return redirect("/create_account")
+        if etype != "currency":
+            flash(currency_id + " is not a currency")
+            return redirect("/create_account")
+
+
+        account_fph, \
+        account_hrns, \
+        m = new_account(
+                account_hrns,
+                identity_fph, # the owner of this *account*
+                currency_fph
+            )
+        if m:
+            flash(m)
+        flash(
+            "A new currency has been created, identified as \n" \
+            + currency_hrns + " [" + currency_fph + "]"
+        )
+        return redirect("/create_account")
+        #return redirect("/home")
+
+    return render_template(
+                "create_account.html",
+                title="Create an account",
+                logged_in=logged_in,
+                page=page,
+                group=group,
+                form=form,
+                identity_type=identity_type,
+                identity_fph=identity_fph,
+                identity_hrns=identity_hrns,
+                development_mode=development_mode,
+                #
+                namespace_steward=namespace_steward
+           )
+
+
+
+
+
+
+
+
+
+
+
+# create a new namespace ------------------------------------------------------
+@app.route("/create_namespace", methods=["GET", "POST"])
+@login_required
+def create_namespace():
+    page = "create_namespace"
+    group = "home"
+    namespace_steward = False
+    currency_steward = False
+    paying = True
+    logged_in = current_user.is_authenticated
+
+    #user = User(identity_fph) # Retrieve the user object
+    identity_fph = current_user.get_id()
+    identity_fph, \
+    identity_hrns, \
+    identity_type, \
+    m = identify_entity(identity_fph)
+
+    form = NamespaceCreateForm()
+    if form.validate_on_submit():
+        parent_namespace_fph, \
+        parent_namespace_hrns, \
+        etype, \
+        m = identify_entity(form.parent_namespace_id.data) # parent *namesapce*
+        if m:
+            flash(m)
+            return redirect("/create_namespace")
+        if not parent_namespace_fph:
+            flash("Parent namespace does not exist")
+            return redirect("/create_namespace")
+
+        namespace_name = form.namespace_name.data
+        # Check whether an entity with the proposed HRNS exists already.
+        proposed_hrns = namespace_name + "." + parent_namespace_hrns
+        if hrns_exists_already(proposed_hrns):
+            flash(proposed_hrns + " is already registered")
+            return redirect("/create_namespace")
+
+        namespace_fph, \
+        namespace_hrns,\
+        m = new_namespace(
+                namespace_name,
+                parent_namespace_fph,
+                identity_fph # the initial steward of this new *namespace*
+            )
+        flash(
+            "A new namespace has been created, identified as \n" \
+            + namespace_hrns + " [" + namespace_fph + "]"
+        )
+        return redirect("/create_namespace")
+        #return redirect("/home")
+
+    return render_template(
+                "create_namespace.html",
+                title="Create a namespace",
+                logged_in=logged_in,
+                page=page,
+                group=group,
+                form=form,
+                identity_type=identity_type,
+                identity_fph=identity_fph,
+                identity_hrns=identity_hrns
+           )
+
+
+
+
+
+
+
+
+# list the existing namespaces ------------------------------------------------
 @app.route("/list_namespaces", methods=["GET", "POST"])
 @login_required
 def list_namespaces():
