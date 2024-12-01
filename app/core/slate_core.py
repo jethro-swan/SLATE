@@ -65,8 +65,8 @@ def create_entities_db():
 #    	    CREATE TABLE IF NOT EXISTS primids (
 #                entity_fph TEXT PRIMARY KEY,
 #                primid_realname TEXT,
-#                primid_email_1 TEXT NOT NULL,
-#                primid_email_2 TEXT,
+#                primid_email_1_hash TEXT NOT NULL,
+#                primid_email_1_hash TEXT,
 #                secids_fph_list BLOB,
 #                accounts_fph_list BLOB,
 #                stewardships_fph_list BLOB,
@@ -82,8 +82,8 @@ def create_entities_db():
     	    CREATE TABLE IF NOT EXISTS primids (
                 entity_fph TEXT PRIMARY KEY,
                 primid_realname TEXT,
-                primid_email_1 TEXT NOT NULL,
-                primid_email_2 TEXT,
+                primid_email_1_hash TEXT NOT NULL,
+                primid_email_2_hash TEXT,
                 secids_fph_list BLOB,
                 accounts_fph_list BLOB,
                 stewardships_fph_list BLOB,
@@ -110,6 +110,7 @@ def create_entities_db():
                 entity_fph TEXT PRIMARY KEY,
                 currency_prefix TEXT,
                 currency_suffix TEXT,
+                default_account_name TEXT DEFAULT 'local',
                 stewards_fph_list BLOB
             );
             """
@@ -319,14 +320,14 @@ def update_primid_contact_details(
     else:
         errors += primid_realname + " is not a valid name"
     if primid_email_1 and re_email.match(primid_email_1):
-        update_str += "primid_email_1 = ?, "
-        values_str += primid_email_1 + ", "
+        update_str += "primid_email_1_hash = ?, "
+        values_str += auth_hash(primid_email_1_hash) + ", "
         update_needed = True
     else:
         errors += primid_email_1 + " is not a valid email address"
     if primid_email_2 and re_email.match(primid_email_2):
-        update_str += "primid_email_2 = ?, "
-        values_str += primid_email_2 + ", "
+        update_str += "primid_email_2_hash = ?, "
+        values_str += auth_hash(primid_email_2_hash) + ", "
         update_needed = True
     else:
         errors += primid_email_2 + " is not a valid email address"
@@ -492,20 +493,11 @@ def new_primid(
         realname,
         email_address_1,
         email_address_2,
-#        password_already_hashed,
         password,
         pin
     ):
 
-    #if not re_fph.match(parent_namespace_fph):
-    #    return "", "", "", "Invalid parent namespace: " + parent_namespace_fph
     errors = ""
-
-    #if re_password.match(password):
-    #    password_hash = auth_hash(password)
-#    password_hash = auth_hash(password) # restored 2024-11-10 19.50
-    #else:
-    #    return "", "", "", "Invalid password provided."
 
     if not re_pin.match(pin):
         return "", "", "", "Invalid PIN provided."
@@ -574,8 +566,8 @@ def new_primid(
             INSERT INTO primids (
                 entity_fph,
                 primid_realname,
-                primid_email_1,
-                primid_email_2,
+                primid_email_1_hash,
+                primid_email_2_hash,
                 secids_fph_list,
                 accounts_fph_list,
                 stewardships_fph_list,
@@ -588,8 +580,8 @@ def new_primid(
             (
                 primid_fph,
                 realname,
-                email_address_1,
-                email_address_2,
+                auth_hash(email_address_1),
+                auth_hash(email_address_2),
                 pickle.dumps(secids_fph_list),          # empty list
                 pickle.dumps(accounts_fph_list),        # empty list
                 pickle.dumps(stewardships_fph_list),    # empty list
@@ -679,6 +671,15 @@ def new_secid(
         conn.commit()
         cursor.close()
 
+        # TEST STUFF
+        with open("secid_creation_dump.txt", "a") as f:
+            f.write(
+                "secid " + secid_hrns + " (" + secid_fph + ") " \
+                + "added for primid " + fph_to_hrns(primid_fph) \
+                + " (" + primid_fph + ")\n"
+            )
+        # END OF TEST STUFF
+
     return secid_fph, secid_hrns, ""
 
 #==============================================================================
@@ -738,7 +739,8 @@ def new_currency(
         parent_namespace_fph,
         initial_steward_fph,
         currency_prefix,
-        currency_suffix
+        currency_suffix,
+        default_account_name
     ):
     # The initial account in this currency is assigned to its initial steward
     # (which must exist already).
@@ -775,16 +777,17 @@ def new_currency(
                 entity_fph,
                 currency_prefix,
                 currency_suffix,
+                default_account_name,
                 stewards_fph_list
             )
-            VALUES (?, ?, ?, ?)
+            VALUES (?, ?, ?, ?, ?)
             """,
             (
                 currency_fph,
                 currency_prefix,
                 currency_suffix,
+                default_account_name,
                 pickle.dumps([])
-                #pickle.dumps([initial_steward_fph])
             )
         )
         conn.commit()
@@ -796,25 +799,32 @@ def new_currency(
 ## A new account is created in a specified currency:
 
 def new_account(
-        account_hrns,
-        agent_fph,      # (Agent may be a *primid* or a *secid*)
+        account_name,
+        parent_namespace_fph,
+        owner_fph,      # (Owner may be a *primid* or a *secid*)
         currency_fph
     ):
 
-    if not re_hrns.match(account_hrns):
-        return "", "", "Invalid account HRNS: " + account_hrns
+    if not re_fph.match(parent_namespace_fph):
+        return "", "", "Invalid parent namespace FPH: " + parent_namespace_fph
 
-    agent_fph, \
-    agent_hrns, \
-    agent_type, \
-    m = identify_entity(agent_fph)
+    if not re_fph.match(owner_fph):
+        return "", "", "Invalid owner FPH: " + owner_fph
 
-    if agent_type == "primid":
+    parent_namespace_hrns = fph_to_hrns(parent_namespace_fph)
+    account_hrns = account_name + "." + parent_namespace_hrns
+
+    owner_fph, \
+    owner_hrns, \
+    owner_type, \
+    m = identify_entity(owner_fph)
+
+    if owner_type == "primid":
         a_table = "primids"
-    elif agent_type == "secid":
+    elif owner_type == "secid":
         a_table = "secids"
     else:
-        return "", "", agent_fph + " is not an agent"
+        return "", "", owner_fph + " is not an agent"
 
     currency_fph, \
     currency_hrns, \
@@ -823,6 +833,17 @@ def new_account(
     if (etype != "currency"):
         return "", "", currency_fph + " is not a currency"
 
+    currency_fph, \
+    currency_hrns, \
+    prefix, \
+    suffix, \
+    default_account_name, \
+    stewards_list, \
+    m = get_currency_specific_properties(currency_fph)
+
+    if account_name == "":
+        account_name = default_account_name
+
     if fph_to_hrns(nshash(account_hrns)):
         return "", "", account_hrns + "  already registered in FPH>HRNS map"
 
@@ -830,7 +851,7 @@ def new_account(
 
     add_entity_common_properties(
         account_fph,
-        agent_fph,
+        owner_fph,
         "account",
         True
     )
@@ -850,7 +871,7 @@ def new_account(
             """,
             (
                 account_fph,
-                agent_fph,      # Owner may be either *primid* or *secid"
+                owner_fph,      # Owner may be either *primid* or *secid"
                 currency_fph,
                 0
             )
@@ -863,26 +884,17 @@ def new_account(
         update_string = "UPDATE " + a_table \
                       + " SET accounts_fph_list = ?" \
                       + " WHERE entity_fph = ?"
-    #with sqlite3.connect(ENTITIES_DB) as conn:
-    #    cursor = conn.cursor()
-        cursor.execute(select_string, (agent_fph,))
+        cursor.execute(select_string, (owner_fph,))
         result = cursor.fetchone()
         accounts_fph_blob = result[0]
         accounts_fph_list = pickle.loads(accounts_fph_blob)
         accounts_fph_list.append(account_fph)
         accounts_fph_blob = pickle.dumps(accounts_fph_list)
-        cursor.execute(update_string, (accounts_fph_blob, agent_fph))
-
-
+        cursor.execute(update_string, (accounts_fph_blob, owner_fph))
 
         conn.commit()
 
         cursor.close()
-
-    #add_account_to_currency(
-    #    account_fph,
-    #    currency_fph
-    #)
 
     if m:
         return "", "", m
@@ -906,7 +918,8 @@ def get_currency_specific_properties(currency_identifier):
         # Add the stewarded entity's FPH to the *primid*'s stewardships list:
         cursor.execute(
             """
-            SELECT currency_prefix, currency_suffix, stewards_fph_list
+            SELECT currency_prefix, currency_suffix, default_account_name,
+                   stewards_fph_list
             FROM currencies
             WHERE entity_fph = ?
             """,
@@ -919,14 +932,17 @@ def get_currency_specific_properties(currency_identifier):
     else:
         prefix = result[0]
         suffix = result[1]
-        stewards_fph_blob = result[2]
+        default_account_name = result[2]
+        stewards_fph_blob = result[3]
         stewards_list = pickle.loads(stewards_fph_blob)
 
-        return currency_fph, currency_hrns, prefix, suffix, stewards_list, ""
+        return currency_fph, currency_hrns, prefix, suffix, \
+               default_account_name, stewards_list, ""
 
 
 
-
+#==============================================================================
+##
 def get_currency_name(currency_fph):
     hrns = fph_to_hrns(currency_fph)
     if hrns == "":
@@ -951,9 +967,6 @@ def list_primid_accounts(primid_fph):
             (primid_fph,)
         )
         result = cursor.fetchone()
-        #cursor.close()
-        #print("results = ", end="")
-        #print(results)
     if result is None:
         accounts_fph_list = []
         accounts_fph_blob = pickle.dumps(accounts_fph_list)
@@ -1095,7 +1108,7 @@ def list_accounts_in_currency(currency_identifier):
     accounts_fph_list = []
     for account_fph in result_list:
         accounts_fph_list.append("".join(account_fph).strip())
-        # FIX: The results retrieved are currently typles where they should be
+        # FIX: The results retrieved are currently tuples where they should be
         # strings.
         #print(account_fph)
 
@@ -1196,10 +1209,6 @@ def list_secids(primid_fph):
 
         return secids_fph_list
 
-
-
-
-
 #==============================================================================
 #
 def get_parent_namespace(entity_fph): # for any entity
@@ -1246,7 +1255,6 @@ def list_all_namespaces():
                 (namespace_fph,)
             )
             result = cursor.fetchone()
-            #print(result)
             if result[0]:
                 active_namespaces.append(namespace_fph)
         cursor.close()
@@ -1699,7 +1707,6 @@ def list_active_namespaces(ancestor_namespace_identifier = ""): # FPH or HRNS
         if m:
             errors += m
 
-
     # First the *namespace* trees are selected where the node root *namespace*
     # is active and has the specified ancestor *namespace* as its parent:
     with sqlite3.connect(ENTITIES_DB) as conn:
@@ -1834,7 +1841,7 @@ def email_to_primid(email):
         cursor.execute(
             """
             SELECT entity_fph FROM primids
-            WHERE primid_email_1 = ? OR primid_email_2 = ?
+            WHERE primid_email_1_hash = ? OR primid_email_2_hash = ?
             """,
             (email,email)
         )

@@ -99,7 +99,7 @@ class CurrencyCreateForm(FlaskForm):
 
 class AccountCreateForm(FlaskForm):
     account_name    = StringField(
-                        "currency name",
+                        "account name",
                         validators=[DataRequired("required")]
                       )
     namespace_id    = StringField(
@@ -210,9 +210,9 @@ class RegistrationForm(FlaskForm):
 
     # The following two are not assigned validators because one or both values
     # may be provided via the URL:
-    namespace       = StringField("namespace")
+    namespace       = StringField("parent namespace for new user")
     realname        = StringField("real name")
-    currency        = StringField("currency")
+    currency        = StringField("currency for initial account")
 
     # The drop-down version commented out below works, but is more trouble than
     # it's worth ...

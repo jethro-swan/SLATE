@@ -4,7 +4,7 @@
   <form action="" method="post" novalidate>
     {{ form.hidden_tag() }}
     <p>
-      {{ form.identity.label }} (HRNS or FPH)<br />
+      {{ form.identity.label }}<br />
       {{ form.identity(size=32) }}<br />
       {% for error in form.identity.errors %}
         <span style="color: red;">[{{ error }}]</span>
@@ -24,15 +24,15 @@
   <br />
   <hr />
   <p class="footnote">
-    Enter <em>either</em> the FPH or the HRNS or your <strong>primary
-    identity</strong> along with email address you have registered. You will be
-    sent a link to allow you to set a new password and PIN.
+    Enter <em>either</em> and identifier (HRNS or FPH) for your <strong>primary
+    identity</strong> along with an email address you have registered. You will
+    be sent a link to allow you to set a new password and PIN.
   </p>
   <p class="footnote">
     NB, your password is never stored. When you enter your email address here,
     it is hashed cryptographically and that hash is then compared to the hash
     already stored. If the hashes agree, a time-limited recovery link will be
-    sent to the email address, which will be discarded immediately.
+    sent to the email address, which will be discarded immediately after use.
   </p>
   <p class="footnote">
     This function has not yet been implemented.

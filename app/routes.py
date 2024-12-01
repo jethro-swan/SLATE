@@ -18,6 +18,7 @@ from app.core.slate_core import get_entity_type, get_account_currency
 from app.core.slate_core import identify_entity, get_primid
 from app.core.slate_core import new_primid, new_secid
 from app.core.slate_core import new_namespace, new_currency
+from app.core.slate_core import new_account
 from app.core.slate_core import list_stewardships, list_stewards
 from app.core.slate_core import retrieve_primid_access_details
 from app.core.slate_core import list_agent_accounts, list_secids
@@ -140,18 +141,27 @@ def register():
     initial_currency_hrns, \
     etype, \
     m = identify_entity(url_currency_identifier)
+    #if m:
+    #    flash(m)
+    #    redirect("/register")
     if not (initial_currency_fph and (etype == "currency")):
         initial_currency_fph = ""
         initial_currency_hrns = ""
+
+    print("currency: " + initial_currency_fph + " > " + initial_currency_hrns)
 
     initial_namespace_identifier = request.args.get("ns_fph")
     initial_namespace_fph, \
     initial_namespace_hrns, \
     etype, \
     m = identify_entity(initial_namespace_identifier)
+    #if m:
+    #    flash(m)
+    #    redirect("/register")
     if not (initial_namespace_fph and (etype == "namespace")):
         initial_namespace_fph = ""
         initial_namespace_hrns = ""
+    print("namespace: " + initial_namespace_fph + " > " + initial_namespace_hrns)
 
     form = RegistrationForm()
 
@@ -320,10 +330,6 @@ def login():
             if identity_fph:
                 # If control reaches this point and the FPH exists, we have a
                 # valid *primid* for the HRNS or FPH entered.
-#                flash(
-#                    identity_hrns + " = [" + identity_fph + "] has " \
-#                    + "been identified from the agent identifier."
-#                )
                 primid_has_been_identified_from_identity = True
             else:
                 flash(identity_fph + " is not a registered identity.")
@@ -355,11 +361,9 @@ def login():
                             identity_hrns + " = [" + identity_fph + "] has " \
                             + "been identified from the email address."
                         )
-
         else:
             flash("No valid identifier has been provided.")
             return redirect(url_for("login"))
-
 
         # If control reaches this point, we have a valid *identity* (which may
         # be a *primid* or a *secid*) for the email address entered.
@@ -367,7 +371,6 @@ def login():
         # Alternatively, the *primid*
         # Whether from the agent field (*primid*|*secid*) or from an email
         # address, we have now identified the *primid*.
-#        print("identity = " + identity_fph + " = [" + identity_hrns + "]")
 
         password_hash, \
         stored_pin, \
@@ -377,30 +380,18 @@ def login():
             flash(m)
             return redirect(url_for("login"))
 
-#        print("password hash = " + password_hash)
-#        print("PIN = " + stored_pin)
-#        print("access_token_hash = " + access_token_hash)
-
         # Retrieve the user object:
         user = User(identity_fph)
 
         password = form.password.data
-#        print("form.password.data = " + form.password.data)
         password2 = form.password.data.strip()
-#        print("password strip()ped = " + form.password.data)
         if password != password2:
             print("password corrupted")
-
-#        if not check_auth_hash(password_hash, form.password.data):
-#            flash("Password check failed ... but you can come in anyway")
 
         pwd = password
         pwd_hash = password_hash
         if not bcrypt.checkpw(pwd.encode("utf-8"), pwd_hash.encode("utf-8")):
-            #flash("Password check failed ... but you can come in anyway")
             return redirect(url_for("login"))
-        #else:
-            #flash("Password check successful")
 
         if not authenticate_pin(stored_pin, form.pse.data, form.pro.data):
             flash("Incorrect PIN digits")
@@ -454,60 +445,38 @@ def login_recover():
     namespace_steward = True
     currency_steward = True
     paying = False
-    logged_in = current_user.is_authenticated
+    logged_in = current_user.is_authenticated # false
     form = LoginRecoveryForm()
     if form.validate_on_submit():
-        flash(
-            "Recovery details submitted for user {}".format(
-                form.identity.data,
-                form.fph.data,
-                form.email.data
-            )
-        )
-        identity_hrns = form.identity.data  # Get rid of these and replace with
-        identity_fph = form.fph.data        # agent_identifier (HRNS or FPH)
-        identity_email = form.email.data
+        agent_identifier = form.identity.data
+        agent_email = form.email.data
 
-        # (Most of the following chunk of code has been re-used from /login so
-        # it may be possible to factorize this in due course.)
-        if (identity_hrns == "") and (identity_fph == ""): # neither provided
-            flash("Either an HRNS on an FPH must be provided for identity.")
-            return redirect(url_for("login"))
-        if identity_hrns:
-            if not re_hrns.match(identity_hrns):
-                flash("The identity is invalid.")
-                return redirect(url_for("login"))
-            else:
-                identity_fph = hrns_to_fph(identity_hrns)
-        elif identity_fph:
-            if not re_fph.match(identity_fph):
-                flash("The identity FPH is invalid.")
-                return redirect(url_for("login"))
-        # At this point, whether derived from the HRNS or entered directly as
-        # an FPH, we have something that looks like an FPH. It must now be
-        # determind whether this actually represents a registered identity.
-        entity_fph, \
-        entity_hrns, \
-        etype, \
+        agent_fph, \
+        agent_hrns, \
+        agent_type, \
         m = identify_entity(agent_identifier)
 
-        # m = identify_entity(identity_fph)   # This should be agent_identifier,
-                                            # so change it ...
-        # If control has recahed this point, this is a registered entity of
-        # some type, but is it a *primid*?
-        if etype != "primid":
-            flash(agent_identifier + " is not a primary identity.")
+        if agent_type == "secid":
+            agent_primid_fph = get_primid(agent_fph)
+        elif agent_type == "primid":
+            agent_primid_fph = agent_fph
+        else:
+            flash(agent_identifier + " is not a registered identity")
             return redirect(url_for("login"))
+
         # If control reaches this point, the entity identifier entered has been
         # identified as a registered *primid*.
         if not identity_email:
             flash("Login recovery is not possible without an email address.")
             return redirect(url_for("login"))
+
+
+
         elif not re_email.match(identity_email):
             flash("The email address is invalid.")
             return redirect(url_for("login"))
         else:
-            identity_fph_2 = email_to_primid(identity_email)
+            identity_fph_2 = email_to_primid(agent_email)
             # Returns "" if the email address is not mapped to a *primid*.
             if not identity_fph_2:
                 flash("This email is not registered here.")
@@ -542,23 +511,13 @@ def login_recover():
     return render_template(
                 "login_recovery.html",
                 title="Login recovery",
-
-                #logged_in=logged_in,
-                #page=page,
-#                group=group,
-                identity_type=etype,
-#                identity_type=identity_type,
+                identity_type=identity_type,
                 identity_fph=identity_fph,
                 identity_hrns=identity_hrns,
-
-
                 form=form,
                 logged_in=logged_in,
                 page=page,
-                mode=mode,
-                development_mode=development_mode,
-                namespace_steward=namespace_steward,
-                currency_steward=currency_steward
+                mode=mode
            )
 
 # login landing page ----------------------------------------------------------
@@ -583,11 +542,6 @@ def home():
     # entities over which it holds/shares stewardship.
 
     stewardships_list, m = list_stewardships(identity_fph)
-
-#    print("Currently in the /home endpoint")
-#    print("identity_fph = " + identity_fph)
-#    print("identity_hrns = " + identity_hrns)
-#    print("identity_type = " + identity_type)
 
     # Since a user may have *accounts* scattered across an arbitrary number of
     # *namespaces*, it is necessary to maintain a list of these:
@@ -633,22 +587,14 @@ def home():
             account_balance, \
             m = get_account_specific_properties(account_fph)
 
-#            print("account_currency_fph  \t= " + account_currency_fph)
-#            print("account_owner_fph  \t= " + account_owner_fph)
-#            print("account_balance  \t= " + str(account_balance))
-
             # Fetch currency details:
             currency_fph, \
             currency_hrns, \
             prefix, \
             suffix, \
+            default_account_name, \
             stewards_list, \
             m = get_currency_specific_properties(account_currency_fph)
-
-#            print("currency_fph  \t= " + currency_fph)
-#            print("currency_hrns  \t= " + currency_hrns)
-#            print("stewards_list  \t= ", end="")
-#            print(stewards_list)
 
             # Assemble a dictonary of *account* properties:
             a = {}
@@ -669,9 +615,6 @@ def home():
             a["currency_fph"] = currency_fph
             a["currency_hrns"] = currency_hrns
 
-#            print("a  \t= ", end="")
-#            print(a)
-
             #accounts[account_fph] = a
             accounts.append(a)
 
@@ -685,7 +628,7 @@ def home():
 #    print("secids for " + fph_to_hrns(identity_fph))
     for secid_fph in secid_list:
         if secid_fph != "":
-            print(identity_fph + " :: " + fph_to_hrns(secid_fph))
+            print(secid_fph + " :: " + fph_to_hrns(secid_fph))
             secid = {}
             secid["fph"] = secid_fph
             secid["hrns"] = fph_to_hrns(secid_fph)
@@ -696,7 +639,7 @@ def home():
 #    print("stewardships for " + fph_to_hrns(identity_fph))
     for stewardship_fph in stewardships_list:
         if stewardship_fph != "":
-            print(identity_fph + " :: " + fph_to_hrns(stewardship_fph))
+            print(stewardship_fph + " :: " + fph_to_hrns(stewardship_fph))
             stewardship = {}
             entity_fph, \
             entity_hrns, \
@@ -736,9 +679,6 @@ def account(account_fph):
 #def account(account_fph=None):
     page = "account"
     group = "home"
-    #mode = ""
-#    namespace_steward = False  ## ???
-#    currency_steward = False   ## ???
     paying = False
     logged_in = current_user.is_authenticated
 
@@ -750,16 +690,15 @@ def account(account_fph):
     identity_type = fph_to_display_type(identity_fph)
 
     # If an *account* has been specified (by FPH) in the URL slug
-#    print("Account " + account_fph)
-
     payer_account_fph, \
     payer_account_hrns, \
     etype, \
     m = identify_entity(account_fph)
+    if m:
+        flash(m)
 
     if not account_fph:
         flash("The FPH in the URL cannot be identified.")
-#        return redirect("/home")
         return redirect("/account")
     elif etype != "account":
         flash("The FPH in the URL does not identify an account.")
@@ -769,6 +708,12 @@ def account(account_fph):
     payer_owner_fph, \
     payer_balance, \
     m = get_account_specific_properties(payer_account_fph)
+
+    print(
+        "payer_owner_fph = " + payer_owner_fph + "\n" + \
+        "identity_fph    = " + identity_fph
+    )
+
     if m:
         flash(m)
         #return redirect("/home")
@@ -786,6 +731,7 @@ def account(account_fph):
     currency_hrns, \
     currency_prefix, \
     currency_suffix, \
+    default_account_name, \
     stewards_list, \
     m = get_currency_specific_properties(payer_currency_fph)
 
@@ -953,6 +899,7 @@ def account_details(account_fph):
     currency_hrns, \
     currency_prefix, \
     currency_suffix, \
+    default_account_name, \
     stewards_list, \
     m = get_currency_specific_properties(currency_fph)
 
@@ -1004,6 +951,14 @@ def stewardships(identity_fph):
     identity_hrns = fph_to_hrns(identity_fph)
     identity_type = fph_to_display_type(identity_fph)
 
+
+    stewardships, m = list_stewardships(identity_fph)
+    if m:
+        splash(m)
+
+
+
+
     return render_template(
                 "stewardships.html",
                 title="Stewardships",
@@ -1016,6 +971,40 @@ def stewardships(identity_fph):
                 logged_in=logged_in,
                 namespace_steward=namespace_steward,
                 currency_steward=currency_steward
+           )
+
+# secids page -----------------------------------------------------------------
+@app.route("/secids/<identity_fph>")
+@login_required
+def secids(identity_fph):
+    page = "secids"
+    group = "home"
+    namespace_steward = True
+    currency_steward = True
+    paying = False
+    logged_in = current_user.is_authenticated
+
+    identity_fph = current_user.get_id()
+    identity_hrns = fph_to_hrns(identity_fph)
+    identity_type = fph_to_display_type(identity_fph)
+
+    secids = list_secids(identity_fph)
+
+    for secid_fph in secids:
+        print(secid_fph + " > " + fph_to_hrns(secid_fph))
+
+    return render_template(
+                "secids.html",
+                title="Secondary identities",
+                page=page,
+                group=group,
+                identity_type=identity_type,
+                identity_fph=identity_fph,
+                identity_hrns=identity_hrns,
+                development_mode=development_mode,
+                logged_in=logged_in,
+                namespace_steward=namespace_steward,
+                secids=secids
            )
 
 # MANAGEMENT ==================================================================
@@ -1177,15 +1166,16 @@ def create_account():
         account_fph, \
         account_hrns, \
         m = new_account(
-                account_hrns,
+                account_name,
+                namespace_fph,
                 identity_fph, # the owner of this *account*
                 currency_fph
             )
         if m:
             flash(m)
         flash(
-            "A new currency has been created, identified as \n" \
-            + currency_hrns + " [" + currency_fph + "]"
+            "A new account has been created, identified as \n" \
+            + account_hrns + " [" + account_fph + "]"
         )
         return redirect("/create_account")
         #return redirect("/home")

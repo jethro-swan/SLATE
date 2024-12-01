@@ -393,18 +393,23 @@ def create_fake_entities(n, a):
         if currency_type == "hours":
             currency_prefix = ""
             currency_suffix = "h"
+            default_account_name = "hours"
         elif currency_type == "kWh":
             currency_prefix = ""
             currency_suffix = "kWh"
+            default_account_name = "kWh"
         elif currency_type == "g£":
             currency_prefix = "g£"
             currency_suffix = ""
+            default_account_name = "g£"
         elif currency_type == "g$":
             currency_prefix = "g$"
             currency_suffix = ""
+            default_account_name = "g$"
         else:
             currency_prefix = ""
             currency_suffix = ""
+            default_account_name = "local"
 
         initial_steward_fph = select_available_primid()
         currency_fph, \
@@ -414,7 +419,8 @@ def create_fake_entities(n, a):
                 parent_namespace_fph,
                 initial_steward_fph,
                 currency_prefix,
-                currency_suffix
+                currency_suffix,
+                default_account_name
             )
         if m:
             return "", "", m
@@ -422,8 +428,10 @@ def create_fake_entities(n, a):
         return currency_fph, currency_hrns, m
 
     def create_test_account():
-        account_namesapace_hrns = fph_to_hrns(select_available_namespace())
-        account_hrns = random_name() + "." + account_namesapace_hrns
+        parent_namespace_fph = select_available_namespace()
+        account_name = random_name()
+#        account_namesapace_hrns = fph_to_hrns(select_available_namespace())
+#        account_hrns = random_name() + "." + account_namesapace_hrns
         # In early iterations, the l_secids list may be empty so that must be
         # checked:
 ##        agent_fph = select_available_secid()
@@ -437,7 +445,9 @@ def create_fake_entities(n, a):
         account_fph, \
         account_hrns, \
         m = new_account(
-                account_hrns,
+                account_name,
+                parent_namespace_fph,
+                #account_hrns,
                 agent_fph,
                 currency_fph
             )

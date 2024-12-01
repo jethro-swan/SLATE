@@ -312,8 +312,8 @@ def create_seed_entities():
             INSERT INTO primids (
                 entity_fph,
                 primid_realname,
-                primid_email_1,
-                primid_email_2,
+                primid_email_1_hash,
+                primid_email_2_hash,
                 secids_fph_list,
                 accounts_fph_list,
                 stewardships_fph_list,
@@ -326,8 +326,8 @@ def create_seed_entities():
             (
                 seed_primid_fph,
                 seed_primid_realname,
-                seed_primid_email_1,
-                seed_primid_email_2,
+                auth_hash(seed_primid_email_1),
+                auth_hash(seed_primid_email_2),
                 pickle.dumps([]),
                 pickle.dumps(accounts_fph_list),
                 pickle.dumps(stewardships_fph_list),

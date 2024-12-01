@@ -14,10 +14,124 @@ from common import entity_type, account_currency, currency_accounts
 from regexp_list import re_fph, re_hrns, re_email
 
 
+
+#==============================================================================
+# A set of *accounts* is created in the specified *namespace*, all belonging to
+# the same *identity*.
+#
+# The *currency* and *namespace* are specified in the form used for uploading
+# the CSV file.
+#
+def import_minimal_payment_set_as_csv(
+        owner_identifier,
+        currency_identifier,
+        namespace_identifier,
+        csv_file
+    ):
+
+    errors = ""
+
+    namespace_fph, \
+    namespace_hrns, \
+    etype, \
+    m = identify_entity(namespace_identifier)
+    if m:
+        errors += m + "\n"
+        return [], errors
+    if etype != "namespace":
+        errors += namespace_identifier + " is not a namespace\n"
+        return [], errors
+
+    currency_fph, \
+    currency_hrns, \
+    etype, \
+    m = identify_entity(currency_identifier)
+    if m:
+        errors += m + "\n"
+        return [], errors
+    if etype != "currency":
+        errors += currency_identifier + " is not a currency\n"
+        return [], errors
+
+    payments_made = []
+
+    account_names = []
+    with open(csv_file, "r") as f:
+        while
+        row = f.readline()
+        payer_name = row[0]
+        payee_name = row[1]
+        amount = row[2]
+        annotation = row[3]
+
+        if payer_name in account_names:
+            payer_fph, \
+            payer_hrns, \
+            etype, \
+            m = identify_entity(payer_name + "." + )
+            if m:
+                errors += m + "\n"
+                return [], errors
+        else:
+            payer_fph, \
+            payer_hrns, \
+            m = new_account(
+                payer_name,
+                namespace_fph,
+                owner_fph,
+                currency_fph
+            )
+            if m:
+                errors += m + "\n"
+                return [], errors
+            account_names.append(payer_name)
+
+        if payee_name in account_names:
+            payee_fph, \
+            payee_hrns, \
+            etype, \
+            m = identify_entity(payee_name + "." + )
+            if m:
+                errors += m + "\n"
+                return [], errors
+        else:
+            payee_fph, \
+            payee_hrns, \
+            m = new_account(
+                payee_name,
+                namespace_fph,
+                owner_fph,
+                currency_fph
+            )
+            if m:
+                errors += m + "\n"
+                return [], errors
+            account_names.append(payee_name)
+
+        m = payment(payer_fph, payee_fph, amount, annotation)
+        if m:
+            errors += m + "\n"
+            return [], errors
+
+        paid = payer_hrns + ":" \
+             + payee_hrns + ":" \
+             + amount + ":" \
+             + annotation
+        payments_made.append(paid)
+
+    return payments, ""
+
+#==============================================================================
+
+
+
+
+
+
+
+
+
 # THIS MUST BE MODIFIED EXTENSIVELY
-
-
-
 
 # CSV can mean either "comma-separated value" or "character-separated value".
 # Here the latter meaning is used, with a semicolon used as the separator.
