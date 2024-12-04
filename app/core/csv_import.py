@@ -5,13 +5,13 @@ import time
 import sys
 import json
 
-from regexp_list import re_fph
-from common import fph_to_dpath, fph_to_hrns
-from common import get_currency_fph
-from common import hrns_to_fph, fph_to_hrns, fph_to_fip, fph_to_dpath
-from common import hrns_to_dpath
-from common import entity_type, account_currency, currency_accounts
-from regexp_list import re_fph, re_hrns, re_email
+#from common import fph_to_dpath, fph_to_hrns
+#from common import get_currency_fph
+#from common import hrns_to_fph, fph_to_hrns, fph_to_fip, fph_to_dpath
+#from common import hrns_to_dpath
+#from common import entity_type, account_currency, currency_accounts
+from app.core.slate_core import identify_entity
+from app.core.regexp_list import re_fph, re_hrns, re_email
 
 
 
@@ -26,7 +26,7 @@ def import_minimal_payment_set_as_csv(
         owner_identifier,
         currency_identifier,
         namespace_identifier,
-        csv_file
+        csv_file_path
     ):
 
     errors = ""
@@ -56,70 +56,70 @@ def import_minimal_payment_set_as_csv(
     payments_made = []
 
     account_names = []
-    with open(csv_file, "r") as f:
-        while
-        row = f.readline()
-        payer_name = row[0]
-        payee_name = row[1]
-        amount = row[2]
-        annotation = row[3]
+    with open(csv_file_path, "r") as f:
+        for row in f:
+            col = row.split(":")
+            payer_name = col[0]
+            payee_name = col[1]
+            amount = col[2]
+            annotation = col[3]
 
-        if payer_name in account_names:
-            payer_fph, \
-            payer_hrns, \
-            etype, \
-            m = identify_entity(payer_name + "." + )
+            if payer_name in account_names:
+                payer_fph, \
+                payer_hrns, \
+                etype, \
+                m = identify_entity(payer_name + "." + namespace_identifier)
+                if m:
+                    errors += m + "\n"
+                    return [], errors
+            else:
+                payer_fph, \
+                payer_hrns, \
+                m = new_account(
+                    payer_name,
+                    namespace_fph,
+                    owner_fph,
+                    currency_fph
+                )
+                if m:
+                    errors += m + "\n"
+                    return [], errors
+                account_names.append(payer_name)
+
+            if payee_name in account_names:
+                payee_fph, \
+                payee_hrns, \
+                etype, \
+                m = identify_entity(payee_name + "." + namespace_hrns)
+                if m:
+                    errors += m + "\n"
+                    return [], errors
+            else:
+                payee_fph, \
+                payee_hrns, \
+                m = new_account(
+                    payee_name,
+                    namespace_fph,
+                    owner_fph,
+                    currency_fph
+                )
+                if m:
+                    errors += m + "\n"
+                    return [], errors
+                account_names.append(payee_name)
+
+            m = payment(payer_fph, payee_fph, amount, annotation)
             if m:
                 errors += m + "\n"
                 return [], errors
-        else:
-            payer_fph, \
-            payer_hrns, \
-            m = new_account(
-                payer_name,
-                namespace_fph,
-                owner_fph,
-                currency_fph
-            )
-            if m:
-                errors += m + "\n"
-                return [], errors
-            account_names.append(payer_name)
 
-        if payee_name in account_names:
-            payee_fph, \
-            payee_hrns, \
-            etype, \
-            m = identify_entity(payee_name + "." + )
-            if m:
-                errors += m + "\n"
-                return [], errors
-        else:
-            payee_fph, \
-            payee_hrns, \
-            m = new_account(
-                payee_name,
-                namespace_fph,
-                owner_fph,
-                currency_fph
-            )
-            if m:
-                errors += m + "\n"
-                return [], errors
-            account_names.append(payee_name)
+            paid = payer_hrns + ":" \
+                 + payee_hrns + ":" \
+                 + amount + ":" \
+                 + annotation
+            payments_made.append(paid)
 
-        m = payment(payer_fph, payee_fph, amount, annotation)
-        if m:
-            errors += m + "\n"
-            return [], errors
-
-        paid = payer_hrns + ":" \
-             + payee_hrns + ":" \
-             + amount + ":" \
-             + annotation
-        payments_made.append(paid)
-
-    return payments, ""
+        return payments, ""
 
 #==============================================================================
 
@@ -203,84 +203,83 @@ def import_csv_entity_set(data_set, entity_definition_file):
 #   password    <password string>
 #   PIN         <PIN string>
 #
-def identities_bulk_creation(import_file):
-    if not re_csv_filename.match(import_file):
-        return ("Bad filename: " + import_file)
-    valid_fieldnames = [
-                         "type",
-                         "identity",
-                         "primid",
-                         "currency",
-                         "email",
-                         "password",
-                         "PIN"
-                       ]
-    bad_rows = []
-    problems = []
-    created = []
-    with open(import_file, "r") as import_f:
-        # Check that the column headers are correct:
-        header_line = import_f.readline()
-        field = header_line.split(",")
-        for h in len(field):
-            if not field[h] == valid_fieldnames[h]:
-                return ("Bad column header: " + field[h])
-        # The rest of the file is now read line by line:
-        row = import_f.readline()
-        col = row.split(",")
-        if not ( \
-                (col[0] == "primid") or (col[0] == "secid") \
-                and re_hrns.match(col[1])
-                and ((col[2] == "") or re_hrns.match(col[2])) \
-                and re_hrns.match(col[3]) and re_email.match(col[4]) \
-                and re_pin.match(col[6]):
-            bad_rows.append(row)
-        else:
-            # The row format is valid.
-            #
-            type        = col[0]
-            id_hrns     = col[1]
-            primid_hrns = col[2]
-            currency    = col[3]
-            email       = col[4]
-            password    = col[5]
-            pin         = col[6]
-
-            if type == "primid":
-                if primid_exists(id_hrns):
-                    report_line = "primid\t" + id_fph + " exists already"
-                    report.append(report_line)
-                    break
-                currency_fph = hrns_to_fph(currency)
-                if not currency_exists(currency_fph):
-                    bad_rows.append(row)
-                    problems.append("Currency " + currency + " not found")
-                    break
-
-                primid_split = id_hrns.split(".")
-                username = primid_split[0]
-                namespace_hrns = ".".join(primid_split[1:])
-                primid_fph = primid_create(
-                                username,
-                                namespace_hrns,
-                                currency_fph,
-                                password,
-                                pin,
-                                email,
-                                ""
-                             )
-                report_line = "primid\t" + primid_fph + "\t" + id_hrns
-                report.append(report_line)
-            else: # type == "secid":
-                if secid_exists(id_hrns):
-                    report_line = "secid\t" + id_fph + " exists already"
-                    report.append(report_line)
-                    break
-                if not primid_hrns:
-                    report_line = "secid\t" + id_fph + " : primid not given"
-                    report.append(report_line)
-                    break
-                secid_create(id_hrns, hrns_to_fph(primid_hrns))
+#def identities_bulk_creation(import_file_path):
+#    if not re_csv_filename.match(import_file_path):
+#        return ("Bad filename: " + import_file_path)
+#    valid_fieldnames = [
+#                         "type",
+#                         "identity",
+#                         "primid",
+#                         "currency",
+#                         "email",
+#                         "password",
+#                         "PIN"
+#                       ]
+#    bad_rows = []
+#    problems = []
+#    created = []
+#    with open(import_file_path, "r") as import_f:
+#        # Check that the column headers are correct:
+#        header_line = import_f.readline()
+#        field = header_line.split(",")
+#        for h in len(field):
+#            if not field[h] == valid_fieldnames[h]:
+#                return ("Bad column header: " + field[h])
+#        # The rest of the file is now read line by line:
+#        row = import_f.readline()
+#        col = row.split(",")
+#        if not ((col[0] == "primid") or (col[0] == "secid") \
+#                and re_hrns.match(col[1]) \
+#                and ((col[2] == "") or re_hrns.match(col[2])) \
+#                and re_hrns.match(col[3]) and re_email.match(col[4]) \
+#                and re_pin.match(col[6])):
+#            bad_rows.append(row)
+#        else:
+#            # The row format is valid.
+#            #
+#            type        = col[0]
+#            id_hrns     = col[1]
+#            primid_hrns = col[2]
+#            currency    = col[3]
+#            email       = col[4]
+#            password    = col[5]
+#            pin         = col[6]
+#
+#            if type == "primid":
+#                if primid_exists(id_hrns):
+#                    report_line = "primid\t" + id_fph + " exists already"
+#                    report.append(report_line)
+#                    break
+#                currency_fph = hrns_to_fph(currency)
+#                if not currency_exists(currency_fph):
+#                    bad_rows.append(row)
+#                    problems.append("Currency " + currency + " not found")
+#                    break
+#
+#                primid_split = id_hrns.split(".")
+#                username = primid_split[0]
+#                namespace_hrns = ".".join(primid_split[1:])
+#                primid_fph = primid_create(
+#                                username,
+#                                namespace_hrns,
+#                                currency_fph,
+#                                password,
+#                                pin,
+#                                email,
+#                                ""
+#                             )
+#                report_line = "primid\t" + primid_fph + "\t" + id_hrns
+#                report.append(report_line)
+#            else: # type == "secid":
+#                if secid_exists(id_hrns):
+#                    report_line = "secid\t" + id_fph + " exists already"
+#                    report.append(report_line)
+#                    break
+#                if not primid_hrns:
+#                    report_line = "secid\t" + id_fph + " : primid not given"
+#                    report.append(report_line)
+#                    break
+#                secid_create(id_hrns, hrns_to_fph(primid_hrns))
 
 
 

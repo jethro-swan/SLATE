@@ -1,25 +1,15 @@
-2024-10-21:
+2024-12-03:
 
-Move 
-	def add_account_to_currency( ) 
-to within 
-	def new_account( )
+(1) Add/complete CSV import screen for sandbox payments set.
 
+(2) Add/complete password/PIN recovery screen/code.
 
-The function
-	add_primid_specific_properties( )
-can probably be moved to within
-	def new_primid( )
+(3) Add/complete payments export listing (CSV) for *account*.
 
-Change
-	def add_primid_stewardships(primid_fph, stewardship_fph_to_add)	
-to
-	def add_stewardship(primid_identifier, entity_identifier)
-because all stewardships are held only by *primid*s for a single*namespace* or *currency*.
+(4) Add/complete payments export listing (CSV) for *currency*.
 
+(5) Clean up payments listing for *account* and move to a separate screen.
 
+(6) Clean up payments listing for *currency* and move to a separate screen.
 
-
-
-
-
+(7) Add/complete invitation QR code generation screen/code.

@@ -36,7 +36,7 @@ from app.core.payments import payment
 from app.core.payments import dump_account_payments
 
 from app.core.display import yesno, integer_to_money_format
-
+from app.core.csv_import import import_minimal_payment_set_as_csv
 
 
 #from app import bcrypt # added 2024-11-10
@@ -150,7 +150,7 @@ def register():
 
     print("currency: " + initial_currency_fph + " > " + initial_currency_hrns)
 
-    initial_namespace_identifier = request.args.get("ns_fph")
+    initial_namespace_identifier = request.args.get("s_fph")
     initial_namespace_fph, \
     initial_namespace_hrns, \
     etype, \
@@ -511,9 +511,10 @@ def login_recover():
     return render_template(
                 "login_recovery.html",
                 title="Login recovery",
-                identity_type=identity_type,
-                identity_fph=identity_fph,
-                identity_hrns=identity_hrns,
+                #identity_type=identity_type,
+                #agent_type=agent_type,
+                #identity_fph=identity_fph,
+                #identity_hrns=identity_hrns,
                 form=form,
                 logged_in=logged_in,
                 page=page,
@@ -718,11 +719,11 @@ def account(account_fph):
         flash(m)
         #return redirect("/home")
         return redirect("/account")
-    if payer_owner_fph != identity_fph:
-        flash(
-            "Account " + payer_account_hrns + " does not belong to " \
-            + identity_hrns
-        )
+    #if payer_owner_fph != identity_fph:
+    #    flash(
+    #        "Account " + payer_account_hrns + " does not belong to " \
+    #        + identity_hrns
+    #    )
 
     account_balance_is_negative = (payer_balance < 0)
 
@@ -783,8 +784,8 @@ def account(account_fph):
 
         if payee_currency_fph != payer_currency_fph:
             flash(
-                "The payer account  " + payer_hrns + "  and the " \
-                + "payee account  " + payee_hrns \
+                "The payer account  " + payer_account_hrns + "  and the " \
+                + "payee account  " + payee_account_hrns \
                 + "  are not in the same currency."
             )
             return redirect("/account/" + payer_account_fph)
@@ -1322,7 +1323,41 @@ def list_namespaces():
 
 
 
-# help ------------------------------------------------------------------------
+
+# CSV import: sandbox payments set ============================================
+#
+# The screen is use to import a set of payments for sandbox purposes (as CSV),
+# each row having the format:
+#   payer_account:payee_account:amount:annotation
+# The form used to import the CSV file provides fields for
+# - the *namespace* in which any new *accounts* will all be created
+# - the *currency* of these accounts
+# Any *accounts* not already registered are created on the fly in the
+# *namespace* specified.
+# All *accounts* listed in the file belong to the agent importing it.
+
+@app.route("/import/payments_set")
+def import_payments_set():
+    page = "sandbox_payment_set_import"
+    group = ""
+    namespace_steward = True
+    currency_steward = True
+    paying = False
+    logged_in = current_user.is_authenticated
+
+
+    import_minimal_payment_set_as_csv(
+        owner_identifier,
+        currency_identifier,
+        namespace_identifier,
+        csv_file_path
+    )
+
+
+
+    return
+
+# help ========================================================================
 @app.route("/help")
 def help():
     page = "help"

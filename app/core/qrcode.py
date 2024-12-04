@@ -141,12 +141,23 @@ def qr_code_png(url, qr_png_name):
     qr_url.png(png_path, scale = 8)
     return png_path # for display
 
-def qrencode_invitation(hub, currency_fph, inviter_fph, expiry):
+
+
+
+
+def qrencode_invitation(
+        hub,
+        currency_fph,
+        namespace_fph,
+        inviter_fph,
+        expiry # Unix time
+    ):
     # URL of the website for which we are making QR code
     s = "https://" + hub \
       + "&c=" + currency_fph \
-      + "&c=" + inviter_fph \
-      + "&c=" + expiry # Unix time
+      + "&s=" + namespace_fph \
+      + "&f=" + inviter_fph \
+      + "&e=" + expiry # Unix time
     qr_png_name = currency_fph + '_' + inviter_fph + '_'
     return qr_code_png(s, qr_png_name)
     #qr_png_path = qr_code_png(s, qr_png_name)

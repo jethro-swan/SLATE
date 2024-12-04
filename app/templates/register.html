@@ -9,10 +9,12 @@
     <!-- If the initial currency has already been specified (e.g. if the form
     has been invoked by scanning a QR code), this is displayed instead of the
     input field. -->
-      {{ form.currency.label }}<br />
       {% if initial_currency_fph and initial_currency_hrns %}
-        {{ form.currency(value=initial_currency_hrns, size=42) }}
+        You have been invited to create an <strong>account</strong> in the
+        <strong>currency</strong>
+        <span class="dark-green-bold">{{ initial_currency_hrns }}</span>
       {% else %}
+        {{ form.currency.label }}<br />
         {{ form.currency(size=42) }}
         {% for error in form.currency.errors %}
           <span style="color: red;">[{{ error }}]</span>
@@ -24,10 +26,12 @@
     <!-- If the the parent namespace has already been specified (e.g. if the
     form has been invoked by scanning a QR code), this is displayed instead of
     the input field. -->
-      {{ form.namespace.label }}<br />
       {% if initial_namespace_fph and initial_namespace_hrns %}
-        {{ form.namespace(value=initial_namespace_hrns, size=42) }}
+        You have been invited to register an <strong>identity</strong> in the
+        <strong>namespace</strong>
+        <span class="dark-green-bold">{{ initial_namespace_hrns }}</span>
       {% else %}
+        {{ form.namespace.label }}<br />
         {{ form.namespace(size=42) }}
         {% for error in form.namespace.errors %}
           <span style="color: red;">[{{ error }}]</span>

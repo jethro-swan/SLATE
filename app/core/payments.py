@@ -23,9 +23,6 @@ from .slate_core import identify_entity
 from .display import integer_to_money_format
 
 
-debugging = True
-
-
 #==============================================================================
 # Create the SQLite transactions database:
 
