@@ -8,13 +8,17 @@
 
 - Add/complete password/PIN reset screen/code.
 
+- Add/complete **identities** screen.
+
+- Add/complete _stewardships_ listing/management screen.
+
 - Add/complete invitation QR code generation screen/code.
 
 - Add/complete payments export listing (CSV) for **account**.
 
 - Add/complete payments export listing (CSV) for **currency**.
 
-- Add/complete pruning/grafting screen+code.
+- Add/complete **namespace** tree pruning/grafting screen+code.
 
 - Make _private_ **namespace** extensible.
 
@@ -23,6 +27,12 @@
 - Clean up payments listing for **account** and move to a separate screen.
 
 - Clean up payments listing for **currency** and move to a separate screen.
+
+- Add _steward_ to **identity** messaging (via "home" page) - e.g. suspension.
+
+- Add **identity** to _steward_  messaging - e.g. notification about bad actors.
+
+- Add/complete _entity_ management screens.
 
 - Update tables for HTML5 consistency.
 
@@ -36,6 +46,16 @@
 
 - Add hub replication.
 
+- Add minimalist Python API and plug-in directory.
+
+- Add simulation library support (for increasingly rich patterns).
+
+- Add visualization tools.
+
+- Add provision to use _PostgreSQL_ in place of _SQLite_ for large data sets.
+
 #### ... after which ...
 
 - Apply what has been learnt here to a re-design/-implementation of _NESTS_.
+
+- Maximize reusability of _SLATE_ components in _NESTS_.
