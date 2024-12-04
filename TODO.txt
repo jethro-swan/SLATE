@@ -1,15 +1,41 @@
-2024-12-03:
+2024-12-04
 
-(1) Add/complete CSV import screen for sandbox payments set.
+#### The next few tasks ...
 
-(2) Add/complete password/PIN recovery screen/code.
+- Add/complete CSV import screen for sandbox payments set.
 
-(3) Add/complete payments export listing (CSV) for *account*.
+- Add/complete CSV import screen for bulk entity creation (sandbox use).
 
-(4) Add/complete payments export listing (CSV) for *currency*.
+- Add/complete password/PIN reset screen/code.
 
-(5) Clean up payments listing for *account* and move to a separate screen.
+- Add/complete invitation QR code generation screen/code.
 
-(6) Clean up payments listing for *currency* and move to a separate screen.
+- Add/complete payments export listing (CSV) for **account**.
 
-(7) Add/complete invitation QR code generation screen/code.
+- Add/complete payments export listing (CSV) for **currency**.
+
+- Add/complete pruning/grafting screen+code.
+
+- Make _private_ **namespace** extensible.
+
+- Permit inclusion of _open_ **namespace** below _private_ **namespace** tree.
+
+- Clean up payments listing for **account** and move to a separate screen.
+
+- Clean up payments listing for **currency** and move to a separate screen.
+
+- Update tables for HTML5 consistency.
+
+- Find a simple, mobile-first, responsive template.
+
+- Add in the parabola plot.
+
+- Complete CLI for SSH use.
+
+- Add REST API.
+
+- Add hub replication.
+
+#### ... after which ...
+
+- Apply what has been learnt here to a re-design/-implementation of _NESTS_.
