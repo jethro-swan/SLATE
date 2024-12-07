@@ -14,7 +14,7 @@ from .fph_hrns_maps import hrns_to_fph, fph_to_hrns, create_maps
 from .fph_hrns_maps import delete_fph_from_map
 from .dbm_functions import dbm_store, dbm_fetch, dbm_delete, dbm_keys
 from .dbm_functions import dbm_create_map
-from .auth import auth_hash, generate_access_token
+from .auth import auth_hash, check_auth_hash, generate_access_token
 from .regexp_list import *
 from .unix_functions import fcopy
 from .cctld_list import *
@@ -351,8 +351,9 @@ def update_primid_contact_details(
 def update_primid_access_details(
         primid_fph,
         password,
-        pin,
-        access_token
+        pin
+#        pin,
+#        access_token
     ):
     errors = ""
     if not re_match(primid_fph):
@@ -378,11 +379,11 @@ def update_primid_access_details(
         update_str += "pin = ?, "
         values_str += pin + ", "
         update_needed = True
-    if access_token and re_access_token.match(access_token):
-        access_token_hash = auth_hash(access_token)
-        update_str += "access_token_hash = ?, "
-        values_str += access_token_hash + ", "
-        update_needed = True
+#    if access_token and re_access_token.match(access_token):
+#        access_token_hash = auth_hash(access_token)
+#        update_str += "access_token_hash = ?, "
+#        values_str += access_token_hash + ", "
+#        update_needed = True
     update_str += "WHERE entity_fph = ?"
     update_str = update_str.replace(", WHERE", " WHERE")
     values_str += ")"
@@ -1833,24 +1834,31 @@ def list_primids(status = "all"):
 
 #==============================================================================
 
-def email_to_primid(email):
+def authenticate_primid_email(primid_fph, email):
     if not re_email.match(email):
-        return ""
+        return False
     with sqlite3.connect(ENTITIES_DB) as conn:
         cursor = conn.cursor()
         cursor.execute(
             """
-            SELECT entity_fph FROM primids
-            WHERE primid_email_1_hash = ? OR primid_email_2_hash = ?
+            SELECT primid_email_1_hash, primid_email_2_hash
+            FROM primids
+            WHERE entity_fph = ?
             """,
-            (email,email)
+            (primid_fph,)
         )
         result = cursor.fetchone()
         cursor.close()
-        if result is not None:
-            return result[0] # *primid* FPH
+        if result is None:
+            return False
+        em1hash = result[0]
+        em2hash = result[1]
+        if check_auth_hash(email, em1hash):
+            return True
+        elif check_auth_hash(email, em2hash):
+            return True
         else:
-            return ""
+            return False
 
 #==============================================================================
 

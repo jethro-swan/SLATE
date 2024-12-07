@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+  <form action="" method="post" novalidate>
+    {{ form.hidden_tag() }}
+    <!-- password -->
+    <p>
+      {{ form.password.label }}<br />
+      {{ form.password(size=32) }}
+      {% for error in form.password.errors %}
+        <span style="color: red;">[{{ error }}]</span>
+      {% endfor %}
+    </p>
+    <p>
+      {{ form.password_repeat.label }}<br />
+      {{ form.password_repeat(size=32) }}
+      {% for error in form.password_repeat.errors %}
+        <span style="color: red;">[{{ error }}]</span>
+      {% endfor %}
+    </p>
+    <!-- PIN -->
+    <p>
+      {{ form.pin.label }}<br />
+      {{ form.pin(size=6) }} Enter a 6-digit memorable PIN.
+      {% for error in form.pin.errors %}
+        <span style="color: red;">[{{ error }}]</span>
+      {% endfor %}
+    </p>
+    <!-- SSH public key -->
+    {% if ssh_public_key_allowed %}
+      <p>
+        {{ form.ssh_pubkey.label }}<br />
+        {{ form.ssh_pubkey(size=42) }}
+      </p>
+    {% endif %}
+    <!-- -->
+    <p>
+      {{ form.submit() }}
+    </p>
+  </form>
+
+  <hr />
+
+{% endblock %}

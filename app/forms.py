@@ -173,21 +173,59 @@ class LoginForm(FlaskForm):
     submit          = SubmitField("log in")
 
 #------------------------------------------------------------------------------
+# This form is used to request a login recovery link:
 
 class LoginRecoveryForm(FlaskForm):
-    identity        = StringField(
+    identity        = StringField( # HRNS or FPH
                         "identity",
                         validators=[DataRequired("required")]
                       )
-    fph             = StringField(
-                        "FPH",
-                        validators=[DataRequired("required")]
-                      )
+#    fph             = StringField(
+#                        "FPH",
+#                        validators=[DataRequired("required")]
+#                      )
     email           = StringField(
                             "email address",
                             validators=[DataRequired("required"), Email()]
                       )
     submit          = SubmitField("send recovery link")
+
+#------------------------------------------------------------------------------
+# This form is reached via the login recovery link requested above. Therefore
+# it duplicates some of the elements of the registration form.
+
+class LoginResetForm(FlaskForm):
+
+    password            = PasswordField(
+                            "password",
+                            validators=[
+                                #DataRequired("required")
+                                InputRequired(),
+                                EqualTo(
+                                    "password_repeat",
+                                    message="Passwords must match"
+                                )
+                            ]
+                          )
+    password_repeat     = PasswordField("repeat password")
+
+    pin                 = PasswordField(
+                            "PIN",
+                            validators=[
+                                DataRequired(),
+                                Length(min=6, max=6)
+                            ]
+                          )
+#    ssh_pubkey          = StringField(
+#                            "SSH public key"
+#                          )
+
+    submit              = SubmitField("register")
+
+
+
+
+
 
 #------------------------------------------------------------------------------
 
@@ -326,7 +364,6 @@ class RegistrationForm(FlaskForm):
                           )
     password_repeat     = PasswordField("repeat password")
 
-    #password        = PasswordField("password", validators=[DataRequired("required")])
     pin                 = PasswordField(
                             "PIN",
                             validators=[

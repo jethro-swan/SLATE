@@ -4,6 +4,7 @@ from pathlib import Path
 import sys
 
 import bcrypt
+from itsdangerous import URLSafeTimedSerializer
 
 #from flask_bcrypt import Bcrypt # 2024-11-10: Try this out to resolve problem
 #                                # with check_auth_hash( )
@@ -26,6 +27,7 @@ from app.core.slate_core import get_currency_specific_properties
 from app.core.slate_core import get_account_specific_properties
 from app.core.slate_core import list_all_namespaces
 from app.core.slate_core import hrns_to_name_and_namespace
+from app.core.slate_core import authenticate_primid_email
 from app.core.regexp_list import re_fph, re_hrns, re_email
 from app.core.slate_login import get_auth_data, register_authenticated_login
 ##from app.core.auth import pin_random_ord, pin_prompt_message
@@ -38,6 +40,7 @@ from app.core.payments import dump_account_payments
 from app.core.display import yesno, integer_to_money_format
 from app.core.csv_import import import_minimal_payment_set_as_csv
 
+from app.site_configuration import site_config
 
 #from app import bcrypt # added 2024-11-10
 
@@ -47,21 +50,30 @@ from app.core.csv_import import import_minimal_payment_set_as_csv
 
 # Flask components: -----------------------------------------------------------
 
-from flask import render_template, flash, redirect, url_for
+from flask import render_template, render_template_string
+from flask import flash, redirect, url_for
+from flask import session, g, request
+#from flask_mailman import Mail, EmailMessage
+from flask_mailman import EmailMessage
 from flask_login import LoginManager, current_user, login_user, logout_user
 from flask_login import login_required
-from flask import session, g, request
 from app import app
+
+from app import mail # from __init__.py
+
 from app.models import User
 from app.forms import LoginForm, RegistrationForm, LoginRecoveryForm
 from app.forms import PaymentToAccountForm, PaymentToIdentityForm
-#from app.forms import PaymentToAccountHRNSForm, PaymentToIdentityHRNSForm
-#from app.forms import PaymentToAccountFPHForm, PaymentToIdentityFPHForm
 from app.forms import CurrencyCreateForm
 from app.forms import AccountCreateForm
 from app.forms import NamespaceCreateForm
 #from app.forms import TQueueForm
 from markupsafe import escape
+
+#------------------------------------------------------------------------------
+
+
+
 
 #------------------------------------------------------------------------------
 # Shared local functions:
@@ -298,7 +310,7 @@ def login():
     if form.validate_on_submit():
 
         agent_identifier = form.identity.data # HRNS or FPH
-        identity_email = form.email.data
+#        identity_email = form.email.data
 
         if (agent_identifier == "") and (email == ""): # neither provided
             flash("Either an identity or an email address must be provided")
@@ -334,33 +346,39 @@ def login():
             else:
                 flash(identity_fph + " is not a registered identity.")
 
-        elif identity_email:
-            if not re_email.match(identity_email):
-                flash("The email address is invalid.")
-                return redirect(url_for("login"))
-            else:
-                identity_fph_from_email = email_to_primid(identity_email)
-                # Returns "" if the email address not mapped to *primid* FPH.
-                if not identity_fph_from_email:
-                    flash("This email address is not registered here.")
-                    return redirect(url_for("login"))
-                else:
-                    primid_has_been_identified_from_email = True
-                    if primid_has_been_identified_from_identity:
-                        if primid_identified_from_email != identity_fph:
-                            flash(
-                                "The email address provided here is not " \
-                                + "consistent with the user identity " \
-                                + "already validated."
-                            )
-                            return redirect(url_for("login"))
-                    else:
-                        identity_fph = identity_fph_from_email
-                        identity_hrns = fph_to_hrns(identity_fph)
-                        flash(
-                            identity_hrns + " = [" + identity_fph + "] has " \
-                            + "been identified from the email address."
-                        )
+## Commented out 2024-12-07 because
+##      email_to_primid(email)
+## replaced by
+##      authenticate_primid_email(primid_fph, email)
+## because the email adress is not stored.
+##
+#        elif identity_email:
+#            if not re_email.match(identity_email):
+#                flash("The email address is invalid.")
+#                return redirect(url_for("login"))
+#            else:
+#                identity_fph_from_email = email_to_primid(identity_email)
+#                # Returns "" if the email address not mapped to *primid* FPH.
+#                if not identity_fph_from_email:
+#                    flash("This email address is not registered here.")
+#                    return redirect(url_for("login"))
+#                else:
+#                    primid_has_been_identified_from_email = True
+#                    if primid_has_been_identified_from_identity:
+#                        if primid_identified_from_email != identity_fph:
+#                            flash(
+#                                "The email address provided here is not " \
+#                                + "consistent with the user identity " \
+#                                + "already validated."
+#                            )
+#                            return redirect(url_for("login"))
+#                    else:
+#                        identity_fph = identity_fph_from_email
+#                        identity_hrns = fph_to_hrns(identity_fph)
+#                        flash(
+#                            identity_hrns + " = [" + identity_fph + "] has " \
+#                            + "been identified from the email address."
+#                        )
         else:
             flash("No valid identifier has been provided.")
             return redirect(url_for("login"))
@@ -437,15 +455,15 @@ def logout():
 
 
 
-# login recovery --------------------------------------------------------------
+# login recovery request ------------------------------------------------------
 @app.route("/login/recover", methods=["GET", "POST"])
 def login_recover():
+    if current_user.is_authenticated: # should be false
+        return redirect(url_for("login"))
+
     page = "login_recovery"
     mode = "logged_out"
-    namespace_steward = True
-    currency_steward = True
-    paying = False
-    logged_in = current_user.is_authenticated # false
+
     form = LoginRecoveryForm()
     if form.validate_on_submit():
         agent_identifier = form.identity.data
@@ -465,63 +483,150 @@ def login_recover():
             return redirect(url_for("login"))
 
         # If control reaches this point, the entity identifier entered has been
-        # identified as a registered *primid*.
-        if not identity_email:
+        # confirmed to be or have a registered *primid*.
+
+        # An valid email address is required in order to send a recovery link:
+        if not agent_email:
             flash("Login recovery is not possible without an email address.")
             return redirect(url_for("login"))
 
-
-
-        elif not re_email.match(identity_email):
-            flash("The email address is invalid.")
+        if not authenticate_primid_email(agent_primid_fph, agent_email):
+            flash(
+                "The email is address " + agent_email + " is not registered " \
+                + "for user " + agent_identifier
+            )
             return redirect(url_for("login"))
-        else:
-            identity_fph_2 = email_to_primid(agent_email)
-            # Returns "" if the email address is not mapped to a *primid*.
-            if not identity_fph_2:
-                flash("This email is not registered here.")
-                return redirect(url_for("login"))
+
         # If control reaches this point, we have a valid email address for the
         # identity entered.
 
-# At this point we need to ...
-# (1) Generate a random recovery token string;
-# (2) hash that string using xxHash128;
-# (3) assemble a URL comprising: address of recovery form + recovery token
-#     e.g. https://locus1.lrc.org.uk?rt=c32ad8d181e8807a54282e817dabe328
-# (4) generate a time limit (e.g. 20 minutes, to accommodate slow email
-#     delivery) and add that to the current Unix timestamp to create a deadline
-#     value;
-# (5) Register that token as the key in a recovery dictionary with the deadline
-#     as the value;
-# (6) flash a message to the user explaining that an email has been sent
-#     containg a time-limited recovery link; and
-# (7) assemble and send the recovery email.
-#
-# When the using clicks on the recovery link, it is taken to the recovery form
-# to enter a new password and PIN. (This for can probably be constructed from
-# parts of the /register form).
-#
-# NB, for (2), use of auth_hash() to take advantage of Bcrypt's salt feature,
-# would make it more challenging to create a "web safe" URL string and is
-# probably not worth the trouble.
+        password_hash, \
+        stored_pin, \
+        access_token_hash, \
+        m = get_auth_data(agent_primid_fph)
+
+        salt = password_hash # Used to invalidate the login reset token once
+                             # the password has been changed. [1]
+
+        serializer = URLSafeTimedSerializer(app.config["SECRET_KEY"])
+        login_reset_token = serializer.dumps(agent_email, salt)
+
+        login_reset_url = url_for(
+                              "login_reset",
+                              token = login_reset_token,
+                              user_id = agent_primid_fph,
+                              _external = True
+                          )
+
+#        from app.templates.login_recovery_message import login_reset_content
+#        message_body = render_template_string(
+#                           login_reset_content,
+#                           login_reset_url=login_reset_url
+#                       )
+
+        message_body = "<p>You have received this message because a login " \
+                     + " recovery link has been requested.</p>" \
+                     + "<p>To reset your password and PIN, <a href=\"" \
+                     + login_reset_url + "\">click here</a>.</p>" \
+                     + "<p>Alternatively, you can paste the following URL " \
+                     + "into your browser's address bar: " + login_reset_url \
+                     + "</p><p>If you have not requested a login recovery " \
+                     + "link, you can ignore this message.</p>"
+
+        connection = mail.get_connection()
+        connection.open()
+        message = EmailMessage(
+                      "Reset your password and PIN",
+                      message_body,
+                      site_config["hub_email_sender"],
+                      [agent_email],
+                      connection = connection
+                  )
+        message.content_subtype = "html"
+        message.send()
+        connection.close()
+
+        flash(
+            "Password/PIN reset instructions have been sent to " + agent_email
+        )
+
 
         return redirect("/login")
 
     return render_template(
                 "login_recovery.html",
                 title="Login recovery",
-                #identity_type=identity_type,
-                #agent_type=agent_type,
-                #identity_fph=identity_fph,
-                #identity_hrns=identity_hrns,
                 form=form,
-                logged_in=logged_in,
                 page=page,
                 mode=mode
            )
 
-# login landing page ----------------------------------------------------------
+# [1] Thanks to https://freelancefootprints.substack.com/p/
+#     yet-another-password-reset-tutorial
+#     for this and many other useful hints and suggestions.)
+
+#==============================================================================
+# login reset
+@app.route("/login/reset/<token>/<user_id>", methods=["GET", "POST"])
+def login_reset():
+    if current_user.is_authenticated: # should be false
+        return redirect(url_for("login"))
+
+    page = "login_reset"
+    mode = "logged_out"
+
+    user = validate_login_reset_token(token, user_id)
+    if not user:
+        flash("Login reset error")
+        redirect("/login")
+
+
+    #primid_fph = user_id
+
+    form = LoginResetForm()
+    if form.validate_on_submit():
+        flash(
+            "Registration submitted for user {}".format(
+                form.password.data,
+                form.password_repeat.data,
+                form.pin.data
+            )
+        )
+        if form.password_repeat.data != form.password.data:
+            flash("The passwords not not match")
+            redirect("/login")
+
+        m = update_primid_access_details(
+                primid_fph,
+                form.password.data,
+                form.pin.data
+            )
+        if m:
+            flash(m)
+            flash("Unable to reset login credentials")
+            redirect("/login")
+        else:
+            flash("Password/PIN reset successful.")
+            redirect("/login")
+
+    return render_template(
+                "login_reset.html",
+                title="User login reset",
+                form=form
+           )
+
+
+
+
+
+
+
+
+
+
+
+#==============================================================================
+# login landing page
 @app.route("/home", methods=["GET", "POST"])
 @login_required
 def home():

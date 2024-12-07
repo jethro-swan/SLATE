@@ -4,10 +4,17 @@ from flask_login import LoginManager
 #from flask_bcrypt import Bcrypt # added 2024-11-10 *
 from flask_bootstrap import Bootstrap
 
+from flask_mailman import Mail
+
 app = Flask(__name__)
 #bcrypt = Bcrypt(app) # added 2024-11-10 *
 app.config.from_object(Config)
 login_manager = LoginManager(app)
+
+mail = Mail(app)
+
+
+
 
 bootstrap = Bootstrap(app)
 
