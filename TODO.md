@@ -14,11 +14,7 @@
 
 - Add/complete invitation QR code generation screen/code.
 
-- Add/complete payments export listing (CSV) for **account**.
-
-- Add/complete payments export listing (CSV) for **currency**.
-
-- Add/complete **namespace** tree pruning/grafting screen+code.
+- Add/complete payments export listing (CSV) for **account** and **currency**.
 
 - Make _private_ **namespace** extensible.
 
@@ -30,11 +26,11 @@
 
 - Add _steward_ to **identity** messaging (via "home" page) - e.g. suspension.
 
-- Add **identity** to _steward_  messaging - e.g. notification about bad actors.
+- Add **identity** to _steward_ messaging - e.g. suspicious activity alert.
 
 - Add/complete _entity_ management screens.
 
-- Update tables for HTML5 consistency.
+- Update tables and other elements for HTML5 consistency.
 
 - Find a simple, mobile-first, responsive template.
 
@@ -50,7 +46,9 @@
 
 - Add simulation library support (for increasingly rich patterns).
 
-- Add visualization tools.
+- Add **namespace** tree visualization tool.
+
+- Add window pop-up support for more detailed display in larger screens.
 
 - Add provision to use _PostgreSQL_ in place of _SQLite_ for large data sets.
 
