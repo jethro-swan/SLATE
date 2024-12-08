@@ -2,6 +2,7 @@ import os
 from pathlib import Path
 from datetime import datetime
 import sys
+from itsdangerous import URLSafeTimedSerializer
 
 # SLATE components: -----------------------------------------------------------
 
@@ -14,6 +15,10 @@ from app.core.fph_hrns_maps import hrns_to_fph
 from app.core.slate_login import register_authenticated_login
 from app.core.slate_login import deregister_authenticated_login
 from app.core.slate_login import check_authenticated_login
+from app.core.slate_login import get_auth_data
+from app.core.auth import check_auth_hash
+
+from app import app
 
 # Flask components: -----------------------------------------------------------
 
@@ -80,6 +85,29 @@ class User(UserMixin):
         return deregistered, m
         #primid_fph, login_id_fph, m = deregister_authenticated_login(self)
         #return primid_fph, login_id_fph
+
+#    @staticmethod
+#    def validate_login_reset_token(token: str, user_id: str):
+#
+#        password_hash, \
+#        stored_pin, \
+#        access_token_hash, \
+#        m = get_auth_data(user_id)
+#
+#        print("SECRET_KEY = " + app.config["SECRET_KEY"])
+#
+#        serializer = URLSafeTimedSerializer(app.config["SECRET_KEY"])
+#        token_user_email = serializer.loads(
+#                               token,
+#                               max_age=app.config["RESET_PASS_TOKEN_MAX_AGE"],
+#                               salt=password_hash
+#                           )
+#
+#        if check_auth_hash(token_user_email, password_hash):
+#            return agent_primid_fph
+#        else:
+#            return None
+
 
 
 

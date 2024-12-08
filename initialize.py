@@ -9,6 +9,7 @@ from app.slate_seed import create_seed_entities, create_quasitld_set
 
 create_maps()
 create_entities_db()
+create_seed_entities()
 tld_fph_list, errors = create_quasitld_set(False)
 
 print("The following seed entities have been created (HRNS):")

@@ -116,7 +116,6 @@ class AccountCreateForm(FlaskForm):
                       )
     create_account   = SubmitField("create account")
 
-
 #------------------------------------------------------------------------------
 
 class NamespaceCreateForm(FlaskForm):
@@ -129,12 +128,6 @@ class NamespaceCreateForm(FlaskForm):
                        validators=[DataRequired("required")]
                       )
     create_namespace = SubmitField("create namespace")
-
-
-
-#------------------------------------------------------------------------------
-
-
 
 #------------------------------------------------------------------------------
 

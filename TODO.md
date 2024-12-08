@@ -30,6 +30,8 @@
 
 - Add/complete _entity_ management screens.
 
+- Separate endpoint code into multiple files (as blueprints).
+
 - Update tables and other elements for HTML5 consistency.
 
 - Find a simple, mobile-first, responsive template.

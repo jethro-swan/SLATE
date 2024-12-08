@@ -18,6 +18,7 @@ from app.core.fph_hrns_maps import hrns_exists_already
 from app.core.slate_core import get_entity_type, get_account_currency
 from app.core.slate_core import identify_entity, get_primid
 from app.core.slate_core import new_primid, new_secid
+from app.core.slate_core import update_primid_access_details
 from app.core.slate_core import new_namespace, new_currency
 from app.core.slate_core import new_account
 from app.core.slate_core import list_stewardships, list_stewards
@@ -37,6 +38,8 @@ from app.core.logging import log_event
 from app.core.payments import payment
 from app.core.payments import dump_account_payments
 
+from app.core.mail_temp import temp_mail_send
+
 from app.core.display import yesno, integer_to_money_format
 from app.core.csv_import import import_minimal_payment_set_as_csv
 
@@ -54,15 +57,16 @@ from flask import render_template, render_template_string
 from flask import flash, redirect, url_for
 from flask import session, g, request
 #from flask_mailman import Mail, EmailMessage
-from flask_mailman import EmailMessage
+#from flask_mailman import EmailMessage
 from flask_login import LoginManager, current_user, login_user, logout_user
 from flask_login import login_required
 from app import app
 
-from app import mail # from __init__.py
+#from app import mail # from __init__.py
 
 from app.models import User
-from app.forms import LoginForm, RegistrationForm, LoginRecoveryForm
+from app.forms import LoginForm, RegistrationForm
+from app.forms import LoginRecoveryForm, LoginResetForm
 from app.forms import PaymentToAccountForm, PaymentToIdentityForm
 from app.forms import CurrencyCreateForm
 from app.forms import AccountCreateForm
@@ -505,51 +509,48 @@ def login_recover():
         access_token_hash, \
         m = get_auth_data(agent_primid_fph)
 
-        salt = password_hash # Used to invalidate the login reset token once
-                             # the password has been changed. [1]
-
+#        token_salt = password_hash  # Used to invalidate the login reset token
+                                    # once the password has been changed. [1]
+#        reset_token_data = {
+#                               "agent_primid_fph" : agent_primid_fph,
+#                               "agent_email" : agent_email
+#                           }
+        reset_token_data = agent_primid_fph
         serializer = URLSafeTimedSerializer(app.config["SECRET_KEY"])
-        login_reset_token = serializer.dumps(agent_email, salt)
-
+        login_reset_token = serializer.dumps(
+                                           agent_primid_fph,
+                                           salt = password_hash
+                                       )
         login_reset_url = url_for(
                               "login_reset",
-                              token = login_reset_token,
                               user_id = agent_primid_fph,
+                              token = login_reset_token,
                               _external = True
                           )
+#        login_reset_url = url_for("login_reset") \
+#                        + "/" + agent_primid_fph + "/" + login_reset_token
 
-#        from app.templates.login_recovery_message import login_reset_content
-#        message_body = render_template_string(
-#                           login_reset_content,
-#                           login_reset_url=login_reset_url
-#                       )
+        print(login_reset_token)
+        print(login_reset_url)
 
-        message_body = "<p>You have received this message because a login " \
-                     + " recovery link has been requested.</p>" \
-                     + "<p>To reset your password and PIN, <a href=\"" \
-                     + login_reset_url + "\">click here</a>.</p>" \
-                     + "<p>Alternatively, you can paste the following URL " \
-                     + "into your browser's address bar: " + login_reset_url \
-                     + "</p><p>If you have not requested a login recovery " \
-                     + "link, you can ignore this message.</p>"
+        message_body = "You have received this message because a login " \
+                     + " recovery link has been requested.\n" \
+                     + "\nTo reset your password and PIN, click on:\n" \
+                     + login_reset_url + " (or copy and paste it into your " \
+                     + "browser's address bar.\n\n" \
+                     + "\nIf you have not requested a login recovery " \
+                     + "link, you can ignore this message.\n\n"
 
-        connection = mail.get_connection()
-        connection.open()
-        message = EmailMessage(
-                      "Reset your password and PIN",
-                      message_body,
-                      site_config["hub_email_sender"],
-                      [agent_email],
-                      connection = connection
-                  )
-        message.content_subtype = "html"
-        message.send()
-        connection.close()
+        temp_mail_send(
+            "server@lrc.org.uk",
+            agent_email,
+            "Reset your password and PIN",
+            message_body
+        )
 
         flash(
             "Password/PIN reset instructions have been sent to " + agent_email
         )
-
 
         return redirect("/login")
 
@@ -567,37 +568,59 @@ def login_recover():
 
 #==============================================================================
 # login reset
-@app.route("/login/reset/<token>/<user_id>", methods=["GET", "POST"])
-def login_reset():
+@app.route("/login/reset/<user_id>/<token>", methods=["GET", "POST"])
+def login_reset(user_id, token):
     if current_user.is_authenticated: # should be false
         return redirect(url_for("login"))
 
     page = "login_reset"
     mode = "logged_out"
 
-    user = validate_login_reset_token(token, user_id)
-    if not user:
-        flash("Login reset error")
+    identity_fph, \
+    identity_hrns, \
+    identity_type, \
+    m = identify_entity(user_id) # from URL slug
+
+    password_hash, \
+    stored_pin, \
+    access_token_hash, \
+    m = get_auth_data(user_id) # from URL slug
+
+    print(
+        "SECRET_KEY = " \
+        + app.config["SECRET_KEY"]
+    )
+    print(
+        "RESET_PASS_TOKEN_MAX_AGE = " \
+        + str(app.config["RESET_PASS_TOKEN_MAX_AGE"])
+    )
+
+    serializer = URLSafeTimedSerializer(app.config["SECRET_KEY"])
+    reset_token_data = serializer.loads(
+                            token,
+                            #max_age = 900,
+                            #max_age = app.config["RESET_PASS_TOKEN_MAX_AGE"],
+                            salt = password_hash
+                        )
+    print(type(reset_token_data))
+    print(reset_token_data)
+
+#    if reset_token_data["agent_primid_fph"] != identity_fph:
+    if reset_token_data != identity_fph:
+        flash("Login reset token error")
         redirect("/login")
 
-
-    #primid_fph = user_id
+    print("user_id = " + user_id + " > " + fph_to_hrns(user_id))
 
     form = LoginResetForm()
     if form.validate_on_submit():
-        flash(
-            "Registration submitted for user {}".format(
-                form.password.data,
-                form.password_repeat.data,
-                form.pin.data
-            )
-        )
+        flash("Registration submitted for user " + fph_to_hrns(user_id))
         if form.password_repeat.data != form.password.data:
             flash("The passwords not not match")
             redirect("/login")
 
         m = update_primid_access_details(
-                primid_fph,
+                identity_fph,
                 form.password.data,
                 form.pin.data
             )
@@ -612,6 +635,7 @@ def login_reset():
     return render_template(
                 "login_reset.html",
                 title="User login reset",
+                identity_hrns=identity_hrns,
                 form=form
            )
 

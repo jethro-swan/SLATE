@@ -356,7 +356,7 @@ def update_primid_access_details(
 #        access_token
     ):
     errors = ""
-    if not re_match(primid_fph):
+    if not re_fph.match(primid_fph):
         errors += primid_fph + " is not an FPH\n"
         return errors
     etype, m = get_entity_type(primid_fph)
@@ -366,33 +366,34 @@ def update_primid_access_details(
         errors += primid_fph + " is not a primid\n"
         return errors
     update_needed = False
-    update_str = "UPDATE primids SET "
-    values_str = "("
     if password:
         password_hash = auth_hash(password)
-        update_str += "password_hash = ?, "
-        values_str += password_hash + ", "
-        update_needed = True
     else:
-        errors += password + " is not a valid password"
-    if pin and re_pin.match(pin):
-        update_str += "pin = ?, "
-        values_str += pin + ", "
-        update_needed = True
-#    if access_token and re_access_token.match(access_token):
-#        access_token_hash = auth_hash(access_token)
-#        update_str += "access_token_hash = ?, "
-#        values_str += access_token_hash + ", "
-#        update_needed = True
-    update_str += "WHERE entity_fph = ?"
-    update_str = update_str.replace(", WHERE", " WHERE")
-    values_str += ")"
-    values_str = values_str.replace(", )", ")") # remove the final comma
+        errors += "No password provided\n"
+        return errors
+    if not (pin and re_pin.match(pin)):
+        errors += "PIN value invalid"
+        return errors
+
     with sqlite3.connect(ENTITIES_DB) as conn:
         cursor = conn.cursor()
-        cursor.execute(update_str, values_str)
+        cursor.execute(
+                   """
+                   UPDATE primids
+                   SET password_hash = ?,
+                       pin = ?
+                   WHERE entity_fph = ?
+                   """,
+                   (
+                       password_hash,
+                       pin,
+                       primid_fph
+                   )
+               )
+
         conn.commit()
         cursor.close()
+
     return errors
 
 #==============================================================================
