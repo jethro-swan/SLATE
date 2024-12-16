@@ -52,9 +52,11 @@ def entity_type_verbose(etype):
     if not (etype in ["namespace", "currency", "account", "primid", "secid"]):
         return ""
     if etype == "primid":
-        return "primary identity"
+        return "login identity"
+        #return "primary identity"
     if etype == "secid":
-        return "secondary identity"
+        return "alias"
+        #return "secondary identity"
     else:
         return etype
 

@@ -378,17 +378,10 @@ def update_primid_access_details(
     with sqlite3.connect(ENTITIES_DB) as conn:
         cursor = conn.cursor()
         cursor.execute(
-                   """
-                   UPDATE primids
-                   SET password_hash = ?,
-                       pin = ?
-                   WHERE entity_fph = ?
-                   """,
-                   (
-                       password_hash,
-                       pin,
-                       primid_fph
-                   )
+                   "UPDATE primids " + \
+                   "SET password_hash = ?, pin = ? " + \
+                   "WHERE entity_fph = ?",
+                   (password_hash, pin, primid_fph)
                )
 
         conn.commit()
@@ -969,25 +962,28 @@ def list_primid_accounts(primid_fph):
             (primid_fph,)
         )
         result = cursor.fetchone()
-    if result is None:
-        accounts_fph_list = []
-        accounts_fph_blob = pickle.dumps(accounts_fph_list)
-        cursor.execute(
-            """
-            UPDATE primids
-            SET accounts_fph_list = ?
-            WHERE entity_fph = ?
-            """,
-            (accounts_fph_blob, primid_fph)
-        )
-        conn.commit()
-        cursor.close()
-        return [], "Primid " + fph_to_hrns(primid_fph) + " has no accounts."
-    else:
-        cursor.close()
-        accounts_fph_blob = result[0]
-        accounts_fph_list = pickle.loads(accounts_fph_blob)
-        return accounts_fph_list, ""    # list + message
+        if result is None:
+            accounts_fph_list = []
+            accounts_fph_blob = pickle.dumps(accounts_fph_list)
+            cursor.execute(
+                """
+                UPDATE primids
+                SET accounts_fph_list = ?
+                WHERE entity_fph = ?
+                """,
+                (accounts_fph_blob, primid_fph)
+            )
+            conn.commit()
+            cursor.close()
+            return [], "Primid " + fph_to_hrns(primid_fph) + " has no accounts."
+        else:
+            cursor.close()
+            accounts_fph_blob = result[0]
+            accounts_fph_list = pickle.loads(accounts_fph_blob)
+
+            print(accounts_fph_list)
+
+    return accounts_fph_list, ""    # list + message
 
 #==============================================================================
 ## List the *secid*'s accounts: #
@@ -1022,7 +1018,10 @@ def list_secid_accounts(secid_fph):
             cursor.close()
             accounts_fph_blob = result[0]
             accounts_fph_list = pickle.loads(accounts_fph_blob)
-            return accounts_fph_list, ""    # list + message
+
+            print(accounts_fph_list)
+
+        return accounts_fph_list, ""    # list + message
 
 #==============================================================================
 ##
@@ -1032,30 +1031,16 @@ def list_secid_accounts(secid_fph):
 def list_agent_accounts(agent_fph):
 
     etype, m = get_entity_type(agent_fph)
-    if m:
-        return [], m
+
     if etype == "primid":
-        table = " primids "
+        accounts_fph_list, m = list_primid_accounts(agent_fph)
     elif etype == "secid":
-        table = " secids "
+        accounts_fph_list, m = list_secid_accounts(agent_fph)
     else:
-        return [], agent_fph + " is neither primid nor secid but " + etype
+        accounts_fph_list = []
+        m = agent_fph + " is not and identity of either type"
 
-    sstr = "SELECT accounts_fph_list FROM" + table + "WHERE entity_fph = ?"
-
-    with sqlite3.connect(ENTITIES_DB) as conn:
-        cursor = conn.cursor()
-        cursor.execute(sstr, (agent_fph,))
-        result = cursor.fetchone()
-        if result is None:
-            accounts_fph_list = []
-        else:
-            accounts_fph_blob = result[0]
-            accounts_fph_list = pickle.loads(accounts_fph_blob)
-            conn.commit()
-        cursor.close()
-
-    return accounts_fph_list, ""    # list + message
+    return accounts_fph_list, m    # list + message
 
 
 #==============================================================================
@@ -1182,6 +1167,28 @@ def list_secid_currencies(secid_fph): # in which an primid has accounts
     for account_fph in accounts_fph_list:
         currencies_fph_list.append(get_account_currency(account_fph))
     return currencies_fph_list    # list
+
+
+
+
+
+def list_agent_currencies(agent_identifier):
+
+    agent_fph, \
+    agent_hrns, \
+    etype, \
+    m = identify_entity(agent_identifier)
+
+    if etype == "primid":
+        return list_primid_currencies(agent_fph)
+    elif etype == "secid":
+        return list_secid_currencies(agent_fph)
+
+
+
+
+
+
 
 
 #==============================================================================
@@ -1341,6 +1348,7 @@ def list_currencies_in_common_by_hrns(a1_fph, a2_fph):
 def identify_entity(entity_identifier): # HRNS or FPH
     if not isinstance(entity_identifier, str):
         return "", "", "", "Invalid identifier.\n"
+    entity_identifier =  entity_identifier.strip()
     if re_fph.match(entity_identifier): # this is an FPH
         entity_fph = entity_identifier.strip()
         #entity_hrns = fph_to_hrns(entity_fph).strip()
@@ -1371,6 +1379,8 @@ def identify_entity(entity_identifier): # HRNS or FPH
 ##
 
 def get_account_specific_properties(account_fph):
+
+    print("account = " + account_fph + " > " + fph_to_hrns(account_fph))
 
     with sqlite3.connect(ENTITIES_DB) as conn:
         cursor = conn.cursor()

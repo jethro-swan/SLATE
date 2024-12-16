@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<h3>Select the account from which to pay</h3>
+
+
+
+{% if payer_has_accounts_available %}
+<p>
+  Paying to <b>account</b>
+  <span class="dark-red-bold">{{ payee_account_hrns }}</span>
+  (in <b>currency</b>
+  <span class="dark-red-bold">{{ specified_currency_hrns }}</span>)
+</p>
+<table>
+  <tr>
+    <th>account</th>
+    <th>balance</th>
+  </tr>
+  {% for payer_account in payer_usable_accounts %}
+  <tr>
+    <td style="font-weight:bold;">
+      <a href="/account/{{ payer_account.fph }}/{{ payee_account_fph }}">
+        {{ payer_account.hrns }}
+      </a>
+    </td>
+    {% if payer_account.isneg %}
+    <td class="balneg" align="right">
+    {% else %}
+    <td class="balpos" align="right">
+    {% endif %}
+    <b>{{ payer_account.balance }}</b>
+    </td>
+  </tr>
+  {% endfor %}
+</table>
+<hr />
+{% else %}
+<p>
+  You have no <b>accounts</b> in <b>currency</b>
+  <span class="dark-red-bold">{{ specified_currency_hrns }}</span>
+  so you cannot make a payment to <b>account</b>
+  <span class="dark-red-bold">{{ payee_account_hrns }}</span>
+</p>
+{% endif %}
+
+<br /><br />
+<p class="shout">
+  Not yet fully implemented
+</p>
+
+{% endblock %}

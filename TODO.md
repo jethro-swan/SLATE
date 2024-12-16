@@ -1,40 +1,48 @@
-2024-12-04
+2024-12-09
 
-#### The next few tasks ...
+###### The next few screens to be added ...
 
-- Add/complete CSV import screen for sandbox payments set.
-
-- Add/complete CSV import screen for bulk entity creation (sandbox use).
-
-- Add/complete password/PIN reset screen/code.
-
-- Add/complete **identities** screen.
-
-- Add/complete _stewardships_ listing/management screen.
-
-- Add/complete invitation QR code generation screen/code.
+- Add/complete screen for **identity**-to-**identity** payment.
 
 - Add/complete payments export listing (CSV) for **account** and **currency**.
 
-- Make _private_ **namespace** extensible.
+- Add/complete **primid** self-managemnt screens/endpoints/code.
 
-- Permit inclusion of _open_ **namespace** below _private_ **namespace** tree.
+- Add/complete **identities** screen.
+
+- Add/complete invitation QR code generation screen/code.
 
 - Clean up payments listing for **account** and move to a separate screen.
 
 - Clean up payments listing for **currency** and move to a separate screen.
 
-- Add _steward_ to **identity** messaging (via "home" page) - e.g. suspension.
+- Add _steward_-to-**identity** messaging (via "home" page) - e.g. suspension.
 
-- Add **identity** to _steward_ messaging - e.g. suspicious activity alert.
+- Add **identity**-to-_steward_ messaging - e.g. suspicious activity alert.
 
 - Add/complete _entity_ management screens.
 
-- Separate endpoint code into multiple files (as blueprints).
+- Add/complete _stewardships_ listing/management screen.
+
+- Add/complete CSV import screen for sandbox payments set.
+
+- Add/complete CSV import screen for bulk entity creation (sandbox use).
+
+###### .. which require also ...
+
+- Make _private_ **namespace** extensible.
+
+- Permit inclusion of _open_ **namespace** below _private_ **namespace** tree.
+
+###### ... then ...
 
 - Update tables and other elements for HTML5 consistency.
 
 - Find a simple, mobile-first, responsive template.
+
+- Separate endpoint code into multiple files (as blueprints).
+
+###### ... and later ...
 
 - Add in the parabola plot.
 
@@ -54,7 +62,7 @@
 
 - Add provision to use _PostgreSQL_ in place of _SQLite_ for large data sets.
 
-#### ... after which ...
+###### ... after which ...
 
 - Apply what has been learnt here to a re-design/-implementation of _NESTS_.
 

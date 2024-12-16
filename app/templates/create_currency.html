@@ -27,6 +27,10 @@
     {{ form.suffix_symbol.label }}<br />
     {{ form.suffix_symbol(size=1) }} (any UTF-8 character)
   </div>
+  <div style="float:left; margin:2px;">
+    {{ form.default_account_name.label }}<br />
+    {{ form.default_account_name(size=12, placeholder="default name") }}
+  </div>
   <div>
     <p>
       {{ form.acct_same_name }} {{ form.acct_same_name.label }}

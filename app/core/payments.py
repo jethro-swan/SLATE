@@ -140,8 +140,8 @@ def payment(payer_fph, payee_fph, amount, annotation):
 
 
 # TEMPORARY FAKE pending relocation to Flask SWI code:
-def url_for(whatever):
-    return ""
+#def url_for(whatever):
+#    return ""
 
 def list_currencies_in_common_as_html(a1_fph, a2_fph):
     print("<ul>")

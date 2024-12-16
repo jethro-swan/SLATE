@@ -55,6 +55,25 @@
       <a class="mb" href="/logout">logout</a>
     </div>
 
+    {% if page == "secids" %}
+      <div class="mba">identities</div>
+    {% else %}
+      <div class="mb">
+        <a class="mb" href="/secids/{{ identity_fph }}">identities</a>
+      </div>
+    {% endif %}
+
+    {% if page == "stewardships" %}
+      <div class="mba">stewardships</div>
+    {% else %}
+      <div class="mb">
+        <a class="mb" href="/stewardships/{{ identity_fph }}">stewardships</a>
+      </div>
+    {% endif %}
+
+
+
+
   {% endif %}<!-- logged_in -->
 
   {% if page == "help" %}
@@ -99,22 +118,15 @@
 
     {% if current_user.is_authenticated %}
 
-    {% if page == "secids" %}
-      <div class="mba">identities</div>
+    {% if page == "pay_account" %}
+      <div class="mba">make a payment to an account</div>
     {% else %}
       <div class="mb">
-        <a class="mb" href="/secids/{{ identity_fph }}">identities</a>
+        <a class="mb" href="/pay_to_account">
+          make a payment to an account
+        </a>
       </div>
     {% endif %}
-
-    {% if page == "stewardships" %}
-      <div class="mba">stewardships</div>
-    {% else %}
-      <div class="mb">
-        <a class="mb" href="/stewardships/{{ identity_fph }}">stewardships</a>
-      </div>
-    {% endif %}
-
 
     {% endif %}
 

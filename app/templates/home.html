@@ -11,16 +11,26 @@
   <table>
     <tr>
       <th>account</th>
-      <th>currency</th>
-      <th>balance</th>
       <th>unit</th>
+      <th>balance</th>
+      <th>currency</th>
     </tr>
   {% for account in identity.accounts %}
     <tr>
       <td align="left">
-        <a href="/account/{{ account.fph }}">
+        <a href="/account/{{ account.fph }}/none">
           <strong>{{ account.hrns }}</strong>
         </a>
+      </td>
+      <td>
+        {{ account.prefix }}{{ account.suffix }}
+      </td>
+      {% if account.isneg %}
+      <td align="right" class="balneg">
+      {% else %}
+      <td align="right" class="balpos">
+      {% endif %}
+        <strong>{{ account.balance }}</strong>
       </td>
       <td align="left">
         {% if account.primid_currency_steward %}
@@ -30,16 +40,6 @@
         {% else %}
           <strong>{{ account.currency_hrns }}</strong>
         {% endif %}
-      </td>
-      {% if account.isneg %}
-      <td align="right" class="balneg">
-      {% else %}
-      <td align="right" class="balpos">
-      {% endif %}
-        <strong>{{ account.balance }}</strong>
-      </td>
-      <td>
-        {{ account.prefix }}{{ account.suffix }}
       </td>
     </tr>
   {% endfor %}

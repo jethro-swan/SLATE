@@ -4,29 +4,29 @@
 
   <table border="0">
     <tr valign="top">
-      <td colspan=""><strong>account</strong></td>
+      <td colspan=""><b>account</b></td>
       <td colspan="2">
         <a href="/account_details/{{ payer_account_fph }}">
-          <strong>{{ payer_account_hrns }}</strong>
+          <b>{{ payer_account_hrns }}</b>
         </a>
       </td>
     </tr>
     <tr valign="top">
-      <td><strong>currency</strong></td>
+      <td><b>currency</b></td>
       <td colspan="2">
         <a href="/currency_details/{{ currency_fph }}">
-          <strong>{{ currency_hrns }}</strong>
+          <b>{{ currency_hrns }}</b>
         </a>
       </td>
     </tr>
     <tr valign="top">
-      <td><strong>balance</strong></td>
+      <td><b>balance</b></td>
       {% if account_balance_is_negative %}
       <td align="right" class="balneg">
       {% else %}
       <td align="right" class="balpos">
       {% endif %}
-        <strong>{{ account_balance }}</strong>
+        <b>{{ account_balance }}</b>
       </td>
       <td align="right">
         {{ currency_prefix }}{{ currency_suffix }}
@@ -34,16 +34,25 @@
     </tr>
   </table>
   <hr />
-  <p>
-    Make a payment from this <strong>account</strong> to another in the same
-    <strong>currency</strong>.
+  <div class="footnote">
+    You can use this form to make a payment from this <b>account</b> to another
+    in the same <b>currency</b>.
+  </div>
+  <p class="footnote">
+    (If you know only the <b>account</b> to which you need to pay, you can
+    <a href="/pay/account">do that directly</a>.)
   </p>
+  <br /><br />
   <form action="" method="post" novalidate>
   {{ form.hidden_tag() }}
-  <p>
-    {{ form.to_account_id.label }} (HRNS or FPH)<br />
-    {{ form.to_account_id(size=32) }}
-  </p>
+  {% if payee_account_hrns %}
+    Paying to <span class="dark-red-bold">{{ payee_account_hrns }}</span>
+  {% else %}
+    <p>
+      {{ form.to_account_id.label }} (HRNS or FPH)<br />
+      {{ form.to_account_id(size=32) }}
+    </p>
+  {% endif %}
   <p>
     {{ form.amount.label }}<br />
     <!--
@@ -63,7 +72,6 @@
       size="10"
       placeholder="Enter a payment value here"
     />
-
   </p>
   <p>
     {{ form.annotation.label }}<br />

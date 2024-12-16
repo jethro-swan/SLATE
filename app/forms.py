@@ -23,7 +23,7 @@ from wtforms.validators import Length, EqualTo
 
 #class PaymentToAccountForm(Form):
 class PaymentToAccountForm(FlaskForm):
-    to_account_id   = StringField("account identifier")
+    to_account_id   = StringField("payee account identifier")
     amount          = StringField(
     #amount          = DecimalField(
     #amount          = FloatField(
@@ -34,6 +34,20 @@ class PaymentToAccountForm(FlaskForm):
                       )
     annotation      = TextAreaField("annotation")
     submit          = SubmitField("pay")
+
+
+class SpecifyPayeeAccountForm(FlaskForm):
+    # This form is used to acquire the payee *account* so a list of suitable
+    # payer *accounts* (those in the same *currency*) can be generated from
+    # which one can be selected before control is passed to the page handling
+    # the /account/<account_fph> endpoint (using the PaymentToAccountForm( )
+    # form above,
+    to_account_id   = StringField(
+                        "payee account identifier",
+                        validators=[DataRequired("required")]
+                      )
+    submit          = SubmitField("list the accounts from which you can pay")
+
 
 
 
@@ -89,6 +103,9 @@ class CurrencyCreateForm(FlaskForm):
                         "Use identities' namespace for initial accounts.",
                         default="checked"
                       )
+    default_account_name = StringField(
+                             "Default name for accounts in this currency."
+                           )
     acct_immdt_crtn = BooleanField(
                         "Allow immediate creation of an account.",
                         default="checked"

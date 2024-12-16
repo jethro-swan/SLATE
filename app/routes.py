@@ -71,6 +71,7 @@ from app.forms import PaymentToAccountForm, PaymentToIdentityForm
 from app.forms import CurrencyCreateForm
 from app.forms import AccountCreateForm
 from app.forms import NamespaceCreateForm
+from app.forms import SpecifyPayeeAccountForm
 #from app.forms import TQueueForm
 from markupsafe import escape
 
@@ -117,7 +118,7 @@ development_mode = False
 # registration ----------------------------------------------------------------
 @app.route("/register", methods=["GET", "POST"])
 def register():
-    page = "register"
+    #page = "register"
     # In a typical situation where the new user is invited (via QR-coded link)
     # to register, it is likely that both the currency and a geographically
     # appropriate user namespace will be specified. However, that will not
@@ -758,7 +759,7 @@ def home():
 #    print("secids for " + fph_to_hrns(identity_fph))
     for secid_fph in secid_list:
         if secid_fph != "":
-            print(secid_fph + " :: " + fph_to_hrns(secid_fph))
+#            print(secid_fph + " :: " + fph_to_hrns(secid_fph))
             secid = {}
             secid["fph"] = secid_fph
             secid["hrns"] = fph_to_hrns(secid_fph)
@@ -769,7 +770,7 @@ def home():
 #    print("stewardships for " + fph_to_hrns(identity_fph))
     for stewardship_fph in stewardships_list:
         if stewardship_fph != "":
-            print(stewardship_fph + " :: " + fph_to_hrns(stewardship_fph))
+#            print(stewardship_fph + " :: " + fph_to_hrns(stewardship_fph))
             stewardship = {}
             entity_fph, \
             entity_hrns, \
@@ -803,13 +804,31 @@ def home():
             )
 
 # account details page --------------------------------------------------------
-@app.route("/account/<account_fph>", methods=["GET", "POST"])
+
+# Note:
+#
+# Change endpoint from
+#   /account/<account_fph>
+# to
+#   /pay/account/<account_fph>
+# and (possibly) change
+#   def account(account_fph)
+# to
+#   def pay_account(account_fph)
+# (although that may introduce complications, so don't leap without looking
+# very thoroughly).
+#
+# Also dd
+#   /pay/identity
+# or
+#   /pay_identity
+
+@app.route("/account/<payer_account_fph>/<payee_account_fph>",
+           methods=["GET", "POST"])
 @login_required
-def account(account_fph):
-#def account(account_fph=None):
+def account(payer_account_fph, payee_account_fph):
     page = "account"
     group = "home"
-    paying = False
     logged_in = current_user.is_authenticated
 
     # The *primid* (or its alias *secid*) logged in currently:
@@ -819,30 +838,45 @@ def account(account_fph):
     # (This uses the identify_entity( ) function:)
     identity_type = fph_to_display_type(identity_fph)
 
-    # If an *account* has been specified (by FPH) in the URL slug
+    # If a payer *account* has been specified (by FPH) in the URL slug
     payer_account_fph, \
     payer_account_hrns, \
     etype, \
-    m = identify_entity(account_fph)
+    m = identify_entity(payer_account_fph)
     if m:
         flash(m)
 
-    if not account_fph:
+    if not payer_account_fph:
         flash("The FPH in the URL cannot be identified.")
         return redirect("/account")
     elif etype != "account":
         flash("The FPH in the URL does not identify an account.")
-#        return redirect("/home")
+        return redirect("/home")
+
+    payee_account_known = False
+    if payee_account_fph != "none":
+        # If a payee *account* has been specified (by FPH) in the URL slug
+        payee_account_fph, \
+        payee_account_hrns, \
+        etype, \
+        m = identify_entity(payee_account_fph)
+        if m:
+            flash(m)
+        if payee_account_fph:
+            payee_account_known = True
+        else:
+            payee_account_fph = ""
+            payee_account_hrns = ""
 
     payer_currency_fph, \
     payer_owner_fph, \
     payer_balance, \
     m = get_account_specific_properties(payer_account_fph)
 
-    print(
-        "payer_owner_fph = " + payer_owner_fph + "\n" + \
-        "identity_fph    = " + identity_fph
-    )
+#    print(
+#        "payer_owner_fph = " + payer_owner_fph + "\n" + \
+#        "identity_fph    = " + identity_fph
+#    )
 
     if m:
         flash(m)
@@ -871,7 +905,7 @@ def account(account_fph):
     form = PaymentToAccountForm()
     if form.validate_on_submit():
 
-        payee_identifier = form.to_account_id.data # HRNS or FPH
+        payee_account_identifier = form.to_account_id.data # HRNS or FPH
         #payee_identifier = form.payee_account_identifier.data # HRNS or FPH
 #        amount = int(form.amount.data)
         amount_entered = form.amount.data
@@ -885,17 +919,21 @@ def account(account_fph):
 #        print("amount               = " + str(amount))
 #        print("annotation           = " + annotation)
 
-        payee_account_fph, \
-        payee_account_hrns, \
-        etype, \
-        m = identify_entity(payee_identifier)
+        if (payee_account_identifier is not None) and payee_account_identifier:
+            payee_account_fph, \
+            payee_account_hrns, \
+            etype, \
+            m = identify_entity(payee_account_identifier)
 
-        if m:
-            print("m                = " + m)
+            if m:
+                print("m                = " + m)
 
-        if etype != "account":
-            flash(payee_id + " is not an account")
-            return redirect("/account/" + payer_account_fph)
+            if etype != "account":
+                flash(payee_account_identifier + " is not an account")
+                return redirect("/account/" + payer_account_fph)
+
+
+
 
 #        print("payee_account_fph    = " + payee_account_fph)
 #        print("payee_account_hrns   = " + payee_account_hrns)
@@ -917,7 +955,9 @@ def account(account_fph):
                 + "payee account  " + payee_account_hrns \
                 + "  are not in the same currency."
             )
-            return redirect("/account/" + payer_account_fph)
+            return redirect(
+                       "/account/" + payer_account_fph + payer_account_fph
+                   )
 
 #        print("payee balance before payment = " + str(payee_balance))
 #        print("payer balance before payment = " + str(payer_balance))
@@ -945,21 +985,21 @@ def account(account_fph):
 #        print("payee balance after payment = " + str(payee_balance))
 #        print("payer balance after payment = " + str(payer_balance))
 
-
-
         flash(
             "Payment submitted: " \
             + currency_prefix \
             + integer_to_money_format(amount) \
             + currency_suffix
         )
-        #return redirect("/home")
-        return redirect("/account/" + payer_account_fph)
+        return redirect("/home")
+#        return redirect("/account/" + payer_account_fph)
 
         #payer_balance = integer_to_money_format(payer_balance)
+#    else:
+#        payee_account_fph = "none"
+#        payee_account_hrns = "none"
 
     return render_template(
-                #"home_account_details.html",
                 "account.html",
                 title="Account",
                 form=form,
@@ -970,18 +1010,167 @@ def account(account_fph):
                 identity_hrns=identity_hrns,
                 payer_account_fph=payer_account_fph,
                 payer_account_hrns=payer_account_hrns,
+                payee_account_known=payee_account_known,
+                payee_account_fph=payee_account_fph,
+                payee_account_hrns=payee_account_hrns,
                 account_balance=integer_to_money_format(payer_balance),
                 account_balance_is_negative=account_balance_is_negative,
-                #development_mode=development_mode,
                 logged_in=logged_in,
-                currency_prefix=currency_prefix,    # just added
-                currency_suffix=currency_suffix,    # just added
-                currency_fph=currency_fph,          # just added
-                currency_hrns=currency_hrns,        # just added
-                #account_fph=account_fph,            # just added
-                #account_hrns=account_hrns,          # just added
-                payer_balance=payer_balance     # just added
+                currency_prefix=currency_prefix,
+                currency_suffix=currency_suffix,
+                currency_fph=currency_fph,
+                currency_hrns=currency_hrns,
+                payer_balance=payer_balance
            )
+
+
+#==============================================================================
+#
+@app.route("/pay_to_account", methods=["GET", "POST"])
+@login_required
+def pay_account():
+
+    print("Splat....")
+    page = "pay_account"
+    group = "home"
+    logged_in = current_user.is_authenticated
+
+    # The *primid* (or its alias *secid*) logged in currently:
+    identity_fph = current_user.get_id()
+    identity_hrns = fph_to_hrns(identity_fph)
+    identity_type = fph_to_display_type(identity_fph)
+
+    form = SpecifyPayeeAccountForm()
+    if form.validate_on_submit():
+
+        print("Boinggggg...")
+
+        payee_account_fph, \
+        payee_account_hrns, \
+        etype, \
+        m = identify_entity(form.to_account_id.data) # HRNS or FPH
+        if m:
+            flash(m)
+            return redirect("/pay_to_account")
+        if payee_account_fph == "":
+            print("Aaarrggggggghhhh...")
+            return redirect("/pay_to_account")
+
+        return redirect("/select_payer_account/" + payee_account_fph)
+
+    return render_template(
+                "pay_to_account.html",
+                title="Make a payment to an account",
+                page=page,
+                group=group,
+                form=form,
+                logged_in=logged_in,
+                identity_type=identity_type,
+                identity_fph=identity_fph,
+                identity_hrns=identity_hrns
+           )
+
+
+
+# payment to an account ------------------------------------------------------
+
+@app.route("/select_payer_account/<payee_account_fph>", methods=["GET", "POST"])
+@login_required
+def select_payer_account(payee_account_fph):
+
+    page = "select_payer_account"
+    group = "home"
+    logged_in = current_user.is_authenticated
+
+    # The *primid* (or its alias *secid*) logged in currently:
+    identity_fph = current_user.get_id()
+    identity_hrns = fph_to_hrns(identity_fph)
+
+    # (This uses the identify_entity( ) function:)
+    identity_type = fph_to_display_type(identity_fph)
+
+    # In contrast to the case of paying from an *account* (and therefore a
+    # known *currency*), here a knowledge of the payee *account* tells us both
+    # the *identity* and the *currency*. However, the payer *identity* may have
+    # several accounts in this *currenccy*, so one of these must be selected.
+
+    if payee_account_fph and re_fph.match(payee_account_fph):
+        payee_account_fph, \
+        payee_account_hrns, \
+        etype, \
+        m = identify_entity(payee_account_fph)
+        if etype != "account":
+            flash(payee_account_fph + " in URL slug is not an account")
+            return redirect("/pay_to_account")
+    else:
+        flash("No payee account specified in URL slug")
+        return redirect("/pay_to_account")
+
+    payee_account_currency_fph, \
+    payee_account_owner_fph, \
+    payee_account_balance, \
+    m = get_account_specific_properties(payee_account_fph)
+
+    number_of_payer_accounts = 0
+    payer_usable_accounts = []
+    payer_accounts_list, m = list_agent_accounts(identity_fph)
+
+    for account_fph in payer_accounts_list:
+
+#        print(account_fph)
+
+        account_currency_fph, \
+        account_owner_fph, \
+        account_balance, \
+        m = get_account_specific_properties(account_fph)
+
+        print("account = " + account_fph + " > " + fph_to_hrns(account_fph))
+        print(
+            "currency = " + account_currency_fph + " > " \
+            + fph_to_hrns(account_currency_fph)
+        )
+
+        if account_currency_fph == payee_account_currency_fph:
+            print(account_fph)
+            a = {}
+            a["fph"] = account_fph
+            a["hrns"] = fph_to_hrns(account_fph)
+            a["currency_fph"] = account_currency_fph
+            a["balance"] = integer_to_money_format(account_balance)
+            a["isneg"] = (account_balance < 0)
+            payer_usable_accounts.append(a)
+            number_of_payer_accounts += 1
+
+    payer_has_accounts_available = (number_of_payer_accounts > 0)
+    print("payer_has_accounts_available = ", end="")
+    print(payer_has_accounts_available)
+
+
+    return render_template(
+                "select_payer_account.html",
+                title="Select an account from which to pay",
+                page=page,
+                group=group,
+#                form=form,
+                logged_in=logged_in,
+                payee_account_fph=payee_account_fph,
+                payee_account_hrns=payee_account_hrns,
+                specified_currency_fph=payee_account_currency_fph,
+                specified_currency_hrns=fph_to_hrns(payee_account_currency_fph),
+#                specified_currency_fph=specified_currency_fph,
+#                specified_currency_hrns=specified_currency_hrns,
+                number_of_payer_accounts=number_of_payer_accounts,
+                payer_has_accounts_available=payer_has_accounts_available,
+                payer_usable_accounts=payer_usable_accounts,
+                identity_type=identity_type,
+                identity_fph=identity_fph,
+                identity_hrns=identity_hrns
+           )
+
+
+
+
+
 
 # account details page --------------------------------------------------------
 @app.route("/account_details/<account_fph>", methods=["GET", "POST"])
@@ -1214,7 +1403,8 @@ def create_currency():
                 namespace_fph,
                 identity_fph,
                 form.prefix_symbol.data,
-                form.suffix_symbol.data
+                form.suffix_symbol.data,
+                form.default_account_name.data
             )
         flash(
             "A new currency has been created, identified as \n" \
