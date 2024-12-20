@@ -72,7 +72,6 @@ from app.forms import CurrencyCreateForm
 from app.forms import AccountCreateForm
 from app.forms import NamespaceCreateForm
 from app.forms import SpecifyPayeeAccountForm
-from app.forms import SpecifyPayeeAgentForm
 #from app.forms import TQueueForm
 from markupsafe import escape
 
@@ -91,9 +90,9 @@ def fph_to_display_type(agent_identifier):
     etype, \
     m = identify_entity(agent_identifier)
     if etype == "primid":
-        return "login identity"
+        return "primary identity"
     elif etype == "secid":
-        return "alias"
+        return "secondary identity"
     else:
         return ""
 
@@ -337,7 +336,7 @@ def login():
                 flash("Invalid identity entered")
                 return redirect(url_for("login"))
             if etype == "secid": # authentication requires primary *identity*
-                primary_identity_fph, m = get_primid(identity_fph)
+                identity_fph, m = get_primid(identity_fph)
                 if m:
                     flash(m)
                     log_event(
@@ -345,7 +344,7 @@ def login():
                         "The primid cannot be identified from " + identity_fph
                     )
                     return redirect(url_for("login"))
-            if primary_identity_fph:
+            if identity_fph:
                 # If control reaches this point and the FPH exists, we have a
                 # valid *primid* for the HRNS or FPH entered.
                 primid_has_been_identified_from_identity = True
@@ -399,13 +398,13 @@ def login():
         password_hash, \
         stored_pin, \
         access_token_hash, \
-        m = get_auth_data(primary_identity_fph)
+        m = get_auth_data(identity_fph)
         if m:
             flash(m)
             return redirect(url_for("login"))
 
         # Retrieve the user object:
-        user = User(primary_identity_fph)
+        user = User(identity_fph)
 
         password = form.password.data
         password2 = form.password.data.strip()
@@ -422,7 +421,7 @@ def login():
             return redirect(url_for("login"))
 
         # Register the authenticated login:
-        register_authenticated_login(primary_identity_fph)
+        register_authenticated_login(identity_fph)
 
         login_user(user, remember=form.remember_me.data)
 
@@ -578,9 +577,9 @@ def login_reset(user_id, token):
     page = "login_reset"
     mode = "logged_out"
 
-    primary_identity_fph, \
-    primary_identity_hrns, \
-    primary_identity_type, \
+    identity_fph, \
+    identity_hrns, \
+    identity_type, \
     m = identify_entity(user_id) # from URL slug
 
     password_hash, \
@@ -608,7 +607,7 @@ def login_reset(user_id, token):
     print(reset_token_data)
 
 #    if reset_token_data["agent_primid_fph"] != identity_fph:
-    if reset_token_data != primary_identity_fph:
+    if reset_token_data != identity_fph:
         flash("Login reset token error")
         redirect("/login")
 
@@ -622,7 +621,7 @@ def login_reset(user_id, token):
             redirect("/login")
 
         m = update_primid_access_details(
-                primary_identity_fph,
+                identity_fph,
                 form.password.data,
                 form.pin.data
             )
@@ -637,7 +636,7 @@ def login_reset(user_id, token):
     return render_template(
                 "login_reset.html",
                 title="User login reset",
-                primary_identity_hrns=primary_identity_hrns,
+                identity_hrns=identity_hrns,
                 form=form
            )
 
@@ -664,37 +663,23 @@ def home():
     paying = False
     logged_in = current_user.is_authenticated
 
-#    primary_identity_fph = current_user.get_id() # *primid* as which logged in
-#    primary_identity_hrns = fph_to_hrns(primary_identity_fph)
-#    primary_identity_type = "login identity"
-    primary_identity_fph, \
-    primary_identity_hrns, \
-    primary_identity_type, \
-    m = identify_entity(current_user.get_id())
-
-    if "current_identity" in session:
-        current_identity_fph, \
-        current_identity_hrns, \
-        current_identity_type, \
-        m = identify_entity(session["current_identity"])
-    else:
-        current_identity_fph = primary_identity_fph
-        current_identity_hrns = primary_identity_hrns
-        current_identity_type = fph_to_display_type(current_identity_fph)
+    identity_fph = current_user.get_id() # *primid* as which logged in
+    identity_hrns = fph_to_hrns(identity_fph)
+    identity_type = fph_to_display_type(identity_fph)
 
     # The user logs in as the *primid*, even if indirectly as one of its
     # *secid*s, but once logged in will see all of its *identities* along with
     # a list of *accounts* belonging to each. The user will also see a list of
     # entities over which it holds/shares stewardship.
 
-    stewardships_list, m = list_stewardships(primary_identity_fph)
+    stewardships_list, m = list_stewardships(identity_fph)
 
     # Since a user may have *accounts* scattered across an arbitrary number of
     # *namespaces*, it is necessary to maintain a list of these:
 
     # A full list of *identities* is compiled, with the *primid* first:
-    identities_list = list_secids(primary_identity_fph)
-    identities_list.insert(0, primary_identity_fph)
+    identities_list = list_secids(identity_fph)
+    identities_list.insert(0, identity_fph)
 
     identities = [] # list of *identities* to pass to "home.html" template as
                     # dictionaries.
@@ -769,7 +754,7 @@ def home():
 
 
     # If this is a *primid*, fetch a list of its *secid*s and stewardships:
-    secid_list = list_secids(primary_identity_fph)
+    secid_list = list_secids(identity_fph)
     secids = []
 #    print("secids for " + fph_to_hrns(identity_fph))
     for secid_fph in secid_list:
@@ -807,12 +792,9 @@ def home():
                 #currency_steward=currency_steward,
 
                 # Variables passed for display in "base.html":
-                primary_identity_type = "login identity",
-                primary_identity_fph=primary_identity_fph,
-                primary_identity_hrns=primary_identity_hrns,
-                current_identity_fph=current_identity_fph,
-                current_identity_hrns=current_identity_hrns,
-                current_identity_type=current_identity_type,
+                identity_type=identity_type,
+                identity_fph=identity_fph,
+                identity_hrns=identity_hrns,
 
                 # List of (nested) dictionaries for display in "home.html":
                 identities=identities,
@@ -841,37 +823,23 @@ def home():
 # or
 #   /pay_identity
 
+#@app.route("/account/<payer_account_fph>", methods=["GET", "POST"])
 @app.route("/account/<payer_account_fph>/<payee_account_fph>",
            methods=["GET", "POST"])
 @login_required
-def account(payer_account_fph, payee_account_fph):
+def account(payer_account_fph, *payee_account_fph):
     page = "account"
     group = "home"
     logged_in = current_user.is_authenticated
 
     # The *primid* (or its alias *secid*) logged in currently:
-#    primary_identity_fph = current_user.get_id()
-#    primary_identity_hrns = fph_to_hrns(primary_identity_fph)
-#    primary_identity_type = "login identity"
-    primary_identity_fph, \
-    primary_identity_hrns, \
-    primary_identity_type, \
-    m = identify_entity(current_user.get_id())
+    identity_fph = current_user.get_id()
+    identity_hrns = fph_to_hrns(identity_fph)
 
     # (This uses the identify_entity( ) function:)
-    #primary_identity_type = fph_to_display_type(primary_identity_fph)
+    identity_type = fph_to_display_type(identity_fph)
 
-    if "current_identity" in session:
-        current_identity_fph, \
-        current_identity_hrns, \
-        current_identity_type, \
-        m = identify_entity(session["current_identity"])
-    else:
-        current_identity_fph = primary_identity_fph
-        current_identity_hrns = primary_identity_hrns
-        current_identity_type = fph_to_display_type(current_identity_fph)
-
-   # If a payer *account* has been specified (by FPH) in the URL slug
+    # If a payer *account* has been specified (by FPH) in the URL slug
     payer_account_fph, \
     payer_account_hrns, \
     etype, \
@@ -888,8 +856,7 @@ def account(payer_account_fph, payee_account_fph):
 
     payee_account_known = False
     if payee_account_fph is not None:
-        # A pseudo-FPH is used where only the payer account FPH is provided:
-        if payee_account_fph == "00000000000000000000000000000000":
+        if payee_account_fph =="none":
             payee_account_fph = ""
             payee_account_hrns = ""
         else:
@@ -902,9 +869,13 @@ def account(payer_account_fph, payee_account_fph):
                 flash(m)
             if payee_account_fph:
                 payee_account_known = True
+            else:
+                payee_account_fph = ""
+                payee_account_hrns = ""
     else:
         payee_account_fph = ""
         payee_account_hrns = ""
+
 
     payer_currency_fph, \
     payer_owner_fph, \
@@ -1043,12 +1014,9 @@ def account(payer_account_fph, payee_account_fph):
                 form=form,
                 page=page,
                 group=group,
-                primary_identity_type = "login identity",
-                primary_identity_fph=primary_identity_fph,
-                primary_identity_hrns=primary_identity_hrns,
-                current_identity_fph=current_identity_fph,
-                current_identity_hrns=current_identity_hrns,
-                current_identity_type=current_identity_type,
+                identity_type=identity_type,
+                identity_fph=identity_fph,
+                identity_hrns=identity_hrns,
                 payer_account_fph=payer_account_fph,
                 payer_account_hrns=payer_account_hrns,
                 payee_account_known=payee_account_known,
@@ -1071,33 +1039,21 @@ def account(payer_account_fph, payee_account_fph):
 @login_required
 def pay_account():
 
+    print("Splat....")
     page = "pay_account"
     group = "home"
     logged_in = current_user.is_authenticated
 
     # The *primid* (or its alias *secid*) logged in currently:
-#    primary_identity_fph = current_user.get_id()
-#    primary_identity_hrns = fph_to_hrns(primary_identity_fph)
-    #primary_identity_type = "login identity"
-#    primary_identity_type = fph_to_display_type(primary_identity_fph)
-    primary_identity_fph, \
-    primary_identity_hrns, \
-    primary_identity_type, \
-    m = identify_entity(current_user.get_id())
-
-    if "current_identity" in session:
-        current_identity_fph, \
-        current_identity_hrns, \
-        current_identity_type, \
-        m = identify_entity(session["current_identity"])
-    else:
-        current_identity_fph = primary_identity_fph
-        current_identity_hrns = primary_identity_hrns
-        current_identity_type = fph_to_display_type(current_identity_fph)
-
+    identity_fph = current_user.get_id()
+    identity_hrns = fph_to_hrns(identity_fph)
+    identity_type = fph_to_display_type(identity_fph)
 
     form = SpecifyPayeeAccountForm()
     if form.validate_on_submit():
+
+        print("Boinggggg...")
+
         payee_account_fph, \
         payee_account_hrns, \
         etype, \
@@ -1106,6 +1062,7 @@ def pay_account():
             flash(m)
             return redirect("/pay_to_account")
         if payee_account_fph == "":
+            print("Aaarrggggggghhhh...")
             return redirect("/pay_to_account")
 
         return redirect("/select_payer_account/" + payee_account_fph)
@@ -1117,154 +1074,15 @@ def pay_account():
                 group=group,
                 form=form,
                 logged_in=logged_in,
-                primary_identity_type = "login identity",
-                primary_identity_fph=primary_identity_fph,
-                primary_identity_hrns=primary_identity_hrns,
-                current_identity_fph=current_identity_fph,
-                current_identity_hrns=current_identity_hrns,
-                current_identity_type=current_identity_type
+                identity_type=identity_type,
+                identity_fph=identity_fph,
+                identity_hrns=identity_hrns
            )
 
-#==============================================================================
-#
-@app.route("/pay_to_agent", methods=["GET", "POST"])
-@login_required
-def pay_agent():
-
-    page = "pay_agent"
-    group = "home"
-    logged_in = current_user.is_authenticated
-
-    # The *primid* (or its alias *secid*) logged in currently:
-#    primary_identity_fph = current_user.get_id()
-#    primary_identity_hrns = fph_to_hrns(primary_identity_fph)
-    #primary_identity_type = fph_to_display_type(primary_identity_fph)
-#    primary_identity_type = "login identity"
-    primary_identity_fph, \
-    primary_identity_hrns, \
-    primary_identity_type, \
-    m = identify_entity(current_user.get_id())
-
-    if "current_identity" in session:
-        current_identity_fph, \
-        current_identity_hrns, \
-        current_identity_type, \
-        m = identify_entity(session["current_identity"])
-    else:
-        current_identity_fph = primary_identity_fph
-        current_identity_hrns = primary_identity_hrns
-        current_identity_type = fph_to_display_type(current_identity_fph)
 
 
-    form = SpecifyPayeeAgentForm()
-    if form.validate_on_submit():
-        payee_identity_fph, \
-        payee_identity_hrns, \
-        etype, \
-        m = identify_entity(form.to_identity_id.data) # HRNS or FPH
-        if m:
-            flash(m)
-            return redirect("/pay_to_agent")
-        if payee_identity_fph == "": # *agent* cannot be identified
-            return redirect("/pay_to_agent")
+# payment to an account ------------------------------------------------------
 
-        currency_fph, \
-        currency__hrns, \
-        etype, \
-        m = identify_entity(form.currency_id.data)
-        if m:
-            flash(m)
-            return redirect("/pay_to_agent")
-        if currency_fph == "": # *currency* cannot be identified
-            return redirect("/pay_to_agent")
-
-
-
-        # Find *accounts* in specified *currency* for specified *identity*
-
-        return redirect(
-                   "/select_account_combination_in_currency/" \
-                   + payee_identity_fph + "/" \
-                   + currency_fph
-               )
-
-    return render_template(
-                "pay_to_agent.html",
-                title="Make a payment to an agent",
-                page=page,
-                group=group,
-                form=form,
-                logged_in=logged_in,
-                primary_identity_type = "login identity",
-                primary_identity_fph=primary_identity_fph,
-                primary_identity_hrns=primary_identity_hrns,
-                current_identity_fph=current_identity_fph,
-                current_identity_hrns=current_identity_hrns,
-                current_identity_type=current_identity_type
-           )
-
-# payment to an *agent* -- select available payer-payee *account* pair --------
-@app.route("/select_account_combination_in_currency" \
-           + "/<payee_identity_fph>/<currency_fph>", methods=["GET", "POST"])
-@login_required
-def select_account_combination_in_currency(payee_identity_fph, currency_fph):
-
-    page = "select_account_combination_in_currency"
-    group = "home"
-    logged_in = current_user.is_authenticated
-
-    # The *primid* (or its alias *secid*) logged in currently:
-#    primary_identity_fph = current_user.get_id()
-#    primary_identity_hrns = fph_to_hrns(primary_identity_fph)
-    primary_identity_fph, \
-    primary_identity_hrns, \
-    primary_identity_type, \
-    m = identify_entity(current_user.get_id())
-
-    # (This uses the identify_entity( ) function:)
-    #primary_identity_type = fph_to_display_type(primary_identity_fph)
-#    primary_identity_type = "login identity"
-
-    if "current_identity" in session:
-        current_identity_fph, \
-        current_identity_hrns, \
-        current_identity_type, \
-        m = identify_entity(session["current_identity"])
-    else:
-        current_identity_fph = primary_identity_fph
-        current_identity_hrns = primary_identity_hrns
-        current_identity_type = fph_to_display_type(current_identity_fph)
-
-    # In contrast to the case of paying to a known *account*, here the payee
-    #*account* and the *currency* have been specified.
-    #
-    # Both the payer and the payee may each have several accounts in this
-    # *currenccy*, so one of the available combinations must be selected.
-
-    all_payer_accounts, m = list_agent_accounts(primary_identity_fph)
-    all_payee_accounts, m = list_agent_accounts(payee_fph)
-
-    # NB, the following is a temporary solution pending cleanup and merger:
-
-    usable_payer_accounts = []
-    for payer_account_fph in all_payer_accounts:
-        if get_account_currency(payer_account_fph) == currency_fph:
-            usable_payer_accounts.append(payer_account_fph)
-
-    usable_payee_accounts = []
-    for payee_account_fph in all_payee_accounts:
-        if get_account_currency(payee_account_fph) == currency_fph:
-            usable_payee_accounts.append(payee_account_fph)
-
-    # The two lists now have to be passed to the template renderer:
-
-
-
-
-
-
-
-# payment to an *account* -- select payer *account* ---------------------------
 @app.route("/select_payer_account/<payee_account_fph>", methods=["GET", "POST"])
 @login_required
 def select_payer_account(payee_account_fph):
@@ -1274,26 +1092,11 @@ def select_payer_account(payee_account_fph):
     logged_in = current_user.is_authenticated
 
     # The *primid* (or its alias *secid*) logged in currently:
-#    primary_identity_fph = current_user.get_id()
-#    primary_identity_hrns = fph_to_hrns(primary_identity_fph)
-    primary_identity_fph, \
-    primary_identity_hrns, \
-    primary_identity_type, \
-    m = identify_entity(current_user.get_id())
+    identity_fph = current_user.get_id()
+    identity_hrns = fph_to_hrns(identity_fph)
 
     # (This uses the identify_entity( ) function:)
-    #primary_identity_type = fph_to_display_type(primary_identity_fph)
-#    primary_identity_type = "login identity"
-
-    if "current_identity" in session:
-        current_identity_fph, \
-        current_identity_hrns, \
-        current_identity_type, \
-        m = identify_entity(session["current_identity"])
-    else:
-        current_identity_fph = primary_identity_fph
-        current_identity_hrns = primary_identity_hrns
-        current_identity_type = fph_to_display_type(current_identity_fph)
+    identity_type = fph_to_display_type(identity_fph)
 
     # In contrast to the case of paying from an *account* (and therefore a
     # known *currency*), here a knowledge of the payee *account* tells us both
@@ -1368,12 +1171,9 @@ def select_payer_account(payee_account_fph):
                 number_of_payer_accounts=number_of_payer_accounts,
                 payer_has_accounts_available=payer_has_accounts_available,
                 payer_usable_accounts=payer_usable_accounts,
-                primary_identity_type = "login identity",
-                primary_identity_fph=primary_identity_fph,
-                primary_identity_hrns=primary_identity_hrns,
-                current_identity_fph=current_identity_fph,
-                current_identity_hrns=current_identity_hrns,
-                current_identity_type=current_identity_type
+                identity_type=identity_type,
+                identity_fph=identity_fph,
+                identity_hrns=identity_hrns
            )
 
 
@@ -1392,26 +1192,11 @@ def account_details(account_fph):
     logged_in = current_user.is_authenticated
 
     # The *primid* (or its alias *secid*) logged in currently:
-#    primary_identity_fph = current_user.get_id()
-#    primary_identity_hrns = fph_to_hrns(primary_identity_fph)
-    primary_identity_fph, \
-    primary_identity_hrns, \
-    primary_identity_type, \
-    m = identify_entity(current_user.get_id())
+    identity_fph = current_user.get_id()
+    identity_hrns = fph_to_hrns(identity_fph)
 
     # (This uses the identify_entity( ) function:)
-    #primary_identity_type = fph_to_display_type(primary_identity_fph)
-#    primary_identity_type = "login identity"
-
-    if "current_identity" in session:
-        current_identity_fph, \
-        current_identity_hrns, \
-        current_identity_type, \
-        m = identify_entity(session["current_identity"])
-    else:
-        current_identity_fph = primary_identity_fph
-        current_identity_hrns = primary_identity_hrns
-        current_identity_type = fph_to_display_type(current_identity_fph)
+    identity_type = fph_to_display_type(identity_fph)
 
     # If an *account* has been specified (by FPH) in the URL slug
     print("Account " + account_fph)
@@ -1460,12 +1245,9 @@ def account_details(account_fph):
                 page=page,
                 group=group,
                 #
-                primary_identity_type = "login identity",
-                primary_identity_fph=primary_identity_fph,
-                primary_identity_hrns=primary_identity_hrns,
-                current_identity_fph=current_identity_fph,
-                current_identity_hrns=current_identity_hrns,
-                current_identity_type=current_identity_type,
+                identity_type=identity_type,
+                identity_fph=identity_fph,
+                identity_hrns=identity_hrns,
                 #
                 account_fph=account_fph,
                 account_hrns=account_hrns,
@@ -1493,27 +1275,12 @@ def stewardships(identity_fph):
     paying = False
     logged_in = current_user.is_authenticated
 
-#    primary_identity_fph = current_user.get_id()
-#    primary_identity_hrns = fph_to_hrns(primary_identity_fph)
-    #primary_identity_type = fph_to_display_type(primary_identity_fph)
-#    primary_identity_type = "login identity"
-    primary_identity_fph, \
-    primary_identity_hrns, \
-    primary_identity_type, \
-    m = identify_entity(current_user.get_id())
-
-    if "current_identity" in session:
-        current_identity_fph, \
-        current_identity_hrns, \
-        current_identity_type, \
-        m = identify_entity(session["current_identity"])
-    else:
-        current_identity_fph = primary_identity_fph
-        current_identity_hrns = primary_identity_hrns
-        current_identity_type = fph_to_display_type(current_identity_fph)
+    identity_fph = current_user.get_id()
+    identity_hrns = fph_to_hrns(identity_fph)
+    identity_type = fph_to_display_type(identity_fph)
 
 
-    stewardships, m = list_stewardships(primary_identity_fph)
+    stewardships, m = list_stewardships(identity_fph)
     if m:
         splash(m)
 
@@ -1525,12 +1292,9 @@ def stewardships(identity_fph):
                 title="Stewardships",
                 page=page,
                 group=group,
-                primary_identity_type = "login identity",
-                primary_identity_fph=primary_identity_fph,
-                primary_identity_hrns=primary_identity_hrns,
-                current_identity_fph=current_identity_fph,
-                current_identity_hrns=current_identity_hrns,
-                current_identity_type=current_identity_type,
+                identity_type=identity_type,
+                identity_fph=identity_fph,
+                identity_hrns=identity_hrns,
                 development_mode=development_mode,
                 logged_in=logged_in,
                 namespace_steward=namespace_steward,
@@ -1548,26 +1312,11 @@ def secids(identity_fph):
     paying = False
     logged_in = current_user.is_authenticated
 
-#    primary_identity_fph = current_user.get_id()
-#    primary_identity_hrns = fph_to_hrns(primary_identity_fph)
-    #primary_identity_type = fph_to_display_type(identity_fph)
-#    primary_identity_type = "login identity"
-    primary_identity_fph, \
-    primary_identity_hrns, \
-    primary_identity_type, \
-    m = identify_entity(current_user.get_id())
+    identity_fph = current_user.get_id()
+    identity_hrns = fph_to_hrns(identity_fph)
+    identity_type = fph_to_display_type(identity_fph)
 
-    if "current_identity" in session:
-        current_identity_fph, \
-        current_identity_hrns, \
-        current_identity_type, \
-        m = identify_entity(session["current_identity"])
-    else:
-        current_identity_fph = primary_identity_fph
-        current_identity_hrns = primary_identity_hrns
-        current_identity_type = fph_to_display_type(current_identity_fph)
-
-    secids = list_secids(primary_identity_fph)
+    secids = list_secids(identity_fph)
 
     for secid_fph in secids:
         print(secid_fph + " > " + fph_to_hrns(secid_fph))
@@ -1577,12 +1326,9 @@ def secids(identity_fph):
                 title="Secondary identities",
                 page=page,
                 group=group,
-                primary_identity_type = "login identity",
-                primary_identity_fph=primary_identity_fph,
-                primary_identity_hrns=primary_identity_hrns,
-                current_identity_fph=current_identity_fph,
-                current_identity_hrns=current_identity_hrns,
-                current_identity_type=current_identity_type,
+                identity_type=identity_type,
+                identity_fph=identity_fph,
+                identity_hrns=identity_hrns,
                 development_mode=development_mode,
                 logged_in=logged_in,
                 namespace_steward=namespace_steward,
@@ -1602,24 +1348,9 @@ def manage():
     paying = False
     logged_in = current_user.is_authenticated
 
-#    primary_identity_fph = current_user.get_id()
-#    primary_identity_hrns = fph_to_hrns(primary_identity_fph)
-    #primary_identity_type = fph_to_display_type(primary_identity_fph)
-#    primary_identity_type = "login identity"
-    primary_identity_fph, \
-    primary_identity_hrns, \
-    primary_identity_type, \
-    m = identify_entity(current_user.get_id())
-
-    if "current_identity" in session:
-        current_identity_fph, \
-        current_identity_hrns, \
-        current_identity_type, \
-        m = identify_entity(session["current_identity"])
-    else:
-        current_identity_fph = primary_identity_fph
-        current_identity_hrns = primary_identity_hrns
-        current_identity_type = fph_to_display_type(current_identity_fph)
+    identity_fph = current_user.get_id()
+    identity_hrns = fph_to_hrns(identity_fph)
+    identity_type = fph_to_display_type(identity_fph)
 
     return render_template(
                 "manage.html",
@@ -1627,12 +1358,9 @@ def manage():
                 logged_in=logged_in,
                 page=page,
                 group=group,
-                primary_identity_type = "login identity",
-                primary_identity_fph=primary_identity_fph,
-                primary_identity_hrns=primary_identity_hrns,
-                current_identity_fph=current_identity_fph,
-                current_identity_hrns=current_identity_hrns,
-                current_identity_type=current_identity_type,
+                identity_type=identity_type,
+                identity_fph=identity_fph,
+                identity_hrns=identity_hrns,
                 development_mode=development_mode,
                 namespace_steward=namespace_steward,
                 currency_steward=currency_steward
@@ -1650,23 +1378,12 @@ def create_currency():
     paying = True
     logged_in = current_user.is_authenticated
 
-    #user = User(primary_identity_fph) # Retrieve the user object
-    #primary_identity_fph = current_user.get_id()
-    primary_identity_fph, \
-    primary_identity_hrns, \
-    primary_identity_type, \
-    m = identify_entity(current_user.get_id())
-#    primary_identity_type = "login identity"
-
-    if "current_identity" in session:
-        current_identity_fph, \
-        current_identity_hrns, \
-        current_identity_type, \
-        m = identify_entity(session["current_identity"])
-    else:
-        current_identity_fph = primary_identity_fph
-        current_identity_hrns = primary_identity_hrns
-        current_identity_type = fph_to_display_type(current_identity_fph)
+    #user = User(identity_fph) # Retrieve the user object
+    identity_fph = current_user.get_id()
+    identity_fph, \
+    identity_hrns, \
+    identity_type, \
+    m = identify_entity(identity_fph)
 
     form = CurrencyCreateForm()
     if form.validate_on_submit():
@@ -1693,7 +1410,7 @@ def create_currency():
         m = new_currency(
                 currency_name,
                 namespace_fph,
-                primary_identity_fph,
+                identity_fph,
                 form.prefix_symbol.data,
                 form.suffix_symbol.data,
                 form.default_account_name.data
@@ -1712,12 +1429,9 @@ def create_currency():
                 page=page,
                 group=group,
                 form=form,
-                primary_identity_type = "login identity",
-                primary_identity_fph=primary_identity_fph,
-                primary_identity_hrns=primary_identity_hrns,
-                current_identity_fph=current_identity_fph,
-                current_identity_hrns=current_identity_hrns,
-                current_identity_type=current_identity_type,
+                identity_type=identity_type,
+                identity_fph=identity_fph,
+                identity_hrns=identity_hrns,
                 development_mode=development_mode,
                 #
                 namespace_steward=namespace_steward,
@@ -1737,23 +1451,12 @@ def create_account():
     paying = True
     logged_in = current_user.is_authenticated
 
-    #user = User(primary_identity_fph) # Retrieve the user object
-    #primary_identity_fph = current_user.get_id()
-    primary_identity_fph, \
-    primary_identity_hrns, \
-    primary_identity_type, \
-    m = identify_entity(current_user.get_id())
-#    primary_identity_type = "login identity"
-
-    if "current_identity" in session:
-        current_identity_fph, \
-        current_identity_hrns, \
-        current_identity_type, \
-        m = identify_entity(session["current_identity"])
-    else:
-        current_identity_fph = primary_identity_fph
-        current_identity_hrns = primary_identity_hrns
-        current_identity_type = fph_to_display_type(current_identity_fph)
+    #user = User(identity_fph) # Retrieve the user object
+    identity_fph = current_user.get_id()
+    identity_fph, \
+    identity_hrns, \
+    identity_type, \
+    m = identify_entity(identity_fph)
 
     form = AccountCreateForm()
     if form.validate_on_submit():
@@ -1794,7 +1497,7 @@ def create_account():
         m = new_account(
                 account_name,
                 namespace_fph,
-                primary_identity_fph, # the owner of this *account*
+                identity_fph, # the owner of this *account*
                 currency_fph
             )
         if m:
@@ -1813,12 +1516,9 @@ def create_account():
                 page=page,
                 group=group,
                 form=form,
-                primary_identity_type = "login identity",
-                primary_identity_fph=primary_identity_fph,
-                primary_identity_hrns=primary_identity_hrns,
-                current_identity_fph=current_identity_fph,
-                current_identity_hrns=current_identity_hrns,
-                current_identity_type=current_identity_type,
+                identity_type=identity_type,
+                identity_fph=identity_fph,
+                identity_hrns=identity_hrns,
                 development_mode=development_mode,
                 #
                 namespace_steward=namespace_steward
@@ -1827,97 +1527,12 @@ def create_account():
 
 
 
-# list *secondary identities* =================================================
-@app.route("/list_identities", methods=["GET", "POST"])
-@login_required
-def list_identiies():
-
-    page = "list_identities"
-    group = "home"
-    logged_in = current_user.is_authenticated
-
-    #primary_identity_fph = current_user.get_id()
-    #current_identity_fph = current_user.get_current_identity()
 
 
-    primary_identity_fph, \
-    primary_identity_hrns, \
-    primary_identity_type, \
-    m = identify_entity(current_user.get_id())
-#    primary_identity_type = "login identity"
-
-    if "current_identity" in session:
-        current_identity_fph, \
-        current_identity_hrns, \
-        current_identity_type, \
-        m = identify_entity(session["current_identity"])
-    else:
-        current_identity_fph = primary_identity_fph
-        current_identity_hrns = primary_identity_hrns
-        current_identity_type = "login identity"
 
 
-    current_identity_fph, \
-    current_identity_hrns, \
-    current_identity_type, \
-    m = identify_entity(current_identity_fph)
-
-    secids_fph_list = list_secids(primary_identity_fph)
-    secids_list = []
-    for secid_fph in secids_fph_list:
-        s = {}
-        s["fph"] = secid_fph
-        s["hrns"] = fph_to_hrns(secid_fph)
-        secids_list.append(a)
-
-    return render_template(
-                "list_identities.html",
-                title="List identities",
-                logged_in=logged_in,
-                page=page,
-                group=group,
-#                form=form,
-                primary_identity_type = "login identity",
-                primary_identity_fph=primary_identity_fph,
-                primary_identity_hrns=primary_identity_hrns,
-                current_identity_fph=current_identity_fph,
-                current_identity_hrns=current_identity_hrns,
-                current_identity_type=current_identity_type,
-                secids_list=secids_list
-           )
-
-# create *secondary identity* =================================================
-@app.route("/create_secid", methods=["GET", "POST"])
-@login_required
-def create_secid():
-    page = "create_secid"
-    group = "home"
-    logged_in = current_user.is_authenticated
-
-    #primary_identity_fph = current_user.get_id()
-
-    primary_identity_fph, \
-    primary_identity_hrns, \
-    primary_identity_type, \
-    m = identify_entity(current_user.get_id())
-
-    if "current_identity" in session:
-        current_identity_fph, \
-        current_identity_hrns, \
-        current_identity_type, \
-        m = identify_entity(session["current_identity"])
-    else:
-        current_identity_fph = primary_identity_fph
-        current_identity_hrns = primary_identity_hrns
-        current_identity_type = fph_to_display_type(current_identity_fph)
-
-#    current_identity_fph, \
-#    current_identity_hrns, \
-#    current_identity_type, \
-#    m = identify_entity(current_identity_fph)
 
 
-    return
 
 # create a new namespace ------------------------------------------------------
 @app.route("/create_namespace", methods=["GET", "POST"])
@@ -1931,21 +1546,11 @@ def create_namespace():
     logged_in = current_user.is_authenticated
 
     #user = User(identity_fph) # Retrieve the user object
-    #primary_identity_fph = current_user.get_id()
-    primary_identity_fph, \
-    primary_identity_hrns, \
-    primary_identity_type, \
-    m = identify_entity(current_user.get_id())
-
-    if "current_identity" in session:
-        current_identity_fph, \
-        current_identity_hrns, \
-        current_identity_type, \
-        m = identify_entity(session["current_identity"])
-    else:
-        current_identity_fph = primary_identity_fph
-        current_identity_hrns = primary_identity_hrns
-        current_identity_type = fph_to_display_type(current_identity_fph)
+    identity_fph = current_user.get_id()
+    identity_fph, \
+    identity_hrns, \
+    identity_type, \
+    m = identify_entity(identity_fph)
 
     form = NamespaceCreateForm()
     if form.validate_on_submit():
@@ -1972,7 +1577,7 @@ def create_namespace():
         m = new_namespace(
                 namespace_name,
                 parent_namespace_fph,
-                primary_identity_fph # the initial steward of this new *namespace*
+                identity_fph # the initial steward of this new *namespace*
             )
         flash(
             "A new namespace has been created, identified as \n" \
@@ -1988,12 +1593,9 @@ def create_namespace():
                 page=page,
                 group=group,
                 form=form,
-                primary_identity_type = "login identity",
-                primary_identity_fph=primary_identity_fph,
-                primary_identity_hrns=primary_identity_hrns,
-                current_identity_fph=current_identity_fph,
-                current_identity_hrns=current_identity_hrns,
-                current_identity_type=current_identity_type
+                identity_type=identity_type,
+                identity_fph=identity_fph,
+                identity_hrns=identity_hrns
            )
 
 
@@ -2014,24 +1616,10 @@ def list_namespaces():
     #paying = True
     logged_in = current_user.is_authenticated
 
-    #user = User(primary_identity_fph) # Retrieve the user object
-#    primary_identity_fph = current_user.get_id()
-#    primary_identity_hrns = fph_to_hrns(primary_identity_fph)
-#    primary_identity_type = fph_to_display_type(primary_identity_fph)
-    primary_identity_fph, \
-    primary_identity_hrns, \
-    primary_identity_type, \
-    m = identify_entity(current_user.get_id())
-
-    if "current_identity" in session:
-        current_identity_fph, \
-        current_identity_hrns, \
-        current_identity_type, \
-        m = identify_entity(session["current_identity"])
-    else:
-        current_identity_fph = primary_identity_fph
-        current_identity_hrns = primary_identity_hrns
-        current_identity_type = fph_to_display_type(current_identity_fph)
+    #user = User(identity_fph) # Retrieve the user object
+    identity_fph = current_user.get_id()
+    identity_hrns = fph_to_hrns(identity_fph)
+    identity_type = fph_to_display_type(identity_fph)
 
 
     active_namespaces, m = list_all_namespaces()
@@ -2054,9 +1642,9 @@ def list_namespaces():
                 logged_in=logged_in,
                 page=page,
                 group=group,
-                primary_identity_type = "login identity",
-                primary_identity_fph=primary_identity_fph,
-                primary_identity_hrns=primary_identity_hrns,
+                identity_type=identity_type,
+                identity_fph=identity_fph,
+                identity_hrns=identity_hrns,
                 #
                 available_namespaces=available_namespaces
            )

@@ -264,7 +264,7 @@ def get_entity_type(entity_fph):
                                 "account"
                               ]:
                 return entity_type, ""
-        return "", "Type cannot be identified for " + entity_fph
+        return "", "Type cannot be identified for " + fph_to_hrns(entity_fph)
 
 #==============================================================================
 #
@@ -985,6 +985,44 @@ def list_primid_accounts(primid_fph):
 
     return accounts_fph_list, ""    # list + message
 
+# The following is a temporary solution pending cleanup and merger:
+
+def list_primid_accounts_in_currency(primid_fph, currency_fph):
+
+    with sqlite3.connect(ENTITIES_DB) as conn:
+        cursor = conn.cursor()
+        cursor.execute(
+            """
+            SELECT accounts_fph_list
+            FROM primids
+            WHERE entity_fph = ?, currency_fph = ?
+            """,
+            (primid_fph,currency_fph)
+        )
+        result = cursor.fetchone()
+        if result is None:
+            accounts_fph_list = []
+            accounts_fph_blob = pickle.dumps(accounts_fph_list)
+            cursor.execute(
+                """
+                UPDATE primids
+                SET accounts_fph_list = ?
+                WHERE entity_fph = ?
+                """,
+                (accounts_fph_blob, primid_fph)
+            )
+            conn.commit()
+            cursor.close()
+            return [], "Primid " + fph_to_hrns(primid_fph) + " has no accounts."
+        else:
+            cursor.close()
+            accounts_fph_blob = result[0]
+            accounts_fph_list = pickle.loads(accounts_fph_blob)
+
+            print(accounts_fph_list)
+
+    return accounts_fph_list, ""    # list + message
+
 #==============================================================================
 ## List the *secid*'s accounts: #
 
@@ -1347,7 +1385,10 @@ def list_currencies_in_common_by_hrns(a1_fph, a2_fph):
 
 def identify_entity(entity_identifier): # HRNS or FPH
     if not isinstance(entity_identifier, str):
-        return "", "", "", "Invalid identifier.\n"
+
+        #rint(entity_identifier)
+
+        return "", "", "", ""
     entity_identifier =  entity_identifier.strip()
     if re_fph.match(entity_identifier): # this is an FPH
         entity_fph = entity_identifier.strip()

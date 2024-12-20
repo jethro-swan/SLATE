@@ -59,7 +59,7 @@
       <div class="mba">identities</div>
     {% else %}
       <div class="mb">
-        <a class="mb" href="/secids/{{ identity_fph }}">identities</a>
+        <a class="mb" href="/list_identities">identities</a>
       </div>
     {% endif %}
 
@@ -93,9 +93,12 @@
 
     {% if current_user.is_authenticated %}
     You are logged in as
-    <span style="color:#008000; font-weight:bold;">{{ identity_hrns }}</span>
-    ({{ identity_type }})
-    [<span style="color:#006000; font-weight:normal;">{{ identity_fph }}</span>]
+    <span class="dark-green-bold">{{ primary_identity_hrns }}</span>
+    ({{ primary_identity_type }})
+    <hr class="dashed" />
+    Currently acting as
+    <span class="dark-green-bold" >{{ current_identity_hrns }}</span>
+    ({{ current_identity_type }})
     <br />
     <hr class="dashed" />
     {% endif %}
@@ -119,11 +122,35 @@
     {% if current_user.is_authenticated %}
 
     {% if page == "pay_account" %}
-      <div class="mba">make a payment to an account</div>
+      <!--
+      <div class="mba">make payment to account</div>
+      -->
+      <div class="mba">
+        <a class="mba" href="/pay_to_account">
+          make payment to account
+        </a>
+      </div>
     {% else %}
       <div class="mb">
         <a class="mb" href="/pay_to_account">
-          make a payment to an account
+          make payment to account
+        </a>
+      </div>
+    {% endif %}
+
+    {% if page == "pay_agent" %}
+      <!--
+      <div class="mba">make payment to agent</div>
+      -->
+      <div class="mba">
+        <a class="mba" href="/pay_to_agent">
+          make payment to agent
+        </a>
+      </div>
+    {% else %}
+      <div class="mb">
+        <a class="mb" href="/pay_to_agent">
+          make payment to agent
         </a>
       </div>
     {% endif %}

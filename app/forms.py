@@ -49,6 +49,23 @@ class SpecifyPayeeAccountForm(FlaskForm):
     submit          = SubmitField("list the accounts from which you can pay")
 
 
+class SpecifyPayeeAgentForm(FlaskForm):
+    # This form is used to acquire the payee *account* so a list of suitable
+    # payer *accounts* (those in the same *currency*) can be generated from
+    # which one can be selected before control is passed to the page handling
+    # the /account/<account_fph> endpoint (using the PaymentToAccountForm( )
+    # form above,
+    to_identity_id  = StringField(
+                        "payee agent identifier",
+                        validators=[DataRequired("required")]
+                      )
+    currency_id     = StringField(
+                        "currency identifier",
+                        validators=[DataRequired("required")]
+                      )
+    submit          = SubmitField("list the accounts from which you can pay")
+
+
 
 
 class PaymentToIdentityForm(FlaskForm):

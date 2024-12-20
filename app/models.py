@@ -50,6 +50,12 @@ class User(UserMixin):
     def get_id(self):
         return self.id
 
+#    def set_current_identity(current_identity_fph):
+#        self.current_identity_fph = current_identity_fph
+
+#    def get_current_identity(self):
+#        return self.current_identity_fph
+
     def is_authenticated(self):
         #print("is_authenticated: self.id = " + self.id)
         #fpath = fph_to_dpath(self.id) + "/.authenticated"

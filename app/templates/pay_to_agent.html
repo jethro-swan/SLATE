@@ -8,16 +8,24 @@
 <form action="" method="post" autocomplete="off" novalidate>
   {{ form.hidden_tag() }}
   <p>
-    <b>{{ form.to_account_id.label }}</b><br />
-    <!--{{ form.to_account_id(size=32) }}-->
+    <b>{{ form.to_identity_id.label }}</b><br />
     <input
       type="text"
-      name="to_account_id"
+      name="to_identity_id"
       value=""
       size="32"
-      placeholder="Enter an identifier for the payee account"
+      placeholder="Enter an identifier for the payee agent"
     />
-
+  </p>
+  <p>
+    <b>{{ form.currency_id.label }}</b><br />
+    <input
+      type="text"
+      name="currency_id"
+      value=""
+      size="32"
+      placeholder="Enter an identifier for the currency"
+    />
   </p>
   <p>
     <input type="submit" value="list the accounts from which you can pay">
@@ -27,9 +35,9 @@
 <hr />
 
 <br /><br />
-<!--
 <p class="shout">
   Not yet fully implemented
 </p>
+<!--
 -->
 {% endblock %}

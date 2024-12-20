@@ -99,9 +99,20 @@ div.header {
 
 }
 
+a.mb { text-decoration:none; }
+a.mb:link { color:#ffffff; }
+a.mb:visited { color:#ffffff; }
+a.mb:active { color:#ffffff; }
+a.mb:hover { color:#ffffff; }
 
+a.mba { text-decoration:none; }
+a.mba:link { color:#ffffff; }
+a.mba:visited { color:#ffffff; }
+a.mba:active { color:#ffffff; }
+a.mba:hover { color:#ffffff; }
 
 div.mb { /* menu button - upper row */
+  color: #ffffff;
   display: block;
   border-width: 1px;
   border-style: solid;
@@ -122,10 +133,6 @@ div.mba { /* menu button active */
   display: block;
   border: 1px;
   border-style: solid;
-  /*
-  border-color: #005000;
-  background: #005000;
-  */
   border-color: #000000;
   background: #000000;
   padding-left: 4px;
@@ -140,6 +147,7 @@ div.mba { /* menu button active */
 }
 
 div.mb2 { /* menu button - lower row */
+  color: #ffffff;
   display: block;
   border-width: 1px;
   border-style: solid;
@@ -172,14 +180,6 @@ div.mb2a { /* menu button active - lower row */
   margin-bottom: 1px;
   float: left;
 }
-
-
-a.mb { text-decoration:none; font-size: 13px; }
-a.mb:link { color:#ffffff; }
-a.mb:visited { color:#ffffff; }
-a.mb:active { color:#e0ffe0; }
-a.mb:hover { color:#ff8080; }
-
 
 .clear-both { clear: both; }
 
