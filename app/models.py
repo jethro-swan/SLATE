@@ -50,11 +50,11 @@ class User(UserMixin):
     def get_id(self):
         return self.id
 
-#    def set_current_identity(current_identity_fph):
-#        self.current_identity_fph = current_identity_fph
+#    def set_working_identity(working_identity_fph):
+#        self.working_identity_fph = working_identity_fph
 
-#    def get_current_identity(self):
-#        return self.current_identity_fph
+#    def get_working_identity(self):
+#        return self.working_identity_fph
 
     def is_authenticated(self):
         #print("is_authenticated: self.id = " + self.id)

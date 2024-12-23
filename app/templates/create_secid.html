@@ -2,16 +2,40 @@
 
 {% block content %}
 
-<h2>create a secondary identity</h2>
+<h2>create a new alias</h2>
+<hr />
+
+<form action="" method="post" novalidate>
+  {{ form.hidden_tag() }}
+  <div>
+    <div style="float:left; margin:2px;">
+      {{ form.secid_name.label }}<br />
+      {{ form.secid_name(size=12, placeholder="new alias") }}
+    </div>
+    <div style="float:left; margin:2px;">
+      <br />.
+    </div>
+    <div style="float:left; margin:2px;">
+      {{ form.parent_namespace_id.label }}<br />
+      {{ form.parent_namespace_id(size=30,
+      placeholder="parent namespace identifier") }}
+    </div>
+  </div>
+
+  <p>
+    {% for error in form.secid_name.errors %}
+      <span style="color: red;">[{{ error }}]</span>
+    {% endfor %}
+    {% for error in form.parent_namespace_id.errors %}
+      <span style="color: red;">[{{ error }}]</span>
+    {% endfor %}
+  </p>
+  <p>
+    {{ form.create_secid() }}
+  </p>
+</form>
 
 <hr />
 
-  <div class="shoutbox">
-    <p class="shout">
-      NOT YET IMPLEMENTED
-    </p>
-  </div>
-
-  <hr />
 
 {% endblock %}

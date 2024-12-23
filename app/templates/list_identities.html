@@ -2,30 +2,24 @@
 
 {% block content %}
 
-{% for identity in identities %}<!-- list of dictionaries -->
-
-  <div class="header">
-    <strong>{{ current_identity.hrns }}</strong> ({{ current_identity.type }})
-  </div>
-  <br /><br />
-
-  <strong>secondary identities</strong> |
+  <strong>identites</strong> |
   <!-- <a href="/identity/change"><strong>change identity</strong></a> | -->
-  <a href="/identity/create"><strong>create new identity</strong></a>
+  <a href="/identity/create"><strong>create new alias</strong></a>
   <br /><br />
   <ul>
-  {% for secid in secids_list %}
+
+{% for identity in identities %}<!-- list of dictionaries -->
     <li>
-      <a href="/secid/manage/{{ secid.fph }}">
-        <strong>{{ secid.hrns }}</strong>
+      <a href="/secid/manage/{{ identity.fph }}">
+        <strong>{{ identity.hrns }}</strong>
       </a>
     </li>
-  {% endfor %}
+{% endfor %}
+
   </ul>
 
   <hr />
 
-{% endfor%}
 
 <br /><br />
 <p class="shout">

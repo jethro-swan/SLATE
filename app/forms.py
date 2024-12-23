@@ -165,6 +165,18 @@ class NamespaceCreateForm(FlaskForm):
 
 #------------------------------------------------------------------------------
 
+class SecidCreateForm(FlaskForm):
+    secid_name  = StringField(
+                        "alias name",
+                        validators=[DataRequired("required")]
+                      )
+    parent_namespace_id = StringField(
+                       "parent namespace identifier",
+                       validators=[DataRequired("required")]
+                      )
+    create_secid = SubmitField("create alias")
+
+
 
 
 

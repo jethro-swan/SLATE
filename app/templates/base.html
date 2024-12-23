@@ -55,6 +55,7 @@
       <a class="mb" href="/logout">logout</a>
     </div>
 
+<!--
     {% if page == "secids" %}
       <div class="mba">identities</div>
     {% else %}
@@ -70,7 +71,7 @@
         <a class="mb" href="/stewardships/{{ identity_fph }}">stewardships</a>
       </div>
     {% endif %}
-
+-->
 
 
 
@@ -97,8 +98,9 @@
     ({{ primary_identity_type }})
     <hr class="dashed" />
     Currently acting as
-    <span class="dark-green-bold" >{{ current_identity_hrns }}</span>
-    ({{ current_identity_type }})
+    <span class="dark-green-bold" >{{ working_identity_hrns }}</span>
+    ({{ working_identity_type }})
+    [ <b><a href="/create_secid">create new alias</a></b> ]
     <br />
     <hr class="dashed" />
     {% endif %}

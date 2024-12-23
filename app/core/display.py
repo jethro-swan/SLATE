@@ -61,6 +61,15 @@ def entity_type_verbose(etype):
         return etype
 
 
+# Create the *identity* type display string:
+def etype_to_adtype(etype):
+    if etype == "primid":
+        return "login identity"
+    elif etype == "secid":
+        return "alias"
+    else:
+        return ""
+
 
 
 

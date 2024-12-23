@@ -5,7 +5,15 @@
 {% for identity in identities %}<!-- list of dictionaries -->
 
   <div class="header">
-    <strong>{{ identity.hrns }}</strong> ({{ identity.type }})
+    <strong>
+      <a href="/change_working_identity/{{ identity.fph }}">
+        {{ identity.hrns }}
+      </a>
+    </strong>
+    ({{ identity.type }})
+    {% if identity.fph == primary_identity_fph %}
+    [ <b><a href="/list_stewardships">list stewardships</a></b> ]  
+    {% endif %}
   </div>
   <br /><br />
   <table>

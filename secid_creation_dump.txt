@@ -131,3 +131,5 @@ secid mq.fjq.de (a449670a1b0c39f606b917018187ac33) added for primid ce.zsn.fr (a
 secid las.vxj.fr (be98c4de3cc80190c85dbc2556657a19) added for primid ux.isv.es (56152e65e19d43db90b98a41186a2a81)
 secid to.vbx.rpc.global (d86dad7f8df5fcac6e16d2f40ea3a7c3) added for primid adc.hkl.global (ae8940d9e65b812e08eaba5d6dcb37f7)
 secid xg.rb.gq.rpc.global (1cc17964ee714eb9f485ceef960bfe46) added for primid qcd.nr.gar.global (7763cc645b6c7f2fa69bd763904ef2fc)
+secid yyy.ycx.io.gn.de (ca86c6c521beb8d9b2e5ea6f2c9a0525) added for primid xvb.uk (93fbddb4b65480ee8946539b31d02004)
+secid gggg.ycx.io.gn.de (a6fdc395f101804ce66034a3bce80ee8) added for primid xvb.uk (93fbddb4b65480ee8946539b31d02004)
