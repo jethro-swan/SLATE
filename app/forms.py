@@ -176,11 +176,6 @@ class SecidCreateForm(FlaskForm):
                       )
     create_secid = SubmitField("create alias")
 
-
-
-
-
-
 #------------------------------------------------------------------------------
 class LoginForm(FlaskForm):
 

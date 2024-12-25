@@ -1,0 +1,117 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<h2>manage currency</h2>
+
+<hr />
+
+<p>
+  This page will be visible only to the <em>stewards</em> of this
+  <b>currency</b>. It will show the following:
+  <ul>
+    <li>
+      A link to display a list of all <b>accounts</b> in this <b>currency</b>,
+      along with the <b>owner</b> and current <em>balance</em> of each.
+      <br /><br />
+    </li>
+    <li>
+      A link to download a CSV list of all <b>accounts</b> in this
+      <b>currency</b>, along with the <b>owner</b> and current <em>balance</em>
+      of each.
+      <br /><br />
+    </li>
+    <li>
+      A link to export (download) a CSV list of all payments made in this
+      <b>currency</b>, showing
+      <ul>
+        <li class="compact2">date and time</li>
+        <li class="compact2">payment number (sequential)</li>
+        <li class="compact2">payer <b>account</b></li>
+        <li class="compact2">payer <b>identity</b></li>
+        <li class="compact2">payee <b>account</b></li>
+        <li class="compact2">payee <b>identity</b></li>
+        <li class="compact2">amount</li>
+        <li class="compact2">annotation</li>
+      </ul>
+      <br />
+      <p>
+        <hr />
+        e.g.
+      </p>
+      <form action="" method="post" autocomplete="off" novalidate>
+        <p>
+          <input
+            type="submit"
+            value="Update list (CSV) of payments in this currency"
+          />
+        </p>
+      </form>
+      <p>
+        <a href="/export/{{ path_to_csv_file }}">download payments list</a>
+      </p>
+      <p>
+        <hr />
+      </p>
+      <p>
+        The filename will be generated automatically comprising
+        <ul>
+          <li class="compact2">"currency_"</li>
+          <li class="compact2">the FPH of the **currency**</li>
+          <li class="compact2">the date and time (in bigendian format)</li>
+        </ul>
+        and a download link will be created.
+      </p>
+      <p>
+        It's not yet obvious how to implement this. The download link must
+        restrict access to this <em>steward</em> (the one downloading the file)
+        and should be time-limited.
+      </p>
+      <br />
+    </li>
+    <li>
+      A link to create a pop-out window wide enough to list of all payments
+      made in this <b>currency</b>, showing
+      <ul>
+        <li class="compact2">date and time</li>
+        <li class="compact2">payment number (sequential)</li>
+        <li class="compact2">payer <b>account</b></li>
+        <li class="compact2">payer <b>identity</b></li>
+        <li class="compact2">payee <b>account</b></li>
+        <li class="compact2">payee <b>identity</b></li>
+        <li class="compact2">amount</li>
+        <li class="compact2">annotation</li>
+      </ul>
+      <br />
+    </li>
+    <li>
+      A link to a form to add or recommend a new <em>steward</em> for this
+      <b>currency</b>. The latter seems more likely because all current
+      <em>stewards</em> should probably have an opportunity to veto or
+      otherwise decide upon the new <em>steward</em>. <span style="color:red">
+      This is a policy matter we need to discuss.</span>
+      <br /><br />
+    </li>
+    <li>
+      A link to a form to propose removal of an existing <em>steward</em> of
+      this <b>currency</b>. All current <em>stewards</em> should probably have
+      an opportunity to veto or otherwise decide upon the matter, including the
+      <em>steward</em> whose removal is being proposed. <span style="color:red">
+      This is a policy matter we need to discuss.</span>
+      <br /><br />
+    </li>
+  </ul>
+</p>
+
+
+
+
+<div class="shoutbox">
+  <p class="shout">
+    NOT YET IMPLEMENTED
+  </p>
+</div>
+
+<hr />
+
+{% endblock %}

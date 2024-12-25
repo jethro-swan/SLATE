@@ -765,7 +765,19 @@ def home():
             a["isneg"] = (account_balance < 0)
             a["prefix"] = prefix
             a["suffix"] = suffix
-            primid_currency_steward = currency_fph in stewardships_list
+            #primid_currency_steward = (currency_fph in stewardships_list)
+            if currency_fph in stewardships_list:
+                primid_currency_steward = True
+                print(
+                    "primid is a steward of currency " \
+                    + fph_to_hrns(currency_fph)
+                )
+            else:
+                primid_currency_steward = False
+                print(
+                    "primid is not a steward of currency " \
+                    + fph_to_hrns(currency_fph)
+                )
             a["primid_is_currency_steward"] = primid_currency_steward
             a["currency_fph"] = currency_fph
             a["currency_hrns"] = currency_hrns
@@ -846,9 +858,6 @@ def account(payer_account_fph, payee_account_fph):
     logged_in = current_user.is_authenticated
 
     # The *primid* (or its alias *secid*) logged in currently:
-#    primary_identity_fph = current_user.get_id()
-#    primary_identity_hrns = fph_to_hrns(primary_identity_fph)
-#    primary_identity_type = "login identity"
     primary_identity_fph, \
     primary_identity_hrns, \
     primary_identity_type, \
@@ -907,20 +916,9 @@ def account(payer_account_fph, payee_account_fph):
     payer_balance, \
     m = get_account_specific_properties(payer_account_fph)
 
-#    print(
-#        "payer_owner_fph = " + payer_owner_fph + "\n" + \
-#        "identity_fph    = " + identity_fph
-#    )
-
     if m:
         flash(m)
-        #return redirect("/home")
         return redirect("/account")
-    #if payer_owner_fph !=  identity_fph:
-    #    flash(
-    #        "Account " + payer_account_hrns + " does not belong to " \
-    #        + identity_hrns
-    #    )
 
     account_balance_is_negative = (payer_balance < 0)
 
@@ -940,19 +938,11 @@ def account(payer_account_fph, payee_account_fph):
     if form.validate_on_submit():
 
         payee_account_identifier = form.to_account_id.data # HRNS or FPH
-        #payee_identifier = form.payee_account_identifier.data # HRNS or FPH
-#        amount = int(form.amount.data)
         amount_entered = form.amount.data
-#        amount = int((form.amount.data)*100)
         annotation = form.annotation.data
 
-#        print("payee_identifier     = " + payee_identifier)
-        #print("amount_entered       = " + amount_entered)
-#        print("amount_entered       = " + str(amount_entered))
         amount = int(round(float(amount_entered)*100))
-#        print("amount               = " + str(amount))
-#        print("annotation           = " + annotation)
-
+#
         if (payee_account_identifier is not None) and payee_account_identifier:
             payee_account_fph, \
             payee_account_hrns, \
@@ -966,17 +956,9 @@ def account(payer_account_fph, payee_account_fph):
                 flash(payee_account_identifier + " is not an account")
                 return redirect("/account/" + payer_account_fph)
 
-
-
-
-#        print("payee_account_fph    = " + payee_account_fph)
-#        print("payee_account_hrns   = " + payee_account_hrns)
-#        print("etype                = " + etype)
-
         if payee_account_fph == payer_account_fph:
             flash("An account cannot pay to itself")
             return redirect("/account/" + payer_account_fph)
-
 
         payee_currency_fph, \
         payee_owner_fph, \
@@ -993,18 +975,12 @@ def account(payer_account_fph, payee_account_fph):
                        "/account/" + payer_account_fph + payer_account_fph
                    )
 
-#        print("payee balance before payment = " + str(payee_balance))
-#        print("payer balance before payment = " + str(payer_balance))
-
-
         # If control reaches this point, the two *accounts* are in the same
         # *currency* so the payment can be made:
         m = payment(payer_account_fph, payee_account_fph, amount, annotation)
         if m:
             flash(m)
             return redirect("/account/" + payer_account_fph)
-
-        ## TESTSTUFF
 
         payer_currency_fph, \
         payer_owner_fph, \
@@ -1016,9 +992,6 @@ def account(payer_account_fph, payee_account_fph):
         payee_balance, \
         m = get_account_specific_properties(payee_account_fph)
 
-#        print("payee balance after payment = " + str(payee_balance))
-#        print("payer balance after payment = " + str(payer_balance))
-
         flash(
             "Payment submitted: " \
             + currency_prefix \
@@ -1026,12 +999,6 @@ def account(payer_account_fph, payee_account_fph):
             + currency_suffix
         )
         return redirect("/home")
-#        return redirect("/account/" + payer_account_fph)
-
-        #payer_balance = integer_to_money_format(payer_balance)
-#    else:
-#        payee_account_fph = "none"
-#        payee_account_hrns = "none"
 
     return render_template(
                 "account.html",
@@ -1465,20 +1432,20 @@ def stewardships(identity_fph):
         splash(m)
 
     return render_template(
-                "stewardships.html",
-                title = "Stewardships",
-                page = page,
-                group = group,
-                primary_identity_type = "login identity",
-                primary_identity_fph = primary_identity_fph,
-                primary_identity_hrns = primary_identity_hrns,
-                working_identity_fph = working_identity_fph,
-                working_identity_hrns = working_identity_hrns,
-                working_identity_type = working_identity_type,
-                development_mode = development_mode,
-                logged_in = logged_in,
-                namespace_steward = namespace_steward,
-                currency_steward = currency_steward
+               "stewardships.html",
+               title = "Stewardships",
+               page = page,
+               group = group,
+               primary_identity_type = "login identity",
+               primary_identity_fph = primary_identity_fph,
+               primary_identity_hrns = primary_identity_hrns,
+               working_identity_fph = working_identity_fph,
+               working_identity_hrns = working_identity_hrns,
+               working_identity_type = working_identity_type,
+               development_mode = development_mode,
+               logged_in = logged_in,
+               namespace_steward = namespace_steward,
+               currency_steward = currency_steward
            )
 
 # secids page -----------------------------------------------------------------
@@ -1528,6 +1495,64 @@ def secids(identity_fph):
                 namespace_steward = namespace_steward,
                 secids = secids
            )
+
+
+
+@app.route("/currency/<currency_fph>", methods = ["GET", "POST"])
+@login_required
+def currency(currency_fph):
+
+    page = "currency"
+    group = "home"
+    logged_in = current_user.is_authenticated
+
+    primary_identity_fph, \
+    primary_identity_hrns, \
+    primary_identity_type, \
+    m = identify_entity(current_user.get_id())
+
+    if "working_identity" in session:
+        working_identity_fph, \
+        working_identity_hrns, \
+        working_identity_type, \
+        m = identify_entity(session["working_identity"])
+    else:
+        working_identity_fph = primary_identity_fph
+        working_identity_hrns = primary_identity_hrns
+        working_identity_type = etype_to_adtype(working_identity_type)
+
+
+
+
+    currency_fph, \
+    currency_hrns, \
+    etype, \
+    m = identify_entity(currency_fph)
+    if (etype != "currency"):
+        return "", "", currency_fph + " is not a currency"
+
+
+
+    return render_template(
+               "currency.html",
+               title = "Currency",
+               page = page,
+               group = group,
+               primary_identity_type = "login identity",
+               primary_identity_fph = primary_identity_fph,
+               primary_identity_hrns = primary_identity_hrns,
+               working_identity_fph = working_identity_fph,
+               working_identity_hrns = working_identity_hrns,
+               working_identity_type = working_identity_type,
+               development_mode = development_mode,
+               logged_in = logged_in
+           )
+
+
+
+
+
+
 
 # MANAGEMENT ==================================================================
 
@@ -1657,15 +1682,26 @@ def create_currency():
            )
 
 # create an account -----------------------------------------------------------
-@app.route("/create_account", methods = ["GET", "POST"])
+@app.route("/create_account/<owner_fph>", methods = ["GET", "POST"])
 @login_required
-def create_account():
+def create_account(owner_fph):
     page = "create_account"
     group = "home"
     namespace_steward = False
     currency_steward = False
     paying = True
     logged_in = current_user.is_authenticated
+
+    owner_fph, \
+    owner_hrns, \
+    owner_type, \
+    m = identify_entity(owner_fph)
+    if m:
+        flash(m)
+        return redirect("/home")
+    if owner_fph == "":
+        flash("The owner FPH in the URL cannot be identified")
+        return redirect("/home")
 
     primary_identity_fph, \
     primary_identity_hrns, \
@@ -1690,17 +1726,20 @@ def create_account():
         m = identify_entity(form.namespace_id.data) # parent *namespace*
         if m:
             flash(m)
-            return redirect("/create_account")
+            #return redirect("/create_account")
+            return redirect("/home")
         if not namespace_fph:
             flash("Parent namespace does not exist")
-            return redirect("/create_account")
+            #return redirect("/create_account")
+            return redirect("/home")
 
         account_name = form.account_name.data
         # Check whether an entity with the proposed HRNS exists already.
         proposed_hrns = account_name + "." + namespace_hrns
         if hrns_exists_already(proposed_hrns):
             flash(proposed_hrns + " is already registered")
-            return redirect("/create_account")
+            return redirect("/home")
+            #return redirect("/create_account")
 
         currency_id = form.currency_id.data
 
@@ -1710,18 +1749,19 @@ def create_account():
         m = identify_entity(currency_id)
         if m:
             flash(m)
-            return redirect("/create_account")
+            #return redirect("/create_account")
+            return redirect("/home")
         if etype !=  "currency":
             flash(currency_id + " is not a currency")
-            return redirect("/create_account")
-
+            #return redirect("/create_account")
+            return redirect("/home")
 
         account_fph, \
         account_hrns, \
         m = new_account(
                 account_name,
                 namespace_fph,
-                primary_identity_fph, # the owner of this *account*
+                owner_fph, # the owner of this *account*
                 currency_fph
             )
         if m:
@@ -1730,8 +1770,8 @@ def create_account():
             "A new account has been created, identified as \n" \
             + account_hrns + " [" + account_fph + "]"
         )
-        return redirect("/create_account")
-        #return redirect("/home")
+        #return redirect("/create_account")
+        return redirect("/home")
 
     return render_template(
                 "create_account.html",

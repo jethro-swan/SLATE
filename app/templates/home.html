@@ -12,7 +12,7 @@
     </strong>
     ({{ identity.type }})
     {% if identity.fph == primary_identity_fph %}
-    [ <b><a href="/list_stewardships">list stewardships</a></b> ]  
+    [ <b><a href="/list_stewardships">list stewardships</a></b> ]
     {% endif %}
   </div>
   <br /><br />
@@ -41,7 +41,7 @@
         <strong>{{ account.balance }}</strong>
       </td>
       <td align="left">
-        {% if account.primid_currency_steward %}
+        {% if account.primid_is_currency_steward %}
         <a href="/currency/{{ account.currency_fph }}">
           <strong>{{ account.currency_hrns }}</strong>
         </a>
@@ -52,7 +52,8 @@
     </tr>
   {% endfor %}
   </table>
-  <a href="/create_account"><strong>add account</strong></a> for
+  <a href="/create_account/{{ identity.fph }}"><strong>add account</strong></a>
+  for
   <strong>{{ identity.hrns }}</strong>
   <br /><br />
 {% endfor %}

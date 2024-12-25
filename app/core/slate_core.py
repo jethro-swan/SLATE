@@ -763,6 +763,14 @@ def new_currency(
         True                    # active flag
     )
 
+
+    # TESTING
+#    print("initial_steward_fph = " + initial_steward_fph)
+#    stewards_fph_list = [initial_steward_fph]
+#    print("initial_stewards_list = ", end="")
+#    print(stewards_fph_list)
+#    stewards_fph_blob = pickle.dumps(stewards_fph_list)
+
     # Now add currency specific properties:
     with sqlite3.connect(ENTITIES_DB) as conn:
         cursor = conn.cursor()
@@ -782,8 +790,29 @@ def new_currency(
                 currency_prefix,
                 currency_suffix,
                 default_account_name,
-                pickle.dumps([])
+                pickle.dumps([initial_steward_fph])
+#               stewards_fph_blob
             )
+        )
+        cursor.execute(
+            """
+            SELECT stewardships_fph_list
+            FROM primids
+            WHERE entity_fph = ?
+            """,
+            (initial_steward_fph,)
+        )
+        stewardships_fph_blob = cursor.fetchone()[0]
+        stewardships_fph_list = pickle.loads(stewardships_fph_blob)
+        stewardships_fph_list.append(currency_fph)
+        stewardships_fph_blob = pickle.dumps(stewardships_fph_list)
+        cursor.execute(
+            """
+            UPDATE primids
+            SET stewardships_fph_list = ?
+            WHERE entity_fph = ?
+            """,
+            (stewardships_fph_blob, initial_steward_fph)
         )
         conn.commit()
         cursor.close()
