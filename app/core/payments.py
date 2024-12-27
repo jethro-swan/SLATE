@@ -7,8 +7,10 @@ from prettytable import PrettyTable
 # see ttps://learnpython.com/blog/print-table-in-python/
 
 from .constants import ENTITIES_DB, PAYMENTS_DB, DB_DIR, DB_BKP_DIR
+from .constants import SLATE_EXPORT
 #from constants import FPH_TO_HRNS_MAP, HRNS_C_FPH_MAP
 from .common import filename_timestamp as timestamp
+from .common import ledger_timestamp
 from .common import nshash
 from .fph_hrns_maps import hrns_to_fph, fph_to_hrns, create_maps
 from .dbm_functions import dbm_store, dbm_fetch, dbm_delete, dbm_keys
@@ -40,11 +42,14 @@ def create_payments_db():
         cursor.execute(
             """
             CREATE TABLE IF NOT EXISTS payments (
+                timestamp INTEGER TEXT NOT NULL,
                 payment_id INTEGER PRIMARY KEY AUTOINCREMENT,
                 payer_fph TEXT NOT NULL,
                 payee_fph TEXT NOT NULL,
                 currency_fph TEXT NOT NULL,
                 amount INTEGER NOT NULL,
+                payer_balance INTEGER NOT NULL,
+                payee_balance INTEGER NOT NULL,
                 annotation TEXT
             );
             """
@@ -107,24 +112,31 @@ def payment(payer_fph, payee_fph, amount, annotation):
     #--------------------------------------------------------------------------
     # Then the payment is recorded in the journal:
 
+    #date_and_time = ledger_timestamp()
     with sqlite3.connect(PAYMENTS_DB) as conn:
         cursor = conn.cursor()
         cursor.execute(
             """
             INSERT INTO payments (
+                timestamp,
                 payer_fph,
                 payee_fph,
                 currency_fph,
                 amount,
+                payer_balance,
+                payee_balance,
                 annotation
             )
-            VALUES (?, ?, ?, ?, ?)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
             """,
             (
+                ledger_timestamp(),
                 payer_fph,
                 payee_fph,
                 payer_currency_fph,
                 amount,
+                payer_balance,
+                payee_balance,
                 annotation
             )
         )
@@ -156,21 +168,34 @@ def list_currencies_in_common_as_html(a1_fph, a2_fph):
 
 
 #==============================================================================
-
+# Create a list of payments made in the specified *currency*:
 
 def list_payments_in_currency(currency_identifier):
 
     currency_fph, \
     currency_hrns, \
-    entity_type, \
+    etype, \
     m = identify_entity(currency_identifier)
+    if m:
+        return "", m
+    if currency_fph == "":
+        "", "No valid entity was specified"
+    if etype != "currency":
+        return "", "The entity specified is not a currency"
 
     with sqlite3.connect(PAYMENTS_DB) as conn:
         cursor = conn.cursor()
         # Read transactions for specified currency:
         cursor.execute(
             """
-            SELECT payment_id, payer_fph, payee_fph, amount, annotation
+            SELECT timestamp,
+                   payment_id,
+                   payer_fph,
+                   payee_fph,
+                   amount,
+                   payer_balance,
+                   payee_balance,
+                   annotation
             FROM payments
             WHERE currency_fph = ?
             """,
@@ -180,37 +205,213 @@ def list_payments_in_currency(currency_identifier):
         cursor.close()
 
     if all_payments is None:
-        return []
+        return [], ""
 
     payments_list = []
-    # Create column headers as the first row:
     for payment in all_payments:
         payment_row = []
-        #p = payment
         p = list(payment)
-        #print(p)
-        payment_row.append(str(p[0]).zfill(8))              # payment number
-        payment_row.append(p[1])                            # payer FPH
-        #payment_row.append(fph_to_hrns(p[1]))               # payer HRNS
-        payment_row.append(p[2])                            # payee FPH
-        #payment_row.append(fph_to_hrns(p[2]))               # payee HRNS
-        payment_row.append(integer_to_money_format(p[3]))   # amount paid
-        payment_row.append(p[4])                            # annotation
-        #print(payment_row)
+        payment_row.append(p[0])                            # timestamp
+        payment_row.append(str(p[1]).zfill(8))              # payment number
+        payment_row.append(fph_to_hrns(p[2]))               # payer HRNS
+        payment_row.append(fph_to_hrns(p[3]))               # payee HRNS
+        payment_row.append(integer_to_money_format(p[4]))   # amount paid
+        payment_row.append(integer_to_money_format(p[5]))   # payer balance
+        payment_row.append(integer_to_money_format(p[6]))   # payee balance
+        payment_row.append(p[7])                            # annotation
+        print(payment_row)
         payments_list.append(payment_row)
-    #print("***** End of loop *****")
-    #print(payments_list)
-    return payments_list
 
-#------------------------------------------------------------------------------
-def dump_currency_payments_csv(currency_identifier, output_file_path):
-    payment_rows = list_payments_in_currency(currency_identifier)
-    if output_file_path and os.path.exists(output_file_path):
-        with open(output_file_path, "w") as csv_f:
-            csv_f.write("payment number:payer FPH:payee FPH:amount:annotation")
-            for row in payment_rows:
-                csv_f.write(":".join(row))
-    return payment_rows
+    return payments_list, ""
+
+
+#==============================================================================
+# Create a list of payments made to or from the specified *account*:
+
+# 2024-12-26 21:04 changing  []  to  {}  for Jinja2 iteration
+
+def list_payments_for_account(account_identifier):
+
+    account_fph, \
+    account_hrns, \
+    etype, \
+    m = identify_entity(account_identifier)
+    if m:
+        return [], m
+    if account_fph == "":
+        [], "No valid entity was specified"
+    if etype != "account":
+        return [], "The entity specified is not an account"
+
+    with sqlite3.connect(PAYMENTS_DB) as conn:
+        cursor = conn.cursor()
+        # Read transactions for specified currency:
+        cursor.execute(
+            """
+            SELECT timestamp,
+                   payment_id,
+                   payer_fph,
+                   payee_fph,
+                   amount,
+                   payer_balance,
+                   payee_balance,
+                   annotation
+            FROM payments
+            WHERE payer_fph = ? OR payee_fph = ?
+            """,
+            (account_fph, account_fph)
+        )
+        all_payments = cursor.fetchall()
+        cursor.close()
+
+    if all_payments is None:
+        return [], ""
+
+    payments_list = []
+    for payment in all_payments:
+        payment_row = {}
+        p = list(payment)
+
+        payment_row["date_time"] = p[0] # date+time of payment
+
+        payment_row["payment_id"] = str(p[1]).zfill(8) # payment number
+
+        # If THIS *account* is the payee, put the amount in the recipts
+        # column (3) and leave the payments column blank:
+        if p[3] == account_fph:
+            payment_row["received"] = integer_to_money_format(p[4])
+            payment_row["paid"] = ""
+            payment_row["other_account"] = fph_to_hrns(p[2]) # payee HRNS
+            payment_row["balance"] = integer_to_money_format(p[6]) # balance
+        # Otherwise, if THIS *account* is the payer, leave the payments
+        # column blank and put the amount in the payments column:
+        elif p[2] == account_fph:
+            payment_row["received"] = ""
+            payment_row["paid"] = integer_to_money_format(p[4]) # amount
+            payment_row["other_account"] = fph_to_hrns(p[3]) # payer HRNS
+            payment_row["balance"] = integer_to_money_format(p[5]) # balance
+        else:
+            payment_row["received"] = ""
+            payment_row["paid"] = ""
+            payment_row["other_account"] = ""
+            payment_row["balance"] = ""
+
+        payment_row["annotation"] = p[7] # annotation
+
+        print(payment_row)
+        payments_list.append(payment_row)
+
+    return payments_list, ""
+
+
+
+
+
+
+
+#==============================================================================
+# Export a CSV listing of all payments made in a specified *currency*
+# (Complete and working)
+
+def dump_currency_payments_csv(
+        currency_identifier,
+        show_header_row = True
+    ):
+    currency_fph, \
+    currency_hrns, \
+    etype, \
+    m = identify_entity(currency_identifier)
+    if m:
+        return "", m
+    if etype != "currency":
+        return "", "The entity specified is not a currency"
+    if currency_fph == "":
+        return "", "No valid currency was specified"
+
+    csv_filename = "currency_" + currency_fph \
+                 + "_journal_" + timestamp() + ".csv"
+
+    csv_export_filepath = SLATE_EXPORT + csv_filename
+
+    payment_rows, m = list_payments_in_currency(currency_identifier)
+    if m:
+        return "", m
+
+    with open(csv_export_filepath, "w") as csv_f:
+        if show_header_row:
+            csv_f.write(
+                      "date and time\t"
+                      + "payment number\t" \
+                      + "payer HRNS\t" \
+                      + "payee HRNS\t" \
+                      + "amount\t" \
+                      + "annotation\n"
+                  )
+        for row in payment_rows:
+            csv_f.write("\t".join(row))
+            csv_f.write("\n")
+
+    return csv_export_filepath, ""
+
+#==============================================================================
+# Export a CSV listing of all payments made to or from a specified *account*
+
+
+def dump_account_payments_csv(
+        account_identifier,
+        show_header_row = True
+    ):
+    account_fph, \
+    account_hrns, \
+    etype, \
+    m = identify_entity(account_identifier)
+    if m:
+        return "", m
+    if etype != "account":
+        return "", "The entity specified is not an account"
+    if account_fph == "":
+        return "", "No valid account was specified"
+
+    csv_filename = "account_" + account_fph \
+                 + "_journal_" + timestamp() + ".csv"
+
+    csv_export_filepath = SLATE_EXPORT + csv_filename
+
+    payment_rows, m = list_payments_for_account(account_identifier)
+    if m:
+        return [], m
+
+    with open(csv_export_filepath, "w") as csv_f:
+        if show_header_row:
+            csv_f.write(
+                      "date and time\t" \
+                      + "payment number\t" \
+                      + "credit\t" \
+                      + "debit\t" \
+                      + "other account\t" \
+                      + "balance\t" \
+                      + "annotation\n"
+                  )
+        for row in payment_rows:
+            csv_f.write("\t".join(row))
+            csv_f.write("\n")
+
+    return csv_export_filepath, ""
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 #==============================================================================
 ##

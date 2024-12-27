@@ -12,7 +12,7 @@ from .regexp_list import re_fph, re_hrns
 
 from .unix_functions import fcopy
 
-from .constants import TIMESTAMP_FMT, FNAME_DATETIME_FMT
+from .constants import TIMESTAMP_FMT, FNAME_DATETIME_FMT, LEDGER_DATETIME_FMT
 
 
 #==============================================================================
@@ -43,10 +43,17 @@ def timestamp():
     return datetime.datetime.now().strftime(TIMESTAMP_FMT)
 
 #------------------------------------------------------------------------------
-# Return current date+time in "%Y%m%d%H%M%%S" format
+# Return current date+time in "%Y-%m-%d_%H%M%%S" format
 # YYYYMMDDhhmmss
 def filename_timestamp():
     return datetime.datetime.now().strftime(FNAME_DATETIME_FMT)
+
+#------------------------------------------------------------------------------
+# Return current date+time in "%Y-%m-%d %H:%M:%S" format
+# YYYY-MM-DD hh:mm:ss:ms
+def ledger_timestamp():
+    return datetime.datetime.now().strftime(LEDGER_DATETIME_FMT)
+
 
 #------------------------------------------------------------------------------
 # Map human-readable entity name (UTF-8) to hash:

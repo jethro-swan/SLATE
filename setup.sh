@@ -13,4 +13,12 @@ sudo mkdir -p /var/slate/logs
 sudo mkdir -p /var/slate/{db,maps}/backups
 sudo chown -R slate:slate /var/slate
 sudo chmod -R 700 /var/slate
+
+sudo mkdir -p /srv/slate/{export,import}
+sudo mkdir -p /srv/slate/export/qr_codes
+sudo chown -R slate:slate /srv/slate
+sudo chmod -R 700 /srv/slate
+
+
+
 #sudo chown -R slate:slate /var/slate

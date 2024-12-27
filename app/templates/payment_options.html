@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+
+  <table>
+    <tr>
+      <th>currency</th>
+      <th>identity</th>
+      <th>account</th>
+      <th>unit</th>
+      <th>balance</th>
+    </tr>
+
+{% for payment_option in payment_options_list %}<!-- list of dictionaries -->
+    <tr>
+      <td align="left"><!-- shown *currency* -->
+        {% if payment_option.currency.primid_is_c_steward %}
+        <a href="/currency/{{
+          payment_option.currency.fph }}">
+          <b>{{ payment_option.currency.hrns }}</b>
+        </a>
+        {% else %}
+          <b>{{ payment_option.currency.hrns }}</b>
+        {% endif %}
+      </td>
+      <td align="left"><!-- show owner *identity* -->
+        <b>{{ payment_option.currency.identity.hrns }}</b>
+      </td>
+      <td align="left">
+        <a href="/account/{{ payment_option.currency.identity.account.fph
+           }}/00000000000000000000000000000000">
+          <b>{{ payment_option.currency.identity.account.hrns }}</b>
+        </a>
+      </td>
+      <td>
+        {{ payment_option.currency.identity.account.prefix }}
+        {{ payment_option.currency.identity.account.suffix }}
+      </td>
+      {% if payment_option.currency.identity.account.isneg %}
+      <td align="right" class="balneg">
+      {% else %}
+      <td align="right" class="balpos">
+      {% endif %}
+        <b>{{ payment_option.currency.identity.account.balance }}</b>
+      </td>
+    </tr>
+  {% endfor %}
+  </table>
+  <hr />
+{% endblock %}

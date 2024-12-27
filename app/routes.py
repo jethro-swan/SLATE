@@ -6,15 +6,13 @@ import sys
 import bcrypt
 from itsdangerous import URLSafeTimedSerializer
 
-#from flask_bcrypt import Bcrypt # 2024-11-10: Try this out to resolve problem
-#                                # with check_auth_hash( )
-#                                # ("ValueError: Invalid salt")
-
-# SLATE components: -----------------------------------------------------------
+## SLATE components: -----------------------------------------------------------
 
 from app.core.constants import NSS
+
 from app.core.fph_hrns_maps import hrns_to_fph, fph_to_hrns
 from app.core.fph_hrns_maps import hrns_exists_already
+
 from app.core.slate_core import get_entity_type, get_account_currency
 from app.core.slate_core import identify_entity, get_primid
 from app.core.slate_core import new_primid, new_secid
@@ -29,19 +27,29 @@ from app.core.slate_core import get_account_specific_properties
 from app.core.slate_core import list_all_namespaces
 from app.core.slate_core import hrns_to_name_and_namespace
 from app.core.slate_core import authenticate_primid_email
+
 from app.core.regexp_list import re_fph, re_hrns, re_email
+
 from app.core.slate_login import get_auth_data, register_authenticated_login
+
 ##from app.core.auth import pin_random_ord, pin_prompt_message
 from app.core.auth import pin_subset_prompt
 from app.core.auth import check_auth_hash, authenticate_pin
+
 from app.core.logging import log_event
+
 from app.core.payments import payment
-from app.core.payments import dump_account_payments
+#from app.core.payments import dump_account_payments
+from app.core.payments import list_payments_for_account
+from app.core.payments import dump_account_payments_csv
+from app.core.payments import list_payments_in_currency
+from app.core.payments import dump_currency_payments_csv
 
 from app.core.mail_temp import temp_mail_send
 
 from app.core.display import yesno, integer_to_money_format
 from app.core.display import etype_to_adtype
+
 from app.core.csv_import import import_minimal_payment_set_as_csv
 
 from app.site_configuration import site_config
@@ -829,6 +837,146 @@ def home():
                 stewardships = stewardships
             )
 
+# ==============================================================================
+# login landing page
+#
+# This is an alternative version that can be duiplayed when we require a list
+# of payment options arranged alphabetically by *currency* and *identity*.
+
+@app.route("/payment_options", methods = ["GET", "POST"])
+@login_required
+def payment_options():
+    page = "payment_options"
+    group = "home"
+
+    namespace_steward = False
+    currency_steward = False
+    paying = False
+    logged_in = current_user.is_authenticated
+
+    primary_identity_fph, \
+    primary_identity_hrns, \
+    primary_identity_type, \
+    m = identify_entity(current_user.get_id())
+
+    if "working_identity" in session:
+        working_identity_fph, \
+        working_identity_hrns, \
+        working_identity_type, \
+        m = identify_entity(session["working_identity"])
+    else:
+        working_identity_fph = primary_identity_fph
+        working_identity_hrns = primary_identity_hrns
+        working_identity_type = primary_identity_type
+    working_identity_type = etype_to_adtype(working_identity_type)
+
+    # The user logs in as the *primid*, even if indirectly as one of its
+    # *secid*s, but once logged in will see all of its *identities* along with
+    # a list of *accounts* belonging to each. The user will also see a list of
+    # entities over which it holds/shares stewardship.
+
+    stewardships_list, m = list_stewardships(primary_identity_fph)
+
+    # Since a user may have *accounts* scattered across an arbitrary number of
+    # *namespaces*, it is necessary to maintain a list of these:
+
+    # A full list of *identities* is compiled, with the *primid* first and the
+    # *secids* arranged alphabetically:
+    identities_list = list_secids(primary_identity_fph)
+    identities_list.sort()
+    identities_list.insert(0, primary_identity_fph)
+
+    # We now need a list of the *currencies* available to these *identities*
+    # along with a list of *accounts* in each.
+
+    payment_options_list = [] # a list of dictionaries to be iterated
+    for id_fph in identities_list:
+
+        id_fph, \
+        id_hrns, \
+        etype, \
+        m = identify_entity(id_fph)
+        if m: # (this should never happen)
+            print(m)
+            flash(m)
+            return redirect("/home")
+
+        if etype == "primid":
+            id_type = "login identity"
+        elif etype == "secid":
+            id_type = "alias"
+        else:
+            id_type = "poltergeist" # something to be investigated
+
+        accounts_list, m = list_agent_accounts(id_fph)
+        if m: # (this should never happen)
+            print(m)
+            flash(m)
+            return redirect("/home")
+        accounts_list.sort()
+        for a_fph in accounts_list:
+
+            # fetch *account* details:
+            c_fph, \
+            a_owner_fph, \
+            a_balance, \
+            m = get_account_specific_properties(a_fph)
+            a_balance_d = integer_to_money_format(a_balance)
+
+            isneg = (a_balance < 0)
+
+            # Fetch *currency* details:
+            c_fph, \
+            c_hrns, \
+            c_prefix, \
+            c_suffix, \
+            c_default_account_name, \
+            c_stewards_list, \
+            m = get_currency_specific_properties(c_fph)
+
+            p = {} # a (*currency", *identity*, *account*) triplet
+            p["currency"] = {}
+            p["currency"]["fph"] = c_fph
+            p["currency"]["hrns"] = fph_to_hrns(c_fph)
+            #p["currency"]["primid_is_c_steward"] = primid_currency_steward
+            if c_fph in stewardships_list:
+                p["currency"]["primid_is_c_steward"] = True
+            else:
+                p["currency"]["primid_is_c_steward"] = False
+            p["currency"]["identity"] = {}
+            p["currency"]["identity"]["fph"] = id_fph
+            p["currency"]["identity"]["hrns"] = fph_to_hrns(id_fph)
+            p["currency"]["identity"]["type"] = id_type
+            p["currency"]["identity"]["account"] = {}
+            p["currency"]["identity"]["account"]["fph"] = a_fph
+            p["currency"]["identity"]["account"]["hrns"] = fph_to_hrns(a_fph)
+            p["currency"]["identity"]["account"]["owner_fph"] = a_owner_fph
+            p["currency"]["identity"]["account"]["balance"] = a_balance_d
+            p["currency"]["identity"]["account"]["isneg"] = (a_balance < 0)
+            p["currency"]["identity"]["account"]["prefix"] = c_prefix
+            p["currency"]["identity"]["account"]["suffix"] = c_suffix
+            payment_options_list.append(p)
+
+    # We now have a list of dictionaries to be iterated that can be iterated
+    # by the Jinja2 template.
+
+    return render_template(
+                "payment_options.html",
+                title = "Home2",
+                page = page,
+                group = group,
+                development_mode = development_mode,
+                logged_in = logged_in,
+                primary_identity_type = "login identity",
+                primary_identity_fph = primary_identity_fph,
+                primary_identity_hrns = primary_identity_hrns,
+                working_identity_fph = working_identity_fph,
+                working_identity_hrns = working_identity_hrns,
+                working_identity_type = working_identity_type,
+                # List of (nested) dictionaries for "payment_options.html":
+                payment_options_list = payment_options_list
+            )
+
 # account details page --------------------------------------------------------
 
 # Note:
@@ -1088,7 +1236,7 @@ def pay_account():
                 working_identity_type = working_identity_type
            )
 
-# ==============================================================================
+#=============================================================================
 #
 @app.route("/pay_to_agent", methods = ["GET", "POST"])
 @login_required
@@ -1216,7 +1364,8 @@ def select_account_combination_in_currency(payee_identity_fph, currency_fph):
 
 
 # payment to an *account* -- select payer *account* ---------------------------
-@app.route("/select_payer_account/<payee_account_fph>", methods = ["GET", "POST"])
+@app.route("/select_payer_account/<payee_account_fph>",
+           methods = ["GET", "POST"])
 @login_required
 def select_payer_account(payee_account_fph):
 
@@ -1374,9 +1523,16 @@ def account_details(account_fph):
     m = get_currency_specific_properties(currency_fph)
 
 
-    payments_history, m = dump_account_payments(account_fph)
+    #payments_history, m = dump_account_payments_csv(account_fph)
+    payments_history, m = list_payments_for_account(account_fph)
     if m:
         flash(m)
+
+    #for payment_row in payments_history:
+
+
+
+
 
     return render_template(
                 "account_details.html",

@@ -128,31 +128,31 @@
       <div class="mba">make payment to account</div>
       -->
       <div class="mba">
+        <!--
         <a class="mba" href="/pay_to_account">
-          make payment to account
+        -->
+        <a class="mba" href="/account">
+          payment to account
         </a>
       </div>
     {% else %}
       <div class="mb">
         <a class="mb" href="/pay_to_account">
-          make payment to account
+          payment to account
         </a>
       </div>
     {% endif %}
 
-    {% if page == "pay_agent" %}
-      <!--
-      <div class="mba">make payment to agent</div>
-      -->
+    {% if page == "payment_options" %}
       <div class="mba">
-        <a class="mba" href="/pay_to_agent">
-          make payment to agent
+        <a class="mba" href="/payment_options">
+          payment options (currency+agent)
         </a>
       </div>
     {% else %}
       <div class="mb">
-        <a class="mb" href="/pay_to_agent">
-          make payment to agent
+        <a class="mb" href="/payment_options">
+          payment options (currency+agent)
         </a>
       </div>
     {% endif %}

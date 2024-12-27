@@ -7,14 +7,17 @@ def nshash(name): # Defined again here to avoid circular import from common.py
 
 SLATE_DATA_ROOT     = '/var/slate/data/'
 SLATE_DATA          = '/var/slate/'
+SLATE_EXPORT        = '/srv/slate/export/'
+SLATE_IMPORT        = '/srv/slate/import/'
+SLATE_QR_CODES      = '/srv/slate/export/qr_codes/'
 
 SLATE_FLAGS         = SLATE_DATA + 'flags/'     # The trailing / is important
 SLATE_TREES         = SLATE_DATA + 'roots/'     # in this group.
 SLATE_FIXED         = SLATE_DATA + 'fixed/'     #
 SLATE_MAPS          = SLATE_DATA + 'maps/'      #
-SLATE_EXPORT        = SLATE_DATA + 'export/'    # CSV exports
+#SLATE_EXPORT        = SLATE_DATA + 'export/'    # CSV exports
 SLATE_WWW_OUT       = SLATE_DATA + 'www/'       # CSV exports
-SLATE_QR_CODES      = SLATE_DATA + 'qr_codes/'  # QR codes generated
+#SLATE_QR_CODES      = SLATE_DATA + 'qr_codes/'  # QR codes generated
                                                 # (both cleared out regularly)
 # fixed values (symlinked files)
 ENABLED             = SLATE_FIXED + '/enabled'   # f: = True
@@ -34,8 +37,8 @@ NSS                 = '.'
 TIMESTAMP_FMT       = "%Y-%m-%d %H:%M (%A)"
 FNAME_DATETIME_FMT  = "%Y-%m-%d_%H%M%S%f"
 LOG_DATETIME_FMT    = "%Y-%m-%d %H:%M:%S:%f"
-LEDGER_DATETIME_FMT = "%Y-%m-%d %H:%M:%S:%f"
-
+#LEDGER_DATETIME_FMT = "%Y-%m-%d %H:%M:%S:%f"
+LEDGER_DATETIME_FMT = "%Y-%m-%d %H:%M:%S"
 
 # Database directory (SQLite and DBM):
 DB_DIR              = "/var/slate/db/"

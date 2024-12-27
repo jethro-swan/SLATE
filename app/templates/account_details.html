@@ -38,31 +38,24 @@
 
   <table>
     <tr valign="bottom">
+      <th>date &amp; time</th>
       <th>payment<br />number</th>
-      <th>payer<br />account</th>
-      <th>payee<br />account</th>
+      <th>received</th>
+      <th>paid</th>
+      <th>other<br />account</th>
       <th>amount</th>
       <th>annotation</th>
     </tr>
     {% for payment in payments_history %}
     <tr>
-      <td align="right">{{ payment.payment_id }}</td>
-      {% if account_fph == payment.payer_fph %}
-      <td style="font-weight:bold">
-      {% else %}
-      <td>
-      {% endif %}
-        <a href="{{ payment.payer_fph }}">{{ payment.payer_hrns }}</a>
-      </td>
-      {% if account_fph == payment.payee_fph %}
-      <td style="font-weight:bold">
-      {% else %}
-      <td>
-      {% endif %}
-        <a href="{{ payment.payee_fph }}">{{ payment.payee_hrns }}</a>
-      <td align="right">{{ payment.amount }}</td>
+      <td align="left">{{ payment.date_time }}</td>
+      <td align="left">{{ payment.payment_id }}</td>
+      <td align="right">{{ payment.received }}</td>
+      <td align="right">{{ payment.paid }}</td>
+      <td align="left">{{ payment.other_account }}</td>
+      <td align="left">{{ payment.balance }}</td>
       <td>{{ payment.annotation }}</td>
-    </tr>
+   </tr>
     {% endfor %}
   </table>
 
