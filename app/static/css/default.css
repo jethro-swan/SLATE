@@ -255,3 +255,7 @@ input[type="checkbox" i] {
     padding: 2px;
     border: 1px;
 }
+
+td.catable {
+    background-color: #ffffcc;
+}

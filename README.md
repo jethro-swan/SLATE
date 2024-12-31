@@ -36,9 +36,10 @@ There are four categories of **agent**:
 ----
 ### Internal representation
 
-For convenience, each _entity_ (**namespace**, **agent**, **currency** or
-**account**) is identified internally by a unique number (_FPH_) serving as the
-primary key in an _SQLite_ table. (NB, these numbers are _not_ fully compatible
+For convenience, each _entity_ (**namespace**, **primary identity**,
+**secondary identity**, **currency** or **account**) is identified
+internally by a unique number (_FPH_) serving as the primary key in
+an _SQLite_ table. (NB, these numbers are _now_ fully compatible
 with the _FPH_ (_Full Path Hash_) used in _NESTS_.
 
 These global mappings are:
@@ -46,8 +47,10 @@ These global mappings are:
   - **namespace**: _namespace_fph_ &rarr; _namespace_hrns_
   - **currency**: _currency_hrns_ &rarr; _currency_fph_
   - **currency**: _currency_fph_ &rarr; _currency_hrns_
-  - **agent**: _agent_hrns_ &rarr; _agent_fph_
-  - **agent**: _agent_fph_ &rarr; _agent_hrns_
+  - **primary identity**: _primid_hrns_ &rarr; _primid_fph_
+  - **primary identity**: _primid_fph_ &rarr; _primid_hrns_
+  - **secondary identity**: _secid_hrns_ &rarr; _secid_fph_
+  - **secondary identity**: _secid_fph_ &rarr; _secid_hrns_
   - **account**: _account_hrns_ &rarr; _account_fph_
   - **account**: _account_fph_ &rarr; _account_hrns_
 
@@ -56,12 +59,12 @@ As in _NESTS_, each entity (**namespace**, **currency**, **agent** or
 within a **namespace**.
 
 Each **namespace** contains the names of **namespaces**, **currencies** and
-**agents** but, in contrast to _NESTS_, the names of **accounts** are contained
-only within the _private namespaces_ of the **agent** to which the **accounts**
-belong. This provides a sufficient entry point into a network fully compatible
-with [open money](https://openmoney.github.io/specification) (although notably
-lacking provision for the construction of the rich governance system that
-_NESTS_ is intended to support).
+**primary identities** (**login identities**) and **secondary identities**
+(**aliases**).
+
+Upon registration, an initial **account** is created in the **currency**
+specified in the registration form. The name of this **account** is contained
+in the _private namespaces_ of this new **agent**.
 
 The compatibility of the _entity_ names is sufficient to enable convenient and
 complete migration from _SLATE_ to _NESTS_ in due course.
@@ -73,6 +76,8 @@ complete migration from _SLATE_ to _NESTS_ in due course.
 
 Each **currency** has an associated journal in which all _payments_ are
 recorded, listing
+  - a unique payment number
+  - the date and time of the payment
   - the _payer_ **account**
   - the _payee_ **account**
   - the _amount_
@@ -91,6 +96,8 @@ Each **agent** (_agent_) has access to at least one **account** (generally
 more), and a separate ledger for each of these. The **account**s' ledgers list
 all transaction (_payments_ and _receipts_). These ledgers each comprise fields
 listing
+  - a unique payment number
+  - the date and time of the payment
   - the name of the other **account** (whether a _payer_ or a _payee_)
   - the _amount_ paid or received (+ or -)
   - the _balance_ following this payment
@@ -101,11 +108,11 @@ For each payment made
   - the _payee's_ balance  in this **currency** is increased by _amount_
   - the payment is recorded in the this **currency**'s _journal_
 
-Each **agent** (_agent_) can export its own **accounts**' ledgers, each
-**account** being in a distinct **currency**.
+Each **primary identity** (_primid_) can export the **account** ledger/journal,
+of any **account** belonging to one of its **identities**.
 
 ----
-## The agent interface
+## The login interface
 
 The _SLATE_ screens form a subset those used in _NESTS_, with minimal, if any,
 modification.
@@ -113,7 +120,7 @@ modification.
 ### Agent screens
 
   - **Registration**  
-    Once registered, the **agent** has access to (an **account** in) every **currency** within that **namespace**.
+    Once registered, the **login identity** (**primary identity**) has access to an **account** created automatically in the **currency** specified in the registration from. The name of this **account** is in the new **agent**'s _private_ **namespace**.
     - **namespace** (selected from a drop-down list)
     - **agent** name (entered in a text box)
     - real name (entered in a text box) (optional)
@@ -223,18 +230,17 @@ Therefore the following additional screens are required:
     - File download location (file dialogue)
 
 
-----
 
 [^1]: _SLATE_ names are limited to UTF-8 Latin characters using only "." as the
 namespace delimiter whereas _NESTS_ names and the namespace delimiter may be
 any UTF-8 character.
 
-[^2]: In contrast to _NESTS_, no distinction is made between _primary_ and
-_secondary_ **agents** (**identities**).
+[^2]: An **agent** is identifiable by its **login identity** (**primary identity**)
+or by any of an arbitrary number of **aliases** (**secondary identities**).
 
 [^3]: NB, this does not remove the original transaction from the journal.
 Instead, it posts a reversing transaction.
 
 ----
 
-Most recently updated: 2024/09/08
+Most recently updated: 2024/12/28 (incompletely)

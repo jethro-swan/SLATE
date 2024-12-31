@@ -2,6 +2,7 @@ import os
 import json
 from pathlib import Path
 import sys
+import pickle
 
 import bcrypt
 from itsdangerous import URLSafeTimedSerializer
@@ -27,6 +28,11 @@ from app.core.slate_core import get_account_specific_properties
 from app.core.slate_core import list_all_namespaces
 from app.core.slate_core import hrns_to_name_and_namespace
 from app.core.slate_core import authenticate_primid_email
+
+from app.core.slate_session import create_slate_session_db
+from app.core.slate_session import save_payment_session_data
+#from app.core.slate_session import retrieve_currency_options
+from app.core.slate_session import retrieve_payment_options
 
 from app.core.regexp_list import re_fph, re_hrns, re_email
 
@@ -395,7 +401,9 @@ def login():
 
         login_user(user, remember = form.remember_me.data)
 
-        session["login_identity"] = identity_fph
+        session["login_identity"] = identity_fph # Initial values upon login
+        session["previous_page"] = "home"        # (this one subsequently
+                                                 #  serving as shift register).
 
         return redirect(url_for("home"))
 
@@ -681,7 +689,14 @@ def change_working_identity(new_identity_fph):
 @login_required
 def home():
     page = "home"
-    group = "home"
+    if "previous_page" in session: # already active
+        previous_page = session["previous_page"]
+    else: # initializing
+#        session["previous_page"] = "home" ### probably not needed
+        previous_page = "home"
+    session["previous_page"] = page
+
+    group = "home" # Used to control top menu behaviour.
 
     namespace_steward = False
     currency_steward = False
@@ -838,16 +853,30 @@ def home():
             )
 
 # ==============================================================================
-# login landing page
+# Payment optionspage (first version).
 #
-# This is an alternative version that can be duiplayed when we require a list
-# of payment options arranged alphabetically by *currency* and *identity*.
+# This is an alternative view of the payment options available to that shown in
+# the login landing page ("/home"). This view shows a list of payment options
+# arranged alphabetically by *currency* and *identity*.
+#
+# This view is still too cluttered so will be replaced by a two-stage view
+# comprising
+# (1) "/currency_options" listing the currencies available to this *agent*, and
+# (2) "/accounts_available" listing the *accounts* available in the *currency*
+#     selected from the "/currency_options" list, each along with the current
+#     balance and its owner (one of this *agent*'s identities').
 
 @app.route("/payment_options", methods = ["GET", "POST"])
 @login_required
 def payment_options():
     page = "payment_options"
-    group = "home"
+    previous_page = session["previous_page"]    # Add these two lines to all
+    session["previous_page"] = page             # endpoint handlers. Some (but
+                                                # but by no means all) screens
+                                                # should be able to follow only
+                                                # from a limited set of previous
+                                                # screens.
+    group = "home" # Used to control top menu behaviour.
 
     namespace_steward = False
     currency_steward = False
@@ -888,6 +917,19 @@ def payment_options():
 
     # We now need a list of the *currencies* available to these *identities*
     # along with a list of *accounts* in each.
+
+    # In order to accommodate the table in the width of a typical phone screen,
+    # the table needs to be divided into sections (one for each *currency*).
+    # A single table is used (rather than a separate table for each *currency*)
+    # in order to keep the column widths consistent.
+    #
+    # In due course, the table will be replaced with suitable <div> elements,
+    # but that is not an urgent priority.
+
+    currency_changed = True     # To be changed to false whenever consecutive
+    previous_currency_fph = ""  # option rows are found to have the same
+                                # currency. This transition is then indicated
+                                # in the dictionary passed to the template.
 
     payment_options_list = [] # a list of dictionaries to be iterated
     for id_fph in identities_list:
@@ -934,8 +976,13 @@ def payment_options():
             c_stewards_list, \
             m = get_currency_specific_properties(c_fph)
 
+            currency_changed = (c_fph != previous_currency_fph)
+            print(c_fph + " : " + previous_currency_fph)
+            print(yesno(currency_changed))
+
             p = {} # a (*currency", *identity*, *account*) triplet
             p["currency"] = {}
+            p["currency"]["currency_changed"] = currency_changed
             p["currency"]["fph"] = c_fph
             p["currency"]["hrns"] = fph_to_hrns(c_fph)
             #p["currency"]["primid_is_c_steward"] = primid_currency_steward
@@ -957,12 +1004,14 @@ def payment_options():
             p["currency"]["identity"]["account"]["suffix"] = c_suffix
             payment_options_list.append(p)
 
+            previous_currency_fph = c_fph
+
     # We now have a list of dictionaries to be iterated that can be iterated
     # by the Jinja2 template.
 
     return render_template(
                 "payment_options.html",
-                title = "Home2",
+                title = "payment options",
                 page = page,
                 group = group,
                 development_mode = development_mode,
@@ -975,8 +1024,303 @@ def payment_options():
                 working_identity_type = working_identity_type,
                 # List of (nested) dictionaries for "payment_options.html":
                 payment_options_list = payment_options_list
+           )
+
+
+
+
+#==============================================================================
+# Payment optionspage (second version).
+#
+# This is an alternative view of the payment options available to that shown in
+# the login landing page ("/home"). This view shows a sorted list of the
+# *currencies* available to this *agent*.
+#
+# This is the first of a two-stage view comprising
+# (1) "/currency_options" listing the currencies available to this *agent*, and
+# (2) "/accounts_available" listing the *accounts* available in the *currency*
+#     selected from the "/currency_options" list, each along with the current
+#     balance and its owner (one of this *agent*'s identities').
+#
+# First stage:
+
+@app.route("/currency_options", methods = ["GET", "POST"])
+@login_required
+def currency_options():
+
+    page = "currency_options"
+    previous_page = session["previous_page"]
+    session["previous_page"] = page
+
+    group = "home" # Used to control top menu behaviour.
+
+    logged_in = current_user.is_authenticated
+
+#    print("\ncurrent_user.get_id() = ", end="")
+#    print(current_user.get_id())
+#    print()
+
+    primary_identity_fph, \
+    primary_identity_hrns, \
+    primary_identity_type, \
+    m = identify_entity(current_user.get_id())
+
+#    print("\nprimary_identity_fph = ", end="")
+#    print(primary_identity_fph)
+#    print()
+
+#    for sk in session.keys():
+#        print(sk, end="")
+#        print("\t : \t", end="")
+#        print(session[sk])
+#    print()
+
+    if "working_identity" in session:
+        working_identity_fph, \
+        working_identity_hrns, \
+        working_identity_type, \
+        m = identify_entity(session["working_identity"])
+    else:
+        working_identity_fph = primary_identity_fph
+        working_identity_hrns = primary_identity_hrns
+        working_identity_type = primary_identity_type
+    working_identity_type = etype_to_adtype(working_identity_type)
+
+    # The user logs in as the *primid*, even if indirectly as one of its
+    # *secid*s, but once logged in will see all of its *identities* along with
+    # a list of *accounts* belonging to each. The user will also see a list of
+    # entities over which it holds/shares stewardship.
+
+    stewardships_list, m = list_stewardships(primary_identity_fph)
+
+    # Since a user may have *accounts* scattered across an arbitrary number of
+    # *namespaces*, it is necessary to maintain a list of these:
+
+    # A full list of *identities* is compiled, with the *primid* first and the
+    # *secids* arranged alphabetically:
+    identities_list = list_secids(primary_identity_fph)
+    identities_list.sort()
+    identities_list.insert(0, primary_identity_fph)
+
+    # We now need a list of the *currencies* available to these *identities*
+    # along with a list of *accounts* in each.
+
+    # In order to accommodate the table in the width of a typical phone screen,
+    # the table needs to be divided into sections (one for each *currency*).
+    # A single table is used (rather than a separate table for each *currency*)
+    # in order to keep the column widths consistent.
+    #
+    # In due course, the table will be replaced with suitable <div> elements,
+    # but that is not an urgent priority.
+
+    currencies_available = []  # for use by "/currency_options"
+                                # This listed will be passed to the template.
+                                # The *currency* selected from that list will
+                                # then determine which collection of *accounts*
+                                # (to whichever of this *agent*'s *identities*
+                                # each belongs) will be listed in the next view
+                                # "/account_options".
+
+    currencies_list = []        # for use by "/account_options"
+
+    payment_options = []
+
+    for id_fph in identities_list:
+
+        id_fph, \
+        id_hrns, \
+        etype, \
+        m = identify_entity(id_fph)
+        if m: # (this should never happen)
+            print(m)
+            flash(m)
+            return redirect("/home")
+
+        if etype == "primid":
+            id_type = "login identity"
+        elif etype == "secid":
+            id_type = "alias"
+        else:
+            id_type = "poltergeist" # something to be investigated
+
+        accounts_list, m = list_agent_accounts(id_fph)
+        if m: # (this should never happen)
+            print(m)
+            flash(m)
+            return redirect("/home")
+        accounts_list.sort()
+        for a_fph in accounts_list:
+
+            # fetch *account* details:
+            c_fph, \
+            a_owner_fph, \
+            a_balance, \
+            m = get_account_specific_properties(a_fph)
+            a_balance_d = integer_to_money_format(a_balance)
+
+            isneg = (a_balance < 0)
+
+            # Fetch *currency* details:
+            c_fph, \
+            c_hrns, \
+            c_prefix, \
+            c_suffix, \
+            c_default_account_name, \
+            c_stewards_list, \
+            m = get_currency_specific_properties(c_fph)
+
+            # For the "/currency_options" page we need a list of *currencie*
+            # available to this *agent*:
+            c = {}
+            c["fph"] = c_fph
+            c["hrns"] = fph_to_hrns(c_fph)
+            if c_fph in stewardships_list:
+                c["primid_is_c_steward"] = True
+            else:
+                c["primid_is_c_steward"] = False
+            if not (c in currencies_list):
+                currencies_list.append(c)
+
+
+            currencies_available.append(c_fph)
+
+            # For the "/account_options" page we need a full dictionary of the
+            # *accounts* available in each *currency* since we do not yet know
+            # which will be selected from those displayed in the
+            # "/currency_options" page:
+            p = {} # a (*currency", *identity*, *account*) triplet
+            p["currency"] = {}
+            p["currency"]["fph"] = c_fph
+            p["currency"]["hrns"] = fph_to_hrns(c_fph)
+            if c_fph in stewardships_list:
+                p["currency"]["primid_is_c_steward"] = True
+            else:
+                p["currency"]["primid_is_c_steward"] = False
+            p["currency"]["identity"] = {}
+            p["currency"]["identity"]["fph"] = id_fph
+            p["currency"]["identity"]["hrns"] = fph_to_hrns(id_fph)
+            p["currency"]["identity"]["type"] = id_type
+            p["currency"]["identity"]["account"] = {}
+            p["currency"]["identity"]["account"]["fph"] = a_fph
+            p["currency"]["identity"]["account"]["hrns"] = fph_to_hrns(a_fph)
+            p["currency"]["identity"]["account"]["owner_fph"] = a_owner_fph
+            p["currency"]["identity"]["account"]["balance"] = a_balance_d
+            p["currency"]["identity"]["account"]["isneg"] = (a_balance < 0)
+            p["currency"]["identity"]["account"]["prefix"] = c_prefix
+            p["currency"]["identity"]["account"]["suffix"] = c_suffix
+
+            payment_options.append(p)
+
+    # We now have a list of *currencies* (each as a dictionary to be passed to
+    # the "/currency_options" view).
+    #
+    # We also have a dictionary, with the *currency* FPH as the top-level key,
+    # to be interated in the "/account_options" view which follows after the
+    # selection of a *currency* from those listed in the  "/currency_options"
+    # view. Both the selected *currency* and the full dictionary of *account*
+    # options are needed by the "/account_options" view, these must be passed
+    # across from the first view to the second. The simplest approach might be
+    # to use the Flask  session[ ]  dictionary.
+    save_payment_session_data(currencies_available, payment_options)
+    #session["payment_options"] = pickle.dumps(payment_options)
+
+    # Although the *currency* selected is passed via the URL slug, we must
+    # still be able to check that it is a valid option for the *agent* in this
+    # session, so it is added to the  session[ ]  dictionary:
+    #session["currencies_available"] = pickle.dumps(currencies_available)
+
+    # NB, the p dictionary may be quite large so we need to avoid passing it
+    # upon every subsequent page request. Therefore it should be cleared from
+    # session[ ]  as soon as it has been used by the "/account_options" view.
+
+    return render_template(
+                "currency_options.html",
+                title = "currency options",
+                page = page,
+                group = group,
+                development_mode = development_mode,
+                logged_in = logged_in,
+                primary_identity_type = "login identity",
+                primary_identity_fph = primary_identity_fph,
+                primary_identity_hrns = primary_identity_hrns,
+                working_identity_fph = working_identity_fph,
+                working_identity_hrns = working_identity_hrns,
+                working_identity_type = working_identity_type,
+                # List of *currencies* available:
+                currencies_list = currencies_list
             )
 
+#------------------------------------------------------------------------------
+# Second stage:
+#
+# "/account_options" (always follow immediately after "/currency_options")
+
+@app.route("/account_options/<currency_fph>", methods = ["GET", "POST"])
+@login_required
+def account_options(currency_fph):
+
+    print("currency_fph passed in URL is " + currency_fph)
+
+    page = "payment_options"
+    previous_page = session["previous_page"]
+    session["previous_page"] = page
+
+    group = "home" # Used to control top menu behaviour.
+
+    currencies_available, payment_options_list, m = retrieve_payment_options()
+    if m == "Payment options unavailable":
+        return redirect("/currency_options")
+
+    currency_selected_hrns = fph_to_hrns(currency_fph)
+
+    logged_in = current_user.is_authenticated # for menu display control
+
+    primary_identity_fph, \
+    primary_identity_hrns, \
+    primary_identity_type, \
+    m = identify_entity(current_user.get_id())
+
+    if "working_identity" in session:
+        working_identity_fph, \
+        working_identity_hrns, \
+        working_identity_type, \
+        m = identify_entity(session["working_identity"])
+    else:
+        working_identity_fph = primary_identity_fph
+        working_identity_hrns = primary_identity_hrns
+        working_identity_type = primary_identity_type
+    working_identity_type = etype_to_adtype(working_identity_type)
+
+    return render_template(
+                "payment_options.html",
+                title = "account options",
+                page = page,
+                group = group,
+                development_mode = development_mode,
+                logged_in = logged_in,
+                primary_identity_type = "login identity",
+                primary_identity_fph = primary_identity_fph,
+                primary_identity_hrns = primary_identity_hrns,
+                working_identity_fph = working_identity_fph,
+                working_identity_hrns = working_identity_hrns,
+                working_identity_type = working_identity_type,
+                # The *currency* selected from the list of *currency* options:
+                currency_selected_hrns = currency_selected_hrns,
+                payment_options_list = payment_options_list
+            )
+
+
+
+
+
+
+
+
+
+
+
+
+#==============================================================================
 # account details page --------------------------------------------------------
 
 # Note:
@@ -1002,7 +1346,14 @@ def payment_options():
 @login_required
 def account(payer_account_fph, payee_account_fph):
     page = "account"
-    group = "home"
+    previous_page = session["previous_page"]    # Add these two lines to all
+    session["previous_page"] = page             # endpoint handlers. Some (but
+                                                # but by no means all) screens
+                                                # should be able to follow only
+                                                # from a limited set of previous
+                                                # screens.
+    group = "home" # Used to control top menu behaviour.
+
     logged_in = current_user.is_authenticated
 
     # The *primid* (or its alias *secid*) logged in currently:
@@ -1183,14 +1534,16 @@ def account(payer_account_fph, payee_account_fph):
 def pay_account():
 
     page = "pay_account"
-    group = "home"
+    previous_page = session["previous_page"]    # Add these two lines to all
+    session["previous_page"] = page             # endpoint handlers. Some (but
+                                                # but by no means all) screens
+                                                # should be able to follow only
+                                                # from a limited set of previous
+                                                # screens.
+    group = "home" # Used to control top menu behaviour.
+
     logged_in = current_user.is_authenticated
 
-    # The *primid* (or its alias *secid*) logged in currently:
-#    primary_identity_fph = current_user.get_id()
-#    primary_identity_hrns = fph_to_hrns(primary_identity_fph)
-    #primary_identity_type = "login identity"
-#    primary_identity_type = fph_to_display_type(primary_identity_fph)
     primary_identity_fph, \
     primary_identity_hrns, \
     primary_identity_type, \
@@ -1316,7 +1669,14 @@ def pay_agent():
 def select_account_combination_in_currency(payee_identity_fph, currency_fph):
 
     page = "select_account_combination_in_currency"
-    group = "home"
+    previous_page = session["previous_page"]    # Add these two lines to all
+    session["previous_page"] = page             # endpoint handlers. Some (but
+                                                # but by no means all) screens
+                                                # should be able to follow only
+                                                # from a limited set of previous
+                                                # screens.
+    group = "home" # Used to control top menu behaviour.
+
     logged_in = current_user.is_authenticated
 
     primary_identity_fph, \
@@ -1370,7 +1730,14 @@ def select_account_combination_in_currency(payee_identity_fph, currency_fph):
 def select_payer_account(payee_account_fph):
 
     page = "select_payer_account"
-    group = "home"
+    previous_page = session["previous_page"]    # Add these two lines to all
+    session["previous_page"] = page             # endpoint handlers. Some (but
+                                                # but by no means all) screens
+                                                # should be able to follow only
+                                                # from a limited set of previous
+                                                # screens.
+    group = "home" # Used to control top menu behaviour.
+
     logged_in = current_user.is_authenticated
 
     primary_identity_fph, \
@@ -1470,7 +1837,13 @@ def select_payer_account(payee_account_fph):
 @login_required
 def account_details(account_fph):
     page = "account_details"
-    group = "home"
+    previous_page = session["previous_page"]    # Add these two lines to all
+    session["previous_page"] = page             # endpoint handlers. Some (but
+                                                # but by no means all) screens
+                                                # should be able to follow only
+                                                # from a limited set of previous
+                                                # screens.
+    group = "home" # Used to control top menu behaviour.
 
     logged_in = current_user.is_authenticated
 
@@ -1528,12 +1901,6 @@ def account_details(account_fph):
     if m:
         flash(m)
 
-    #for payment_row in payments_history:
-
-
-
-
-
     return render_template(
                 "account_details.html",
                 title = "Account details",
@@ -1562,7 +1929,14 @@ def account_details(account_fph):
 @login_required
 def stewardships(identity_fph):
     page = "stewardships"
-    group = "home"
+    previous_page = session["previous_page"]    # Add these two lines to all
+    session["previous_page"] = page             # endpoint handlers. Some (but
+                                                # but by no means all) screens
+                                                # should be able to follow only
+                                                # from a limited set of previous
+                                                # screens.
+    group = "home" # Used to control top menu behaviour.
+
     namespace_steward = True
     currency_steward = True
     paying = False
@@ -1609,7 +1983,14 @@ def stewardships(identity_fph):
 @login_required
 def secids(identity_fph):
     page = "secids"
-    group = "home"
+    previous_page = session["previous_page"]    # Add these two lines to all
+    session["previous_page"] = page             # endpoint handlers. Some (but
+                                                # but by no means all) screens
+                                                # should be able to follow only
+                                                # from a limited set of previous
+                                                # screens.
+    group = "home" # Used to control top menu behaviour.
+
     namespace_steward = True
     currency_steward = True
     paying = False
@@ -1659,7 +2040,14 @@ def secids(identity_fph):
 def currency(currency_fph):
 
     page = "currency"
-    group = "home"
+    previous_page = session["previous_page"]    # Add these two lines to all
+    session["previous_page"] = page             # endpoint handlers. Some (but
+                                                # but by no means all) screens
+                                                # should be able to follow only
+                                                # from a limited set of previous
+                                                # screens.
+    group = "home" # Used to control top menu behaviour.
+
     logged_in = current_user.is_authenticated
 
     primary_identity_fph, \
@@ -1686,8 +2074,6 @@ def currency(currency_fph):
     m = identify_entity(currency_fph)
     if (etype != "currency"):
         return "", "", currency_fph + " is not a currency"
-
-
 
     return render_template(
                "currency.html",
@@ -1717,7 +2103,14 @@ def currency(currency_fph):
 @login_required
 def manage():
     page = "manage"
-    group = "management"
+    previous_page = session["previous_page"]    # Add these two lines to all
+    session["previous_page"] = page             # endpoint handlers. Some (but
+                                                # but by no means all) screens
+                                                # should be able to follow only
+                                                # from a limited set of previous
+                                                # screens.
+    group = "management" # Used to control top menu behaviour.
+
     namespace_steward = True
     currency_steward = True
     paying = False
@@ -1761,7 +2154,14 @@ def manage():
 @login_required
 def create_currency():
     page = "create_currency"
-    group = "home"
+    previous_page = session["previous_page"]    # Add these two lines to all
+    session["previous_page"] = page             # endpoint handlers. Some (but
+                                                # but by no means all) screens
+                                                # should be able to follow only
+                                                # from a limited set of previous
+                                                # screens.
+    group = "home" # Used to control top menu behaviour.
+
     namespace_steward = False
     currency_steward = False
     paying = True
@@ -1842,7 +2242,14 @@ def create_currency():
 @login_required
 def create_account(owner_fph):
     page = "create_account"
-    group = "home"
+    previous_page = session["previous_page"]    # Add these two lines to all
+    session["previous_page"] = page             # endpoint handlers. Some (but
+                                                # but by no means all) screens
+                                                # should be able to follow only
+                                                # from a limited set of previous
+                                                # screens.
+    group = "home" # Used to control top menu behaviour.
+
     namespace_steward = False
     currency_steward = False
     paying = True
@@ -1952,7 +2359,14 @@ def create_account(owner_fph):
 def list_identiies():
 
     page = "list_identities"
-    group = "home"
+    previous_page = session["previous_page"]    # Add these two lines to all
+    session["previous_page"] = page             # endpoint handlers. Some (but
+                                                # but by no means all) screens
+                                                # should be able to follow only
+                                                # from a limited set of previous
+                                                # screens.
+    group = "home" # Used to control top menu behaviour.
+
     logged_in = current_user.is_authenticated
 
     primary_identity_fph, \
@@ -2001,7 +2415,14 @@ def list_identiies():
 @login_required
 def create_secid():
     page = "create_secid"
-    group = "home"
+    previous_page = session["previous_page"]    # Add these two lines to all
+    session["previous_page"] = page             # endpoint handlers. Some (but
+                                                # but by no means all) screens
+                                                # should be able to follow only
+                                                # from a limited set of previous
+                                                # screens.
+    group = "home" # Used to control top menu behaviour.
+
     logged_in = current_user.is_authenticated
 
     primary_identity_fph, \
@@ -2068,37 +2489,19 @@ def create_secid():
                 working_identity_type = working_identity_type
            )
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 # create a new namespace ------------------------------------------------------
 @app.route("/create_namespace", methods = ["GET", "POST"])
 @login_required
 def create_namespace():
     page = "create_namespace"
-    group = "home"
+    previous_page = session["previous_page"]    # Add these two lines to all
+    session["previous_page"] = page             # endpoint handlers. Some (but
+                                                # but by no means all) screens
+                                                # should be able to follow only
+                                                # from a limited set of previous
+                                                # screens.
+    group = "home" # Used to control top menu behaviour.
+
     namespace_steward = False
     currency_steward = False
     paying = True
@@ -2175,7 +2578,14 @@ def create_namespace():
 @login_required
 def list_namespaces():
     page = "list_namespaces"
-    group = "home"
+    previous_page = session["previous_page"]    # Add these two lines to all
+    session["previous_page"] = page             # endpoint handlers. Some (but
+                                                # but by no means all) screens
+                                                # should be able to follow only
+                                                # from a limited set of previous
+                                                # screens.
+    group = "home" # Used to control top menu behaviour.
+
     namespace_steward = False
     currency_steward = False
     logged_in = current_user.is_authenticated
@@ -2231,9 +2641,17 @@ def list_namespaces():
 # All *accounts* listed in the file belong to the agent importing it.
 
 @app.route("/import/payments_set")
+@login_required
 def import_payments_set():
     page = "sandbox_payment_set_import"
-    group = ""
+    previous_page = session["previous_page"]    # Add these two lines to all
+    session["previous_page"] = page             # endpoint handlers. Some (but
+                                                # but by no means all) screens
+                                                # should be able to follow only
+                                                # from a limited set of previous
+                                                # screens.
+    group = "home" # Used to control top menu behaviour.
+
     namespace_steward = True
     currency_steward = True
     paying = False

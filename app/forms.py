@@ -153,15 +153,20 @@ class AccountCreateForm(FlaskForm):
 #------------------------------------------------------------------------------
 
 class NamespaceCreateForm(FlaskForm):
-    namespace_name  = StringField(
-                        "namespace name",
-                        validators=[DataRequired("required")]
-                      )
+    namespace_name      = StringField(
+                            "namespace name",
+                            validators=[DataRequired("required")]
+                          )
     parent_namespace_id = StringField(
-                       "parent namespace identifier",
-                       validators=[DataRequired("required")]
-                      )
-    create_namespace = SubmitField("create namespace")
+                            "parent namespace identifier",
+                            validators=[DataRequired("required")]
+                          )
+    default_currency    = StringField(
+                            "default currency",
+                            render_kw={"placeholder": "test"},
+                            validators=[DataRequired("required")]
+                          )
+    create_namespace    = SubmitField("create namespace")
 
 #------------------------------------------------------------------------------
 
@@ -199,6 +204,8 @@ class LoginForm(FlaskForm):
     #pro             = HiddenField(default=pro_a)
     pse             = PasswordField(
                          pin_prompt,
+                         #render_kw={"autocomplete": "off"},
+                         render_kw={"autocomplete": "new-password"},
                          validators=[DataRequired("required")]
                       )
 

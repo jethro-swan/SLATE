@@ -21,7 +21,7 @@
     -->
     <p>
       {{ form.password.label }}<br />
-      {{ form.password(size=32) }}
+      {{ form.password(size=32, autocomplete="off") }}
       {% for error in form.password.errors %}
         <span style="color: red;">[{{ error }}]</span>
       {% endfor %}
@@ -30,7 +30,7 @@
     {{ form.pin_prompt.data }}
     <p>
       {{ form.pse.label }}<br />
-      {{ form.pse(size=3) }} {{ pin_form_message }}
+      {{ form.pse(size=3, autocomplete="off") }} {{ pin_form_message }}
       {% for error in form.pse.errors %}
         <span style="color: red;">[{{ error }}]</span>
       {% endfor %}
@@ -47,18 +47,24 @@
   </p>
   <hr />
   <p class="footnote">
-    Log in using either an <em>identity</em> (using the the full HRNS or its
-    equivalent FPH) or an email address registered for that
-    <strong>identity</strong>.
+    Log in identifying yourself by your <b>login identity</b> (e.g.
+    <em>me.here.uk</em>).
   </p>
   <p class="footnote">
-    If both the <strong>identity</strong> and an email address are entered,
+    (In future versions it may be possible to log in using an email address
+    registered for that <b>identity</b>, but that option has been disabled for
+    the time being.)
+  </p>
+  <!--
+  <p class="footnote">
+    If both the <b>identity</b> and an email address are entered,
     they will be checked for agreement.
   </p>
   <p class="footnote">
-    The <strong>identity</strong> entered may be either a <strong>primary
-    identity</strong> or one of the <strong>secondary identities</strong>
-    associated with it. In either case, the <strong>primary identity</strong>
+    The <b>identity</b> entered may be either a <b>primary
+    identity</b> or one of the <b>secondary identities</b>
+    associated with it. In either case, the <b>primary identity</b>
     is used for authentication.
   </p>
+  -->
 {% endblock %}

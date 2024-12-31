@@ -2,50 +2,55 @@
 
 {% block content %}
 
-
+  <p class="footnote">
+    The table below lists the <b>accounts</b> from which you can make a payment
+    (or to which another user may make a payment). These are grouped by
+    <b>currency</b>.
+  </p>
+  <p class="footnote">
+    To make a payment from an <b>account</b>, click on its identifier (name).
+  </p>
+  <p class="footnote">
+    The name of any <b>currency</b> of which you are a <em>steward</em> will be
+    highlighted as a link. Click on this to access the <b>currency</b>
+    management screen.
+  </p>
   <table>
     <tr>
-      <th>currency</th>
-      <th>identity</th>
+      <td align="left" class="catable" colspan="3"><!-- shown *currency* -->
+        Using currency: <b>{{ currency_selected_hrns }}</b>
+      </td>
+    </tr>
+    <tr valign="bottom">
       <th>account</th>
-      <th>unit</th>
       <th>balance</th>
+      <th>owner</th>
     </tr>
 
-{% for payment_option in payment_options_list %}<!-- list of dictionaries -->
+    {% for payment_option in payment_options_list %}<!-- list of dictionaries -->
+    {% if payment_option.currency.hrns == currency_selected_hrns %}
     <tr>
-      <td align="left"><!-- shown *currency* -->
-        {% if payment_option.currency.primid_is_c_steward %}
-        <a href="/currency/{{
-          payment_option.currency.fph }}">
-          <b>{{ payment_option.currency.hrns }}</b>
-        </a>
-        {% else %}
-          <b>{{ payment_option.currency.hrns }}</b>
-        {% endif %}
-      </td>
-      <td align="left"><!-- show owner *identity* -->
-        <b>{{ payment_option.currency.identity.hrns }}</b>
-      </td>
       <td align="left">
         <a href="/account/{{ payment_option.currency.identity.account.fph
            }}/00000000000000000000000000000000">
           <b>{{ payment_option.currency.identity.account.hrns }}</b>
         </a>
       </td>
-      <td>
-        {{ payment_option.currency.identity.account.prefix }}
-        {{ payment_option.currency.identity.account.suffix }}
-      </td>
       {% if payment_option.currency.identity.account.isneg %}
       <td align="right" class="balneg">
       {% else %}
       <td align="right" class="balpos">
       {% endif %}
+        {{ payment_option.currency.identity.account.prefix }}
         <b>{{ payment_option.currency.identity.account.balance }}</b>
+        {{ payment_option.currency.identity.account.suffix }}
+      </td>
+      <td align="left"><!-- show owner *identity* -->
+        <b>{{ payment_option.currency.identity.hrns }}</b>
       </td>
     </tr>
-  {% endfor %}
+    {% endif %}
+    {% endfor %}
   </table>
   <hr />
 {% endblock %}

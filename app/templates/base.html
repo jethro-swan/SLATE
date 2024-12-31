@@ -123,36 +123,16 @@
 
     {% if current_user.is_authenticated %}
 
-    {% if page == "pay_account" %}
-      <!--
-      <div class="mba">make payment to account</div>
-      -->
-      <div class="mba">
-        <!--
-        <a class="mba" href="/pay_to_account">
-        -->
-        <a class="mba" href="/account">
-          payment to account
-        </a>
-      </div>
-    {% else %}
-      <div class="mb">
-        <a class="mb" href="/pay_to_account">
-          payment to account
-        </a>
-      </div>
-    {% endif %}
-
     {% if page == "payment_options" %}
       <div class="mba">
-        <a class="mba" href="/payment_options">
-          payment options (currency+agent)
+        <a class="mba" href="/currency_options">
+          currencies available
         </a>
       </div>
     {% else %}
       <div class="mb">
-        <a class="mb" href="/payment_options">
-          payment options (currency+agent)
+        <a class="mb" href="/currency_options">
+          currencies available
         </a>
       </div>
     {% endif %}

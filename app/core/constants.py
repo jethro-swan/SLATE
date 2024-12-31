@@ -48,6 +48,7 @@ DB_BKP_DIR          = "/var/slate/db/backups/"
 ENTITIES_DB         = "/var/slate/db/entities.db"
 #MAP_DB              = "/var/slate/db/map.db"
 PAYMENTS_DB         = "/var/slate/db/payments.db"
+SLATE_SESSION_DB    = "/var/slate/db/slate_session.db"
 
 # DBM maps:
 MAP_BKP_DIR         = "/var/slate/maps/backups/"

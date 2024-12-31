@@ -5,10 +5,12 @@
 
 from app.fph_hrns_maps import create_maps, fph_to_hrns
 from app.slate_core import create_entities_db
+from app.slate_session import create_slate_session_db
 from app.slate_seed import create_seed_entities, create_quasitld_set
 
 create_maps()
 create_entities_db()
+create_slate_session_db()
 create_seed_entities()
 tld_fph_list, errors = create_quasitld_set(False)
 

@@ -21,7 +21,11 @@
       placeholder="parent namespace identifier") }}
     </div>
   </div>
-
+  <div style="float:left; margin:2px;">
+    {{ form.default_currency_id.label }}
+    {{ form.default_currency_id(size=30,
+    placeholder="default currency identifier") }}
+  </div>
   <p>
     {% for error in form.namespace_name.errors %}
       <span style="color: red;">[{{ error }}]</span>
