@@ -5,19 +5,19 @@
 {% for identity in identities %}<!-- list of dictionaries -->
 
   <div class="header">
-    <strong>{{ current_identity.hrns }}</strong> ({{ current_identity.type }})
+    <b>{{ current_identity.hrns }}</b> ({{ current_identity.type }})
   </div>
   <br /><br />
 
-  <strong>secondary identities</strong> |
-  <!-- <a href="/identity/change"><strong>change identity</strong></a> | -->
-  <a href="/create_secid"><strong>create new alias</strong></a>
+  <b>secondary identities</b> |
+  <!-- <a href="/identity/change"><b>change identity</b></a> | -->
+  <a href="/create_secid"><b>create new alias</b></a>
   <br /><br />
   <ul>
   {% for secid in secids_list %}
     <li>
       <a href="/secid/manage/{{ secid.fph }}">
-        <strong>{{ secid.hrns }}</strong>
+        <b>{{ secid.hrns }}</b>
       </a>
     </li>
   {% endfor %}

@@ -13,7 +13,7 @@
       {{ form.namespace_name(size=12, placeholder="name") }}
     </div>
     <div style="float:left; margin:2px;">
-      <br />.
+      <br /><b>.</b>
     </div>
     <div style="float:left; margin:2px;">
       {{ form.parent_namespace_id.label }}<br />
@@ -22,7 +22,7 @@
     </div>
   </div>
   <div style="float:left; margin:2px;">
-    {{ form.default_currency_id.label }}
+    {{ form.default_currency_id.label }}<br />
     {{ form.default_currency_id(size=30,
     placeholder="default currency identifier") }}
   </div>
@@ -34,12 +34,15 @@
       <span style="color: red;">[{{ error }}]</span>
     {% endfor %}
   </p>
-  <p>
+  <div class="clear-both"></div>
+  <div style="float:left; margin:2px;">
+    <p>
     {{ form.create_namespace() }}
-  </p>
+    </p>
+  </div>
 </form>
 
-<hr />
+
 
 
 {% endblock %}

@@ -12,17 +12,18 @@ app.config.from_object(Config)
 login_manager = LoginManager(app)
 
 
-app.config['MAIL_SERVER'] = 'localhost'
-#app.config['MAIL_PORT'] = 587
-#app.config['MAIL_USE_TLS'] = True
-app.config['MAIL_PORT'] = 25
-app.config['MAIL_USE_TLS'] = False
-app.config['RESET_PASS_TOKEN_MAX_AGE'] = 1000000
-#app.config['MAIL_USERNAME'] = 'your.email@example.com'
-#app.config['MAIL_PASSWORD'] = 'your-email-password'
+app.config["MAIL_SERVER"] = "localhost"
+#app.config["MAIL_PORT"] = 587
+#app.config["MAIL_USE_TLS"] = True
+app.config["MAIL_PORT"] = 25
+app.config["MAIL_USE_TLS"] = False
+app.config["RESET_PASS_TOKEN_MAX_AGE"] = 1000000
+#app.config["MAIL_USERNAME"] = 'your.email@example.com'
+#app.config["MAIL_PASSWORD"] = 'your-email-password'
 mail = Mail(app)
 
-
+app.config["EXPORT"] = "/var/slate/export"
+app.config["IMPORT"] = "/var/slate/import"
 
 bootstrap = Bootstrap(app)
 

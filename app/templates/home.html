@@ -5,11 +5,11 @@
 {% for identity in identities %}<!-- list of dictionaries -->
 
   <div class="header">
-    <strong>
+    <b>
       <a href="/change_working_identity/{{ identity.fph }}">
         {{ identity.hrns }}
       </a>
-    </strong>
+    </b>
     ({{ identity.type }})
     {% if identity.fph == primary_identity_fph %}
     [ <b><a href="/list_stewardships">list stewardships</a></b> ]
@@ -27,7 +27,7 @@
     <tr>
       <td align="left">
         <a href="/account/{{ account.fph }}/00000000000000000000000000000000">
-          <strong>{{ account.hrns }}</strong>
+          <b>{{ account.hrns }}</b>
         </a>
       </td>
       <td>
@@ -38,29 +38,29 @@
       {% else %}
       <td align="right" class="balpos">
       {% endif %}
-        <strong>{{ account.balance }}</strong>
+        <b>{{ account.balance }}</b>
       </td>
       <td align="left">
         {% if account.primid_is_currency_steward %}
         <a href="/currency/{{ account.currency_fph }}">
-          <strong>{{ account.currency_hrns }}</strong>
+          <b>{{ account.currency_hrns }}</b>
         </a>
         {% else %}
-          <strong>{{ account.currency_hrns }}</strong>
+          <b>{{ account.currency_hrns }}</b>
         {% endif %}
       </td>
     </tr>
   {% endfor %}
   </table>
-  <a href="/create_account/{{ identity.fph }}"><strong>add account</strong></a>
+  <a href="/create_account/{{ identity.fph }}"><b>add account</b></a>
   for
-  <strong>{{ identity.hrns }}</strong>
+  <b>{{ identity.hrns }}</b>
   <br /><br />
 {% endfor %}
   <hr />
 
-  <a href="/create_namespace"><strong>create new namespace</strong></a>
+  <a href="/create_namespace"><b>create new namespace</b></a>
   |
-  <a href="/create_currency"><strong>create new currency</strong></a>
+  <a href="/create_currency"><b>create new currency</b></a>
 
 {% endblock %}

@@ -27,7 +27,7 @@
     {% for acct in accounts %}
       <tr>
         <td>
-          {{ acct.prefix }}<strong>{{ acct.balance }}</strong>{{ acct.suffix }}
+          {{ acct.prefix }}<b>{{ acct.balance }}</b>{{ acct.suffix }}
         </td>
         <td>
           <a href="/currency/hrns={{ acct.currency }}">

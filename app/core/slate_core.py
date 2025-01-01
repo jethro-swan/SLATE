@@ -457,6 +457,14 @@ def account_status(account_fph):
 
 #==============================================================================
 
+
+
+
+
+
+
+
+
 def namespace_status(namespace_fph):
 
     if not re_fph.match(namespace_fph):
@@ -477,6 +485,15 @@ def namespace_status(namespace_fph):
         return False, False, [], m
 
     return True, active, stewards_list, ""
+
+
+
+
+
+
+
+
+
 
 #==============================================================================
 # A new *primid* is created in the specified namespace. This function is used
@@ -1838,15 +1855,15 @@ def list_active_namespaces(ancestor_namespace_identifier = ""): # FPH or HRNS
 # Get the *primid* to which a *secid* belongs:
 
 def get_primid(secid_identifier):
-    print("get_primid :: secid_id\t\t= " + secid_identifier)
+#    print("get_primid :: secid_id\t\t= " + secid_identifier)
     secid_fph, \
     secid_hrns, \
     etype, \
     m = identify_entity(secid_identifier)
-    print("get_primid :: secid_fph\t\t= " + secid_fph)
-    print("get_primid :: secid_hrns\t= " + secid_hrns)
-    print("get_primid :: etype\t\t= " + etype)
-    print("get_primid :: m\t\t\t= " + m)
+#    print("get_primid :: secid_fph\t\t= " + secid_fph)
+#    print("get_primid :: secid_hrns\t= " + secid_hrns)
+#    print("get_primid :: etype\t\t= " + etype)
+#    print("get_primid :: m\t\t\t= " + m)
     if m:
         return "", m
     with sqlite3.connect(ENTITIES_DB) as conn:

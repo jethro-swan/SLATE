@@ -5,12 +5,12 @@
 {% for identity in identities %}<!-- list of dictionaries -->
 
   <div class="header">
-    <strong>{{ identity.hrns }}</strong> ({{ identity.type }})
+    <b>{{ identity.hrns }}</b> ({{ identity.type }})
   </div>
   <br /><br />
   <hr />
 
-  <strong>stewardships</strong>
+  <b>stewardships</b>
   <br /><br />
 
   <table>
@@ -22,7 +22,7 @@
     <tr>
       <td class="compact2">
         <a href="/stewardship/{{ stewardship.fph }}">
-          <strong>{{ stewardship.hrns }}</strong>
+          <b>{{ stewardship.hrns }}</b>
         </a>
       </td>
       <td>

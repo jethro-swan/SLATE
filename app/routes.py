@@ -75,6 +75,7 @@ from flask import session, g, request
 #from flask_mailman import EmailMessage
 from flask_login import LoginManager, current_user, login_user, logout_user
 from flask_login import login_required
+from flask import send_from_directory
 from app import app
 
 #from app import mail # from __init__.py
@@ -89,6 +90,7 @@ from app.forms import NamespaceCreateForm
 from app.forms import SecidCreateForm
 from app.forms import SpecifyPayeeAccountForm
 from app.forms import SpecifyPayeeAgentForm
+from app.forms import StewardAddForm
 #from app.forms import TQueueForm
 from markupsafe import escape
 
@@ -195,7 +197,6 @@ def register():
     if not (initial_namespace_fph and (etype == "namespace")):
         initial_namespace_fph = ""
         initial_namespace_hrns = ""
-    print("namespace: " + initial_namespace_fph + " > " + initial_namespace_hrns)
 
     form = RegistrationForm()
 
@@ -287,9 +288,35 @@ def register():
             log_event("error", "primid creation", m)
             flash("The primid cannot be created. See error log.")
             return redirect("/register")
-        else:
-            flash(primid_hrns + " [" + primid_fph + "] has been registered")
-            return redirect("/")
+
+        # An initial *account* will now be created (in the new *primid*'s
+        # private *namespace*) using the default name associated with the
+        # specified *currency*.
+
+        currency_fph, \
+        currency_hrns, \
+        prefix, \
+        suffix, \
+        default_account_name, \
+        stewards_list, \
+        m = get_currency_specific_properties(currency_fph)
+
+        account_fph, \
+        account_hrns, \
+        m = new_account(
+                default_account_name,
+                primid_fph,
+                primid_fph,
+                currency_fph
+            )
+        if m:
+            log_event("error", "account creation", m)
+            flash("The account cannot be created. See error log.")
+            return redirect("/register")
+
+        flash(primid_hrns + " has been registered")
+        flash(account_hrns + " has been created in currency " + currency_hrns)
+        return redirect("/")
 
     # If control has reached this point then the new *primid* has been created.
     # Its SSH CLI access token has been recorded already and will be visible to
@@ -879,8 +906,11 @@ def payment_options():
     group = "home" # Used to control top menu behaviour.
 
     namespace_steward = False
+
     currency_steward = False
+
     paying = False
+
     logged_in = current_user.is_authenticated
 
     primary_identity_fph, \
@@ -1783,8 +1813,6 @@ def select_payer_account(payee_account_fph):
 
     for account_fph in payer_accounts_list:
 
-#        print(account_fph)
-
         account_currency_fph, \
         account_owner_fph, \
         account_balance, \
@@ -2065,9 +2093,6 @@ def currency(currency_fph):
         working_identity_hrns = primary_identity_hrns
         working_identity_type = etype_to_adtype(working_identity_type)
 
-
-
-
     currency_fph, \
     currency_hrns, \
     etype, \
@@ -2075,17 +2100,41 @@ def currency(currency_fph):
     if (etype != "currency"):
         return "", "", currency_fph + " is not a currency"
 
+    currency_fph, \
+    currency_hrns, \
+    prefix, \
+    suffix, \
+    default_account_name, \
+    stewards_list, \
+    m = get_currency_specific_properties(currency_fph)
+
+    # Compile a list of the stewards of this *currency*, excluding the *primid*
+    # of the *agent* logged in here:
+    current_stewards = []
+    for steward_fph in stewards_list:
+        if steward_fph != primary_identity_fph:
+            s = {}
+            s["fph"] = steward_fph
+            s["hrns"] = fph_to_hrns(steward_fph)
+            current_stewards.append(s)
+
+    form = StewardAddForm()
+
     return render_template(
                "currency.html",
                title = "Currency",
                page = page,
                group = group,
+               form = form,
+               currency_fph = currency_fph,
+               currency_hrns = currency_hrns,
                primary_identity_type = "login identity",
                primary_identity_fph = primary_identity_fph,
                primary_identity_hrns = primary_identity_hrns,
                working_identity_fph = working_identity_fph,
                working_identity_hrns = working_identity_hrns,
                working_identity_type = working_identity_type,
+               current_stewards = current_stewards,
                development_mode = development_mode,
                logged_in = logged_in
            )
@@ -2668,6 +2717,239 @@ def import_payments_set():
 
 
     return
+
+
+# add steward to entitity =====================================================
+@app.route("/steward/add/<entity_fph>", methods = ["GET", "POST"])
+@login_required
+def add_steward():
+    page = "add_steward"
+    previous_page = session["previous_page"]
+    session["previous_page"] = page
+    group = "home" # Used to control top menu behaviour.
+    logged_in = current_user.is_authenticated
+
+    primary_identity_fph, \
+    primary_identity_hrns, \
+    primary_identity_type, \
+    m = identify_entity(current_user.get_id())
+
+    if "working_identity" in session:
+        working_identity_fph, \
+        working_identity_hrns, \
+        working_identity_type, \
+        m = identify_entity(session["working_identity"])
+    else:
+        working_identity_fph = primary_identity_fph
+        working_identity_hrns = primary_identity_hrns
+        working_identity_type = primary_identity_type
+    working_identity_type = etype_to_adtype(working_identity_type)
+
+    # The entity (*namespace* or *currency* to which this new steward is to be
+    # added):
+
+    entity_fph, \
+    entity_hrns, \
+    etype, \
+    m = identify_entity(entity_fph) # from URL slug
+    if m:
+        flash(m)
+        return redirect("/home")
+    if entity_fph == "":
+        flash("The entity specified does not exist")
+        return redirect("/home")
+    if etype == "namespace":
+        namespace_exists, \
+        namespace_active, \
+        stewards_list, \
+        m = namespace_status(namespace_fph)
+    elif etype == "currency":
+        currency_fph, \
+        currency_hrns, \
+        prefix, \
+        suffix, \
+        default_account_name, \
+        stewards_list, \
+        m = get_currency_specific_properties(currency_fph)
+    else:
+        flash("The entity specified is not of a stewarded type")
+        return redirect("/home")
+
+    form = StewardAddForm()
+    if form.validate_on_submit():
+        steward_fph, \
+        steward_hrns, \
+        etype, \
+        m = identify_entity(form.new_steward.data)
+        if m:
+            flash(m)
+            return redirect("/currency/" + currency_fph)
+        if etype == "primid":
+            stewards_list.append(primary_identity_fph)
+            with sqlite3.connect(ENTITIES_DB) as conn:
+                cursor = conn.cursor()
+                if etype == "namespace":
+                    cursor.execute(
+                        """
+                        UPDATE namespaces
+                        SET stewards_fph_list = ?
+                        WHERE entity_fph = ?
+                        """,
+                        (pickle.dumps(stewards_list), namespace_fph)
+                    )
+                elif etype == "currency":
+                    cursor.execute(
+                        """
+                        UPDATE currencies
+                        SET stewards_fph_list = ?
+                        WHERE entity_fph = ?
+                        """,
+                        (pickle.dumps(stewards_list), currency_fph)
+                    )
+                conn.commit()
+                cursor.close()
+
+
+        else:
+            flash("The steward must be the primary identity of an agent")
+            return redirect("/currency/" + currency_fph)
+
+
+
+
+    return
+
+
+# Export a CSV record of all payments made to or from this *account* ==========
+
+@app.route("/export/<path:filename>", methods = ["GET", "POST"])
+def export_path(filename):
+    full_export_path = os.path.join(app.root_path, app.config["EXPORT"])
+    print("full_export_path = " + full_export_path)
+    
+    export_path = send_from_directory(full_export_path, filename)
+    print("export_path = " + export_path)
+
+    return export_path
+    #return send_from_directory(export_path, filename)
+
+
+
+
+@app.route("/account/export/<account_fph>", methods = ["GET", "POST"])
+@login_required
+def export_account_csv(account_fph):
+    page = "export_account"
+    previous_page = session["previous_page"]
+    session["previous_page"] = page
+    group = "home" # Used to control top menu behaviour.
+    logged_in = current_user.is_authenticated
+
+    primary_identity_fph, \
+    primary_identity_hrns, \
+    primary_identity_type, \
+    m = identify_entity(current_user.get_id())
+
+    if "working_identity" in session:
+        working_identity_fph, \
+        working_identity_hrns, \
+        working_identity_type, \
+        m = identify_entity(session["working_identity"])
+    else:
+        working_identity_fph = primary_identity_fph
+        working_identity_hrns = primary_identity_hrns
+        working_identity_type = primary_identity_type
+    working_identity_type = etype_to_adtype(working_identity_type)
+
+    account_fph, \
+    account_hrns, \
+    etype, \
+    m = identify_entity(account_fph) # from URL slug
+    if m:
+        flash(m)
+        return redirect("/home")
+    if account_fph == "":
+        flash("The entity specified does not exist")
+        return redirect("/home")
+    if etype != "account":
+        flash("The entity specified is not an account")
+        return redirect("/home")
+
+    currency_fph, \
+    owner_fph, \
+    balance, \
+    m = get_account_specific_properties(account_fph)
+    if m:
+        flash(m)
+        return redirect("/home")
+    owner_primid_fph, m = get_primid(owner_fph)
+    if m:
+        flash(m)
+        return redirect("/home")
+    if owner_primid_fph != primary_identity_fph:
+        flash("None of your identities owns this account")
+        return redirect("/home")
+
+    currency_fph, \
+    currency_hrns, \
+    etype, \
+    m = identify_entity(currency_fph)
+    if m:
+        flash(m)
+        #return redirect("/create_account")
+        return redirect("/home")
+    if etype !=  "currency":
+        flash(currency_id + " is not a currency")
+        #return redirect("/create_account")
+        return redirect("/home")
+
+
+    csv_export_filename, \
+    m = dump_account_payments_csv(account_fph, False)
+
+    print("???????????????????")
+
+    csv_export_path = export_path(csv_export_filename)
+
+    print("???????????????????")
+
+    if not os.path.exists(csv_export_path):
+        flash("Export path " + csv_export_path + " does not exist")
+        return redirect("/home")
+
+    print("???????????????????")
+
+
+    return render_template(
+               "account_journal_export.html",
+               title = "export_account_journal",
+               logged_in = logged_in,
+               page = page,
+               group = group,
+               primary_identity_type = "login identity",
+               primary_identity_fph = primary_identity_fph,
+               primary_identity_hrns = primary_identity_hrns,
+               working_identity_fph = working_identity_fph,
+               working_identity_hrns = working_identity_hrns,
+               working_identity_type = working_identity_type,
+               currency_fph = currency_fph,
+               currency_hrns = currency_hrns,
+               account_fph = account_fph,
+               account_hrns = account_hrns,
+               csv_export_path = csv_export_path
+           )
+
+
+
+
+
+
+
+
+
+
+
+
 
 # help ========================================================================
 @app.route("/help")

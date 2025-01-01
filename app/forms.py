@@ -161,7 +161,7 @@ class NamespaceCreateForm(FlaskForm):
                             "parent namespace identifier",
                             validators=[DataRequired("required")]
                           )
-    default_currency    = StringField(
+    default_currency_id = StringField(
                             "default currency",
                             render_kw={"placeholder": "test"},
                             validators=[DataRequired("required")]
@@ -182,6 +182,19 @@ class SecidCreateForm(FlaskForm):
     create_secid = SubmitField("create alias")
 
 #------------------------------------------------------------------------------
+
+class StewardAddForm(FlaskForm):
+    new_steward     = StringField(
+                        "identity of new steward",
+                        render_kw={"placeholder": "identity"},
+                        validators=[DataRequired("required")]
+                      )
+    add_steward     = SubmitField("add steward")
+
+
+
+#------------------------------------------------------------------------------
+
 class LoginForm(FlaskForm):
 
     identity        = StringField(

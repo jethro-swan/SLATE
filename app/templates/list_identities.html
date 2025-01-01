@@ -2,16 +2,16 @@
 
 {% block content %}
 
-  <strong>identites</strong> |
-  <!-- <a href="/identity/change"><strong>change identity</strong></a> | -->
-  <a href="/identity/create"><strong>create new alias</strong></a>
+  <b>identites</b> |
+  <!-- <a href="/identity/change"><b>change identity</b></a> | -->
+  <a href="/identity/create"><b>create new alias</b></a>
   <br /><br />
   <ul>
 
 {% for identity in identities %}<!-- list of dictionaries -->
     <li>
       <a href="/secid/manage/{{ identity.fph }}">
-        <strong>{{ identity.hrns }}</strong>
+        <b>{{ identity.hrns }}</b>
       </a>
     </li>
 {% endfor %}

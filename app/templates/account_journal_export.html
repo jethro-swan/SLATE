@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<h3>export account journal</h3>
+
+<p>
+  You can now
+  <b><a href="{{ export_path }}">download the journal</a></b>
+  for account <b>{{ account_hrns }}</b>
+  (in currency <b>{{ currency_hrns }}</b>)
+</p>
+
+{% endblock %}

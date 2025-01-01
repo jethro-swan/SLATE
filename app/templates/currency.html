@@ -4,114 +4,135 @@
 
 <h2>manage currency</h2>
 
-<hr />
-
 <p>
-  This page will be visible only to the <em>stewards</em> of this
-  <b>currency</b>. It will show the following:
+  This page is visible only to <em>stewards</em> of <b>currency</b>
+  {{ currency_hrns }}.
+</p>
+<p>
+  Here a <em>stewards</em> can:
   <ul>
-    <li>
-      A link to display a list of all <b>accounts</b> in this <b>currency</b>,
-      along with the <b>owner</b> and current <em>balance</em> of each.
-      <br /><br />
+    <li class="compact2">
+      Export (as CSV) a current version of the journal listing all payments
+      made in this <b>currency</b> (see <b>note 1</b>).
     </li>
-    <li>
-      A link to download a CSV list of all <b>accounts</b> in this
-      <b>currency</b>, along with the <b>owner</b> and current <em>balance</em>
-      of each.
-      <br /><br />
+    <li class="compact2">
+      Import (as CSV) a set of payments between <b>accounts</b> in this
+      <b>currency</b> (see <b>note 2</b>).
     </li>
-    <li>
-      A link to export (download) a CSV list of all payments made in this
-      <b>currency</b>, showing
-      <ul>
-        <li class="compact2">date and time</li>
-        <li class="compact2">payment number (sequential)</li>
-        <li class="compact2">payer <b>account</b></li>
-        <li class="compact2">payer <b>identity</b></li>
-        <li class="compact2">payee <b>account</b></li>
-        <li class="compact2">payee <b>identity</b></li>
-        <li class="compact2">amount</li>
-        <li class="compact2">annotation</li>
-      </ul>
-      <br />
-      <p>
-        <hr />
-        e.g.
-      </p>
-      <form action="" method="post" autocomplete="off" novalidate>
-        <p>
-          <input
-            type="submit"
-            value="Update list (CSV) of payments in this currency"
-          />
-        </p>
-      </form>
-      <p>
-        <a href="/export/{{ path_to_csv_file }}">download payments list</a>
-      </p>
-      <p>
-        <hr />
-      </p>
-      <p>
-        The filename will be generated automatically comprising
-        <ul>
-          <li class="compact2">"currency_"</li>
-          <li class="compact2">the FPH of the **currency**</li>
-          <li class="compact2">the date and time (in bigendian format)</li>
-        </ul>
-        and a download link will be created.
-      </p>
-      <p>
-        It's not yet obvious how to implement this. The download link must
-        restrict access to this <em>steward</em> (the one downloading the file)
-        and should be time-limited.
-      </p>
-      <br />
+    <li class="compact2">
+      Add another <em>steward</em> (see <b>note 3</b>).
     </li>
-    <li>
-      A link to create a pop-out window wide enough to list of all payments
-      made in this <b>currency</b>, showing
-      <ul>
-        <li class="compact2">date and time</li>
-        <li class="compact2">payment number (sequential)</li>
-        <li class="compact2">payer <b>account</b></li>
-        <li class="compact2">payer <b>identity</b></li>
-        <li class="compact2">payee <b>account</b></li>
-        <li class="compact2">payee <b>identity</b></li>
-        <li class="compact2">amount</li>
-        <li class="compact2">annotation</li>
-      </ul>
-      <br />
-    </li>
-    <li>
-      A link to a form to add or recommend a new <em>steward</em> for this
-      <b>currency</b>. The latter seems more likely because all current
-      <em>stewards</em> should probably have an opportunity to veto or
-      otherwise decide upon the new <em>steward</em>. <span style="color:red">
-      This is a policy matter we need to discuss.</span>
-      <br /><br />
-    </li>
-    <li>
-      A link to a form to propose removal of an existing <em>steward</em> of
-      this <b>currency</b>. All current <em>stewards</em> should probably have
-      an opportunity to veto or otherwise decide upon the matter, including the
-      <em>steward</em> whose removal is being proposed. <span style="color:red">
-      This is a policy matter we need to discuss.</span>
-      <br /><br />
+    <li class="compact2">
+      Remove an existing <em>steward</em> (see <b>note 4</b>).
     </li>
   </ul>
 </p>
+<hr />
+<p>
+  <b>
+    <a href="/export/currency/csv/{{ currency_fph }}">
+      export currency journal
+    </a>
+  </b>
+  (CSV) for
+  <b>{{ currency_hrns }}</b><br />
+  <span class="footnote">(see <b>note 1</b>)</span>
+</p>
+<!--
+This passes control to a new endpoint which generates an updated journal for
+this currency and displays a download link to the CSV file.
+-->
+<hr />
+<p>
+  <b>
+    <a href="/export/currency/csv/{{ currency_fph }}">
+      import sandbox payment set
+    </a>
+  </b>
+  (CSV) for <b>accounts</b> in <b>currency</b>
+  <b>{{ currency_hrns }}</b><br />
+  <span class="footnote">(see <b>note 2</b>)</span>
+</p>
+<hr />
+The stewards of this <b>currency</b> are:
+<ul>
+<li class="compact2">
+<b>{{ primary_identity_hrns }}</b><!-- cannot remove self as steward -->
+</li>
+{% for steward in current_stewards %}
+<li class="compact2">
+  <b>{{ steward.hrns }}</b>
+  (<a href="/currency/steward/remove/{{ steward.fph }}">remove</a>)
+</li>
+{% endfor %}
+</ul>
+<p>
+  <b>
+    <a href="/currency/steward/add/{{ currency_fph }}">
+      add a steward for this currency
+    </a>
+  </b>
+</p>
+<hr />
 
+<h4>Notes</h4>
 
-
+<ul>
+  <li class="compact2">
+    <p class="footnote">
+      <b>Note 1</b>: It is not yet entirely obvious how this should be
+      implemented, but the download link must restrict access to the
+      <em>steward</em> downloading the file and should be time-limited.
+    </p>
+  </li>
+  <li class="compact2">
+    <p class="footnote">
+      <b>Note 2</b>: The <b>accounts</b> must have been created already and
+      (obviously) must all be in this <b>currency</b>. Any which are not will
+      be displayed as errors.
+    </p>
+  </li>
+  <li class="compact2">
+    <p class="footnote">
+      <b>Note 3</b>: The policies to be followed remain to be agreed, but a
+      possible approach would be to provide a form to add or recommend a new
+      <em>steward</em> for this <b>currency</b>. This is because all current
+      <em>stewards</em> should probably have an opportunity to veto or
+      otherwise influence any decision to appoint a new <em>steward</em>. The
+      temporary solution implemented here allows only for the immediate
+      unilateral adding of a new <em>steward</em>.<br />
+      <span style="color:red">Policy to be discussed.</span>
+    </p>
+  </li>
+  <li class="compact2">
+    <p class="footnote">
+      <b>Note 4</b>: The policies to be followed remain to be agreed, but a
+      possible approach would be to provide a form to propose removal of an
+      existing <em>steward</em> of this <b>currency</b>. All current
+      <em>stewards</em> should probably have an opportunity to veto or
+      otherwise influence any decision to remove an existing <em>steward</em>,
+      and this includes the <em>steward</em> whose removal is being proposed.
+      It must also be possible for a <em>steward</em> to signal the intention
+      to resign from this role, but at least one <em>steward</em> must always
+      exist if the <b>currency</b> is to remain in use. As a last resort, the
+      sole remaining <em>steward</em> may (in effect) close the <b>currency</b>
+      but in that case the owners of the <a>accounts</a> in this
+      <b>currency</b> must be provided with a way to transfer their
+      <a>account</a> records to another (metrically equivalent) <b>currency</b>
+      (whether or not they already have <a>accounts</a> in that).<br />
+      <span style="color:red"> These are policies to be discussed.</span>
+    </p>
+  </li>
+</ul>
 
 <div class="shoutbox">
   <p class="shout">
-    NOT YET IMPLEMENTED
+    NOT YET FULLY IMPLEMENTED
   </p>
 </div>
 
-<hr />
+
+
+
 
 {% endblock %}

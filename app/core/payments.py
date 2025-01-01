@@ -375,7 +375,9 @@ def dump_account_payments_csv(
     csv_filename = "account_" + account_fph \
                  + "_journal_" + timestamp() + ".csv"
 
-    csv_export_filepath = SLATE_EXPORT + csv_filename
+    #csv_export_filepath = SLATE_EXPORT + csv_filename
+    #csv_export_filepath = csv_filename
+    csv_export_filepath = csv_filename
 
     payment_rows, m = list_payments_for_account(account_identifier)
     if m:

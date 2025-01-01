@@ -41,8 +41,8 @@
       {% else %}
       <td align="right" class="balpos">
       {% endif %}
-        {{ payment_option.currency.identity.account.prefix }}
         <b>{{ payment_option.currency.identity.account.balance }}</b>
+        {{ payment_option.currency.identity.account.prefix }}
         {{ payment_option.currency.identity.account.suffix }}
       </td>
       <td align="left"><!-- show owner *identity* -->

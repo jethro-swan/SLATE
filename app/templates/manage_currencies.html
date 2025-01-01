@@ -4,7 +4,7 @@
 
 <h2>manage currencies</h2>
 
-<strong>currencies</strong>
+<b>currencies</b>
 <a href="/currency/create">+</a>
 <a href="/currency/create">(add new currency)</a>
 <br />
@@ -27,7 +27,7 @@
       a link to <a href="/currency/create">create new currency</a>
     </li>
     <li class="compact">
-      a list of the existing <strong>currencies</strong> over which this
+      a list of the existing <b>currencies</b> over which this
       identity shares <em>stewardship</em> (not necessarily as its original
       creator), including links to:
       <ul>
@@ -45,11 +45,11 @@
         </li>
         <li class="compact">
           <a href="/currency/export">export</a> a JSON dump of all
-          transactions<sup>6</sup> in this <strong>currency</strong>
+          transactions<sup>6</sup> in this <b>currency</b>
         </li>
         <li class="compact">
           <a href="/currency/import">import</a> JSON record of all
-          transactions<sup>7</sup> in this <strong>currency</strong>
+          transactions<sup>7</sup> in this <b>currency</b>
         </li>
        </ul>
     </li>
@@ -62,86 +62,86 @@
 <p>NOTES:</p>
 <ol>
   <li class="compact"><!-- 1 -->
-    Any <strong>identity</strong> may create a new <strong>currency</strong>
+    Any <b>identity</b> may create a new <b>currency</b>
     if, and according to conditions defined by the <em>stewards</em> of its
-    <em>parent</em> <strong>namespace</strong>. If authorized, that
-    <strong>identity</strong> becomes the first <em>stewards</em> of that new
-    <strong>currency</strong>.
+    <em>parent</em> <b>namespace</b>. If authorized, that
+    <b>identity</b> becomes the first <em>stewards</em> of that new
+    <b>currency</b>.
   </li>
   <li class="compact"><!-- 2 -->
     The conditions allowing the <em>stewards</em> of any
-    <strong>currency</strong> to <u>suspend</u> or <u>remove</u> (i.e.
+    <b>currency</b> to <u>suspend</u> or <u>remove</u> (i.e.
     <u>archive</u>) it are defined by the <em>stewards</em> of its
-    <em>parent</em> <strong>namespace</strong>.
+    <em>parent</em> <b>namespace</b>.
   </li>
   <li class="compact"><!-- 3 -->
     <ul>
       <li class="compact">
-        If <u>permissive</u>, any <strong>identity</strong> may create an
-        <strong>account</strong> in this <strong>currency</strong> immediately.
+        If <u>permissive</u>, any <b>identity</b> may create an
+        <b>account</b> in this <b>currency</b> immediately.
       </li>
       <li class="compact">
-        If <u>merchant</u>, any <strong>identity</strong> may create an
-        <strong>account</strong> in this <strong>currency</strong> immediately if
-        invited to do so by an <strong>identity</strong> registered as a
-        <em>merchant</em> in this <strong>currency</strong>.
+        If <u>merchant</u>, any <b>identity</b> may create an
+        <b>account</b> in this <b>currency</b> immediately if
+        invited to do so by an <b>identity</b> registered as a
+        <em>merchant</em> in this <b>currency</b>.
       </li>
       <li class="compact">
-        If <u>restrictive</u>, any <strong>identity</strong> may apply to create
-        an <strong>account</strong> in this <strong>currency</strong> but must
+        If <u>restrictive</u>, any <b>identity</b> may apply to create
+        an <b>account</b> in this <b>currency</b> but must
         wait for its <em>authorization</em> by the <em>stewards</em> of the
-        <strong>currency</strong>..
+        <b>currency</b>..
       </li>
     </ul>
-    However it is created, any <strong>account</strong> may subsequently be
+    However it is created, any <b>account</b> may subsequently be
     <em>suspended</em> (or, exceptionally, subjected to more permanent
-    restrictions) by the <em>stewards</em> of the <strong>currency</strong>.
+    restrictions) by the <em>stewards</em> of the <b>currency</b>.
   </li>
   <li class="compact"><!-- 4 -->
     The conditions allowing the <em>stewards</em> of any
-    <strong>currency</strong> to add a new <em>steward</em> or to remove an
+    <b>currency</b> to add a new <em>steward</em> or to remove an
     existing <em>steward</em> are defined by the <em>stewards</em> of its
-    <em>parent</em> <strong>namespace</strong>.
+    <em>parent</em> <b>namespace</b>.
   </li>
   <li class="compact"><!-- 5 -->
     Unless the policy set by the <em>stewards</em> of its <em>parent</em>
-    <strong>namespace</strong> permits it (according to some majority vote
-    criterion) the removal of a <strong>currency</strong>'s <em>steward</em>
+    <b>namespace</b> permits it (according to some majority vote
+    criterion) the removal of a <b>currency</b>'s <em>steward</em>
     will require referral to the <em>stewards</em> of its <em>parent</em>
-    <strong>namespace</strong>. The policy may permit more immediate
+    <b>namespace</b>. The policy may permit more immediate
     suspension, the suspended <em>steward</em> having the right to appeal to
     <em>stewards</em> of its <em>parent</em>
-    <strong>namespace</strong>.
+    <b>namespace</b>.
   </li>
   <li class="compact"><!-- 6 -->
-    An of the <em>stewards</em> of a <strong>currency</strong> may export a
-    JSON dump of all transactions within that <strong>currency</strong>. The
-    <strong>accounts</strong> will be identified by both HRNS (the full
+    An of the <em>stewards</em> of a <b>currency</b> may export a
+    JSON dump of all transactions within that <b>currency</b>. The
+    <b>accounts</b> will be identified by both HRNS (the full
     namespace path) and FPH (the 64-character ID).
   </li>
   <li class="compact"><!-- 7 -->
     Where permitted by the policy defined by the <em>stewards</em> of its
-    <em>parent</em> <strong>namespace</strong>, a <em>steward</em> of a newly
-    created <strong>currency</strong> may import a JSON listing of
-    <strong>accounts</strong> (identified by HRNS) and transactions between
+    <em>parent</em> <b>namespace</b>, a <em>steward</em> of a newly
+    created <b>currency</b> may import a JSON listing of
+    <b>accounts</b> (identified by HRNS) and transactions between
     them.
     <br />
-    Since this is a new <strong>currency</strong>, there will be no existing
-    <strong>accounts</strong> but some of the <strong>identities</strong> may
-    exist already. Therefore, if any <strong>account</strong>-holder listed
-    exists already, the corresponding <strong>account</strong> will be
+    Since this is a new <b>currency</b>, there will be no existing
+    <b>accounts</b> but some of the <b>identities</b> may
+    exist already. Therefore, if any <b>account</b>-holder listed
+    exists already, the corresponding <b>account</b> will be
     ignored unless the policy configuration (set by both the <em>stewards</em>)
-    and by the individual <strong>identity</strong> will have to allow the
-    <strong>account</strong>'s creation.
+    and by the individual <b>identity</b> will have to allow the
+    <b>account</b>'s creation.
     <br />
-    Any non-existing <strong>account</strong>-holders will be created (along
-    with any required new intermediate <strong>namespaces</strong>) for which
+    Any non-existing <b>account</b>-holders will be created (along
+    with any required new intermediate <b>namespaces</b>) for which
     reason the JSON listing will will have to include some initial
     access authorization details).
     <br />
     Such an import will generally be use to permit demonstrations, simulations,
     etc., and it will not be possible to overwrite or extend a "live"
-    <strong>currency</strong>'s <strong>account</strong> set.
+    <b>currency</b>'s <b>account</b> set.
   </li>
 </ol>
 

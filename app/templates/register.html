@@ -10,8 +10,8 @@
     has been invoked by scanning a QR code), this is displayed instead of the
     input field. -->
       {% if initial_currency_fph and initial_currency_hrns %}
-        You have been invited to create an <strong>account</strong> in the
-        <strong>currency</strong>
+        You have been invited to create an <b>account</b> in the
+        <b>currency</b>
         <span class="dark-green-bold">{{ initial_currency_hrns }}</span>
       {% else %}
         {{ form.currency.label }}<br />
@@ -27,8 +27,8 @@
     form has been invoked by scanning a QR code), this is displayed instead of
     the input field. -->
       {% if initial_namespace_fph and initial_namespace_hrns %}
-        You have been invited to register an <strong>identity</strong> in the
-        <strong>namespace</strong>
+        You have been invited to register an <b>identity</b> in the
+        <b>namespace</b>
         <span class="dark-green-bold">{{ initial_namespace_hrns }}</span>
       {% else %}
         {{ form.namespace.label }}<br />
@@ -110,21 +110,21 @@
   <hr />
 
 <p class="footnote">
-  You will not be able to register (i.e. to create your <strong>primary
-  identity</strong>) unless both an initial parent <strong>namespace</strong>
-  and an initial <strong>currency</strong> are specified.
+  You will not be able to register (i.e. to create your <b>primary
+  identity</b>) unless both an initial parent <b>namespace</b>
+  and an initial <b>currency</b> are specified.
 </p>
 <p class="footnote">
-  Upon registration, a <strong>namespace</strong> will be created for you with
-  the specified parent <strong>namespace</strong> and an intial
-  <strong>account</strong> (in the specified <strong>currency</strong>) will be
-  created for you within your own <strong>namespace</strong>. That account will
-  be given the same <em>name</em> as the <strong>currency</strong>.
+  Upon registration, a <b>namespace</b> will be created for you with
+  the specified parent <b>namespace</b> and an intial
+  <b>account</b> (in the specified <b>currency</b>) will be
+  created for you within your own <b>namespace</b>. That account will
+  be given the same <em>name</em> as the <b>currency</b>.
 </p>
 <p class="footnote">
-  For example, if the parent <strong>namespace</strong> is
+  For example, if the parent <b>namespace</b> is
   <em>someneighbourhood.sometown.somewhere</em>, the <em>username</em>
-  you have chosen is <em>fred</em> and the initial <strong>currency</strong> is
+  you have chosen is <em>fred</em> and the initial <b>currency</b> is
   <em>local£.possibly.somewhere.else</em>, then<ul>
   <li class="compact-footnote">
     your namespace will be <em>fred.someneighbourhood.sometown.somewhere</em>
@@ -137,6 +137,6 @@
 </p>
 <p class="footnote">
   You will not be able to use any <em>name</em> that already exists within a
-  <strong>namespace</strong>.
+  <b>namespace</b>.
 </p>
 {% endblock %}

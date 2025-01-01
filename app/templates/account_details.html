@@ -5,31 +5,31 @@
 {% block content %}
   <table>
     <tr>
-      <td><strong>account&nbsp;HRNS</strong></td>
-      <td colspan="2"><strong>{{ account_hrns }}</strong></td>
+      <td><b>account&nbsp;HRNS</b></td>
+      <td colspan="2"><b>{{ account_hrns }}</b></td>
     <tr>
     <tr>
-      <td><strong>account&nbsp;FPH</strong></td>
+      <td><b>account&nbsp;FPH</b></td>
       <td colspan="2">{{ account_fph }}</td>
     <tr>
     <tr>
       <td>
-        <strong>currency</strong>
+        <b>currency</b>
       </td>
       <td colspan="2">
-        <strong>
+        <b>
           <a href="/currency/{{ currency_fph }}">{{ currency_hrns }}</a>
-        </strong>
+        </b>
       </td>
     <tr>
     <tr>
-      <td><strong>account&nbsp;balance</strong></td>
+      <td><b>account&nbsp;balance</b></td>
       {% if account_balance_is_negative %}
       <td align="right" class="balneg">
       {% else %}
       <td align="right" class="balpos">
       {% endif %}
-        <strong>{{ account_balance }}</strong>
+        <b>{{ account_balance }}</b>
       </td>
       <td>{{ currency_prefix }}{{ currency_suffix }}</td>
     <tr>
