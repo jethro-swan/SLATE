@@ -10,6 +10,7 @@ from itsdangerous import URLSafeTimedSerializer
 ## SLATE components: -----------------------------------------------------------
 
 from app.core.constants import NSS
+from app.core.constants import SLATE_EXPORT, SLATE_IMPORT
 
 from app.core.fph_hrns_maps import hrns_to_fph, fph_to_hrns
 from app.core.fph_hrns_maps import hrns_exists_already
@@ -184,7 +185,7 @@ def register():
         initial_currency_fph = ""
         initial_currency_hrns = ""
 
-    print("currency: " + initial_currency_fph + " > " + initial_currency_hrns)
+#    print("currency: " + initial_currency_fph + " > " + initial_currency_hrns)
 
     initial_namespace_identifier = request.args.get("s_fph")
     initial_namespace_fph, \
@@ -411,8 +412,8 @@ def login():
 
         password = form.password.data
         password2 = form.password.data.strip()
-        if password !=  password2:
-            print("password corrupted")
+#        if password !=  password2:
+#            print("password corrupted")
 
         pwd = password
         pwd_hash = password_hash
@@ -538,8 +539,8 @@ def login_recover():
 #        login_reset_url = url_for("login_reset") \
 #                        + "/" + agent_primid_fph + "/" + login_reset_token
 
-        print(login_reset_token)
-        print(login_reset_url)
+#        print(login_reset_token)
+#        print(login_reset_url)
 
         message_body = "You have received this message because a login " \
                      + " recovery link has been requested.\n" \
@@ -594,14 +595,14 @@ def login_reset(user_id, token):
     access_token_hash, \
     m = get_auth_data(user_id) # from URL slug
 
-    print(
-        "SECRET_KEY = " \
-        + app.config["SECRET_KEY"]
-    )
-    print(
-        "RESET_PASS_TOKEN_MAX_AGE = " \
-        + str(app.config["RESET_PASS_TOKEN_MAX_AGE"])
-    )
+#    print(
+#        "SECRET_KEY = " \
+#        + app.config["SECRET_KEY"]
+#    )
+#    print(
+#        "RESET_PASS_TOKEN_MAX_AGE = " \
+#        + str(app.config["RESET_PASS_TOKEN_MAX_AGE"])
+#    )
 
     serializer = URLSafeTimedSerializer(app.config["SECRET_KEY"])
     reset_token_data = serializer.loads(
@@ -610,15 +611,15 @@ def login_reset(user_id, token):
                             #max_age = app.config["RESET_PASS_TOKEN_MAX_AGE"],
                             salt = password_hash
                         )
-    print(type(reset_token_data))
-    print(reset_token_data)
+#    print(type(reset_token_data))
+#    print(reset_token_data)
 
 #    if reset_token_data["agent_primid_fph"] !=  identity_fph:
     if reset_token_data !=  primary_identity_fph:
         flash("Login reset token error")
         return redirect("/login")
 
-    print("user_id = " + user_id + " > " + fph_to_hrns(user_id))
+#    print("user_id = " + user_id + " > " + fph_to_hrns(user_id))
 
     form = LoginResetForm()
     if form.validate_on_submit():
@@ -654,7 +655,7 @@ def login_reset(user_id, token):
 @login_required
 def change_working_identity(new_identity_fph):
 
-    print(":: <new_identity_fph> = " + fph_to_hrns(new_identity_fph))
+#    print(":: <new_identity_fph> = " + fph_to_hrns(new_identity_fph))
 
     new_identity_fph, \
     new_identity_hrns, \
@@ -667,7 +668,7 @@ def change_working_identity(new_identity_fph):
         flash(new_identity_fph + " is not a valid identity")
         return redirect("/home")
 
-    print(":: new_identity_fph = " + fph_to_hrns(new_identity_fph))
+#    print(":: new_identity_fph = " + fph_to_hrns(new_identity_fph))
 
     login_identity_fph, \
     login_identity_hrns, \
@@ -676,14 +677,14 @@ def change_working_identity(new_identity_fph):
 
     if "working_identity" in session:
         current_working_identity_fph = session["working_identity"]
-        print(":: found  working_identity = " \
-              + fph_to_hrns(current_working_identity_fph))
+#        print(":: found  working_identity = " \
+#              + fph_to_hrns(current_working_identity_fph))
     else:
         session["working_identity"] = login_identity_fph
         current_working_identity_fph = login_identity_fph
 
-    print(":: current_working_identity = " \
-          + fph_to_hrns(current_working_identity_fph))
+#    print(":: current_working_identity = " \
+#          + fph_to_hrns(current_working_identity_fph))
 
     current_identity_fph, \
     current_identity_hrns, \
@@ -818,16 +819,16 @@ def home():
             #primid_currency_steward = (currency_fph in stewardships_list)
             if currency_fph in stewardships_list:
                 primid_currency_steward = True
-                print(
-                    "primid is a steward of currency " \
-                    + fph_to_hrns(currency_fph)
-                )
+#                print(
+#                    "primid is a steward of currency " \
+#                    + fph_to_hrns(currency_fph)
+#                )
             else:
                 primid_currency_steward = False
-                print(
-                    "primid is not a steward of currency " \
-                    + fph_to_hrns(currency_fph)
-                )
+#                print(
+#                    "primid is not a steward of currency " \
+#                    + fph_to_hrns(currency_fph)
+#                )
             a["primid_is_currency_steward"] = primid_currency_steward
             a["currency_fph"] = currency_fph
             a["currency_hrns"] = currency_hrns
@@ -969,7 +970,7 @@ def payment_options():
         etype, \
         m = identify_entity(id_fph)
         if m: # (this should never happen)
-            print(m)
+#            print(m)
             flash(m)
             return redirect("/home")
 
@@ -982,7 +983,7 @@ def payment_options():
 
         accounts_list, m = list_agent_accounts(id_fph)
         if m: # (this should never happen)
-            print(m)
+#            print(m)
             flash(m)
             return redirect("/home")
         accounts_list.sort()
@@ -1007,8 +1008,8 @@ def payment_options():
             m = get_currency_specific_properties(c_fph)
 
             currency_changed = (c_fph != previous_currency_fph)
-            print(c_fph + " : " + previous_currency_fph)
-            print(yesno(currency_changed))
+#            print(c_fph + " : " + previous_currency_fph)
+#            print(yesno(currency_changed))
 
             p = {} # a (*currency", *identity*, *account*) triplet
             p["currency"] = {}
@@ -1162,7 +1163,7 @@ def currency_options():
         etype, \
         m = identify_entity(id_fph)
         if m: # (this should never happen)
-            print(m)
+#            print(m)
             flash(m)
             return redirect("/home")
 
@@ -1175,7 +1176,7 @@ def currency_options():
 
         accounts_list, m = list_agent_accounts(id_fph)
         if m: # (this should never happen)
-            print(m)
+#            print(m)
             flash(m)
             return redirect("/home")
         accounts_list.sort()
@@ -1289,7 +1290,7 @@ def currency_options():
 @login_required
 def account_options(currency_fph):
 
-    print("currency_fph passed in URL is " + currency_fph)
+#    print("currency_fph passed in URL is " + currency_fph)
 
     page = "payment_options"
     previous_page = session["previous_page"]
@@ -1478,8 +1479,8 @@ def account(payer_account_fph, payee_account_fph):
             etype, \
             m = identify_entity(payee_account_identifier)
 
-            if m:
-                print("m                = " + m)
+#            if m:
+#                print("m                = " + m)
 
             if etype !=  "account":
                 flash(payee_account_identifier + " is not an account")
@@ -1818,14 +1819,14 @@ def select_payer_account(payee_account_fph):
         account_balance, \
         m = get_account_specific_properties(account_fph)
 
-        print("account = " + account_fph + " > " + fph_to_hrns(account_fph))
-        print(
-            "currency = " + account_currency_fph + " > " \
-            + fph_to_hrns(account_currency_fph)
-        )
+#        print("account = " + account_fph + " > " + fph_to_hrns(account_fph))
+#        print(
+#            "currency = " + account_currency_fph + " > " \
+#            + fph_to_hrns(account_currency_fph)
+#        )
 
         if account_currency_fph == payee_account_currency_fph:
-            print(account_fph)
+#            print(account_fph)
             a = {}
             a["fph"] = account_fph
             a["hrns"] = fph_to_hrns(account_fph)
@@ -1836,8 +1837,8 @@ def select_payer_account(payee_account_fph):
             number_of_payer_accounts += 1
 
     payer_has_accounts_available = (number_of_payer_accounts > 0)
-    print("payer_has_accounts_available = ", end = "")
-    print(payer_has_accounts_available)
+#    print("payer_has_accounts_available = ", end = "")
+#    print(payer_has_accounts_available)
 
     return render_template(
                 "select_payer_account.html",
@@ -1891,7 +1892,7 @@ def account_details(account_fph):
         working_identity_type = etype_to_adtype(working_identity_type)
 
     # If an *account* has been specified (by FPH) in the URL slug
-    print("Account " + account_fph)
+#    print("Account " + account_fph)
 
     account_fph, \
     account_hrns, \
@@ -2041,8 +2042,8 @@ def secids(identity_fph):
 
     secids = list_secids(primary_identity_fph)
 
-    for secid_fph in secids:
-        print(secid_fph + " > " + fph_to_hrns(secid_fph))
+#    for secid_fph in secids:
+#        print(secid_fph + " > " + fph_to_hrns(secid_fph))
 
     return render_template(
                 "secids.html",
@@ -2659,7 +2660,7 @@ def list_namespaces():
         flash(m)
     available_namespaces = []
     for namespace in active_namespaces:
-        print(namespace)
+#        print(namespace)
         n = {}
         n["fph"] = namespace
         n["hrns"] = fph_to_hrns(namespace)
@@ -2822,15 +2823,17 @@ def add_steward():
 
 # Export a CSV record of all payments made to or from this *account* ==========
 
-@app.route("/export/<path:filename>", methods = ["GET", "POST"])
-def export_path(filename):
-    full_export_path = os.path.join(app.root_path, app.config["EXPORT"])
-    print("full_export_path = " + full_export_path)
-    
-    export_path = send_from_directory(full_export_path, filename)
+#@app.route("/export/<path:filename>", methods = ["GET", "POST"])
+@app.route("/export/<filename>", methods = ["GET", "POST"])
+def full_export_path(filename):
+    print("app.root_path = " + app.root_path)
+    export_path = os.path.join(app.root_path, app.config["EXPORT"])
     print("export_path = " + export_path)
 
-    return export_path
+    full_export_path = send_from_directory(export_path, filename)
+    print("full_export_path = " + full_export_path)
+
+    return full_export_path
     #return send_from_directory(export_path, filename)
 
 
@@ -2896,11 +2899,9 @@ def export_account_csv(account_fph):
     m = identify_entity(currency_fph)
     if m:
         flash(m)
-        #return redirect("/create_account")
         return redirect("/home")
     if etype !=  "currency":
         flash(currency_id + " is not a currency")
-        #return redirect("/create_account")
         return redirect("/home")
 
 
@@ -2909,15 +2910,15 @@ def export_account_csv(account_fph):
 
     print("???????????????????")
 
-    csv_export_path = export_path(csv_export_filename)
+    csv_export_path = full_export_path(csv_export_filename)
 
-    print("???????????????????")
+    print("??????????????????????????????????????")
 
     if not os.path.exists(csv_export_path):
         flash("Export path " + csv_export_path + " does not exist")
         return redirect("/home")
 
-    print("???????????????????")
+    print("?????????????????????????????????????????????????????????")
 
 
     return render_template(

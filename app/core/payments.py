@@ -7,7 +7,7 @@ from prettytable import PrettyTable
 # see ttps://learnpython.com/blog/print-table-in-python/
 
 from .constants import ENTITIES_DB, PAYMENTS_DB, DB_DIR, DB_BKP_DIR
-from .constants import SLATE_EXPORT
+from .constants import SLATE_EXPORT, SLATE_IMPORT
 #from constants import FPH_TO_HRNS_MAP, HRNS_C_FPH_MAP
 from .common import filename_timestamp as timestamp
 from .common import ledger_timestamp
@@ -155,14 +155,14 @@ def payment(payer_fph, payee_fph, amount, annotation):
 #def url_for(whatever):
 #    return ""
 
-def list_currencies_in_common_as_html(a1_fph, a2_fph):
-    print("<ul>")
-    for currency_fph in list_currencies_in_common_by_fph(a1_fph, a2_fph):
-        print(
-            "<li><a href=\"" + url_for("something") + "\">" \
-            + fph_to_hrns(currency_fph) + "</a></li>"
-        )
-    print("</ul>")
+#def list_currencies_in_common_as_html(a1_fph, a2_fph):
+#    print("<ul>")
+#    for currency_fph in list_currencies_in_common_by_fph(a1_fph, a2_fph):
+#        print(
+#            "<li><a href=\"" + url_for("something") + "\">" \
+#            + fph_to_hrns(currency_fph) + "</a></li>"
+#        )
+#    print("</ul>")
 
 
 
@@ -219,7 +219,7 @@ def list_payments_in_currency(currency_identifier):
         payment_row.append(integer_to_money_format(p[5]))   # payer balance
         payment_row.append(integer_to_money_format(p[6]))   # payee balance
         payment_row.append(p[7])                            # annotation
-        print(payment_row)
+#        print(payment_row)
         payments_list.append(payment_row)
 
     return payments_list, ""
@@ -269,36 +269,53 @@ def list_payments_for_account(account_identifier):
 
     payments_list = []
     for payment in all_payments:
-        payment_row = {}
+        #payment_row = {}
+        payment_row =[]
         p = list(payment)
+#        print(p)
 
-        payment_row["date_time"] = p[0] # date+time of payment
+        #payment_row["date_time"] = p[0] # date+time of payment
+        payment_row.append(p[0])
 
-        payment_row["payment_id"] = str(p[1]).zfill(8) # payment number
+        #payment_row["payment_id"] = str(p[1]).zfill(8) # payment number
+        payment_row.append(str(p[1]).zfill(8))
 
         # If THIS *account* is the payee, put the amount in the recipts
         # column (3) and leave the payments column blank:
         if p[3] == account_fph:
-            payment_row["received"] = integer_to_money_format(p[4])
-            payment_row["paid"] = ""
-            payment_row["other_account"] = fph_to_hrns(p[2]) # payee HRNS
-            payment_row["balance"] = integer_to_money_format(p[6]) # balance
+            payment_row.append(integer_to_money_format(p[4])) # amount
+            payment_row.append("")
+            payment_row.append(p[2]) # payee HRNS
+            payment_row.append(integer_to_money_format(p[6])) # balance
+#            payment_row["received"] = integer_to_money_format(p[4])
+#            payment_row["paid"] = ""
+#            payment_row["other_account"] = fph_to_hrns(p[2]) # payee HRNS
+#            payment_row["balance"] = integer_to_money_format(p[6]) # balance
         # Otherwise, if THIS *account* is the payer, leave the payments
         # column blank and put the amount in the payments column:
         elif p[2] == account_fph:
-            payment_row["received"] = ""
-            payment_row["paid"] = integer_to_money_format(p[4]) # amount
-            payment_row["other_account"] = fph_to_hrns(p[3]) # payer HRNS
-            payment_row["balance"] = integer_to_money_format(p[5]) # balance
+            payment_row.append("")
+            payment_row.append(integer_to_money_format(p[4])) # amount
+            payment_row.append(p[3]) # payer HRNS
+            payment_row.append(integer_to_money_format(p[5])) # balance
+#            payment_row["received"] = ""
+#            payment_row["paid"] = integer_to_money_format(p[4]) # amount
+#            payment_row["other_account"] = fph_to_hrns(p[3]) # payer HRNS
+#            payment_row["balance"] = integer_to_money_format(p[5]) # balance
         else:
-            payment_row["received"] = ""
-            payment_row["paid"] = ""
-            payment_row["other_account"] = ""
-            payment_row["balance"] = ""
+            payment_row.append("")
+            payment_row.append("")
+            payment_row.append("")
+            payment_row.append("")
+#            payment_row["received"] = ""
+#            payment_row["paid"] = ""
+#            payment_row["other_account"] = ""
+#            payment_row["balance"] = ""
 
-        payment_row["annotation"] = p[7] # annotation
+        payment_row.append(p[7]) # annotation
+#        payment_row["annotation"] = p[7] # annotation
 
-        print(payment_row)
+#        print(payment_row)
         payments_list.append(payment_row)
 
     return payments_list, ""
@@ -335,7 +352,10 @@ def dump_currency_payments_csv(
 
     payment_rows, m = list_payments_in_currency(currency_identifier)
     if m:
+        print("m = " + m)
         return "", m
+
+
 
     with open(csv_export_filepath, "w") as csv_f:
         if show_header_row:
@@ -359,7 +379,7 @@ def dump_currency_payments_csv(
 
 def dump_account_payments_csv(
         account_identifier,
-        show_header_row = True
+        show_header_row = False
     ):
     account_fph, \
     account_hrns, \
@@ -377,25 +397,39 @@ def dump_account_payments_csv(
 
     #csv_export_filepath = SLATE_EXPORT + csv_filename
     #csv_export_filepath = csv_filename
-    csv_export_filepath = csv_filename
+    csv_export_filepath = SLATE_EXPORT + csv_filename
 
     payment_rows, m = list_payments_for_account(account_identifier)
     if m:
         return [], m
 
+#    print("-"*40)
+#    for row in payment_rows: # list of dictionaries
+
+#        print(row) #####
+
+#        print(":: ", end="")
+        #print("\t".join(list(row)))
+#        print("\t".join(row))
+#        print("-"*40)
+
     with open(csv_export_filepath, "w") as csv_f:
-        if show_header_row:
-            csv_f.write(
-                      "date and time\t" \
-                      + "payment number\t" \
-                      + "credit\t" \
-                      + "debit\t" \
-                      + "other account\t" \
-                      + "balance\t" \
-                      + "annotation\n"
-                  )
+#        if show_header_row:
+#            csv_f.write(
+#                      "date and time\t" \
+#                      + "payment number\t" \
+#                      + "credit\t" \
+#                      + "debit\t" \
+#                      + "other account\t" \
+#                      + "balance\t" \
+#                      + "annotation\n"
+#                  )
         for row in payment_rows:
-            csv_f.write("\t".join(row))
+#            print(row)
+            for i in range(len(row)-1):
+                csv_f.write(row[i])
+                csv_f.write("\t")
+            csv_f.write(row[-1])
             csv_f.write("\n")
 
     return csv_export_filepath, ""

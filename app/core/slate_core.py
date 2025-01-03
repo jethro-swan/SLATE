@@ -38,6 +38,23 @@ def create_entities_db():
 
     with sqlite3.connect(ENTITIES_DB) as conn:
         cursor = conn.cursor()
+        # The initial values for the following details are read from a
+        # configuration file at the time of installation.
+        cursor.execute(
+            """
+    	    CREATE TABLE IF NOT EXISTS hub (
+                subdomain TEXT DEFAULT '',
+                must_be_archived INTEGER NOT NULL DEFAULT 1,
+                administrators_fph_list BLOB,
+                single_hub INTEGER NOT NULL DEFAULT 1,
+                hub_members BLOB,
+                synchronized_hubs BLOB,
+                nests_extensions_enabled INTEGER NOT NULL DEFAULT 0,
+                location_details BLOB,
+                contact_details BLOB
+            );
+            """
+        )
         # A table is created for the entities' common properties:
         cursor.execute(
             """
@@ -45,7 +62,7 @@ def create_entities_db():
                 entity_fph TEXT PRIMARY KEY,
                 parent_namespace_fph TEXT,
                 entity_type TEXT,
-                active INTEGER NOT NULL
+                active INTEGER NOT NULL DEFAULT 1
             );
             """
         )
@@ -55,7 +72,8 @@ def create_entities_db():
             CREATE TABLE IF NOT EXISTS namespaces (
                 entity_fph TEXT PRIMARY KEY,
                 default_currency_fph TEXT DEFAULT '',
-                stewards_fph_list BLOB
+                stewards_fph_list BLOB,
+                sandbox INTEGER NOT NULL DEFAULT 0
             );
             """
         )
@@ -89,7 +107,8 @@ def create_entities_db():
                 stewardships_fph_list BLOB,
                 password_hash BLOB NOT NULL,
                 pin TEXT,
-                access_token_hash BLOB
+                access_token_hash BLOB,
+                administrator INTEGER NOT NULL DEFAULT 0
             );
             """
         )
@@ -111,7 +130,8 @@ def create_entities_db():
                 currency_prefix TEXT,
                 currency_suffix TEXT,
                 default_account_name TEXT DEFAULT 'local',
-                stewards_fph_list BLOB
+                stewards_fph_list BLOB,
+                sandbox INTEGER NOT NULL DEFAULT 0
             );
             """
         )
@@ -1027,7 +1047,7 @@ def list_primid_accounts(primid_fph):
             accounts_fph_blob = result[0]
             accounts_fph_list = pickle.loads(accounts_fph_blob)
 
-            print(accounts_fph_list)
+#            print(accounts_fph_list)
 
     return accounts_fph_list, ""    # list + message
 
@@ -1065,7 +1085,7 @@ def list_primid_accounts_in_currency(primid_fph, currency_fph):
             accounts_fph_blob = result[0]
             accounts_fph_list = pickle.loads(accounts_fph_blob)
 
-            print(accounts_fph_list)
+#            print(accounts_fph_list)
 
     return accounts_fph_list, ""    # list + message
 
@@ -1103,7 +1123,7 @@ def list_secid_accounts(secid_fph):
             accounts_fph_blob = result[0]
             accounts_fph_list = pickle.loads(accounts_fph_blob)
 
-            print(accounts_fph_list)
+#            print(accounts_fph_list)
 
         return accounts_fph_list, ""    # list + message
 
@@ -1297,8 +1317,8 @@ def list_secids(primid_fph):
         else:
             secids_fph_list = pickle.loads(result[0])
 
-        for secid_fph in secids_fph_list :
-            print(secid_fph + " > " + fph_to_hrns(secid_fph))
+#        for secid_fph in secids_fph_list :
+#            print(secid_fph + " > " + fph_to_hrns(secid_fph))
 
         return secids_fph_list
 
@@ -1467,7 +1487,7 @@ def identify_entity(entity_identifier): # HRNS or FPH
 
 def get_account_specific_properties(account_fph):
 
-    print("account = " + account_fph + " > " + fph_to_hrns(account_fph))
+    #print("account = " + account_fph + " > " + fph_to_hrns(account_fph))
 
     with sqlite3.connect(ENTITIES_DB) as conn:
         cursor = conn.cursor()
