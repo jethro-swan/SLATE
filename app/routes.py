@@ -10,7 +10,7 @@ from itsdangerous import URLSafeTimedSerializer
 ## SLATE components: -----------------------------------------------------------
 
 from app.core.constants import NSS
-from app.core.constants import SLATE_EXPORT, SLATE_IMPORT
+#from app.core.constants import SLATE_EXPORT, SLATE_IMPORT
 
 from app.core.fph_hrns_maps import hrns_to_fph, fph_to_hrns
 from app.core.fph_hrns_maps import hrns_exists_already
@@ -76,7 +76,8 @@ from flask import session, g, request
 #from flask_mailman import EmailMessage
 from flask_login import LoginManager, current_user, login_user, logout_user
 from flask_login import login_required
-from flask import send_from_directory
+from flask import send_file
+#from flask import send_from_directory
 from app import app
 
 #from app import mail # from __init__.py
@@ -2809,32 +2810,20 @@ def add_steward():
                     )
                 conn.commit()
                 cursor.close()
-
-
         else:
             flash("The steward must be the primary identity of an agent")
             return redirect("/currency/" + currency_fph)
-
-
-
-
     return
 
 
-# Export a CSV record of all payments made to or from this *account* ==========
 
-#@app.route("/export/<path:filename>", methods = ["GET", "POST"])
-@app.route("/export/<filename>", methods = ["GET", "POST"])
-def full_export_path(filename):
-    print("app.root_path = " + app.root_path)
-    export_path = os.path.join(app.root_path, app.config["EXPORT"])
-    print("export_path = " + export_path)
-
-    full_export_path = send_from_directory(export_path, filename)
-    print("full_export_path = " + full_export_path)
-
-    return full_export_path
-    #return send_from_directory(export_path, filename)
+#==============================================================================
+#
+@app.route("/export/<path:file>")
+@login_required
+def export(file):
+    exports = os.path.join(app.root_path, "export", file)
+    return send_file(exports, as_attachment=True)
 
 
 
@@ -2904,21 +2893,12 @@ def export_account_csv(account_fph):
         flash(currency_id + " is not a currency")
         return redirect("/home")
 
-
-    csv_export_filename, \
+    csv_file, \
     m = dump_account_payments_csv(account_fph, False)
-
-    print("???????????????????")
-
-    csv_export_path = full_export_path(csv_export_filename)
-
-    print("??????????????????????????????????????")
-
-    if not os.path.exists(csv_export_path):
-        flash("Export path " + csv_export_path + " does not exist")
+    if m:
+        flash(m)
         return redirect("/home")
-
-    print("?????????????????????????????????????????????????????????")
+    
 
 
     return render_template(
@@ -2937,7 +2917,8 @@ def export_account_csv(account_fph):
                currency_hrns = currency_hrns,
                account_fph = account_fph,
                account_hrns = account_hrns,
-               csv_export_path = csv_export_path
+               #csv_export_path = csv_export_path
+               csv_file = csv_file
            )
 
 

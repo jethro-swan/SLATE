@@ -22,8 +22,10 @@ app.config["RESET_PASS_TOKEN_MAX_AGE"] = 1000000
 #app.config["MAIL_PASSWORD"] = 'your-email-password'
 mail = Mail(app)
 
-app.config["EXPORT"] = "/srv/slate/export/"
-app.config["IMPORT"] = "/srv/slate/import/"
+#app.config["EXPORT"] = "/srv/slate/export/"
+#app.config["IMPORT"] = "/srv/slate/import/"
+app.config["EXPORT"] = "export"
+app.config["IMPORT"] = "import"
 
 bootstrap = Bootstrap(app)
 

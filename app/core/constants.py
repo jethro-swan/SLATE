@@ -7,8 +7,8 @@ def nshash(name): # Defined again here to avoid circular import from common.py
 
 SLATE_DATA_ROOT     = "/var/slate/data/"
 SLATE_DATA          = "/var/slate/"
-SLATE_EXPORT        = "/srv/slate/export/"
-SLATE_IMPORT        = "/srv/slate/import/"
+#SLATE_EXPORT        = "/srv/slate/export/"
+#SLATE_IMPORT        = "/srv/slate/import/"
 SLATE_QR_CODES      = "/srv/slate/export/qr_codes/"
 
 SLATE_FLAGS         = SLATE_DATA + "flags/"     # The trailing / is important

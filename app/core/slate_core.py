@@ -972,7 +972,7 @@ def get_currency_specific_properties(currency_identifier):
     entity_type, \
     m = identify_entity(currency_identifier)
     if m:
-        return "", "", "", "", "", m
+        return "", "", "", "", "", "", m
 
     with sqlite3.connect(ENTITIES_DB) as conn:
         cursor = conn.cursor()
@@ -989,7 +989,7 @@ def get_currency_specific_properties(currency_identifier):
         result = cursor.fetchone()
     if result is None:
         m = "Currency " + fph_to_hrns(currency_fph) + " not found"
-        return "", "", "", "", "", m
+        return "", "", "", "", "", "", m
     else:
         prefix = result[0]
         suffix = result[1]

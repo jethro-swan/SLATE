@@ -6,9 +6,17 @@
 
 <p>
   You can now
-  <b><a href="{{ csv_export_path }}">download the journal</a></b>
-  for account <b>{{ account_hrns }}</b>
+  <b>
+    <a href="/export/{{ csv_file }}">
+      download the journal
+    </a>
+  </b>
+  for your account <b>{{ account_hrns }}</b>
   (in currency <b>{{ currency_hrns }}</b>)
+</p>
+<hr />
+<p>
+  (You can <b><a href="/home">return home</a></b> now)
 </p>
 
 {% endblock %}
