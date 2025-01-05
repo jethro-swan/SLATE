@@ -111,7 +111,7 @@ in any **namespace**, a further distinction must be made here:
   maintain a collection of **login identities** in order to move around within
   the various _payment_ networks (although that option is always open as well).
   This also means that the _agent_ can easily see the balance of each _account_
-  alongside its **currency** and the **identity** that _owns_it.
+  alongside its **currency** and the **identity** that _owns_ it.
 
 A new term has just been introduced:
 
