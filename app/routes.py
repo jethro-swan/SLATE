@@ -47,10 +47,14 @@ from app.core.logging import log_event
 
 from app.core.payments import payment
 #from app.core.payments import dump_account_payments
-from app.core.payments import list_payments_for_account
-from app.core.payments import dump_account_payments_csv
-from app.core.payments import list_payments_in_currency
-from app.core.payments import dump_currency_payments_csv
+from app.core.exports import list_payments_for_account
+from app.core.exports import dump_account_payments_csv
+from app.core.exports import list_payments_in_currency
+from app.core.exports import dump_currency_payments_csv
+#from app.core.payments import list_payments_for_account
+#from app.core.payments import dump_account_payments_csv
+#from app.core.payments import list_payments_in_currency
+#from app.core.payments import dump_currency_payments_csv
 
 from app.core.mail_temp import temp_mail_send
 
@@ -117,7 +121,7 @@ def fph_to_display_type(agent_identifier):
     else:
         return ""
 
-# The *primid* need only be displayed if the current active identity is a
+# The *primid* need be displayed only if the current active *identity* is a
 # *secid*:
 def fph_to_primid_iff_needed(agent_identifier):
     agent_fph, \
@@ -131,6 +135,7 @@ def fph_to_primid_iff_needed(agent_identifier):
         return primid_fph, primid_hrns
     else:
         return "", ""
+
 #------------------------------------------------------------------------------
 
 development_mode = False
@@ -179,9 +184,9 @@ def register():
     initial_currency_hrns, \
     etype, \
     m = identify_entity(url_currency_identifier)
-    #if m:
-    #    flash(m)
-    #    return redirect("/register")
+    if m:
+        flash(m)
+        return redirect("/register")
     if not (initial_currency_fph and (etype == "currency")):
         initial_currency_fph = ""
         initial_currency_hrns = ""
@@ -210,26 +215,27 @@ def register():
     # overlay.
 
     if form.validate_on_submit():
-        flash(
-            "Registration submitted for user {}".format(
-                # The username captured here is not the same as the login
-                # identity which comprises: username.namespace (parent)
-                form.username.data,
-                form.namespace.data,
-                form.realname.data,
-                form.currency.data,
-                form.email_1.data,
-                form.email_2.data,
-                form.password.data,
-                form.password_repeat.data,
-                form.pin.data
-            )
-        )
+#        flash(
+#            "Registration submitted for user {}".format(
+#                # The username captured here is not the same as the login
+#                # identity which comprises: username.namespace (parent)
+#                form.username.data,
+#                form.namespace.data,
+#                form.realname.data,
+#                form.currency.data,
+#                form.email_1.data,
+#                form.email_2.data,
+#                form.password.data,
+#                form.password_repeat.data,
+#                form.pin.data
+#            )
+#        )
         # At this point the initial *currency* may have been specified in
         # either the URL or the form. If the *currency* FPH was specified in
         # the URL, the *currency* HRNS field will not have been displayed.
 
-        currency_identifier = form.currency.data  # (from the form)
+#        currency_identifier = form.currency.data  # (from the form)
+        currency_identifier = form.currency.data.strip()  # (from the form)
         # The identify_entity( ) function determines whether either is valid.
         currency_fph, \
         currency_hrns, \
@@ -251,7 +257,8 @@ def register():
         # FPH was specified in the URL, the *currency* HRNS field will not have
         # been displayed.
 
-        namespace_identifier = form.namespace.data
+#        namespace_identifier = form.namespace.data
+        namespace_identifier = form.namespace.data.strip().lstrip(".")
         # The identify_entity( ) function determines whether either is valid.
         namespace_fph, \
         namespace_hrns, \
@@ -262,9 +269,9 @@ def register():
             flash("Unknown error (logged)")
             return redirect("/register")
         if not namespace_fph:
-            flash(namespace_identifier + " does not exist")
+            flash("The namespace specified does not exist")
             return redirect("/register")
-        if etype !=  "namespace":
+        if etype != "namespace":
             flash(namespace_identifier + " is not a namespace")
             return redirect("/register")
         # If control reaches this point then *namespace* (whether specified
@@ -302,6 +309,12 @@ def register():
         default_account_name, \
         stewards_list, \
         m = get_currency_specific_properties(currency_fph)
+        if m:
+            flash(m)
+            return redirect("/register")
+        if currency_fph == "":
+            flash("The currency specified does not exist.")
+            return redirect("/register")
 
         account_fph, \
         account_hrns, \
@@ -430,9 +443,11 @@ def login():
 
         login_user(user, remember = form.remember_me.data)
 
-        session["login_identity"] = identity_fph # Initial values upon login
-        session["previous_page"] = "home"        # (this one subsequently
-                                                 #  serving as shift register).
+        session["login_identity"] = identity_fph    # Initial values upon login
+        session["working_identity"] = identity_fph  #
+
+        session["previous_page"] = "home"           # (This one subsequently
+                                                    # serves as shift register).
 
         return redirect(url_for("home"))
 
@@ -656,8 +671,6 @@ def login_reset(user_id, token):
 @login_required
 def change_working_identity(new_identity_fph):
 
-#    print(":: <new_identity_fph> = " + fph_to_hrns(new_identity_fph))
-
     new_identity_fph, \
     new_identity_hrns, \
     new_identity_type, \
@@ -669,8 +682,6 @@ def change_working_identity(new_identity_fph):
         flash(new_identity_fph + " is not a valid identity")
         return redirect("/home")
 
-#    print(":: new_identity_fph = " + fph_to_hrns(new_identity_fph))
-
     login_identity_fph, \
     login_identity_hrns, \
     login_identity_type, \
@@ -678,14 +689,9 @@ def change_working_identity(new_identity_fph):
 
     if "working_identity" in session:
         current_working_identity_fph = session["working_identity"]
-#        print(":: found  working_identity = " \
-#              + fph_to_hrns(current_working_identity_fph))
     else:
         session["working_identity"] = login_identity_fph
         current_working_identity_fph = login_identity_fph
-
-#    print(":: current_working_identity = " \
-#          + fph_to_hrns(current_working_identity_fph))
 
     current_identity_fph, \
     current_identity_hrns, \
@@ -744,6 +750,7 @@ def home():
         m = identify_entity(session["working_identity"])
     else:
         working_identity_fph = primary_identity_fph
+        session["working_identity"] = working_identity_fph
         working_identity_hrns = primary_identity_hrns
         working_identity_type = primary_identity_type
     working_identity_type = etype_to_adtype(working_identity_type)
@@ -762,8 +769,7 @@ def home():
     identities_list = list_secids(primary_identity_fph)
     identities_list.insert(0, primary_identity_fph)
 
-    identities = [] # list of *identities* to pass to "home.html" template as
-                    # dictionaries.
+    identities = [] # list of *identity* dictionaries) to "home.html" template.
 
     for id_fph in identities_list:
 
@@ -820,16 +826,8 @@ def home():
             #primid_currency_steward = (currency_fph in stewardships_list)
             if currency_fph in stewardships_list:
                 primid_currency_steward = True
-#                print(
-#                    "primid is a steward of currency " \
-#                    + fph_to_hrns(currency_fph)
-#                )
             else:
                 primid_currency_steward = False
-#                print(
-#                    "primid is not a steward of currency " \
-#                    + fph_to_hrns(currency_fph)
-#                )
             a["primid_is_currency_steward"] = primid_currency_steward
             a["currency_fph"] = currency_fph
             a["currency_hrns"] = currency_hrns
@@ -890,9 +888,9 @@ def home():
 #
 # This view is still too cluttered so will be replaced by a two-stage view
 # comprising
-# (1) "/currency_options" listing the currencies available to this *agent*, and
+# (1) "/currency/options" listing the currencies available to this *agent*, and
 # (2) "/accounts_available" listing the *accounts* available in the *currency*
-#     selected from the "/currency_options" list, each along with the current
+#     selected from the "/currency/options" list, each along with the current
 #     balance and its owner (one of this *agent*'s identities').
 
 @app.route("/payment_options", methods = ["GET", "POST"])
@@ -927,6 +925,7 @@ def payment_options():
         m = identify_entity(session["working_identity"])
     else:
         working_identity_fph = primary_identity_fph
+        session["working_identity"] = working_identity_fph
         working_identity_hrns = primary_identity_hrns
         working_identity_type = primary_identity_type
     working_identity_type = etype_to_adtype(working_identity_type)
@@ -971,7 +970,6 @@ def payment_options():
         etype, \
         m = identify_entity(id_fph)
         if m: # (this should never happen)
-#            print(m)
             flash(m)
             return redirect("/home")
 
@@ -984,7 +982,6 @@ def payment_options():
 
         accounts_list, m = list_agent_accounts(id_fph)
         if m: # (this should never happen)
-#            print(m)
             flash(m)
             return redirect("/home")
         accounts_list.sort()
@@ -1009,8 +1006,6 @@ def payment_options():
             m = get_currency_specific_properties(c_fph)
 
             currency_changed = (c_fph != previous_currency_fph)
-#            print(c_fph + " : " + previous_currency_fph)
-#            print(yesno(currency_changed))
 
             p = {} # a (*currency", *identity*, *account*) triplet
             p["currency"] = {}
@@ -1058,9 +1053,6 @@ def payment_options():
                 payment_options_list = payment_options_list
            )
 
-
-
-
 #==============================================================================
 # Payment optionspage (second version).
 #
@@ -1069,14 +1061,14 @@ def payment_options():
 # *currencies* available to this *agent*.
 #
 # This is the first of a two-stage view comprising
-# (1) "/currency_options" listing the currencies available to this *agent*, and
+# (1) "/currency/options" listing the currencies available to this *agent*, and
 # (2) "/accounts_available" listing the *accounts* available in the *currency*
-#     selected from the "/currency_options" list, each along with the current
+#     selected from the "/currency/options" list, each along with the current
 #     balance and its owner (one of this *agent*'s identities').
 #
 # First stage:
 
-@app.route("/currency_options", methods = ["GET", "POST"])
+@app.route("/currency/options", methods = ["GET", "POST"])
 @login_required
 def currency_options():
 
@@ -1088,24 +1080,10 @@ def currency_options():
 
     logged_in = current_user.is_authenticated
 
-#    print("\ncurrent_user.get_id() = ", end="")
-#    print(current_user.get_id())
-#    print()
-
     primary_identity_fph, \
     primary_identity_hrns, \
     primary_identity_type, \
     m = identify_entity(current_user.get_id())
-
-#    print("\nprimary_identity_fph = ", end="")
-#    print(primary_identity_fph)
-#    print()
-
-#    for sk in session.keys():
-#        print(sk, end="")
-#        print("\t : \t", end="")
-#        print(session[sk])
-#    print()
 
     if "working_identity" in session:
         working_identity_fph, \
@@ -1114,6 +1092,7 @@ def currency_options():
         m = identify_entity(session["working_identity"])
     else:
         working_identity_fph = primary_identity_fph
+        session["working_identity"] = working_identity_fph
         working_identity_hrns = primary_identity_hrns
         working_identity_type = primary_identity_type
     working_identity_type = etype_to_adtype(working_identity_type)
@@ -1145,15 +1124,15 @@ def currency_options():
     # In due course, the table will be replaced with suitable <div> elements,
     # but that is not an urgent priority.
 
-    currencies_available = []  # for use by "/currency_options"
-                                # This listed will be passed to the template.
+    currencies_available = []   # for use by "/currency/options"
+                                # This list will be passed to the template.
                                 # The *currency* selected from that list will
                                 # then determine which collection of *accounts*
                                 # (to whichever of this *agent*'s *identities*
                                 # each belongs) will be listed in the next view
-                                # "/account_options".
+                                # "/account/options".
 
-    currencies_list = []        # for use by "/account_options"
+    currencies_list = []        # for use by "/account/options"
 
     payment_options = []
 
@@ -1164,7 +1143,6 @@ def currency_options():
         etype, \
         m = identify_entity(id_fph)
         if m: # (this should never happen)
-#            print(m)
             flash(m)
             return redirect("/home")
 
@@ -1177,7 +1155,6 @@ def currency_options():
 
         accounts_list, m = list_agent_accounts(id_fph)
         if m: # (this should never happen)
-#            print(m)
             flash(m)
             return redirect("/home")
         accounts_list.sort()
@@ -1201,7 +1178,7 @@ def currency_options():
             c_stewards_list, \
             m = get_currency_specific_properties(c_fph)
 
-            # For the "/currency_options" page we need a list of *currencie*
+            # For the "/currency/options" page we need a list of *currencie*
             # available to this *agent*:
             c = {}
             c["fph"] = c_fph
@@ -1216,10 +1193,10 @@ def currency_options():
 
             currencies_available.append(c_fph)
 
-            # For the "/account_options" page we need a full dictionary of the
+            # For the "/account/options" page we need a full dictionary of the
             # *accounts* available in each *currency* since we do not yet know
             # which will be selected from those displayed in the
-            # "/currency_options" page:
+            # "/currency/options" page:
             p = {} # a (*currency", *identity*, *account*) triplet
             p["currency"] = {}
             p["currency"]["fph"] = c_fph
@@ -1244,13 +1221,13 @@ def currency_options():
             payment_options.append(p)
 
     # We now have a list of *currencies* (each as a dictionary to be passed to
-    # the "/currency_options" view).
+    # the "/currency/options" view).
     #
     # We also have a dictionary, with the *currency* FPH as the top-level key,
-    # to be interated in the "/account_options" view which follows after the
-    # selection of a *currency* from those listed in the  "/currency_options"
+    # to be interated in the "/account/options" view which follows after the
+    # selection of a *currency* from those listed in the  "/currency/options"
     # view. Both the selected *currency* and the full dictionary of *account*
-    # options are needed by the "/account_options" view, these must be passed
+    # options are needed by the "/account/options" view, these must be passed
     # across from the first view to the second. The simplest approach might be
     # to use the Flask  session[ ]  dictionary.
     save_payment_session_data(currencies_available, payment_options)
@@ -1263,7 +1240,7 @@ def currency_options():
 
     # NB, the p dictionary may be quite large so we need to avoid passing it
     # upon every subsequent page request. Therefore it should be cleared from
-    # session[ ]  as soon as it has been used by the "/account_options" view.
+    # session[ ]  as soon as it has been used by the "/account/options" view.
 
     return render_template(
                 "currency_options.html",
@@ -1285,9 +1262,9 @@ def currency_options():
 #------------------------------------------------------------------------------
 # Second stage:
 #
-# "/account_options" (always follow immediately after "/currency_options")
+# "/account/options" (always follow immediately after "/currency/options")
 
-@app.route("/account_options/<currency_fph>", methods = ["GET", "POST"])
+@app.route("/account/options/<currency_fph>", methods = ["GET", "POST"])
 @login_required
 def account_options(currency_fph):
 
@@ -1301,7 +1278,7 @@ def account_options(currency_fph):
 
     currencies_available, payment_options_list, m = retrieve_payment_options()
     if m == "Payment options unavailable":
-        return redirect("/currency_options")
+        return redirect("/currency/options")
 
     currency_selected_hrns = fph_to_hrns(currency_fph)
 
@@ -1319,6 +1296,7 @@ def account_options(currency_fph):
         m = identify_entity(session["working_identity"])
     else:
         working_identity_fph = primary_identity_fph
+        session["working_identity"] = working_identity_fph
         working_identity_hrns = primary_identity_hrns
         working_identity_type = primary_identity_type
     working_identity_type = etype_to_adtype(working_identity_type)
@@ -1340,17 +1318,6 @@ def account_options(currency_fph):
                 currency_selected_hrns = currency_selected_hrns,
                 payment_options_list = payment_options_list
             )
-
-
-
-
-
-
-
-
-
-
-
 
 #==============================================================================
 # account details page --------------------------------------------------------
@@ -1404,6 +1371,7 @@ def account(payer_account_fph, payee_account_fph):
         m = identify_entity(session["working_identity"])
     else:
         working_identity_fph = primary_identity_fph
+        session["working_identity"] = working_identity_fph
         working_identity_hrns = primary_identity_hrns
         working_identity_type = etype_to_adtype(working_identity_type)
 
@@ -1473,15 +1441,12 @@ def account(payer_account_fph, payee_account_fph):
         annotation = form.annotation.data
 
         amount = int(round(float(amount_entered)*100))
-#
+
         if (payee_account_identifier is not None) and payee_account_identifier:
             payee_account_fph, \
             payee_account_hrns, \
             etype, \
             m = identify_entity(payee_account_identifier)
-
-#            if m:
-#                print("m                = " + m)
 
             if etype !=  "account":
                 flash(payee_account_identifier + " is not an account")
@@ -1588,6 +1553,7 @@ def pay_account():
         m = identify_entity(session["working_identity"])
     else:
         working_identity_fph = primary_identity_fph
+        session["working_identity"] = working_identity_fph
         working_identity_hrns = primary_identity_hrns
         working_identity_type = primary_identity_type
     working_identity_type = etype_to_adtype(working_identity_type)
@@ -1643,6 +1609,7 @@ def pay_agent():
         m = identify_entity(session["working_identity"])
     else:
         working_identity_fph = primary_identity_fph
+        session["working_identity"] = working_identity_fph
         working_identity_hrns = primary_identity_hrns
         working_identity_type = primary_identity_type
     working_identity_type = etype_to_adtype(working_identity_type)
@@ -1723,6 +1690,7 @@ def select_account_combination_in_currency(payee_identity_fph, currency_fph):
         m = identify_entity(session["working_identity"])
     else:
         working_identity_fph = primary_identity_fph
+        session["working_identity"] = working_identity_fph
         working_identity_hrns = primary_identity_hrns
         working_identity_type = etype_to_adtype(working_identity_type)
 
@@ -1784,6 +1752,7 @@ def select_payer_account(payee_account_fph):
         m = identify_entity(session["working_identity"])
     else:
         working_identity_fph = primary_identity_fph
+        session["working_identity"] = working_identity_fph
         working_identity_hrns = primary_identity_hrns
         working_identity_type = etype_to_adtype(working_identity_type)
 
@@ -1889,6 +1858,7 @@ def account_details(account_fph):
         m = identify_entity(session["working_identity"])
     else:
         working_identity_fph = primary_identity_fph
+        session["working_identity"] = working_identity_fph
         working_identity_hrns = primary_identity_hrns
         working_identity_type = etype_to_adtype(working_identity_type)
 
@@ -1984,6 +1954,7 @@ def stewardships(identity_fph):
         m = identify_entity(session["working_identity"])
     else:
         working_identity_fph = primary_identity_fph
+        session["working_identity"] = working_identity_fph
         working_identity_hrns = primary_identity_hrns
         working_identity_type = etype_to_adtype(working_identity_type)
 
@@ -2038,6 +2009,7 @@ def secids(identity_fph):
         m = identify_entity(session["working_identity"])
     else:
         working_identity_fph = primary_identity_fph
+        session["working_identity"] = working_identity_fph
         working_identity_hrns = primary_identity_hrns
         working_identity_type = etype_to_adtype(working_identity_type)
 
@@ -2092,6 +2064,7 @@ def currency(currency_fph):
         m = identify_entity(session["working_identity"])
     else:
         working_identity_fph = primary_identity_fph
+        session["working_identity"] = working_identity_fph
         working_identity_hrns = primary_identity_hrns
         working_identity_type = etype_to_adtype(working_identity_type)
 
@@ -2179,6 +2152,7 @@ def manage():
         m = identify_entity(session["working_identity"])
     else:
         working_identity_fph = primary_identity_fph
+        session["working_identity"] = working_identity_fph
         working_identity_hrns = primary_identity_hrns
         working_identity_type = etype_to_adtype(working_identity_type)
 
@@ -2230,6 +2204,7 @@ def create_currency():
         m = identify_entity(session["working_identity"])
     else:
         working_identity_fph = primary_identity_fph
+        session["working_identity"] = working_identity_fph
         working_identity_hrns = primary_identity_hrns
         working_identity_type = etype_to_adtype(working_identity_type)
 
@@ -2329,6 +2304,7 @@ def create_account(owner_fph):
         m = identify_entity(session["working_identity"])
     else:
         working_identity_fph = primary_identity_fph
+        session["working_identity"] = working_identity_fph
         working_identity_hrns = primary_identity_hrns
         working_identity_type = etype_to_adtype(working_identity_type)
 
@@ -2432,6 +2408,7 @@ def list_identiies():
         m = identify_entity(session["working_identity"])
     else:
         working_identity_fph = primary_identity_fph
+        session["working_identity"] = working_identity_fph
         working_identity_hrns = primary_identity_hrns
         working_identity_type = "login identity"
     working_identity_type = etype_to_adtype(working_identity_type)
@@ -2488,6 +2465,7 @@ def create_secid():
         m = identify_entity(session["working_identity"])
     else:
         working_identity_fph = primary_identity_fph
+        session["working_identity"] = working_identity_fph
         working_identity_hrns = primary_identity_hrns
         working_identity_type = etype_to_adtype(working_identity_type)
 
@@ -2572,6 +2550,7 @@ def create_namespace():
         m = identify_entity(session["working_identity"])
     else:
         working_identity_fph = primary_identity_fph
+        session["working_identity"] = working_identity_fph
         working_identity_hrns = primary_identity_hrns
         working_identity_type = etype_to_adtype(working_identity_type)
 
@@ -2653,6 +2632,7 @@ def list_namespaces():
         m = identify_entity(session["working_identity"])
     else:
         working_identity_fph = primary_identity_fph
+        session["working_identity"] = working_identity_fph
         working_identity_hrns = primary_identity_hrns
         working_identity_type = etype_to_adtype(working_identity_type)
 
@@ -2743,6 +2723,7 @@ def add_steward():
         m = identify_entity(session["working_identity"])
     else:
         working_identity_fph = primary_identity_fph
+        session["working_identity"] = working_identity_fph
         working_identity_hrns = primary_identity_hrns
         working_identity_type = primary_identity_type
     working_identity_type = etype_to_adtype(working_identity_type)
@@ -2825,9 +2806,8 @@ def export(file):
     exports = os.path.join(app.root_path, "export", file)
     return send_file(exports, as_attachment=True)
 
-
-
-
+#------------------------------------------------------------------------------
+# Export *account* jourbal:
 @app.route("/account/export/<account_fph>", methods = ["GET", "POST"])
 @login_required
 def export_account_csv(account_fph):
@@ -2849,6 +2829,7 @@ def export_account_csv(account_fph):
         m = identify_entity(session["working_identity"])
     else:
         working_identity_fph = primary_identity_fph
+        session["working_identity"] = working_identity_fph
         working_identity_hrns = primary_identity_hrns
         working_identity_type = primary_identity_type
     working_identity_type = etype_to_adtype(working_identity_type)
@@ -2874,10 +2855,20 @@ def export_account_csv(account_fph):
     if m:
         flash(m)
         return redirect("/home")
-    owner_primid_fph, m = get_primid(owner_fph)
+
+    owner_fph, \
+    owner_hrns, \
+    etype, \
+    m = identify_entity(owner_fph)
     if m:
         flash(m)
         return redirect("/home")
+    if etype == "secid":
+        owner_primid_fph, m = get_primid(owner_fph)
+    else:
+        owner_primid_fph =  primary_identity_fph
+    # This may appear a little convoluted, but simplifying it is not an urgent
+    # priority.
     if owner_primid_fph != primary_identity_fph:
         flash("None of your identities owns this account")
         return redirect("/home")
@@ -2898,11 +2889,9 @@ def export_account_csv(account_fph):
     if m:
         flash(m)
         return redirect("/home")
-    
-
 
     return render_template(
-               "account_journal_export.html",
+               "export_account_journal.html",
                title = "export_account_journal",
                logged_in = logged_in,
                page = page,
@@ -2921,17 +2910,86 @@ def export_account_csv(account_fph):
                csv_file = csv_file
            )
 
+#------------------------------------------------------------------------------
+# Export *currency* journal:
+@app.route("/currency/export/<currency_fph>", methods = ["GET", "POST"])
+@login_required
+def export_currency_csv(currency_fph):
+    page = "export_currency"
+    previous_page = session["previous_page"]
+    session["previous_page"] = page
+    group = "home" # Used to control top menu behaviour.
+    logged_in = current_user.is_authenticated
 
+    primary_identity_fph, \
+    primary_identity_hrns, \
+    primary_identity_type, \
+    m = identify_entity(current_user.get_id())
 
+    if "working_identity" in session:
+        working_identity_fph, \
+        working_identity_hrns, \
+        working_identity_type, \
+        m = identify_entity(session["working_identity"])
+    else:
+        working_identity_fph = primary_identity_fph
+        session["working_identity"] = working_identity_fph
+        working_identity_hrns = primary_identity_hrns
+        working_identity_type = primary_identity_type
+    working_identity_type = etype_to_adtype(working_identity_type)
 
+    currency_fph, \
+    currency_hrns, \
+    etype, \
+    m = identify_entity(currency_fph) # from URL slug
+    if m:
+        flash(m)
+        return redirect("/home")
+    if currency_fph == "":
+        flash("The entity specified does not exist")
+        return redirect("/home")
+    if etype != "currency":
+        flash("The entity specified is not a currency")
+        return redirect("/home")
 
+    currency_fph, \
+    currency_hrns, \
+    prefix, \
+    suffix, \
+    default_account_name, \
+    stewards_list, \
+    m = get_currency_specific_properties(currency_fph)
+    if m:
+        flash(m)
+        return redirect("/home")
 
+    if not (primary_identity_fph in stewards_list):
+        flash("You are not a steward of this currency")
+        return redirect("/home")
 
+    csv_file, \
+    m = dump_currency_payments_csv(currency_fph, False)
+    if m:
+        flash(m)
+        return redirect("/home")
 
-
-
-
-
+    return render_template(
+               "export_currency_journal.html",
+               title = "export_currency_journal",
+               logged_in = logged_in,
+               page = page,
+               group = group,
+               primary_identity_type = "login identity",
+               primary_identity_fph = primary_identity_fph,
+               primary_identity_hrns = primary_identity_hrns,
+               working_identity_fph = working_identity_fph,
+               working_identity_hrns = working_identity_hrns,
+               working_identity_type = working_identity_type,
+               currency_fph = currency_fph,
+               currency_hrns = currency_hrns,
+               #csv_export_path = csv_export_path
+               csv_file = csv_file
+           )
 
 # help ========================================================================
 @app.route("/help")

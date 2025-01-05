@@ -543,7 +543,7 @@ def new_primid(
     primid_hrns = username + "." + namespace_hrns
 
     if fph_to_hrns(nshash(primid_hrns)):
-        return "", "", "", primid_hrns + "  already registered in FPH>HRNS map"
+        return "", "", "", "An entity" + primid_hrns + " is already registered"
 
     primid_fph, m = hrns_to_fph(primid_hrns)
     if m:
@@ -645,7 +645,7 @@ def new_secid(
     parent_namespace_hrns = fph_to_hrns(parent_namespace_fph)
     secid_hrns = username + "." + parent_namespace_hrns
     if fph_to_hrns(nshash(secid_hrns)):
-        return "", "", secid_hrns + "  already registered in FPH>HRNS map"
+        return "", "", "A entity " + secid_hrns + " is already registered"
     else:
         secid_fph, m = hrns_to_fph(secid_hrns)
         if m:
@@ -736,7 +736,7 @@ def new_namespace(
         namespace_hrns = namespace_name
 
     if fph_to_hrns(nshash(namespace_hrns)):
-        return "", "", namespace_hrns + "  already registered in FPH>HRNS map"
+        return "", "", "An entity " + namespace_hrns + " is already registered"
 
     namespace_fph, m = hrns_to_fph(namespace_hrns)
 
@@ -787,7 +787,7 @@ def new_currency(
     currency_hrns = currency_name + "." + parent_namespace_hrns
 
     if fph_to_hrns(nshash(currency_hrns)):
-        return "", "", currency_hrns + "  already registered in FPH>HRNS map"
+        return "", "", "An entity " + currency_hrns + " is already registered"
 
     currency_fph, m = hrns_to_fph(currency_hrns)
 
@@ -906,7 +906,7 @@ def new_account(
         account_name = default_account_name
 
     if fph_to_hrns(nshash(account_hrns)):
-        return "", "", account_hrns + "  already registered in FPH>HRNS map"
+        return "", "", "An entity " + account_hrns + " is already registered"
 
     account_fph, m = hrns_to_fph(account_hrns)
 
@@ -1875,15 +1875,10 @@ def list_active_namespaces(ancestor_namespace_identifier = ""): # FPH or HRNS
 # Get the *primid* to which a *secid* belongs:
 
 def get_primid(secid_identifier):
-#    print("get_primid :: secid_id\t\t= " + secid_identifier)
     secid_fph, \
     secid_hrns, \
     etype, \
     m = identify_entity(secid_identifier)
-#    print("get_primid :: secid_fph\t\t= " + secid_fph)
-#    print("get_primid :: secid_hrns\t= " + secid_hrns)
-#    print("get_primid :: etype\t\t= " + etype)
-#    print("get_primid :: m\t\t\t= " + m)
     if m:
         return "", m
     with sqlite3.connect(ENTITIES_DB) as conn:

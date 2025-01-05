@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<h3>export currency journal</h3>
+
+<p>
+  You can now
+  <b><a href="/export/{{ csv_file }}">download the journal</a></b>
+  <br />
+  for the currency <b>{{ currency_hrns }}</b> (of which you are are one of the
+  <em>stewards</em>)
+
+</p>
+<br />
+<hr />
+<br />
+<p>(You can <b><a href="/home">return home</a></b> now)</p>
+
+{% endblock %}

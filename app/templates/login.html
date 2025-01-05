@@ -20,18 +20,21 @@
     </p>
     -->
     <p>
-      {{ form.password.label }}<br />
-      {{ form.password(size=32, autocomplete="off") }}
-      {% for error in form.password.errors %}
+    {{ form.pro }}
+    {{ form.pin_prompt.data }}
+    </p>
+    <p>
+      {{ form.pse.label }}<br />
+      {{ form.pse(size=3) }}
+      {{ pin_form_message }}
+      {% for error in form.pse.errors %}
         <span style="color: red;">[{{ error }}]</span>
       {% endfor %}
     </p>
-    {{ form.pro }}
-    {{ form.pin_prompt.data }}
     <p>
-      {{ form.pse.label }}<br />
-      {{ form.pse(size=3, autocomplete="off") }} {{ pin_form_message }}
-      {% for error in form.pse.errors %}
+      {{ form.password.label }}<br />
+      {{ form.password(size=32) }}
+      {% for error in form.password.errors %}
         <span style="color: red;">[{{ error }}]</span>
       {% endfor %}
     </p>

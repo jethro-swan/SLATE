@@ -2,24 +2,24 @@
 
 {% block content %}
 
-  <p>
+  <p class="footnote">
     The table below lists the <b>currencies</b> in which any of your
     <b>identities</b> has an <b>account</b>.
   </p>
-  <p>
+  <p class="footnote">
     Select one of these <b>currencies</b> to see a list of the <b>accounts</b>
     from which you can make a payment to another <b>account</b> in this
     <b>currency</b> (along with its current balance and whichever of your
     <b>identities</b> is its owner).
   </p>
-  <p>
+  <p class="footnote">
     The name of any <b>currency</b> of which you are a <em>steward</em> will be
     supplemented by a link to access the <b>currency</b> management screen.
   </p>
   <ul>
     {% for currency in currencies_list %}
     <li class="compact2">
-      <a href="/account_options/{{ currency.fph }}">
+      <a href="/account/options/{{ currency.fph }}">
         <b>{{ currency.hrns }}</b>
       </a>
       {% if currency.primid_is_c_steward %}

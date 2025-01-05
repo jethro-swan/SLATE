@@ -207,8 +207,6 @@ class LoginForm(FlaskForm):
                         "email address"
                       )
 
-    password        = PasswordField("password")
-
     ##pro_a = pin_random_ord()
     ##pin_prompt = pin_prompt_message(pro_a)
 
@@ -221,9 +219,15 @@ class LoginForm(FlaskForm):
                          render_kw={"autocomplete": "new-password"},
                          validators=[DataRequired("required")]
                       )
+    #
+    password        = PasswordField(
+                          "password",
+                          render_kw={"autocomplete": "on"},
+                          validators=[DataRequired("required")]
+                      )
 
     remember_me     = BooleanField("remember me")
-    #recaptcha = RecaptchaField("recaptcha", validators=[DataRequired("required")])
+
     submit          = SubmitField("log in")
 
 #------------------------------------------------------------------------------

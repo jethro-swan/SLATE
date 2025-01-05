@@ -99,7 +99,7 @@
     <hr class="dashed" />
     Currently acting as
     <span class="dark-green-bold" >{{ working_identity_hrns }}</span>
-    ({{ working_identity_type }})
+    ({{ working_identity_type }})<br />
     [ <b><a href="/create_secid">create new alias</a></b> ]
     <br />
     <hr class="dashed" />
@@ -125,13 +125,13 @@
 
     {% if page == "currency_options" %}
       <div class="mba">
-        <a class="mba" href="/currency_options">
+        <a class="mba" href="/currency/options">
           currencies available
         </a>
       </div>
     {% else %}
       <div class="mb">
-        <a class="mb" href="/currency_options">
+        <a class="mb" href="/currency/options">
           currencies available
         </a>
       </div>
