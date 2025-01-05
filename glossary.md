@@ -36,14 +36,15 @@ stuff").
 - A _name_ is something that identifies something (such as an _agent_, a
   **currency** or a **namespace**) uniquely within a **namespace**.
 - A **namespace** is simply a collection of _names_ (each unique within _that_
-  **namespace** but able to appear uniquely within any other **namespace**).
-  Since the _name_ of every **namespace** is contained (uniquely) within another
-  **namespace**, the **namespaces** form a _tree_ each unique path within which
-  is identified by a string of _names_ joined by a character (a "." by
-  established convention), e.g.
-  - if a **namespace** at the "root" of such a tree is identified by a single
-    _name_ (which is not unusal) the _name_ and the _namespace_ identifier
-    appear to be the same, but
+  **namespace** but able also to appear uniquely within any other **namespace**
+  in which they are _authorized_). Since the _name_ of every **namespace** is
+  also contained (uniquely) within another **namespace**, the **namespaces**
+  form a _tree_ each unique path within which is identified by a string of
+  _names_ joined by a character (a "." by established convention), e.g.
+  - if a **namespace** at the _root_ of such a tree is identified by a single
+    _name_ (which is not unusual), no immediate distinction need to made
+    between the _name_ and the _namespace_ identifier (which may help to ease a
+    new user into _open money_ world), but
   - if the _name_ of a **namespace** is located in another **namespace** (which
     is the more general case) it will take the form
     - _a.b_ (where _b_ is the _identifier_ of a **namespace**)
@@ -76,27 +77,27 @@ be known:
 - the **identity** by which the _payee_ is to be identified
 - the **currency** in which the _payment_ is to be made
 
-Each combination of **identity** and **currency** unique and has a _value_.
-When a _payment_ is made, one such _value_ (that of the _payer_) is decreased
-the other (that of the _payee_) is increased by exactly the same amount.
-Because and expression such as "unique combination of **identity** and
-**currency**" is rather unwieldy, it is helpful to introduce a new term
-(_account_) to simplify things. So, for an example, the term _payment_ can now
-be defined as
+Each combination of **identity** and **currency** is unique and has a _value_
+(its _balance_). When a _payment_ is made, one such _balance_ (that of the
+_payer_) is decreased by a specified _amount_ while the other (that of the
+_payee_) is increased by exactly the same _amount_. Because an expression such
+as "unique combination of **identity** and **currency**" is rather unwieldy, it
+is convenient to introduce a new term (_account_) to simplify things. So, for
+example, the term _payment_ can now be defined as
 - the simultaneous adjustment of two _accounts_ in the same **currency** by the
   same _amount_, one positive and the other negative.
 
-You will not that the term _account_ is not rendered as **account** here. That
+You will note that the term _account_ is not rendered as **account** here. That
 is because, in this simpler context (that in which users will be introduced
-gently to _open money_ concepts), the **account** is not required as a
+gently to _open money_ concepts), the **account** is not _required_ as a
 distinct category of _entity_.
 
 An **identity** (as defined above) is all that is required, in combination with
 a **currency**, to identify either of the two parties (_agents_) involved in a
 payment.
 
-However, since any _agent_ may have a presence in any **namespace**, a further
-distinction needs to be made here:
+However, since any _agent_ may have a uniquely-identified presence (a _name_)
+in any **namespace**, a further distinction must be made here:
 
 - A **login identity** is the unique identifier of an _agent_ (within a
   collection of connected _open money_ networks). Upon first registering, the
@@ -112,7 +113,7 @@ distinction needs to be made here:
   This also means that the _agent_ can easily see the balance of each _account_
   alongside its **currency** and the **identity** that _owns_it.
 
-A new term has just bee introduced:
+A new term has just been introduced:
 
 - A _steward_ is one of a set of **(**login**)** identities** sharing
   responsibility for the governance or maintenance of a **namespace** or
@@ -122,12 +123,12 @@ A new term has just bee introduced:
 
 NB, few rules are imposed generally, and the approach to _governance_ is
 usually very light touch. However, in the case where an _open money_
-**currency** is used in place of (and alongside) government-issued money, the
-users obviously have a legal responsibility not to violate laws (and, for this
-reason, each is responsible for disclosure its own _payment_ records[2] where,
-when and to whom required). The _stewards_ have a role in identifying possible
-misuse of the tools provided and have both the _ability_ and the _obligation_
-to exclude misbehaving _agents_.
+**currency** is used in place of (and alongside) a _metrically equivalent_
+government-issued money, the users obviously have a legal responsibility not to
+violate laws (and, for this reason, each is responsible for disclosure its own
+_payment_ records[2] where, when and to whomever required). The _stewards_ have
+a role in identifying possible misuse of the tools provided, and they have both
+the _ability_ and the _obligation_ to exclude misbehaving _agents_.
 
 
 ---
@@ -135,7 +136,7 @@ to exclude misbehaving _agents_.
 
 As originally designed in _NESTS_ (and later carried over to _SLATE_), a
 number of extensions increases the potential power and reach of these tools
-considerable. In the _NESTS_/_SLATE_ things an a number of ways:
+considerably. _NESTS_/_SLATE_ extends things an a number of ways:
 
 - An **account** (as distinct from an _account_) is the unique _identifier_ of
   a unique combination of an **identity** and a **currency**. The _name_ of
@@ -143,9 +144,14 @@ considerable. In the _NESTS_/_SLATE_ things an a number of ways:
   _parent_ **namespace** of either the **identity** or the **currency**). This
   approach offers two advantages (especially for _payment_ intensive
   applications such as simulations):
-  - a _payment_ may be made directly to an **account** (without having to
-    specify the unique **identity**+**currency** combination it identifies)
-  - this approach in turn reduces the number of columns required (for example
+  - A _payment_ may be made directly to an **account** (without having to
+    specify the unique **identity**+**currency** combination it identifies). If
+    situations were to arise in which a greater measure of privacy were
+    required (and these are not inconceivable, even in a very small and highly-local network - for example where an _agent_ might wish to make a
+    quasi-anonymous donation), or in which someone who has carried out an
+    anonymous act of generosity does not wish to be identified by a beneficiary
+    insistent upon acknowledging that act through a payment.
+  - This approach in turn reduces the number of columns required (for example
     in a CSV file used to specify the _payers_ and _payees_ in a bulk upload),
     so, for example, the same _payment_ can be specified or recorded in either
     of the two equivalent ways:
