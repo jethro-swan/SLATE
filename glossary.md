@@ -66,7 +66,7 @@ synonymous with _atomic units_).
 
 The _name_ of every _entity_ is contained within a **namespace** (known as its
 _parent_ **namespace**). The _entities_ the _names_ of which are contained in a
-**namespace** are referred to as its _children_.[1]
+**namespace** are referred to as its _children_. [1]
 
 In the case of **namespaces**, the _parent_-_child_ concept can be extended in
 either direction to refer to _ancestors_ and _descendants_ respectively.  
@@ -126,7 +126,7 @@ usually very light touch. However, in the case where an _open money_
 **currency** is used in place of (and alongside) a _metrically equivalent_
 government-issued money, the users obviously have a legal responsibility not to
 violate laws (and, for this reason, each is responsible for disclosure its own
-_payment_ records[2] where, when and to whomever required). The _stewards_ have
+_payment_ records [2] where, when and to whomever required). The _stewards_ have
 a role in identifying possible misuse of the tools provided, and they have both
 the _ability_ and the _obligation_ to exclude misbehaving _agents_.
 
@@ -160,7 +160,7 @@ considerably. _NESTS_/_SLATE_ extends things an a number of ways:
 
 - In _NESTS_, the concept of the **currency** has been extended to encompass
   any _named_ variable. This means that we are no longer restricted to scalar
-  values. In addition, the **accounts** within[3] a **currency** may be
+  values. In addition, the **accounts** within [3] a **currency** may be
   anything the structure of which can be implemented, including
   - vectors (including information preserving currencies and high-variety
     impact vectors)
