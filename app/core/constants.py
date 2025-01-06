@@ -45,6 +45,7 @@ DB_DIR              = "/var/slate/db/"
 DB_BKP_DIR          = "/var/slate/db/backups/"
 
 # SQLite database files:
+HUBS_DB             = "/var/slate/db/hubs.db"
 ENTITIES_DB         = "/var/slate/db/entities.db"
 #MAP_DB              = "/var/slate/db/map.db"
 PAYMENTS_DB         = "/var/slate/db/payments.db"

@@ -5,6 +5,7 @@ import pickle
 from pathlib import Path
 from string import ascii_lowercase
 
+from .constants import HUBS_DB
 from .constants import ENTITIES_DB, PAYMENTS_DB, DB_DIR, DB_BKP_DIR
 from .constants import FPH_TO_HRNS_MAP, HRNS_C_FPH_MAP
 from .constants import SUBSTRATE_FPH
@@ -26,23 +27,26 @@ from .cctld_list import *
 # impact on the FPH to HRNS and FPH to FIP mappings.
 
 #==============================================================================
-## Create the SQLite entities database:
+def create_hubs_db():
 
-def create_entities_db():
+    # This database is kept separate from the others because it needs to be
+    # kept consistent with copies held across other hubs (according to rules
+    # not yet defined):
 
-    if os.path.exists(ENTITIES_DB):
+    if os.path.exists(HUBS_DB):
         # If the database exists already, it is deleted after a time-stamped
         # copy has been saved.
-        fcopy(ENTITIES_DB, DB_BKP_DIR + '/entities_' + timestamp() + '.db')
-        os.remove(ENTITIES_DB)
-
-    with sqlite3.connect(ENTITIES_DB) as conn:
+        fcopy(HUBS_DB, DB_BKP_DIR + '/entities_' + timestamp() + '.db')
+        os.remove(HUBS_DB)
+    #
+    with sqlite3.connect(HUBS_DB) as conn:
         cursor = conn.cursor()
         # The initial values for the following details are read from a
         # configuration file at the time of installation.
         cursor.execute(
             """
-    	    CREATE TABLE IF NOT EXISTS hub (
+            CREATE TABLE IF NOT EXISTS hub (
+                hub_id INTEGER PRIMARY KEY AUTOINCREMENT,
                 subdomain TEXT DEFAULT '',
                 must_be_archived INTEGER NOT NULL DEFAULT 1,
                 administrators_fph_list BLOB,
@@ -55,6 +59,21 @@ def create_entities_db():
             );
             """
         )
+
+
+
+
+#==============================================================================
+## Create the SQLite entities database:
+
+def create_entities_db():
+
+    if os.path.exists(ENTITIES_DB):
+        # If the database exists already, it is deleted after a time-stamped
+        # copy has been saved.
+        fcopy(ENTITIES_DB, DB_BKP_DIR + '/entities_' + timestamp() + '.db')
+        os.remove(ENTITIES_DB)
+
         # A table is created for the entities' common properties:
         cursor.execute(
             """
