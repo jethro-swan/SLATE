@@ -40,7 +40,7 @@ stuff").
   in which they are _authorized_). Since the _name_ of every **namespace** is
   also contained (uniquely) within another **namespace**, the **namespaces**
   form a _tree_ each unique path within which is identified by a string of
-  _names_ joined by a character (a "." by established convention [1]), e.g.
+  _names_ joined by a character (a "." by established convention [^1]), e.g.
   - if a **namespace** at the _root_ of such a tree is identified by a single
     _name_ (which is not unusual), no immediate distinction need to made
     between the _name_ and the _namespace_ identifier (which may help to ease a
@@ -66,7 +66,7 @@ synonymous with _atomic units_).
 
 The _name_ of every _entity_ is contained within a **namespace** (known as its
 _parent_ **namespace**). The _entities_ the _names_ of which are contained in a
-**namespace** are referred to as its _children_. [2]
+**namespace** are referred to as its _children_. [^2]
 
 In the case of **namespaces**, the _parent_-_child_ concept can be extended in
 either direction to refer to _ancestors_ and _descendants_ respectively.  
@@ -126,7 +126,7 @@ usually very light touch. However, in the case where an _open money_
 **currency** is used in place of (and alongside) a _metrically equivalent_
 government-issued money, the users obviously have a legal responsibility not to
 violate laws (and, for this reason, each is responsible for disclosure its own
-_payment_ records [3] where, when and to whomever required). The _stewards_ have
+_payment_ records [^3] where, when and to whomever required). The _stewards_ have
 a role in identifying possible misuse of the tools provided, and they have both
 the _ability_ and the _obligation_ to exclude misbehaving _agents_.
 
@@ -160,7 +160,7 @@ considerably. _NESTS_/_SLATE_ extends things an a number of ways:
 
 - In _NESTS_, the concept of the **currency** has been extended to encompass
   any _named_ variable. This means that we are no longer restricted to scalar
-  values. In addition, the **accounts** within [4] a **currency** may be
+  values. In addition, the **accounts** within [^4] a **currency** may be
   anything the structure of which can be implemented, including
   - vectors (including information preserving currencies and high-variety
     impact vectors)
@@ -173,64 +173,64 @@ considerably. _NESTS_/_SLATE_ extends things an a number of ways:
 - In _NESTS_, the concept of the _agent_ has been extended beyond humans,
   organizations or virtual representations of such (e.g. in agent-based
   simulations and interactive sandboxes) to include _devices_ ranging from
-  networked sensors and controls (used in such IoT [5] or "edge computing" roles
+  networked sensors and controls (used in such IoT [^5] or "edge computing" roles
   as environmental monitoring, irrigation and climate control within a food
   production system, or the management of a multi-functional "community hub"
-  [6]).
+  [^6]).
 
-Here we are extending a concept of _open measure_ [7], of which _open money_ is
+Here we are extending a concept of _open measure_ [^7], of which _open money_ is
 a very important special case.
 
 
 ---
 ##### Notes
 
-[1] This convention has arisen because the implementations to date have been
-    restricted to the standard Latin character set. In order to accommodate
-    other character sets, the _NESTS_ design allows for any UTF-8 character to
-    be used. It remains to be seen whether that provides an adequate solution.
+[^1] This convention has arisen because the implementations to date have been
+     restricted to the standard Latin character set. In order to accommodate
+     other character sets, the _NESTS_ design allows for any UTF-8 character to
+     be used. It remains to be seen whether that provides an adequate solution.
 
-[2] This is not strictly true because **namespaces** at the _root_ of a tree
-    cannot have a named _parent_ **namespace**. Instead their names sit within
-    a _nameless_ **namespace** (referred to as the _substrate_ in some places)
-    serving them as a _virtual parent_ in which new _entities_ cannot be
-    created.  
+[^2] This is not strictly true because **namespaces** at the _root_ of a tree
+     cannot have a named _parent_ **namespace**. Instead their names sit within
+     a _nameless_ **namespace** (referred to as the _substrate_ in some places)
+     serving them as a _virtual parent_ in which new _entities_ cannot be
+     created.  
 
-[3] Unless such a law applies locally, the _stewards_ generally bear no
-    responsibility for monitoring or reporting on the activity of an **agents**
-    within the scope of their _stewardship_. They do however have the right to
-    exclude **agents** (each of which retains _ownership_ of the **accounts**
-    for which they bear responsibility). (In general, it is likely that the
-    _stewards_ would take a rather gentle approach initially, starting with a
-    query, followed by advice, then by a series of warnings, before reaching
-    the stage of exclusion, and the details of the policy adopted are largely
-    to be agreed among themselves).
+[^3] Unless such a law applies locally, the _stewards_ generally bear no
+     responsibility for monitoring or reporting on the activity of an **agents**
+     within the scope of their _stewardship_. They do however have the right to
+     exclude **agents** (each of which retains _ownership_ of the **accounts**
+     for which they bear responsibility). (In general, it is likely that the
+     _stewards_ would take a rather gentle approach initially, starting with a
+     query, followed by advice, then by a series of warnings, before reaching
+     the stage of exclusion, and the details of the policy adopted are largely
+     to be agreed among themselves).
 
-[4] For consistency with use (in such a context) by accountants or tax
-    authorities (for example), the term "accounts" could have been used here in
-    place of "_payment_ records", but that would be inconsistent with the use
-    above (which is analoguous to its use in terms such as _savings account_,
-    _current account_, _loan account_ and so on). Instead, the term _journal_
-    is used here to refer to the record of all _payments_ to or from a
-    particular _account_.
+[^4] For consistency with use (in such a context) by accountants or tax
+     authorities (for example), the term "accounts" could have been used here in
+     place of "_payment_ records", but that would be inconsistent with the use
+     above (which is analoguous to its use in terms such as _savings account_,
+     _current account_, _loan account_ and so on). Instead, the term _journal_
+     is used here to refer to the record of all _payments_ to or from a
+     particular _account_.
 
-[5] IoT = "Internet of Things". Networked devices varyingly widely in their
-    purpose, capacity and sophistication.
+[^5] IoT = "Internet of Things". Networked devices varyingly widely in their
+     purpose, capacity and sophistication.
 
-[6] It is easy to imagine (as an example) developing a (very) local facility to
-    manage the storage and distribution of community-generated energy. Such a
-    facility might also assist in the management of local water-collection,
-    -filtration and -distribution systems, or as a host for any number of other
-    approaches to increasing local capacity and resilience. While such a _hub_
-    would generally be networked in various ways with other such _hubs_, they
-    would also serve a very important role where the inter-_hub_ communication
-    is lost temporarily. For example, in the case a disaster (such as a flood)
-    bringing down _either_ the power lines of the phone/fibre lines, the _hub_
-    could help both to keep the lights on (adequately if minimally) and to
-    maintain a shorter-term continuity is the _truly local_ economy by the
-    provision of _open money_ payment tools that any member of the community
-    can use.
+[^6] It is easy to imagine (as an example) developing a (very) local facility to
+     manage the storage and distribution of community-generated energy. Such a
+     facility might also assist in the management of local water-collection,
+     -filtration and -distribution systems, or as a host for any number of other
+     approaches to increasing local capacity and resilience. While such a _hub_
+     would generally be networked in various ways with other such _hubs_, they
+     would also serve a very important role where the inter-_hub_ communication
+     is lost temporarily. For example, in the case a disaster (such as a flood)
+     bringing down _either_ the power lines of the phone/fibre lines, the _hub_
+     could help both to keep the lights on (adequately if minimally) and to
+     maintain a shorter-term continuity is the _truly local_ economy by the
+     provision of _open money_ payment tools that any member of the community
+     can use.
 
-[7] The term _open measure_ was coined by Les Moore, building upon the earlier
-    concept of _open money_ (itself an expansion of the earlier _LETSystem_
-    model developed by Michael Linton and others).
+[^7] The term _open measure_ was coined by Les Moore, building upon the earlier
+     concept of _open money_ (itself an expansion of the earlier _LETSystem_
+     model developed by Michael Linton and others).
