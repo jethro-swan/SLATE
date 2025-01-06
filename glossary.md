@@ -40,7 +40,7 @@ stuff").
   in which they are _authorized_). Since the _name_ of every **namespace** is
   also contained (uniquely) within another **namespace**, the **namespaces**
   form a _tree_ each unique path within which is identified by a string of
-  _names_ joined by a character (a "." by established convention [^1]), e.g.
+  _names_ joined by a character (a "." by established convention[^1]), e.g.
   - if a **namespace** at the _root_ of such a tree is identified by a single
     _name_ (which is not unusual), no immediate distinction need to made
     between the _name_ and the _namespace_ identifier (which may help to ease a
@@ -66,7 +66,7 @@ synonymous with _atomic units_).
 
 The _name_ of every _entity_ is contained within a **namespace** (known as its
 _parent_ **namespace**). The _entities_ the _names_ of which are contained in a
-**namespace** are referred to as its _children_. [^2]
+**namespace** are referred to as its _children_.[^2]
 
 In the case of **namespaces**, the _parent_-_child_ concept can be extended in
 either direction to refer to _ancestors_ and _descendants_ respectively.  
@@ -126,7 +126,7 @@ usually very light touch. However, in the case where an _open money_
 **currency** is used in place of (and alongside) a _metrically equivalent_
 government-issued money, the users obviously have a legal responsibility not to
 violate laws (and, for this reason, each is responsible for disclosure its own
-_payment_ records [^3] where, when and to whomever required). The _stewards_ have
+_payment_ records[^3] where, when and to whomever required). The _stewards_ have
 a role in identifying possible misuse of the tools provided, and they have both
 the _ability_ and the _obligation_ to exclude misbehaving _agents_.
 
@@ -160,7 +160,7 @@ considerably. _NESTS_/_SLATE_ extends things an a number of ways:
 
 - In _NESTS_, the concept of the **currency** has been extended to encompass
   any _named_ variable. This means that we are no longer restricted to scalar
-  values. In addition, the **accounts** within [^4] a **currency** may be
+  values. In addition, the **accounts** within[^4] a **currency** may be
   anything the structure of which can be implemented, including
   - vectors (including information preserving currencies and high-variety
     impact vectors)
@@ -173,12 +173,12 @@ considerably. _NESTS_/_SLATE_ extends things an a number of ways:
 - In _NESTS_, the concept of the _agent_ has been extended beyond humans,
   organizations or virtual representations of such (e.g. in agent-based
   simulations and interactive sandboxes) to include _devices_ ranging from
-  networked sensors and controls (used in such IoT [^5] or "edge computing" roles
+  networked sensors and controls (used in such IoT[^5] or "edge computing" roles
   as environmental monitoring, irrigation and climate control within a food
   production system, or the management of a multi-functional "community hub"
   [^6]).
 
-Here we are extending a concept of _open measure_ [^7], of which _open money_ is
+Here we are extending a concept of _open measure_[^7], of which _open money_ is
 a very important special case.
 
 
