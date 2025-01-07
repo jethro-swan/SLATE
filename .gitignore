@@ -22,7 +22,8 @@ whereused2.txt
 whereused.txt
 coredefs.sh
 end_points.txt
-
+deflist*
+seed_primid_details.txt
 
 __pycache__
 
