@@ -2,15 +2,35 @@
 
 ###### The next few screens to be added ...
 
-- Complete screen for CSV import (for bulk creation of **namespaces**,
+- **high priority**:
+  Add in payment received notification for _payee_ **agent**'s (possibly below
+  top menu).
+
+- **high priority**:
+  Add automatic **account** (creation in specified **currency**) for creation
+  of new **aliases** and then
+
+- **high priority**:
+  Simplify screen (including "home") to remove references to **accounts**,
+  shifting the _payment_ link (in this "basic" mode) from **account** to
+  **identity**+**currency**.
+
+- **high priority**:
+  Add/complete screen for **identity**-to-**identity** payment.
+
+- **high priority**:
+  Complete screen for CSV import (for bulk creation of **namespaces**,
   **currencies**, **login identities**, **accounts** and **payments**, for
   sandbox payments sets).
 
-- Add simple **agent**-to-**agent** (one-to-one) and **agent**-to-**agents** 
+- Add simple **agent**-to-**agent** (one-to-one) and  **agent**-to-**agents**
   (one-to-several) messaging (including, respectively, _steward_-to-**agent**
   and _steward_-to-**agents** messaging) via a _messages_ database.
 
-- Add/complete screen for **identity**-to-**identity** payment.
+- Correct **account** journal download to change the other **account**'s
+_identifier_ from FPH to HRNS.
+
+###### ... and then ...
 
 - Add/complete **agent** self-management screens/endpoints/code.
 

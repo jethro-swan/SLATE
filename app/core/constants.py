@@ -20,8 +20,8 @@ SLATE_WWW_OUT       = SLATE_DATA + "www/"       # CSV exports
 #SLATE_QR_CODES      = SLATE_DATA + "qr_codes/"  # QR codes generated
                                                 # (both cleared out regularly)
 # fixed values (symlinked files)
-ENABLED             = SLATE_FIXED + "enabled"   # f: = True
-DISABLED            = SLATE_FIXED + "disabled"  # f: = False
+#ENABLED             = SLATE_FIXED + "enabled"   # f: = True
+#DISABLED            = SLATE_FIXED + "disabled"  # f: = False
 
 # logging files
 SLATE_LOGS          = SLATE_DATA + "logs/"

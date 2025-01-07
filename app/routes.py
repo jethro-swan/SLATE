@@ -57,6 +57,11 @@ from app.core.uploads import csv_create_identities
 from app.core.uploads import csv_create_currencies
 from app.core.uploads import csv_create_accounts
 
+from app.core.messaging import display_colour_subject_prefix
+from app.core.messaging import create_hubs_db
+from app.core.messaging import send_message
+from app.core.messaging import fetch_messages
+
 from app.core.mail_temp import temp_mail_send
 
 from app.core.display import yesno, integer_to_money_format
@@ -721,6 +726,100 @@ def change_working_identity(new_identity_fph):
 
 # ==============================================================================
 # login landing page
+
+@app.route("/home/new", methods = ["GET", "POST"])
+@login_required
+def new_home():
+    page = "new_home"
+    if "previous_page" in session: # already active
+        previous_page = session["previous_page"]
+    else: # initializing
+#        session["previous_page"] = "home" ### probably not needed
+        previous_page = "home"
+    session["previous_page"] = page
+
+    group = "home" # Used to control top menu behaviour.
+
+    mode = "basic" ### New variable added
+
+    namespace_steward = False
+    currency_steward = False
+    paying = False
+    logged_in = current_user.is_authenticated
+
+    primary_identity_fph, \
+    primary_identity_hrns, \
+    primary_identity_type, \
+    m = identify_entity(current_user.get_id())
+
+    if "working_identity" in session:
+        working_identity_fph, \
+        working_identity_hrns, \
+        working_identity_type, \
+        m = identify_entity(session["working_identity"])
+    else:
+        working_identity_fph = primary_identity_fph
+        session["working_identity"] = working_identity_fph
+        working_identity_hrns = primary_identity_hrns
+        working_identity_type = primary_identity_type
+    working_identity_type = etype_to_adtype(working_identity_type)
+
+    ## SOME OF THE FOLLOWING WILL NOT BE NEEDED
+
+    # The user logs in as the *primid*, even if indirectly as one of its
+    # *secid*s, but once logged in will see all of its *identities* along with
+    # a list of *accounts* belonging to each. The user will also see a list of
+    # entities over which it holds/shares stewardship.
+
+    stewardships_list, m = list_stewardships(primary_identity_fph)
+
+    # Since a user may have *accounts* scattered across an arbitrary number of
+    # *namespaces*, it is necessary to maintain a list of these:
+
+    # A full list of *identities* is compiled, with the *primid* first:
+    identities_list = list_secids(primary_identity_fph)
+    identities_list.insert(0, primary_identity_fph)
+
+    identities = [] # list of *identity* dictionaries) to "home.html" template.
+
+#    lid_messages = fetch_messages(login_identity_fph)
+#    wid_messages = fetch_messages(working_identity_fph)
+
+
+
+#
+    return render_template(
+            "new_home.html",
+            title = "Home",
+            page = page,
+            group = group,
+            mode = mode,
+            logged_in = logged_in,
+            primary_identity_type = "login identity",
+            primary_identity_fph = primary_identity_fph,
+            primary_identity_hrns = primary_identity_hrns,
+            working_identity_fph = working_identity_fph,
+            working_identity_hrns = working_identity_hrns,
+            working_identity_type = working_identity_type,
+
+            # List of (nested) dictionaries for display in "home.html":
+#            identities = identities,
+#            secids = secids,
+#            stewardships = stewardships
+        )
+
+
+
+
+
+
+
+
+
+## NB: This will be assigned a new endpoint to allow "/home" to be used for a
+##     sparser login landing page centred around internal messaging.
+
+@app.route("/home/full", methods = ["GET", "POST"])
 @app.route("/home", methods = ["GET", "POST"])
 @login_required
 def home():

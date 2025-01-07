@@ -173,7 +173,7 @@ def send_message(
                              )
     except:
         if longevity: # if the deletion lifespan is valid
-            if isinstance(longevity, int)
+            if isinstance(longevity, int):
                 deletion_scheduled = longevity + datetime.now(timezone.utc)
         else:
             deletion_scheduled = 0 # not sceduled for deletion
@@ -267,7 +267,6 @@ def fetch_messages(recipient_identifier):
                     "DELETE FROM messages WHERE message_id =?",
                     (message[0],)
                 )
-            )
             conn.commit()
         cursor.close()
 
