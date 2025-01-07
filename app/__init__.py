@@ -24,8 +24,8 @@ mail = Mail(app)
 
 #app.config["EXPORT"] = "/srv/slate/export/"
 #app.config["IMPORT"] = "/srv/slate/import/"
-app.config["EXPORT"] = "export"
-app.config["IMPORT"] = "import"
+app.config["EXPORT_PATH"] = "export"
+app.config["UPLOAD_PATH"] = "upload"
 
 bootstrap = Bootstrap(app)
 

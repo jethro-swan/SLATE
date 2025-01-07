@@ -1,20 +1,22 @@
-2024-12-09
+2025-01-06
 
 ###### The next few screens to be added ...
 
+- Complete screen for CSV import (for bulk creation of **namespaces**,
+  **currencies**, **login identities**, **accounts** and **payments**, for
+  sandbox payments sets).
+
+- Add **agent** to **agent** messaging (including _steward_ to **agent**
+  messaging) via _messages_ database (using serialized list of dictionaries)
+  suitable for direct display in "home.html" template.
+
 - Add/complete screen for **identity**-to-**identity** payment.
 
-- Add/complete payments export listing (CSV) for **account** and **currency**.
-
-- Add/complete **primid** self-managemnt screens/endpoints/code.
+- Add/complete **agent** self-management screens/endpoints/code.
 
 - Add/complete **identities** screen.
 
 - Add/complete invitation QR code generation screen/code.
-
-- Clean up payments listing for **account** and move to a separate screen.
-
-- Clean up payments listing for **currency** and move to a separate screen.
 
 - Add _steward_-to-**identity** messaging (via "home" page) - e.g. suspension.
 
@@ -23,8 +25,6 @@
 - Add/complete _entity_ management screens.
 
 - Add/complete _stewardships_ listing/management screen.
-
-- Add/complete CSV import screen for sandbox payments set.
 
 - Add/complete CSV import screen for bulk entity creation (sandbox use).
 
@@ -44,9 +44,16 @@
 
 ###### ... and later ...
 
-- Add in the parabola plot.
+- Merge _primids_ and _secids_ table into single _agents_ table.
+
+- Add _social_roles_ table to gather detailed information for mapping local
+  economic activity.
+
+- Add in the parabola plot (adapted from _LETSplay_).
 
 - Complete CLI for SSH use.
+
+- Add in ABS functions.
 
 - Add REST API.
 

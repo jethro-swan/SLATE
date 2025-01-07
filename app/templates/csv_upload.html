@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<h3>create a set of entities from an uploaded CSV file</h3>
+
+<form method="POST" action="" enctype="multipart/form-data">
+  <fieldset>
+    <legend>Entity type to be created</legend>
+    <p><input type="radio" name="entity_type" id="namespaces" />
+    <label for="namespaces"></label></p>
+    <p><input type="radio" name="entity_type" id="login_identities" />
+    <label for="login_identities"></label></p>
+    {% if mode == rich %}
+    <p><input type="radio" name="entity_type" id="aliases" />
+    <label for="aliases"></label></p>
+    {% endif %}
+    <p><input type="radio" name="entity_type" id="currencies" />
+    <label for="currencies"></label></p>
+    {% if mode == rich %}
+    <p><input type="radio" name="entity_type" id="accounts" />
+    <label for="accounts"></label></p>
+    {% endif %}
+    <p><input type="radio" name="entity_type" id="payments" />
+    <label for="payments"></label></p>
+  </fieldset>
+  <p><input type="file" name="csv_file" accept=".csv"></p>
+  <p><input type="submit" value="upload CSV file"></p>
+</form>
+
+
+
+
+{% endblock %}
