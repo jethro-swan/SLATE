@@ -6,9 +6,9 @@
   **currencies**, **login identities**, **accounts** and **payments**, for
   sandbox payments sets).
 
-- Add **agent** to **agent** messaging (including _steward_ to **agent**
-  messaging) via _messages_ database (using serialized list of dictionaries)
-  suitable for direct display in "home.html" template.
+- Add simple **agent**-to-**agent** (one-to-one) and **agent**-to-**agents** 
+  (one-to-several) messaging (including, respectively, _steward_-to-**agent**
+  and _steward_-to-**agents** messaging) via a _messages_ database.
 
 - Add/complete screen for **identity**-to-**identity** payment.
 

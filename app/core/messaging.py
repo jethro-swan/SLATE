@@ -66,6 +66,7 @@ def create_hubs_db():
                 message_id INTEGER PRIMARY KEY AUTOINCREMENT,
                 timestamp TEXT,
                 expiry_timestamp TEXT,
+                deletion_scheduled INTEGER DEFAULT 0,
                 category INTEGER DEFAULT 0,
                 indelible INTEGER DEFAULT 0,
                 stewardship_id TEXT,
@@ -88,6 +89,9 @@ def create_hubs_db():
     #   expiry_timestamp    If set, the message will disappear at or soon after
     #                       this date+time.
     #
+    #   deletion_scheduled  If true, this message has already been scheduled for
+    #                       deletion.
+    #
     #   category            0: standard message         display: black
     #                       1: offer                    display: green
     #                       2: request                  display: brown
@@ -103,8 +107,14 @@ def create_hubs_db():
     #   indelible           If TRUE, the recipient cannot delete the message
     #                       although the send can.
     #
-    #   stewardship_id      If set, this identifies the entity of which the
-    #                       sender(_fph) is one of the stewards.
+    #   stewardship_id      If the message has been sent by a steward, this (as
+    #                       FPH or HRNS) identifies the *namespace* or
+    #                       *currency* of which the sender_id is one of the
+    #                       stewards.
+    #
+    #                       If the message has been sent to the stewards of a
+    #                       *namespace* or *currency*, this identifies (as
+    #                       FPH or HRNS) the entity.
     #
     #   sender_fph          The *agent* who sent this message.
     #
@@ -125,16 +135,15 @@ def send_message(
         recipient_identifier,   # FPH or HRNS
         subject,                # text
         longevity,              # lifespan (seconds)
-        expiry_year,        #
-        expiry_month,       ##### date+time for scheduled removal
-        expiry_day,         #
-        expiry_hour,        #
-        expiry_minute,      #
-        expiry_second,      #
+        expiry_year,    #
+        expiry_month,   ######### date+time for scheduled removal
+        expiry_day,     #
+        expiry_hour,    #       Values entered in form validated on submission
+        expiry_minute,  #
+        expiry_second,  #
         message_body,           # text
         indelible = False,      # boolean
         expiry_timestamp = "",  # text
-        stewardship_id = ""     # text
     ):
 
     sender_fph, \
@@ -169,7 +178,6 @@ def send_message(
         else:
             deletion_scheduled = 0 # not sceduled for deletion
 
-
     with sqlite3.connect(MESSAGES_DB) as conn:
         cursor = conn.cursor()
         cursor.execute(
@@ -177,6 +185,7 @@ def send_message(
             INSERT INTO messages (
                 timestamp,
                 expiry_timestamp,
+                deletion_scheduled,
                 category,
                 indelible,
                 stewardship_id,
@@ -185,10 +194,11 @@ def send_message(
                 subject,
                 message_body
             )
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """,
             (
                 timestamp,
+                expiry_timestamp,
                 deletion_scheduled,
                 category,
                 indelible,
@@ -216,6 +226,7 @@ def fetch_messages(recipient_identifier):
                 message_id,
                 timestamp,
                 expiry_timestamp,
+                deletion_scheduled,
                 category,
                 indelible,
                 stewardship_id,
@@ -229,11 +240,12 @@ def fetch_messages(recipient_identifier):
             (recipient_fph,)
         )
         message_list = list(cursor.fetchall())
-        cursor.close()
+#        cursor.close()
         if result is None:
             return 0, [] # no messages returned
 #        message_count = 0
         timestamp_now = datetime.now(timezone.utc)
+        deletions_due = []
         messages = [] # list of dictionaries
         for message in message_list:
             if message[2] < timestamp_now: # delete if due
@@ -241,14 +253,26 @@ def fetch_messages(recipient_identifier):
                 m["message_id"]         = message[0]
                 m["timestamp"]          = message[1]
                 m["expiry_timestamp"]   = message[2]
-                m["category"]           = message[3]
-                m["indelible"]          = message[4]
-                m["stewardship_id"]     = message[5]
-                m["sender_fph"]         = message[6]
-                m["recipient_fph"]      = message[7]
-                m["subject"]            = message[8]
-                m["message_body"]       = message[9]
+                m["deletion_scheduled"] = message[3]
+                m["category"]           = message[4]
+                m["indelible"]          = message[5]
+                m["stewardship_id"]     = message[6]
+                m["sender_fph"]         = message[7]
+                m["recipient_fph"]      = message[8]
+                m["subject"]            = message[9]
+                m["message_body"]       = message[10]
                 messages.append(m)
+            else:
+                cursor.execute(
+                    "DELETE FROM messages WHERE message_id =?",
+                    (message[0],)
+                )
+            )
+            conn.commit()
+        cursor.close()
+
+
+
 #            message_count += 1
 
 #    return message_count, messages # list of dictionaries
