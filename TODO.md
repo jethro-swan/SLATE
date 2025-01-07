@@ -6,6 +6,9 @@
   Add in payment received notification for _payee_ **agent**'s (possibly below
   top menu).
 
+- Correct _seed_ **currency**'s default **account** name from "local" to
+  "hours".
+
 - **high priority**:
   Add automatic **account** (creation in specified **currency**) for creation
   of new **aliases** and then
