@@ -233,24 +233,25 @@ def fetch_messages(recipient_identifier):
         if result is None:
             return 0, [] # no messages returned
 #        message_count = 0
+        timestamp_now = datetime.now(timezone.utc)
         messages = [] # list of dictionaries
         for message in message_list:
-            m = {}
-            m["message_id"]         = message[0]
-            m["timestamp"]          = message[1]
-            m["expiry_timestamp"]   = message[2]
-            m["category"]           = message[3]
-            m["indelible"]          = message[4]
-            m["stewardship_id"]     = message[5]
-            m["sender_fph"]         = message[6]
-            m["recipient_fph"]      = message[7]
-            m["subject"]            = message[8]
-            m["message_body"]       = message[9]
-            messages.append(m)
+            if message[2] < timestamp_now: # delete if due
+                m = {}
+                m["message_id"]         = message[0]
+                m["timestamp"]          = message[1]
+                m["expiry_timestamp"]   = message[2]
+                m["category"]           = message[3]
+                m["indelible"]          = message[4]
+                m["stewardship_id"]     = message[5]
+                m["sender_fph"]         = message[6]
+                m["recipient_fph"]      = message[7]
+                m["subject"]            = message[8]
+                m["message_body"]       = message[9]
+                messages.append(m)
 #            message_count += 1
 
 #    return message_count, messages # list of dictionaries
     return messages # list of dictionaries
 
 #==============================================================================
-##
