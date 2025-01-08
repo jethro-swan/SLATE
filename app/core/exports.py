@@ -131,15 +131,15 @@ def list_payments_for_account(account_identifier):
         # If THIS *account* is the payee, put the amount in the recipts
         # column (3) and leave the payments column blank:
         if p[3] == account_fph:
-            payment_row.append(integer_to_money_format(p[4])) # amount
-            payment_row.append("")
-            payment_row.append(p[2]) # payee HRNS
-            payment_row.append(integer_to_money_format(p[6])) # balance
+            payment_row.append(integer_to_money_format(p[4])) # amount received
+            payment_row.append("")                            # -
+            payment_row.append(fph_to_hrns(p[2]))             # payee HRNS
+            payment_row.append(integer_to_money_format(p[6])) # account balance
         elif p[2] == account_fph:
-            payment_row.append("")
-            payment_row.append(integer_to_money_format(p[4])) # amount
-            payment_row.append(p[3]) # payer HRNS
-            payment_row.append(integer_to_money_format(p[5])) # balance
+            payment_row.append("")                            # -
+            payment_row.append(integer_to_money_format(p[4])) # amount paid
+            payment_row.append(fph_to_hrns(p[3]))             # payer HRNS
+            payment_row.append(integer_to_money_format(p[5])) # account balance
         else:
             payment_row.append("")
             payment_row.append("")
@@ -215,20 +215,20 @@ def dump_account_payments_csv(
     if m:
         return [], m
 
-    csv_filename = "account_" + account_fph + "_journal_" + timestamp() \
-                 + ".csv"
+    csv_filename = "account_" + fph_to_hrns(account_fph) + "_journal_" \
+                 + timestamp() + ".csv"
     csv_export_filepath = os.path.join(app.root_path, "export", csv_filename)
     with open(csv_export_filepath, "w") as csv_f:
-#        if show_header_row:
-#            csv_f.write(
-#                      "date and time\t" \
-#                      + "payment number\t" \
-#                      + "credit\t" \
-#                      + "debit\t" \
-#                      + "other account\t" \
-#                      + "balance\t" \
-#                      + "annotation\n"
-#                  )
+        if show_header_row:
+            csv_f.write(
+                      "date and time\t" \
+                      + "payment number\t" \
+                      + "credit\t" \
+                      + "debit\t" \
+                      + "other account\t" \
+                      + "balance\t" \
+                      + "annotation\n"
+                  )
         for row in payment_rows:
             for i in range(len(row)-1):
                 csv_f.write(row[i])

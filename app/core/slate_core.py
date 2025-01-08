@@ -5,7 +5,7 @@ import pickle
 from pathlib import Path
 from string import ascii_lowercase
 
-from .constants import HUBS_DB
+
 from .constants import ENTITIES_DB, PAYMENTS_DB, DB_DIR, DB_BKP_DIR
 from .constants import FPH_TO_HRNS_MAP, HRNS_C_FPH_MAP
 from .constants import SUBSTRATE_FPH

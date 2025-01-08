@@ -4,7 +4,9 @@
 
 - **high priority**:
   Add in payment received notification for _payee_ **agent**'s (possibly below
-  top menu).
+  top menu). Include
+  - option to confirm/acknowledge receipt (check box?)
+  - option to reverse/refund payment received (reversal transaction)
 
 - Correct _seed_ **currency**'s default **account** name from "local" to
   "hours".
@@ -51,7 +53,7 @@ _identifier_ from FPH to HRNS.
 
 - Add/complete CSV import screen for bulk entity creation (sandbox use).
 
-###### .. which require also ...
+###### ... which require also ...
 
 - Make _private_ **namespace** extensible.
 

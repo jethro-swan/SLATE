@@ -1,0 +1,80 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<hr />
+
+<!--
+The messages for the *login identity* are always displayed because some may be
+from _stewards_.
+-->
+
+{% for message in lid_messages %}<!-- list of dictionaries -->
+  <p>
+    {{ message.message_id }}
+  </p>
+  {% if message.indelible %}<b>*</b>{% endif %}
+  <p style="color:#{{ message.rgb_colour }};font-weight:bold;">
+    {{ message.prefix_string }}: {{ message.subject }}
+  </p>
+  <p>{{ message.timestamp }} | {{ message.expiry_timestamp }}</p>
+  <p style="color:#{{ message.rgb_colour }}">
+    <b>{{ message.category }}</b>
+  </p>
+  {% if message.stewardship_hrns %}
+    <p>
+      {{ message.stewardship_hrns }}
+    </p>
+  {% endif %}
+  <p>
+    <b>{{ message.sender_hrns }}</b>
+  </p>
+  <p>
+    <b>{{ message.subject }}</b>
+  </p>
+  <p>
+    {{ message.message_body }}
+  </p>
+  <hr />
+{% endfor %}
+
+{% if login_identity_fph != working_identity_fph %}
+  {% for message in wid_messages %}<!-- list of dictionaries -->
+    <p>
+      {{ message.message_id }}
+      [<a href="/message/delete/{{ message.message_id }}">delete</a>]
+    </p>
+    <p style="color:#{{ message.rgb_colour }};font-weight:bold;">
+      {{ message.prefix_string }}: {{ message.subject }}
+    </p>
+    <p>
+      {{ message.timestamp }} | {{ message.expiry_timestamp }}
+    </p>
+    <p style="color:#{{ message.rgb_colour }}">
+      <b>{{ message.category }}</b>
+    </p>
+    {% if message.stewardship_hrns %}
+      <p>
+        {{ message.stewardship_hrns }}
+      </p>
+    {% endif %}
+    <p>
+      <b>{{ message.sender_hrns }}</b>
+    </p>
+    <p>
+      <b>{{ message.subject }}</b>
+    </p>
+    <p>
+      {{ message.message_body }}
+    </p>
+    <hr />
+  {% endfor %}
+{% endif %}
+
+<hr />
+
+<a href="/create_namespace"><b>create new namespace</b></a>
+|
+<a href="/create_currency"><b>create new currency</b></a>
+
+{% endblock %}

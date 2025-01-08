@@ -672,7 +672,8 @@ def login_reset(user_id, token):
 
 # ==============================================================================
 # change working identity
-@app.route("/change_working_identity/<new_identity_fph>",
+##@app.route("/change_working_identity/<new_identity_fph>",
+@app.route("/identity/change/<new_identity_fph>",
            methods = ["GET", "POST"])
 @login_required
 def change_working_identity(new_identity_fph):
@@ -740,7 +741,9 @@ def new_home():
 
     group = "home" # Used to control top menu behaviour.
 
-    mode = "basic" ### New variable added
+    mode = "slate_basic" ### New variable added
+    #mode = "slate_full"
+    # mode = "nests_full"
 
     namespace_steward = False
     currency_steward = False
@@ -782,8 +785,8 @@ def new_home():
 
     identities = [] # list of *identity* dictionaries) to "home.html" template.
 
-#    lid_messages = fetch_messages(login_identity_fph)
-#    wid_messages = fetch_messages(working_identity_fph)
+    lid_messages = fetch_messages(primary_identity_fph)   # Always display
+    wid_messages = fetch_messages(working_identity_fph)
 
 
 
@@ -801,6 +804,9 @@ def new_home():
             working_identity_fph = working_identity_fph,
             working_identity_hrns = working_identity_hrns,
             working_identity_type = working_identity_type,
+
+            lid_messages = lid_messages,
+            wid_messages = wid_messages
 
             # List of (nested) dictionaries for display in "home.html":
 #            identities = identities,
@@ -2985,7 +2991,7 @@ def export_account_csv(account_fph):
         return redirect("/home")
 
     csv_file, \
-    m = dump_account_payments_csv(account_fph, False)
+    m = dump_account_payments_csv(account_fph, True)
     if m:
         flash(m)
         return redirect("/home")

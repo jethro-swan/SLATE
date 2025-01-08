@@ -3,8 +3,9 @@ import random
 import os
 import pickle
 from string import ascii_lowercase
-import datetime
-import time
+from datetime import datetime, date, time, timezone
+
+from .slate_core import identify_entity
 
 from .constants import MESSAGES_DB
 
@@ -55,7 +56,7 @@ def create_hubs_db():
         # copy has been saved.
         fcopy(MESSAGES_DB, DB_BKP_DIR + '/messages_' + timestamp() + '.db')
         os.remove(MESSAGES_DB)
-    #
+
     with sqlite3.connect(MESSAGES_DB) as conn:
         cursor = conn.cursor()
         # The initial values for the following details are read from a
@@ -218,6 +219,11 @@ def send_message(
 #
 
 def fetch_messages(recipient_identifier):
+    recipient_fph, \
+    recipient_hrns, \
+    recipient_type, \
+    m = identify_entity(recipient_identifier)
+
     with sqlite3.connect(MESSAGES_DB) as conn:
         cursor = conn.cursor()
         cursor.execute(
@@ -241,7 +247,7 @@ def fetch_messages(recipient_identifier):
         )
         message_list = list(cursor.fetchall())
 #        cursor.close()
-        if result is None:
+        if message_list is None:
             return 0, [] # no messages returned
 #        message_count = 0
         timestamp_now = datetime.now(timezone.utc)
@@ -250,18 +256,25 @@ def fetch_messages(recipient_identifier):
         for message in message_list:
             if message[2] < timestamp_now: # delete if due
                 m = {}
-                m["message_id"]         = message[0]
-                m["timestamp"]          = message[1]
-                m["expiry_timestamp"]   = message[2]
-                m["deletion_scheduled"] = message[3]
-                m["category"]           = message[4]
-                m["indelible"]          = message[5]
-                m["stewardship_id"]     = message[6]
-                m["sender_fph"]         = message[7]
-                m["recipient_fph"]      = message[8]
-                m["subject"]            = message[9]
-                m["message_body"]       = message[10]
-                messages.append(m)
+                m["prefix_string"], \
+                m["rgb_colour"] = display_colour_subject_prefix(message[4])
+                m["message_id"]         = message[0] # integer
+                m["timestamp"]          = message[1] # integer
+                m["expiry_timestamp"]   = message[2] # integer
+                m["delete"]             = message[3] # boolean
+                m["category"]           = message[4] # string
+                m["prefix_string"]      = prefix_string # string
+                m["rgb_colour"]         = rgb_colour # string
+                m["indelible"]          = message[5] # boolean
+                m["stewardship_hrns"]   = fph_to_hrns(message[6]) # string
+                m["sender_hrns"]        = fph_to_hrns(message[7]) # string
+                m["recipient_hrns"]     = fph_to_hrns(message[8]) # string
+                m["subject"]            = message[9] # string
+                m["message_body"]       = message[10] # list of dictionaries
+                #
+                # Can this message be displayed?
+                if (m["timestamp"] <  m["expiry_timestamp"]) or m["indelible"]:
+                    messages.append(m)
             else:
                 cursor.execute(
                     "DELETE FROM messages WHERE message_id =?",

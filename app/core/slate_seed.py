@@ -196,13 +196,17 @@ def create_seed_entities():
             """
             INSERT INTO namespaces (
                 entity_fph,
-                stewards_fph_list
+                default_currency_fph,
+                stewards_fph_list,
+                sandbox
             )
             VALUES (?, ?)
             """,
             (
                 seed_namespace_fph,
-                pickle.dumps([seed_primid_fph])
+                seed_currency_fph,
+                pickle.dumps([seed_primid_fph]),
+                False
             )
         )
         conn.commit()
@@ -224,15 +228,17 @@ def create_seed_entities():
                 entity_fph,
                 currency_prefix,
                 currency_suffix,
+                default_account_name,
                 stewards_fph_list
             )
             VALUES (?, ?, ?, ?)
             """,
             (
                 seed_currency_fph,
-                "",     # currency prefix
-                "h",    # currency suffix
-                pickle.dumps([seed_primid_fph])   # first steward added to list
+                "",         # currency prefix
+                "h",        # currency suffix
+                "hours",    # default *account* name
+                pickle.dumps([seed_primid_fph]) # first steward added to list
             )
         )
         # NB: The following may not be needed, given that the *currency* and
