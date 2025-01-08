@@ -238,8 +238,8 @@ Therefore the following additional screens are required:
 
 
 [^1]: _SLATE_ names are limited to UTF-8 Latin characters using only "." as the
-namespace delimiter whereas _NESTS_ names and the namespace delimiter may be
-any UTF-8 character.
+**namespace** delimiter whereas _NESTS_ names and the namespace delimiter may
+be any UTF-8 character.
 
 [^2]: An **agent** is identifiable by its **login identity** (**primary
 identity**) or by any of an arbitrary number of **aliases** (**secondary
