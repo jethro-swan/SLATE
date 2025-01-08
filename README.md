@@ -7,8 +7,9 @@ able to support multiple currencies.
 This is a temporary system to allow networks/islands to form while
 [NESTS](https://nests.lrc.org.uk) is still being developed (its specification
 being still somewhat fluid at this stage). For this reason, the names used to
-identify _entities_ (agents and currencies) in _SLATE_ are compatible [^1] with
-those of the fully-nested (and much more capable) _NESTS_ software.
+identify _entities_ (**namespaces**, **agents**, **currencies** and
+**accounts**) in _SLATE_ are compatible [^1] with (and a subset of) those of
+the fully-nested (and much more ambitious) _NESTS_ software.
 
 ----
 ### Entity categories
@@ -16,7 +17,9 @@ those of the fully-nested (and much more capable) _NESTS_ software.
 There are four categories of _entity_:
   - **namespaces** (a.k.a. _network_ or _island_) in which _names_ of all
     entities (including other **namespaces**) are contained.
-  - **agents** (equivalent to **identities**).
+  - **login identities** (a.k.a. **primary identities**) and **aliases**
+    (a.k.a. **secondary identities**) both of which are _identifiers_ of an
+    **agent** (whether a human, an organization, a robot or a device).
   - **currencies** (limited to scalar values of type _money_, in contrast to
     those supported by _NESTS_) - a set of **accounts**.
   - **accounts** (_variables_) each of which is a member of one **currency**
@@ -25,22 +28,22 @@ There are four categories of _entity_:
 ### Agent categories
 
 There are four categories of **agent**:
-  - A general **agent** - the set to which _all_ **agents** belong.[^2]
-  - A **namespace** _steward_, assigned this role by an **agent** already
-    holding it or by a _global system administrator_.
-  - A **currency** _steward_ - a _steward_ of a **currency**, assigned this role
-    an **agent** already holding it or by a _global system administrator_.
+  - A general **agent** - the set to which _all_ **agents** belong [^2], each
+    identifiable by a **primary identity** or (optionally) and arbitrary
+    collection of **aliases**.
+  - A _steward_ (of a **namespace** or of a **currency**), assigned this role
+    by an **agent** already that role or by a _global system administrator_.
   - A _global system administrator_, assigned this role at setup or by an
     existing _global system administrator_.
 
 ----
 ### Internal representation
 
-For convenience, each _entity_ (**namespace**, **primary identity**,
-**secondary identity**, **currency** or **account**) is identified
-internally by a unique number (_FPH_) serving as the primary key in
-an _SQLite_ table. (NB, these numbers are _now_ fully compatible
-with the _FPH_ (_Full Path Hash_) used in _NESTS_.
+For convenience, each _entity_ (**namespace**, **primary identity**, **alias**,
+**currency** or **account**) is identified internally by a unique number
+(its _FPH_) serving as the primary key in an _SQLite_ table. (NB, these numbers
+have now been made fully compatible with the _FPH_ (_Full Path Hash_) used in
+_NESTS_.
 
 These global mappings are:
   - **namespace**: _namespace_hrns_ &rarr; _namespace_fph_
@@ -114,13 +117,16 @@ of any **account** belonging to one of its **identities**.
 ----
 ## The login interface
 
-The _SLATE_ screens form a subset those used in _NESTS_, with minimal, if any,
-modification.
+The _SLATE_ screens form a subset of those used in _NESTS_, with minimal, if
+any, modification.
 
 ### Agent screens
 
   - **Registration**  
-    Once registered, the **login identity** (**primary identity**) has access to an **account** created automatically in the **currency** specified in the registration from. The name of this **account** is in the new **agent**'s _private_ **namespace**.
+    Once registered, the **login identity** (**primary identity**) has access
+    to an **account** created automatically in the **currency** specified in
+    the registration from. The name of this **account** is in the new
+    **agent**'s _private_ **namespace**.
     - **namespace** (selected from a drop-down list)
     - **agent** name (entered in a text box)
     - real name (entered in a text box) (optional)
@@ -235,12 +241,13 @@ Therefore the following additional screens are required:
 namespace delimiter whereas _NESTS_ names and the namespace delimiter may be
 any UTF-8 character.
 
-[^2]: An **agent** is identifiable by its **login identity** (**primary identity**)
-or by any of an arbitrary number of **aliases** (**secondary identities**).
+[^2]: An **agent** is identifiable by its **login identity** (**primary
+identity**) or by any of an arbitrary number of **aliases** (**secondary
+identities**).
 
 [^3]: NB, this does not remove the original transaction from the journal.
 Instead, it posts a reversing transaction.
 
 ----
 
-Most recently updated: 2024/12/28 (incompletely)
+Most recently updated: 2025/01/08 (incompletely)
