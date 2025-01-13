@@ -1,8 +1,18 @@
 # See https://git-scm.com/docs/gitignore
 
+# .env may contain private data so must no be committed to the repository (eee
+# https://flask.palletsprojects.com/en/stable/cli/).
+.env
+
+
 # The Python virtual environment is created for each fresh installation so is
 # excluded from the GIT tree:
 venv
+
+
+
+
+# Random debris ...
 
 # Also exclude any obsolete versions:
 _3.8_venv

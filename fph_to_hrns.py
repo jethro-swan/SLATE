@@ -2,8 +2,8 @@
 
 import sys
 
-from .common import nshash
-from .fph_hrns_maps import fph_to_hrns
+from app.core.common import nshash
+from pp.core.fph_hrns_maps import fph_to_hrns
 
 #ips = sys.argv[1]
 
