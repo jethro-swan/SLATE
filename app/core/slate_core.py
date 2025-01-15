@@ -74,6 +74,8 @@ def create_entities_db():
         fcopy(ENTITIES_DB, DB_BKP_DIR + '/entities_' + timestamp() + '.db')
         os.remove(ENTITIES_DB)
 
+    with sqlite3.connect(ENTITIES_DB) as conn:
+        cursor = conn.cursor()
         # A table is created for the entities' common properties:
         cursor.execute(
             """

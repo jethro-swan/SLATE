@@ -3,7 +3,6 @@
 # This is a simple CLI tool for the management of SLATE post-installation
 
 import os
-import sys
 import re
 import argparse
 import shutil
@@ -170,19 +169,19 @@ if args.show_current_dataset:
     print(slate_dataset)
     sys.exit(1)
 elif args.dataset_to_be_used:
-    m = use_dataset(args.dataset_to_be_used)
+    m = use_dataset(dataset_to_be_used)
     print(m)
     sys.exit(1)
 elif args.new_dataset:
-    m = create_new_dataset(args.new_dataset)
+    m = create_new_dataset(new_dataset)
     sys.stderr.write(m)
     sys.exit(1)
 elif args.dataset_to_be_deleted:
-    m = delete_dataset(args.dataset_to_be_deleted)
+    m = delete_dataset(dataset_to_be_deleted)
     sys.stderr.write(m)
     sys.exit(1)
 elif args.list_datasets_available:
-    slate_datasets = list_datasets()
+    slate_datasets = list_slate_datasets()
     for dataset in slate_datasets:
         print(dataset)
     sys.exit(1)

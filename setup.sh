@@ -47,7 +47,7 @@ echo "SLATE_URL=$SLATE_URL" >> .flaskenv
 # The SLATE hub may have an arbitrary number of data sets, each containing its
 # own distinct tree. Rollback to an earlier version can be performed only by a
 # hub administrator.
-DATASET = 0
+DATASET = "000"
 
 # Create user "slate":
 sudo useradd -M -U -G sudo slate

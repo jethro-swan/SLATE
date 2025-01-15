@@ -200,7 +200,7 @@ def create_seed_entities():
                 stewards_fph_list,
                 sandbox
             )
-            VALUES (?, ?)
+            VALUES (?, ?, ?, ?)
             """,
             (
                 seed_namespace_fph,
@@ -231,7 +231,7 @@ def create_seed_entities():
                 default_account_name,
                 stewards_fph_list
             )
-            VALUES (?, ?, ?, ?)
+            VALUES (?, ?, ?, ?, ?)
             """,
             (
                 seed_currency_fph,

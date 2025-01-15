@@ -1,7 +1,8 @@
+import os
 import sqlite3
 import pickle
 
-from .constants import SLATE_SESSION_DB
+from .constants import ENTITIES_DB, SLATE_SESSION_DB
 
 from .common import filename_timestamp as timestamp
 from .common import nshash
