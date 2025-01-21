@@ -4,6 +4,8 @@
 
 <h3>Make a payment</h3>
 
+{% if hub_mode == "slate_simple" %}
+
 <p>
   You can make a payment to any <b>account</b> if
   <ul>
@@ -59,5 +61,127 @@
     </li>
   </ol>
 </p>
+
+{% endif %}
+
+{% if hub_mode == "slate_normal" %}
+
+<p>
+  You can make a payment to any <b>account</b> if
+  <ul>
+    <li class="compact">
+      you know its <em>identifier</em> (either its HRNS or its FPH); and
+    </li>
+    <li class="compact">
+      you have at least one <b>account</b> in the same <b>currency</b>.
+    </li>
+  </ul>
+  If you have at least one <b>account</b> in the same <b>currency</b>, it will
+  be displayed in the payment form. If you have more than one <b>account</b> in
+  this <b>currency</b> a list will displayed from which you can select an
+  account.
+</p>
+<p>
+  It is also possible to make a payment to a known <b>identity</b> rather than
+  to an <b>account</b>. In this case, if you can specify the <em>identity</em>
+  (either its HRNS or its FPH) of the payee, you will be shown a list of
+  <b>currencies</b> in which you both have an <b>account</b>, along with the
+  current balance of each.<sup>1, 2</sup>
+</p>
+<p>
+  The payment options are:
+  <ul>
+    <li class="compact">
+      <a href="/pay/account/hrns">
+        Pay to a known <b>account</b> (identified by HRNS or FPH)
+      </a>
+    </li>
+    <li class="compact">
+      <a href="/pay/identity/hrns">
+        Pay to a known <b>identity</b> identified by name <sup>2</sup>
+      </a>
+    </li>
+    <li class="compact">
+      <a href="/pay/identity/fph">
+        Pay to a known <b>identity</b> (identified by HRNS or FPH) <sup>2</sup>
+      </a>
+    </li>
+  </ul>
+</p>
+<hr />
+<p class="footnote">
+  <ol>
+    <li class="compact-footnote"><!-- 1 -->
+      These <b>accounts</b> may be in a variety of different <b>currencies</b>,
+      so it is your responsibility to identify which, if any, is suitable for
+      your need.
+    </li>
+    <li class="compact-footnote"><!-- 2 -->
+      Not yet implemented.
+    </li>
+  </ol>
+</p>
+
+{% endif %}
+
+{% if hub_mode == "nests" %}
+
+<p>
+  You can make a payment to any <b>account</b> if
+  <ul>
+    <li class="compact">
+      you know its <em>identifier</em> (either its HRNS or its FPH); and
+    </li>
+    <li class="compact">
+      you have at least one <b>account</b> in the same <b>currency</b>.
+    </li>
+  </ul>
+  If you have at least one <b>account</b> in the same <b>currency</b>, it will
+  be displayed in the payment form. If you have more than one <b>account</b> in
+  this <b>currency</b> a list will displayed from which you can select an
+  account.
+</p>
+<p>
+  It is also possible to make a payment to a known <b>identity</b> rather than
+  to an <b>account</b>. In this case, if you can specify the <em>identity</em>
+  (either its HRNS or its FPH) of the payee, you will be shown a list of
+  <b>currencies</b> in which you both have an <b>account</b>, along with the
+  current balance of each.<sup>1, 2</sup>
+</p>
+<p>
+  The payment options are:
+  <ul>
+    <li class="compact">
+      <a href="/pay/account/hrns">
+        Pay to a known <b>account</b> (identified by HRNS or FPH)
+      </a>
+    </li>
+    <li class="compact">
+      <a href="/pay/identity/hrns">
+        Pay to a known <b>identity</b> identified by name <sup>2</sup>
+      </a>
+    </li>
+    <li class="compact">
+      <a href="/pay/identity/fph">
+        Pay to a known <b>identity</b> (identified by HRNS or FPH) <sup>2</sup>
+      </a>
+    </li>
+  </ul>
+</p>
+<hr />
+<p class="footnote">
+  <ol>
+    <li class="compact-footnote"><!-- 1 -->
+      These <b>accounts</b> may be in a variety of different <b>currencies</b>,
+      so it is your responsibility to identify which, if any, is suitable for
+      your need.
+    </li>
+    <li class="compact-footnote"><!-- 2 -->
+      Not yet implemented.
+    </li>
+  </ol>
+</p>
+
+{% endif %}
 
 {% endblock %}

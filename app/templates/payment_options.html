@@ -1,6 +1,72 @@
 {% extends "base.html" %}
 
+<!--
+2025-01-16:
+
+This needs to be modified to accomodate "simple mode" in which display of the
+*accounts* is suppressed.
+
+This will require that a value
+    mode = "slate_simple"
+is set at installation time and that
+    mode = mode
+is passed in  render_template( ) for this page.
+
+-->
+
 {% block content %}
+
+{% if hub_mode == "slate_simple" %}
+
+  <p class="footnote">
+    The table below lists the available combinations of the <b>currency</b> you
+    you may wish to use whichever of your <b>identities</b> from which you can
+    make a payment (in that <b>currency</b>).
+  </p>
+  <p class="footnote">
+    The name of any <b>currency</b> of which you are a <em>steward</em> will be
+    highlighted as a link. Click on this to access the <b>currency</b>
+    management screen.
+  </p>
+  <table>
+    <tr valign="bottom">
+      <th><b>currency</b></th>
+      <th><b>identity</th>
+      <th><b>balance</b></th>
+      <th></th>
+    </tr>
+    {% for payment_option in payment_options_list %}<!-- list of dictionaries -->
+    {% if payment_option.currency.hrns == currency_selected_hrns %}
+    <tr>
+      <td align="left" class="catable"><!-- shown *currency* -->
+        <b>{{ currency_selected_hrns }}</b>
+      </td>
+      <td align="left"><!-- show owner *identity* -->
+        <b>{{ payment_option.currency.identity.hrns }}</b>
+      </td>
+      {% if payment_option.currency.identity.account.isneg %}
+      <td align="right" class="balneg">
+      {% else %}
+      <td align="right" class="balpos">
+      {% endif %}
+        <b>{{ payment_option.currency.identity.account.balance }}</b>
+        {{ payment_option.currency.identity.account.prefix }}
+        {{ payment_option.currency.identity.account.suffix }}
+      </td>
+      <td align="left">
+        <a href="/pay/agent/{{ payment_option.currency.identity.account.fph }}">
+          <b>pay</b>
+        </a>
+      </td>
+    </tr>
+    {% endif %}
+    {% endfor %}
+  </table>
+  <hr />
+
+{% endif %}
+
+{% if hub_mode == "slate_normal" %}
 
   <p class="footnote">
     The table below lists the <b>accounts</b> from which you can make a payment
@@ -53,4 +119,67 @@
     {% endfor %}
   </table>
   <hr />
+
+{% endif %}
+
+{% if hub_mode == "nests" %}
+
+  <p class="footnote">
+    The table below lists the <b>accounts</b> from which you can make a payment
+    (or to which another user may make a payment). These are grouped by
+    <b>currency</b>.
+  </p>
+  <p class="footnote">
+    To make a payment from an <b>account</b>, click on its identifier (name).
+  </p>
+  <p class="footnote">
+    The name of any <b>currency</b> of which you are a <em>steward</em> will be
+    highlighted as a link. Click on this to access the <b>currency</b>
+    management screen.
+  </p>
+  <table>
+    <tr>
+      <td align="left" class="catable" colspan="3"><!-- shown *currency* -->
+        Using currency: <b>{{ currency_selected_hrns }}</b>
+      </td>
+    </tr>
+    <tr valign="bottom">
+      <th>account</th>
+      <th>balance</th>
+      <th>owner</th>
+    </tr>
+
+    {% for payment_option in payment_options_list %}<!-- list of dictionaries -->
+    {% if payment_option.currency.hrns == currency_selected_hrns %}
+    <tr>
+      <td align="left">
+        <a href="/account/{{ payment_option.currency.identity.account.fph
+           }}/00000000000000000000000000000000">
+          <b>{{ payment_option.currency.identity.account.hrns }}</b>
+        </a>
+      </td>
+      {% if payment_option.currency.identity.account.isneg %}
+      <td align="right" class="balneg">
+      {% else %}
+      <td align="right" class="balpos">
+      {% endif %}
+        <b>{{ payment_option.currency.identity.account.balance }}</b>
+        {{ payment_option.currency.identity.account.prefix }}
+        {{ payment_option.currency.identity.account.suffix }}
+      </td>
+      <td align="left"><!-- show owner *identity* -->
+        <b>{{ payment_option.currency.identity.hrns }}</b>
+      </td>
+    </tr>
+    {% endif %}
+    {% endfor %}
+  </table>
+  <hr />
+
+{% endif %}
+
+
+
+
+
 {% endblock %}

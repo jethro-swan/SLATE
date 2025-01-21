@@ -288,12 +288,12 @@ cctld_reduced_list = [ "cc", "uk", "es", "fr", "de", "ca", "us" ]
 cctld_reduced_set = set(cctld_reduced_list)
 
 cctld_reduced_list2 = { # used in: seed.py
-    "ca" : "Canada",
     "cc" : "Cocos (Keeling) Islands",
+    "ca" : "Canada",
+    "uk" : "United Kingdom",
     "de" : "Germany",
     "es" : "Spain",
     "fr" : "France",
-    "uk" : "United Kingdom",
     "us" : "United States of America"
 }
 

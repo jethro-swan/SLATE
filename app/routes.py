@@ -24,16 +24,22 @@ from app.core.slate_core import new_account
 from app.core.slate_core import list_stewardships, list_stewards
 from app.core.slate_core import retrieve_primid_access_details
 from app.core.slate_core import list_agent_accounts, list_secids
+from app.core.slate_core import get_namespace_specific_properties
 from app.core.slate_core import get_currency_specific_properties
 from app.core.slate_core import get_account_specific_properties
+from app.core.slate_core import set_default_currency
+from app.core.slate_core import get_default_currency
 from app.core.slate_core import list_all_namespaces
 from app.core.slate_core import hrns_to_name_and_namespace
 from app.core.slate_core import authenticate_primid_email
+from app.core.slate_core import get_hub_mode
 
 from app.core.slate_session import create_slate_session_db
-from app.core.slate_session import save_payment_session_data
+from app.core.slate_session import session_save_currencies_available
 #from app.core.slate_session import retrieve_currency_options
-from app.core.slate_session import retrieve_payment_options
+from app.core.slate_session import session_retrieve_payment_options
+from app.core.slate_session import session_save_payee_accounts_available
+from app.core.slate_session import session_retrieve_payee_accounts_available
 
 from app.core.regexp_list import re_fph, re_hrns, re_email
 
@@ -172,6 +178,9 @@ def register():
 
     # This one may not be needed:
     mode = "logged_out"
+
+    # Hub operational mode (read from environment variable HUB_MODE)
+    hub_mode = get_hub_mode()
 
     #--------------------------------------------------------------------------
     # The following seven variables determine which of the registration form's
@@ -354,6 +363,7 @@ def register():
                 logged_in = logged_in,
                 page = page,
                 mode = mode,
+                hub_mode = hub_mode,
                 development_mode = development_mode,
                 initial_namespace_fph = initial_namespace_fph,
                 initial_namespace_hrns = initial_namespace_hrns,
@@ -374,6 +384,9 @@ def login():
         mode = "logged_in"
         logged_in = True
         return redirect(url_for("home"))
+
+    # Hub operational mode (read from environment variable HUB_MODE)
+    hub_mode = get_hub_mode()
 
     form = LoginForm()
     if form.validate_on_submit():
@@ -678,6 +691,9 @@ def login_reset(user_id, token):
 @login_required
 def change_working_identity(new_identity_fph):
 
+    # Hub operational mode (read from environment variable HUB_MODE)
+    hub_mode = get_hub_mode()
+
     new_identity_fph, \
     new_identity_hrns, \
     new_identity_type, \
@@ -731,6 +747,10 @@ def change_working_identity(new_identity_fph):
 @app.route("/home/new", methods = ["GET", "POST"])
 @login_required
 def new_home():
+
+    # Hub operational mode (read from environment variable HUB_MODE)
+    hub_mode = get_hub_mode()
+
     page = "new_home"
     if "previous_page" in session: # already active
         previous_page = session["previous_page"]
@@ -741,9 +761,7 @@ def new_home():
 
     group = "home" # Used to control top menu behaviour.
 
-    mode = "slate_basic" ### New variable added
-    #mode = "slate_full"
-    # mode = "nests_full"
+    hub_mode = get_hub_mode() ### New variable added
 
     namespace_steward = False
     currency_steward = False
@@ -796,7 +814,7 @@ def new_home():
             title = "Home",
             page = page,
             group = group,
-            mode = mode,
+            hub_mode = hub_mode,
             logged_in = logged_in,
             primary_identity_type = "login identity",
             primary_identity_fph = primary_identity_fph,
@@ -829,6 +847,10 @@ def new_home():
 @app.route("/home", methods = ["GET", "POST"])
 @login_required
 def home():
+
+    # Hub operational mode (read from environment variable HUB_MODE)
+    hub_mode = get_hub_mode()
+
     page = "home"
     if "previous_page" in session: # already active
         previous_page = session["previous_page"]
@@ -919,6 +941,15 @@ def home():
             stewards_list, \
             m = get_currency_specific_properties(account_currency_fph)
 
+
+            print(
+                fph_to_hrns(account_fph) + " (" \
+                + fph_to_hrns(account_owner_fph) + ") [" \
+                + currency_hrns + "] :: " \
+                + integer_to_money_format(account_balance)
+            )
+
+
             # Assemble a dictonary of *account* properties:
             a = {}
             a["fph"] = account_fph
@@ -938,6 +969,19 @@ def home():
             a["currency_fph"] = currency_fph
             a["currency_hrns"] = currency_hrns
             accounts.append(a)
+
+            # The following dictionary is used in template only if
+            # HUB_MODE = "slate_simple")
+            #account_hrns = fph_to_hrns(account_fph)
+#            p["currency"] = {}
+#            p["currency"]["fph"] = currency_fph
+#            p["currency"]["hrns"] = currency_hrns
+#            p["currency"]["identity"] = {}
+#            p["currency"]["identity"]["account"] = {}
+#            p["currency"]["identity"]["account"]["fph"] = account_fph
+            #p["currency"]["identity"]["account"]["hrns"] = account_hrns
+#            payment_option.append(p)
+            # This is a temporary fudge.
 
         id["accounts"] = accounts
         identities.append(id)
@@ -970,6 +1014,7 @@ def home():
                 title = "Home",
                 page = page,
                 group = group,
+                hub_mode = hub_mode,
                 development_mode = development_mode,
                 logged_in = logged_in,
                 primary_identity_type = "login identity",
@@ -1002,6 +1047,10 @@ def home():
 @app.route("/payment_options", methods = ["GET", "POST"])
 @login_required
 def payment_options():
+
+    # Hub operational mode (read from environment variable HUB_MODE)
+    hub_mode = get_hub_mode()
+
     page = "payment_options"
     previous_page = session["previous_page"]    # Add these two lines to all
     session["previous_page"] = page             # endpoint handlers. Some (but
@@ -1147,6 +1196,7 @@ def payment_options():
                 title = "payment options",
                 page = page,
                 group = group,
+                hub_mode = hub_mode,
                 development_mode = development_mode,
                 logged_in = logged_in,
                 primary_identity_type = "login identity",
@@ -1177,6 +1227,9 @@ def payment_options():
 @app.route("/currency/options", methods = ["GET", "POST"])
 @login_required
 def currency_options():
+
+    # Hub operational mode (read from environment variable HUB_MODE)
+    hub_mode = get_hub_mode()
 
     page = "currency_options"
     previous_page = session["previous_page"]
@@ -1336,7 +1389,7 @@ def currency_options():
     # options are needed by the "/account/options" view, these must be passed
     # across from the first view to the second. The simplest approach might be
     # to use the Flask  session[ ]  dictionary.
-    save_payment_session_data(currencies_available, payment_options)
+    session_save_currencies_available(currencies_available, payment_options)
     #session["payment_options"] = pickle.dumps(payment_options)
 
     # Although the *currency* selected is passed via the URL slug, we must
@@ -1355,6 +1408,7 @@ def currency_options():
                 group = group,
                 development_mode = development_mode,
                 logged_in = logged_in,
+                hub_mode = hub_mode,
                 primary_identity_type = "login identity",
                 primary_identity_fph = primary_identity_fph,
                 primary_identity_hrns = primary_identity_hrns,
@@ -1374,7 +1428,13 @@ def currency_options():
 @login_required
 def account_options(currency_fph):
 
+    # Hub operational mode (read from environment variable HUB_MODE)
+    hub_mode = get_hub_mode()
+
 #    print("currency_fph passed in URL is " + currency_fph)
+
+    hub_mode = get_hub_mode()   # This is read from an environment variable
+                                # configured at installation time.
 
     page = "payment_options"
     previous_page = session["previous_page"]
@@ -1382,7 +1442,7 @@ def account_options(currency_fph):
 
     group = "home" # Used to control top menu behaviour.
 
-    currencies_available, payment_options_list, m = retrieve_payment_options()
+    currencies_available, payment_options_list, m = session_retrieve_payment_options()
     if m == "Payment options unavailable":
         return redirect("/currency/options")
 
@@ -1414,6 +1474,7 @@ def account_options(currency_fph):
                 group = group,
                 development_mode = development_mode,
                 logged_in = logged_in,
+                hub_mode = hub_mode,
                 primary_identity_type = "login identity",
                 primary_identity_fph = primary_identity_fph,
                 primary_identity_hrns = primary_identity_hrns,
@@ -1450,6 +1511,10 @@ def account_options(currency_fph):
            methods = ["GET", "POST"])
 @login_required
 def account(payer_account_fph, payee_account_fph):
+
+    # Hub operational mode (read from environment variable HUB_MODE)
+    hub_mode = get_hub_mode()
+
     page = "account"
     previous_page = session["previous_page"]    # Add these two lines to all
     session["previous_page"] = page             # endpoint handlers. Some (but
@@ -1608,6 +1673,7 @@ def account(payer_account_fph, payee_account_fph):
                 form = form,
                 page = page,
                 group = group,
+                hub_mode = hub_mode,
                 primary_identity_type = "login identity",
                 primary_identity_fph = primary_identity_fph,
                 primary_identity_hrns = primary_identity_hrns,
@@ -1635,6 +1701,9 @@ def account(payer_account_fph, payee_account_fph):
 @app.route("/pay_to_account", methods = ["GET", "POST"])
 @login_required
 def pay_account():
+
+    # Hub operational mode (read from environment variable HUB_MODE)
+    hub_mode = get_hub_mode()
 
     page = "pay_account"
     previous_page = session["previous_page"]    # Add these two lines to all
@@ -1685,6 +1754,7 @@ def pay_account():
                 group = group,
                 form = form,
                 logged_in = logged_in,
+                hub_mode = hub_mode,
                 primary_identity_type = "login identity",
                 primary_identity_fph = primary_identity_fph,
                 primary_identity_hrns = primary_identity_hrns,
@@ -1694,15 +1764,68 @@ def pay_account():
            )
 
 #=============================================================================
+# Make a payment to an *agent* rather than to an *account*.
 #
-@app.route("/pay_to_agent", methods = ["GET", "POST"])
+@app.route(
+    "/pay/agent/", methods = ["GET", "POST"]
+)
+@app.route(
+    "/pay/agent/<payer_account_fph>", methods = ["GET", "POST"]
+)
+@app.route(
+    "/pay/agent/<payer_account_fph>/<currency_fph>", methods = ["GET", "POST"]
+)
+@app.route(
+    "/pay/agent/<payer_account_fph>/<currency_fph>/<selected_account_fph>",
+    methods = ["GET", "POST"]
+)
 @login_required
-def pay_agent():
+def pay_agent(
+        payer_account_fph=None,
+        currency_fph=None,
+        selected_account_fph=None
+    ):
+    # The *currency* is identified from the payer *account* passed in the URL
+    # slug. The payee will have specified an *identity* and a *currency*, both
+    # of which are entered into the form below, so here we need only verify
+    # that payer also has an *account* in this *currency*. If control has been
+    # passed to this screen from the "/currency/options" endpoint, then the
+    # availability of the *currency* to the payer will have been established
+    # already. Otherwise it will be necessary to establish that from the payer
+    # *account*.
+    currency_fph = ""
+    if payer_account_fph is not None:
+        if re_fph.match(payer_account_fph):
+            currency_fph = get_account_currency(payer_account_fph)
+            currency_hrns = fph_to_hrns(currency_fph)
+    else:
+        flash("No payer account specified")
+        return redirect("/home")
+
+    if selected_account_fph is not None:
+        if not re_fph.match(selected_account_fph):
+            flash("Invalid FPH for selected account")
+            return redirect("/home")
+        payee_currency = get_account_currency(selected_account_fph)
+        if payee_currency != currency_fph:           # This should never happen
+            flash("Account currencies do not match") # happen unless URL has
+            return redirect("/home")                 # constructed externally.
+    else:
+        selected_account_fph = ""
+
+    # Hub operational mode (read from environment variable HUB_MODE)
+    hub_mode = get_hub_mode()
 
     page = "pay_agent"
     group = "home"
     logged_in = current_user.is_authenticated
 
+    previous_page = session["previous_page"]    # Add these two lines to all
+    session["previous_page"] = page             # endpoint handlers. Some (but
+                                                # but by no means all) screens
+                                                # should be able to follow only
+                                                # from a limited set of previous
+                                                # screens.
     primary_identity_fph, \
     primary_identity_hrns, \
     primary_identity_type, \
@@ -1728,9 +1851,9 @@ def pay_agent():
         m = identify_entity(form.to_identity_id.data) # HRNS or FPH
         if m:
             flash(m)
-            return redirect("/pay_to_agent")
+            return redirect("/pay/agent")
         if payee_identity_fph == "": # *agent* cannot be identified
-            return redirect("/pay_to_agent")
+            return redirect("/pay/agent")
 
         currency_fph, \
         currency__hrns, \
@@ -1738,19 +1861,74 @@ def pay_agent():
         m = identify_entity(form.currency_id.data)
         if m:
             flash(m)
-            return redirect("/pay_to_agent")
+            return redirect("/pay/agent")
         if currency_fph == "": # *currency* cannot be identified
-            return redirect("/pay_to_agent")
+            return redirect("/pay/agent")
 
+        amount = form.amount.data
 
+        annotation = form.annotation.data
 
-        # Find *accounts* in specified *currency* for specified *identity*
+        # Now we need to find an *account* in the specified *currency*
+        # belonging to the specified payee *identity*.
 
-        return redirect(
-                   "/select_account_combination_in_currency/" \
-                   + payee_identity_fph + "/" \
-                   + currency_fph
-               )
+        payee_accounts, m = list_agent_accounts(payee_identity_fph)
+        payable_accounts = []
+        for payee_account_fph in payee_accounts:
+            account_currency_fph = get_account_currency(payee_account_fph)
+            if account_currency_fph == currency_fph:
+                payable_accounts.append(account_currency_fph)
+
+        # If there is only one payable *account*, the payment can be made
+        # immediately. Otherwise the list of payable *accounts* in this
+        # *currency* must be passed on to another endpoint to allow the payer
+        # to make a selection.
+
+        if len(payable_accounts) == 0:
+            flash("The payee has no accounts in the specified currency")
+            return redirect("/pay/agent")
+        elif len(payable_accounts) == 1:
+            m = payment(
+                    payer_account_fph,
+                    payee_account_fph,
+                    amount,
+                    annotation
+                )
+            if m:
+                flash(m)
+            else:
+                flash("Payment made to " + fph_to_hrns(payee_account_fph))
+                return redirect("/home")
+            return redirect("/pay/agent")
+        elif selected_account_fph:
+            m = payment(
+                    payer_account_fph,
+                    selected_account_fph,
+                    amount,
+                    annotation
+                )
+            if m:
+                flash(m)
+                return redirect("/pay/agent")
+            else:
+                flash("Payment made to " + fph_to_hrns(selected_account_fph))
+                return redirect("/home")
+        else:
+            # Control reaches this point only if the *payee* has more than one
+            # *account* in the specified *currency*.
+#            many_payee_account_options = True
+
+            payee_account_options = []
+            for payee_account_fph in payable_accounts:
+                a = {}
+                a["fph"] = payee_account_fph
+                a["hrns"] = fph_to_hrns(payee_account_fph)
+                payee_account_options.append()
+            session_save_payee_accounts_available(payable_accounts)
+            return redirect(
+                       "/pay/agent/" + payer_account_fph + "/" + currency_fph
+                   )
+
 
     return render_template(
                 "pay_to_agent.html",
@@ -1759,19 +1937,101 @@ def pay_agent():
                 group = group,
                 form = form,
                 logged_in = logged_in,
+                hub_mode = hub_mode,
+                currency_fph = currency_fph,
+                currency_hrns = currency_hrns,
                 primary_identity_type = "login identity",
                 primary_identity_fph = primary_identity_fph,
                 primary_identity_hrns = primary_identity_hrns,
                 working_identity_fph = working_identity_fph,
                 working_identity_hrns = working_identity_hrns,
                 working_identity_type = working_identity_type
+#                many_payee_account_options = many_payee_account_options,
+#               payable_accounts = payable_accounts
            )
+
+# Select from available payee accounts
+#
+@app.route("/pay/agent/accounts/<payer_account_fph>/<currency_fph>",
+           methods = ["GET", "POST"])
+@login_required
+def select_account_to_which_to_pay(payer_account_fph, currency_fph ):
+
+    # Hub operational mode (read from environment variable HUB_MODE)
+    hub_mode = get_hub_mode()
+
+    page = "select_account_combination_in_currency"
+    previous_page = session["previous_page"]    # Add these two lines to all
+    session["previous_page"] = page             # endpoint handlers. Some (but
+                                                # but by no means all) screens
+                                                # should be able to follow only
+                                                # from a limited set of previous
+                                                # screens.
+
+    group = "home" # Used to control top menu behaviour.
+
+    logged_in = current_user.is_authenticated
+
+    primary_identity_fph, \
+    primary_identity_hrns, \
+    primary_identity_type, \
+    m = identify_entity(current_user.get_id())
+
+    if "working_identity" in session:
+        working_identity_fph, \
+        working_identity_hrns, \
+        working_identity_type, \
+        m = identify_entity(session["working_identity"])
+    else:
+        working_identity_fph = primary_identity_fph
+        session["working_identity"] = working_identity_fph
+        working_identity_hrns = primary_identity_hrns
+        working_identity_type = etype_to_adtype(working_identity_type)
+
+    # Control reaches this point only if the *payee* has more than one
+    # *account* in the specified *currency*.
+
+    payee_accounts_available, m = session_retrieve_payee_accounts_available()
+    payee_account_options = []
+    for payee_account_fph in payee_accounts_available:
+        a = {}
+        a["fph"] = payee_account_fph
+        a["hrns"] = fph_to_hrns(payee_account_fph)
+        payee_account_options.append()
+
+
+
+    return render_template(
+                "payee_account_options.html",
+                title = "Make a payment to a selected account",
+                page = page,
+                group = group,
+                form = form,
+                logged_in = logged_in,
+                hub_mode = hub_mode,
+                currency_fph = currency_fph,
+                currency_hrns = currency_hrns,
+                primary_identity_type = "login identity",
+                primary_identity_fph = primary_identity_fph,
+                primary_identity_hrns = primary_identity_hrns,
+                working_identity_fph = working_identity_fph,
+                working_identity_hrns = working_identity_hrns,
+                working_identity_type = working_identity_type,
+                payee_account_options = payee_account_options
+           )
+
+
+
+
 
 # payment to an *agent* -- select available payer-payee *account* pair --------
 @app.route("/select_account_combination_in_currency" \
            + "/<payee_identity_fph>/<currency_fph>", methods = ["GET", "POST"])
 @login_required
 def select_account_combination_in_currency(payee_identity_fph, currency_fph):
+
+    # Hub operational mode (read from environment variable HUB_MODE)
+    hub_mode = get_hub_mode()
 
     page = "select_account_combination_in_currency"
     previous_page = session["previous_page"]    # Add these two lines to all
@@ -1834,6 +2094,9 @@ def select_account_combination_in_currency(payee_identity_fph, currency_fph):
            methods = ["GET", "POST"])
 @login_required
 def select_payer_account(payee_account_fph):
+
+    # Hub operational mode (read from environment variable HUB_MODE)
+    hub_mode = get_hub_mode()
 
     page = "select_payer_account"
     previous_page = session["previous_page"]    # Add these two lines to all
@@ -1922,6 +2185,7 @@ def select_payer_account(payee_account_fph):
                 page = page,
                 group = group,
                 logged_in = logged_in,
+                hub_mode = hub_mode,
                 payee_account_fph = payee_account_fph,
                 payee_account_hrns = payee_account_hrns,
                 specified_currency_fph = payee_account_currency_fph,
@@ -1941,6 +2205,10 @@ def select_payer_account(payee_account_fph):
 @app.route("/account_details/<account_fph>", methods = ["GET", "POST"])
 @login_required
 def account_details(account_fph):
+
+    # Hub operational mode (read from environment variable HUB_MODE)
+    hub_mode = get_hub_mode()
+
     page = "account_details"
     previous_page = session["previous_page"]    # Add these two lines to all
     session["previous_page"] = page             # endpoint handlers. Some (but
@@ -2013,6 +2281,7 @@ def account_details(account_fph):
                 logged_in = logged_in,
                 page = page,
                 group = group,
+                hub_mode = hub_mode,
                 primary_identity_type = "login identity",
                 primary_identity_fph = primary_identity_fph,
                 primary_identity_hrns = primary_identity_hrns,
@@ -2034,6 +2303,10 @@ def account_details(account_fph):
 @app.route("/stewardships/<identity_fph>")
 @login_required
 def stewardships(identity_fph):
+
+    # Hub operational mode (read from environment variable HUB_MODE)
+    hub_mode = get_hub_mode()
+
     page = "stewardships"
     previous_page = session["previous_page"]    # Add these two lines to all
     session["previous_page"] = page             # endpoint handlers. Some (but
@@ -2073,6 +2346,7 @@ def stewardships(identity_fph):
                title = "Stewardships",
                page = page,
                group = group,
+               hub_mode = hub_mode,
                primary_identity_type = "login identity",
                primary_identity_fph = primary_identity_fph,
                primary_identity_hrns = primary_identity_hrns,
@@ -2085,10 +2359,24 @@ def stewardships(identity_fph):
                currency_steward = currency_steward
            )
 
+# list stewardships -----------------------------------------------------------
+@app.route("/stewardship/list/<primid_fph>", methods = ["GET", "POST"])
+@login_required
+def stewardships_list(primid_fph):
+
+    return
+
+
+
+
 # secids page -----------------------------------------------------------------
 @app.route("/secids/<identity_fph>")
 @login_required
 def secids(identity_fph):
+
+    # Hub operational mode (read from environment variable HUB_MODE)
+    hub_mode = get_hub_mode()
+
     page = "secids"
     previous_page = session["previous_page"]    # Add these two lines to all
     session["previous_page"] = page             # endpoint handlers. Some (but
@@ -2129,6 +2417,7 @@ def secids(identity_fph):
                 title = "Secondary identities",
                 page = page,
                 group = group,
+                hub_mode = hub_mode,
                 primary_identity_type = "login identity",
                 primary_identity_fph = primary_identity_fph,
                 primary_identity_hrns = primary_identity_hrns,
@@ -2143,9 +2432,78 @@ def secids(identity_fph):
 
 
 
+
+@app.route("/secid/manage/<secid_fph>", methods = ["GET", "POST"])
+@login_required
+def manage_secid(secid_fph):
+
+    # Hub operational mode (read from environment variable HUB_MODE)
+    hub_mode = get_hub_mode()
+
+    page = "secids"
+    previous_page = session["previous_page"]    # Add these two lines to all
+    session["previous_page"] = page             # endpoint handlers. Some (but
+                                                # but by no means all) screens
+                                                # should be able to follow only
+                                                # from a limited set of previous
+                                                # screens.
+    group = "home" # Used to control top menu behaviour.
+
+    namespace_steward = True
+    currency_steward = True
+    paying = False
+    logged_in = current_user.is_authenticated
+
+    primary_identity_fph, \
+    primary_identity_hrns, \
+    primary_identity_type, \
+    m = identify_entity(current_user.get_id())
+
+    if "working_identity" in session:
+        working_identity_fph, \
+        working_identity_hrns, \
+        working_identity_type, \
+        m = identify_entity(session["working_identity"])
+    else:
+        working_identity_fph = primary_identity_fph
+        session["working_identity"] = working_identity_fph
+        working_identity_hrns = primary_identity_hrns
+        working_identity_type = etype_to_adtype(working_identity_type)
+
+    secids = list_secids(primary_identity_fph)
+
+#    for secid_fph in secids:
+#        print(secid_fph + " > " + fph_to_hrns(secid_fph))
+
+    return render_template(
+                "manage_secids.html",
+                title = "Manage an alias",
+                page = page,
+                group = group,
+                hub_mode = hub_mode,
+                primary_identity_type = "login identity",
+                primary_identity_fph = primary_identity_fph,
+                primary_identity_hrns = primary_identity_hrns,
+                working_identity_fph = working_identity_fph,
+                working_identity_hrns = working_identity_hrns,
+                working_identity_type = working_identity_type,
+                development_mode = development_mode,
+                logged_in = logged_in,
+                namespace_steward = namespace_steward,
+                secids = secids
+           )
+
+
+
+
+
+
 @app.route("/currency/<currency_fph>", methods = ["GET", "POST"])
 @login_required
 def currency(currency_fph):
+
+    # Hub operational mode (read from environment variable HUB_MODE)
+    hub_mode = get_hub_mode()
 
     page = "currency"
     previous_page = session["previous_page"]    # Add these two lines to all
@@ -2206,6 +2564,7 @@ def currency(currency_fph):
                title = "Currency",
                page = page,
                group = group,
+               hub_mode = hub_mode,
                form = form,
                currency_fph = currency_fph,
                currency_hrns = currency_hrns,
@@ -2232,6 +2591,10 @@ def currency(currency_fph):
 @app.route("/manage", methods = ["GET", "POST"])
 @login_required
 def manage():
+
+    # Hub operational mode (read from environment variable HUB_MODE)
+    hub_mode = get_hub_mode()
+
     page = "manage"
     previous_page = session["previous_page"]    # Add these two lines to all
     session["previous_page"] = page             # endpoint handlers. Some (but
@@ -2268,6 +2631,7 @@ def manage():
                 logged_in = logged_in,
                 page = page,
                 group = group,
+                hub_mode = hub_mode,
                 primary_identity_type = "login identity",
                 primary_identity_fph = primary_identity_fph,
                 primary_identity_hrns = primary_identity_hrns,
@@ -2284,6 +2648,10 @@ def manage():
 @app.route("/create_currency", methods = ["GET", "POST"])
 @login_required
 def create_currency():
+
+    # Hub operational mode (read from environment variable HUB_MODE)
+    hub_mode = get_hub_mode()
+
     page = "create_currency"
     previous_page = session["previous_page"]    # Add these two lines to all
     session["previous_page"] = page             # endpoint handlers. Some (but
@@ -2357,6 +2725,7 @@ def create_currency():
                 logged_in = logged_in,
                 page = page,
                 group = group,
+                hub_mode = hub_mode,
                 form = form,
                 primary_identity_type = "login identity",
                 primary_identity_fph = primary_identity_fph,
@@ -2373,6 +2742,10 @@ def create_currency():
 @app.route("/create_account/<owner_fph>", methods = ["GET", "POST"])
 @login_required
 def create_account(owner_fph):
+
+    # Hub operational mode (read from environment variable HUB_MODE)
+    hub_mode = get_hub_mode()
+
     page = "create_account"
     previous_page = session["previous_page"]    # Add these two lines to all
     session["previous_page"] = page             # endpoint handlers. Some (but
@@ -2475,6 +2848,7 @@ def create_account(owner_fph):
                 logged_in = logged_in,
                 page = page,
                 group = group,
+                hub_mode = hub_mode,
                 form = form,
                 primary_identity_type = "login identity",
                 primary_identity_fph = primary_identity_fph,
@@ -2487,9 +2861,12 @@ def create_account(owner_fph):
            )
 
 # list *secondary identities* =================================================
-@app.route("/list_identities", methods = ["GET", "POST"])
+@app.route("/identity/list", methods = ["GET", "POST"])
 @login_required
 def list_identiies():
+
+    # Hub operational mode (read from environment variable HUB_MODE)
+    hub_mode = get_hub_mode()
 
     page = "list_identities"
     previous_page = session["previous_page"]    # Add these two lines to all
@@ -2520,7 +2897,11 @@ def list_identiies():
     working_identity_type = etype_to_adtype(working_identity_type)
 
     secids_fph_list = list_secids(primary_identity_fph)
-    identities = [primary_identity_fph]
+    identities = []
+    s = {}
+    s["fph"] = primary_identity_fph
+    s["hrns"] = primary_identity_hrns
+    identities.append(s)
     for secid_fph in secids_fph_list:
         s = {}
         s["fph"] = secid_fph
@@ -2534,6 +2915,7 @@ def list_identiies():
                 logged_in = logged_in,
                 page = page,
                 group = group,
+                hub_mode = hub_mode,
                 primary_identity_type = "login identity",
                 primary_identity_fph = primary_identity_fph,
                 primary_identity_hrns = primary_identity_hrns,
@@ -2548,6 +2930,11 @@ def list_identiies():
 @app.route("/create_secid", methods = ["GET", "POST"])
 @login_required
 def create_secid():
+
+    # Hub operational mode (read from environment variable HUB_MODE)
+    hub_mode = get_hub_mode()
+
+    group = "home" # Used to control top menu behaviour.
     page = "create_secid"
     previous_page = session["previous_page"]    # Add these two lines to all
     session["previous_page"] = page             # endpoint handlers. Some (but
@@ -2555,7 +2942,6 @@ def create_secid():
                                                 # should be able to follow only
                                                 # from a limited set of previous
                                                 # screens.
-    group = "home" # Used to control top menu behaviour.
 
     logged_in = current_user.is_authenticated
 
@@ -2579,7 +2965,7 @@ def create_secid():
     if form.validate_on_submit():
         parent_namespace_fph, \
         parent_namespace_hrns, \
-        etype, \
+        parent_namespace_type, \
         m = identify_entity(form.parent_namespace_id.data) # parent *namesapce*
         if m:
             flash(m)
@@ -2587,13 +2973,15 @@ def create_secid():
         if not parent_namespace_fph:
             flash("Parent namespace does not exist")
             return redirect("/create_secid")
+        # The *namespace* may actually be a *primid* or *secid* (serving as the
+        # root private *namespace*) in which case a default
 
         secid_name = form.secid_name.data
         # Check whether an entity with the proposed HRNS exists already.
         proposed_hrns = secid_name + "." + parent_namespace_hrns
         if hrns_exists_already(proposed_hrns):
             flash(proposed_hrns + " is already registered")
-            return redirect("/create_namespace")
+            return redirect("/create_secid")
 
         secid_fph, \
         secid_hrns, \
@@ -2606,7 +2994,48 @@ def create_secid():
             "A new alias has been created, identified as \n" \
             + secid_hrns + " [" + secid_fph + "]"
         )
-        return redirect("/create_secid")
+
+        # An *account* is now created for this new *alias* in the default
+        # *currency* of the parent *namespace*:
+
+        default_currency_fph = get_default_currency(parent_namespace_fph)
+        m = set_default_currency(secid_fph, default_currency_fph)
+        if m:
+            flash(m)
+            return redirect("/create_secid")
+
+        currency_fph, \
+        currency_hrns, \
+        prefix, \
+        suffix, \
+        default_account_name, \
+        stewards_list, \
+        m = get_currency_specific_properties(default_currency_fph)
+
+        account_fph, \
+        account_hrns, \
+        m = new_account(
+            default_account_name,
+            secid_fph,
+            secid_fph,
+            default_currency_fph
+        )
+        flash(
+            "Account " + account_hrns + " has been created for " \
+            + secid_hrns + " in currency " + currency_hrns
+        )
+
+        # The new *alias* also serves as a (private) *namespace* so must be
+        # assigned a default *currency*. No other information being available
+        # at this point, the default *currency* of the parent *namespace* is
+        # used as the initial default *currency* of the *alias-namespace*.
+
+
+
+
+
+
+        return redirect("/home")
         #return redirect("/home")
 
     return render_template(
@@ -2615,6 +3044,7 @@ def create_secid():
                 logged_in = logged_in,
                 page = page,
                 group = group,
+                hub_mode = hub_mode,
                 form = form,
                 primary_identity_type = "login identity",
                 primary_identity_fph = primary_identity_fph,
@@ -2628,6 +3058,10 @@ def create_secid():
 @app.route("/create_namespace", methods = ["GET", "POST"])
 @login_required
 def create_namespace():
+
+    # Hub operational mode (read from environment variable HUB_MODE)
+    hub_mode = get_hub_mode()
+
     page = "create_namespace"
     previous_page = session["previous_page"]    # Add these two lines to all
     session["previous_page"] = page             # endpoint handlers. Some (but
@@ -2673,6 +3107,8 @@ def create_namespace():
             flash("Parent namespace does not exist")
             return redirect("/create_namespace")
 
+        default_currency_fph = get_default_currency_fph(parent_namespace_fph)
+
         namespace_name = form.namespace_name.data
         # Check whether an entity with the proposed HRNS exists already.
         proposed_hrns = namespace_name + "." + parent_namespace_hrns
@@ -2685,6 +3121,7 @@ def create_namespace():
         m = new_namespace(
                 namespace_name,
                 parent_namespace_fph,
+                default_currency_fph,
                 primary_identity_fph # the initial steward of this new *namespace*
             )
         flash(
@@ -2700,6 +3137,7 @@ def create_namespace():
                 logged_in = logged_in,
                 page = page,
                 group = group,
+                hub_mode = hub_mode,
                 form = form,
                 primary_identity_type = "login identity",
                 primary_identity_fph = primary_identity_fph,
@@ -2713,6 +3151,10 @@ def create_namespace():
 @app.route("/list_namespaces", methods = ["GET", "POST"])
 @login_required
 def list_namespaces():
+
+    # Hub operational mode (read from environment variable HUB_MODE)
+    hub_mode = get_hub_mode()
+
     page = "list_namespaces"
     previous_page = session["previous_page"]    # Add these two lines to all
     session["previous_page"] = page             # endpoint handlers. Some (but
@@ -2759,6 +3201,7 @@ def list_namespaces():
                 logged_in = logged_in,
                 page = page,
                 group = group,
+                hub_mode = hub_mode,
                 primary_identity_type = "login identity",
                 primary_identity_fph = primary_identity_fph,
                 primary_identity_hrns = primary_identity_hrns,
@@ -2780,6 +3223,10 @@ def list_namespaces():
 @app.route("/import/payments_set")
 @login_required
 def import_payments_set():
+
+    # Hub operational mode (read from environment variable HUB_MODE)
+    hub_mode = get_hub_mode()
+
     page = "sandbox_payment_set_import"
     previous_page = session["previous_page"]    # Add these two lines to all
     session["previous_page"] = page             # endpoint handlers. Some (but
@@ -2811,6 +3258,10 @@ def import_payments_set():
 @app.route("/steward/add/<entity_fph>", methods = ["GET", "POST"])
 @login_required
 def add_steward():
+
+    # Hub operational mode (read from environment variable HUB_MODE)
+    hub_mode = get_hub_mode()
+
     page = "add_steward"
     previous_page = session["previous_page"]
     session["previous_page"] = page
@@ -2917,6 +3368,10 @@ def export(file):
 @app.route("/account/export/<account_fph>", methods = ["GET", "POST"])
 @login_required
 def export_account_csv(account_fph):
+
+    # Hub operational mode (read from environment variable HUB_MODE)
+    hub_mode = get_hub_mode()
+
     page = "export_account"
     previous_page = session["previous_page"]
     session["previous_page"] = page
@@ -3002,6 +3457,7 @@ def export_account_csv(account_fph):
                logged_in = logged_in,
                page = page,
                group = group,
+               hub_mode = hub_mode,
                primary_identity_type = "login identity",
                primary_identity_fph = primary_identity_fph,
                primary_identity_hrns = primary_identity_hrns,
@@ -3021,6 +3477,10 @@ def export_account_csv(account_fph):
 @app.route("/currency/export/<currency_fph>", methods = ["GET", "POST"])
 @login_required
 def export_currency_csv(currency_fph):
+
+    # Hub operational mode (read from environment variable HUB_MODE)
+    hub_mode = get_hub_mode()
+
     page = "export_currency"
     previous_page = session["previous_page"]
     session["previous_page"] = page
@@ -3085,6 +3545,7 @@ def export_currency_csv(currency_fph):
                logged_in = logged_in,
                page = page,
                group = group,
+               hub_mode = hub_mode,
                primary_identity_type = "login identity",
                primary_identity_fph = primary_identity_fph,
                primary_identity_hrns = primary_identity_hrns,
@@ -3227,6 +3688,10 @@ def import_create_payments():
 # help ========================================================================
 @app.route("/help")
 def help():
+
+    # Hub operational mode (read from environment variable HUB_MODE)
+    hub_mode = get_hub_mode()
+
     page = "help"
     group = ""
     namespace_steward = True
@@ -3239,6 +3704,7 @@ def help():
                 logged_in = logged_in,
                 page = page,
                 group = group,
+                hub_mode = hub_mode,
                 development_mode = development_mode,
                 namespace_steward = namespace_steward,
                 currency_steward = currency_steward

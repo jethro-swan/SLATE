@@ -100,7 +100,7 @@ thin_line()
 
 # The seed entities' FPH>HRNS mappings will have been registered here and the
 # primid is available to use:
-seed_primid_hrns = "gaia.global"
+seed_primid_hrns = "gaia.cc"
 seed_primid_fph, m = hrns_to_fph(seed_primid_hrns)
 
 
@@ -147,45 +147,45 @@ def check_maps():
 # saved in a list, starting with the "seed" entities' FPH (which have already
 # been created and registered using the  create_seed_entities()  function):
 
-fph, m = hrns_to_fph("global")              # seed namespace "global"
+fph, m = hrns_to_fph("cc")              # seed namespace "cc"
 if m:
     print(m)
 else:
-    if fph_to_hrns(fph) == "global":
+    if fph_to_hrns(fph) == "cc":
         print(fph + " > " + fph_to_hrns(fph))
         l_namespaces = [fph]
     else:
-        print("Should be \"global\"")
+        print("Should be \"cc\"")
 
-fph, m = hrns_to_fph("hours.global")        # seed currency "hours.global"
+fph, m = hrns_to_fph("hours.cc")        # seed currency "hours.cc"
 if m:
     print(m)
 else:
-    if fph_to_hrns(fph) == "hours.global":
+    if fph_to_hrns(fph) == "hours.cc":
         print(fph + " > " + fph_to_hrns(fph))
         l_currencies = [fph]
     else:
-        print("Should be \"hours.global\"")
+        print("Should be \"hours.cc\"")
 
-fph, m = hrns_to_fph("gaia.global")         # seed primid "gaia.global"
+fph, m = hrns_to_fph("gaia.cc")         # seed primid "gaia.cc"
 if m:
     print(m)
 else:
-    if fph_to_hrns(fph) == "gaia.global":
+    if fph_to_hrns(fph) == "gaia.cc":
         print(fph + " > " + fph_to_hrns(fph))
         l_primids = [fph]
     else:
-        print("Should be \"gaia.global\"")
+        print("Should be \"gaia.cc\"")
 
-fph, m = hrns_to_fph("hours.gaia.global")   # seed account "hours.gaia.global"
+fph, m = hrns_to_fph("hours.gaia.cc")   # seed account "hours.gaia.cc"
 if m:
     print(m)
 else:
-    if fph_to_hrns(fph) == "hours.gaia.global":
+    if fph_to_hrns(fph) == "hours.gaia.cc":
         print(fph + " > " + fph_to_hrns(fph))
         l_accounts = [fph]
     else:
-        print("Should be \"hours.gaia.global\"")
+        print("Should be \"hours.gaia.cc\"")
 
 # The following arrays have been created above:
 #   l_namespaces
@@ -267,7 +267,7 @@ def record_test_primid_credentials(fph, hrns, password, pin, access_token):
     if fph: # not ""
         primid_credentials[fph] = list([hrns, password, pin, access_token])
 
-# The first test primid is the seed primid (gaia.global) created earlier:
+# The first test primid is the seed primid (gaia.cc) created earlier:
 record_test_primid_credentials(
     seed_primid_fph,
     seed_primid_hrns,

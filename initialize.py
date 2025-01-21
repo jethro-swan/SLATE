@@ -17,7 +17,16 @@ create_hubs_db()
 tld_fph_list, errors = create_quasitld_set(False)
 
 print("The following seed entities have been created (HRNS):")
-print("\tseed namespace  = \"global\"")
-print("\tseed currency   = \"hours.global\"")
-print("\tseed primid     = \"gaia.global\"")
-print("\tseed account    = \"hours.gaia.global\"")
+print("\tseed namespace  = \"cc\"")
+print("\tseed currency   = \"hours.cc\"")
+print("\tseed primid     = \"gaia.cc\"")
+print("\tseed account    = \"hours.gaia.cc\"")
+print()
+print(
+    "You will be able to log in as the initial administrator (the seed " \
+    + "identity) using the following details:"
+)
+print("\tusername = gaia.cc")
+print("\tpassword = Gl0balM3ltd0wn")
+print("\tPIN      = 123456")
+print()

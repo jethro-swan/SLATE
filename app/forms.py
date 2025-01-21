@@ -63,7 +63,17 @@ class SpecifyPayeeAgentForm(FlaskForm):
                         "currency identifier",
                         validators=[DataRequired("required")]
                       )
-    submit          = SubmitField("list the accounts from which you can pay")
+    amount          = StringField(
+    #amount          = DecimalField(
+    #amount          = FloatField(
+    #amount          = IntegerField(
+                          "amount",
+                          #places=2,
+                          validators=[DataRequired("required")]
+                      )
+    annotation      = TextAreaField("annotation")
+#    submit          = SubmitField("list the accounts from which you can pay")
+    submit          = SubmitField("pay")
 
 
 

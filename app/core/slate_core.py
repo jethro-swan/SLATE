@@ -60,7 +60,20 @@ def create_hubs_db():
             """
         )
 
+#==============================================================================
+# Get hub mode:
+#
+# The operational mode is stored in an environment variable. Its value
+# determines some aspects of the hub behaviour.
 
+def get_hub_mode():
+    hub_mode = os.environ.get("HUB_MODE")
+    if hub_mode is None:
+        return "slate_normal"
+    elif hub_mode in ["slate_normal", "slate_simple", "nests"]:
+        return hub_mode
+    else:
+        return "slate_normal"
 
 
 #==============================================================================
@@ -83,6 +96,7 @@ def create_entities_db():
                 entity_fph TEXT PRIMARY KEY,
                 parent_namespace_fph TEXT,
                 entity_type TEXT,
+                default_currency_fph TEXT DEFAULT '',
                 active INTEGER NOT NULL DEFAULT 1
             );
             """
@@ -92,7 +106,6 @@ def create_entities_db():
             """
             CREATE TABLE IF NOT EXISTS namespaces (
                 entity_fph TEXT PRIMARY KEY,
-                default_currency_fph TEXT DEFAULT '',
                 stewards_fph_list BLOB,
                 sandbox INTEGER NOT NULL DEFAULT 0
             );
@@ -115,6 +128,10 @@ def create_entities_db():
 #            );
 #            """
 #        )
+
+        # NB, since a *primid* or *secid* can serve as the root private
+        # *namespace*, a default *currency* must be specified.
+        #
         # Create primids table:
         cursor.execute(
             """
@@ -201,6 +218,7 @@ def add_entity_common_properties(
         entity_fph,
         parent_namespace_fph,
         entity_type,
+        default_currency_fph,
         active
     ):
     with sqlite3.connect(ENTITIES_DB) as conn:
@@ -211,14 +229,16 @@ def add_entity_common_properties(
                 entity_fph,
                 parent_namespace_fph,
                 entity_type,
+                default_currency_fph,
                 active
             )
-            VALUES (?, ?, ?, ?)
+            VALUES (?, ?, ?, ?, ?)
             """,
             (
                 entity_fph,
                 parent_namespace_fph,
                 entity_type,
+                default_currency_fph,
                 active
             )
         )
@@ -605,10 +625,13 @@ def new_primid(
     access_token = generate_access_token()
     access_token_hash = auth_hash(access_token)
 
+    #get_default_currency(entity_identifier)
+
     add_entity_common_properties(
         primid_fph,
         parent_namespace_fph,
         "primid",
+        get_default_currency(parent_namespace_fph),
         True
     )
 
@@ -676,6 +699,7 @@ def new_secid(
         secid_fph,
         parent_namespace_fph,
         "secid",
+        get_default_currency(parent_namespace_fph),
         True
     )
     # Add the *secid*-specific properties:
@@ -741,6 +765,7 @@ def new_secid(
 def new_namespace(
         namespace_name,
         parent_namespace_fph,
+        default_currency_fph,
         initial_steward_fph
     ):
 
@@ -767,6 +792,7 @@ def new_namespace(
         namespace_fph,
         parent_namespace_fph,
         "namespace",
+        default_currency_fph,
         True
     )
 
@@ -818,6 +844,7 @@ def new_currency(
         currency_fph,
         parent_namespace_fph,
         "currency",             # entity type
+        "", # empty because a *currency* cannot have a default *currency*
         True                    # active flag
     )
 
@@ -935,6 +962,7 @@ def new_account(
         account_fph,
         owner_fph,
         "account",
+        "", # empty because an *account* does not have a default *currency*
         True
     )
 
@@ -986,6 +1014,125 @@ def new_account(
 #==============================================================================
 ##
 
+def get_namespace_specific_properties(namespace_identifier):
+
+    namespace_fph, \
+    namespace_hrns, \
+    namespace_type, \
+    m = identify_entity(namespace_identifier)
+    if m:
+        return "", [], False, m
+
+    with sqlite3.connect(ENTITIES_DB) as conn:
+        cursor = conn.cursor()
+        # Add the stewarded entity's FPH to the *primid*'s stewardships list:
+        cursor.execute(
+            """
+            SELECT stewards_fph_list, sandbox
+            FROM namespaces
+            WHERE entity_fph = ?
+            """,
+            (namespace_fph,)
+        )
+        result = cursor.fetchone()
+        if result is None:
+            m = "Namespace " + fph_to_hrns(namespace_fph) + " not found"
+            return "", [], False, m
+        else:
+            stewards_fph_blob = result[1]
+            sandbox = result[2]
+            stewards_list = pickle.loads(stewards_fph_blob)
+        cursor.execute(
+            """
+            SELECT default_currency_fph
+            FROM entities_common
+            WHERE entity_fph = ?
+            """,
+            (namespace_fph,)
+        )
+        result = cursor.fetchone()
+        if result is None:
+            return "", [], False, "Default currency cannot be identified"
+        else:
+            default_currency_fph = result[0]
+        return default_currency_fph, stewards_list, sandbox, ""
+
+
+#==============================================================================
+## Set the default *currency* for the *namespace* (including that of a
+## *primid-namespace* or *secid-namespace*).
+
+def set_default_currency(entity_identifier, currency_identifier):
+
+    currency_fph, \
+    currency_hrns, \
+    etype, \
+    m = identify_entity(currency_identifier)
+    if m:
+        return m
+    if not currency_fph:
+        return "Currency cannot be identified"
+
+    entity_fph, \
+    entity_hrns, \
+    entity_type, \
+    m = identify_entity(entity_identifier)
+    if m:
+        return m
+    if not entity_fph:
+        return "Entity cannot be identified"
+
+    # The "default_currency_fph" field has now been moved from the "namespaces"
+    # table to the "entities_common" table.
+
+    if not (entity_type in ["namespace", "primid", "secid"]):
+        return fph_to_hrns(entity_identifier) + " is not a namespace type"
+
+    with sqlite3.connect(ENTITIES_DB) as conn:
+        cursor = conn.cursor()
+        cursor.execute(
+            """
+            UPDATE entities_common
+            SET default_currency_fph = ?
+            WHERE entity_fph = ?
+            """,
+            (currency_fph, entity_fph)
+        )
+        conn.commit()
+        cursor.close()
+
+    return ""
+
+#------------------------------------------------------------------------------
+def get_default_currency(entity_identifier):
+
+    entity_fph, \
+    entity_hrns, \
+    entity_type, \
+    m = identify_entity(entity_identifier)
+
+    if not (entity_type in ["namespace", "primid", "secid"]):
+        return fph_to_hrns(entity_identifier) + " is not a namespace type"
+
+    with sqlite3.connect(ENTITIES_DB) as conn:
+        cursor = conn.cursor()
+        cursor.execute(
+            """
+            SELECT default_currency_fph
+            FROM entities_common
+            WHERE entity_fph = ?
+            """,
+            (entity_fph,)
+        )
+        result = cursor.fetchone()
+        if result is None:
+            return "Default currency cannot be identified"
+        else:
+            return result[0]
+
+#==============================================================================
+##
+
 def get_currency_specific_properties(currency_identifier):
 
     currency_fph, \
@@ -1020,8 +1167,6 @@ def get_currency_specific_properties(currency_identifier):
 
         return currency_fph, currency_hrns, prefix, suffix, \
                default_account_name, stewards_list, ""
-
-
 
 #==============================================================================
 ##
@@ -1159,13 +1304,19 @@ def list_agent_accounts(agent_fph):
 
     if etype == "primid":
         accounts_fph_list, m = list_primid_accounts(agent_fph)
+        if m:
+            return [], m
     elif etype == "secid":
         accounts_fph_list, m = list_secid_accounts(agent_fph)
+        if m:
+            return [], m
     else:
-        accounts_fph_list = []
-        m = agent_fph + " is not and identity of either type"
+        #accounts_fph_list = []
+        m = agent_fph + " is not an identity of either type"
+        if m:
+            return [], m
 
-    return accounts_fph_list, m    # list + message
+    return accounts_fph_list, ""    # list + message
 
 
 #==============================================================================
@@ -1182,8 +1333,12 @@ def get_account_currency(account_fph):
             """,
             (account_fph,)
         )
-        currency_fph = cursor.fetchone()[0]
+        result = cursor.fetchone()
         cursor.close()
+        if result is not None:
+            currency_fph = result[0]
+        else:
+            currency_fph = ""
     return currency_fph
 
 #==============================================================================

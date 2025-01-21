@@ -152,18 +152,13 @@ def payment(payer_fph, payee_fph, amount, annotation):
 
 
 
-# TEMPORARY FAKE pending relocation to Flask SWI code:
-#def url_for(whatever):
-#    return ""
 
-#def list_currencies_in_common_as_html(a1_fph, a2_fph):
-#    print("<ul>")
-#    for currency_fph in list_currencies_in_common_by_fph(a1_fph, a2_fph):
-#        print(
-#            "<li><a href=\"" + url_for("something") + "\">" \
-#            + fph_to_hrns(currency_fph) + "</a></li>"
-#        )
-#    print("</ul>")
+
+
+
+
+
+
 
 
 

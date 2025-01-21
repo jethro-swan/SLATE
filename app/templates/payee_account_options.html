@@ -2,9 +2,7 @@
 
 {% block content %}
 
-<h3>Make a payment to an agent</h3>
-
-{%  if hub_mode == "slate_simple" %}
+<h3>Make a payment to a selected account</h3>
 
 <p>
   Paying from <b>identity</b> {{ working_identity_hrns }}
@@ -69,19 +67,5 @@
   </p>
 </form>
 <hr />
-
-{% endif %}
-
-{% if hub_mode == "slate_normal" %}
-
-
-{% endif %}
-
-{% if hub_mode == "nests" %}
-
-
-{% endif %}
-
-
 
 {% endblock %}

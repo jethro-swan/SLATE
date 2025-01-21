@@ -47,9 +47,19 @@
 
   {% else %}<!-- logged_in -->
 
-    <div class="mb">
-      <a class="mb" href="/home">home</a>
-    </div>
+    {% if page == "home" %}
+      <div class="mba">home</div>
+    {% else %}
+      <div class="mb"><a class="mb" href="/home">home</a></div>
+    {% endif %}
+
+    {% if page == "identities" %}
+      <div class="mba">list identities</div>
+    {% else %}
+      <div class="mb">
+        <a class="mb" href="/identity/list">identities</a>
+      </div>
+    {% endif %}
 
     <div class="mb">
       <a class="mb" href="/logout">logout</a>
@@ -99,9 +109,9 @@
     <hr class="dashed" />
     Currently acting as
     <span class="dark-green-bold" >{{ working_identity_hrns }}</span>
-    ({{ working_identity_type }})<br />
+    ({{ working_identity_type }})<!--<br />
     [ <b><a href="/create_secid">create new alias</a></b> ]
-    <br />
+    <br />-->
     <hr class="dashed" />
     {% endif %}
 
@@ -123,26 +133,64 @@
 
     {% if current_user.is_authenticated %}
 
-    {% if page == "currency_options" %}
-      <div class="mba">
-        <a class="mba" href="/currency/options">
-          currencies available
-        </a>
-      </div>
-    {% else %}
-      <div class="mb">
-        <a class="mb" href="/currency/options">
-          currencies available
-        </a>
-      </div>
+      {% if hub_mode == "slate_simple" %}
+
+        {% if page == "currency_options" %}
+          <div class="mba">
+            <a class="mba" href="/currency/options">currencies available</a>
+          </div>
+        {% else %}
+          <div class="mb">
+            <a class="mb" href="/currency/options">currencies available</a>
+          </div>
+        {% endif %}
+
+        {% if page == "pay_agent" %}
+          <div class="mba">
+            make a payment
+          </div>
+        {% else %}
+          <div class="mb">
+            <a class="mb" href="/pay/agent/{{ working_identity_fph }}">
+              make a payment
+            </a>
+          </div>
+        {% endif %}
+
+
+
+      {% endif %}
+
     {% endif %}
 
-    &nbsp;&nbsp;
-    <b><a href="/home/full">all payment options</a></b>
-    &nbsp;|&nbsp;
-    <b><a href="/home/new">new home</a></b>
+    {% if current_user.is_authenticated %}
+
+      {% if hub_mode == "slate_normal" %}
+
+        {% if page == "currency_options" %}
+          <div class="mba">
+            <a class="mba" href="/currency/options">
+              currencies available
+            </a>
+          </div>
+        {% else %}
+          <div class="mb">
+            <a class="mb" href="/currency/options">
+              currencies available
+            </a>
+          </div>
+        {% endif %}
+
+        &nbsp;&nbsp;
+        <b><a href="/home/full">all payment options</a></b>
+        &nbsp;|&nbsp;
+        <b><a href="/home/new">new home</a></b>
+
+      {% endif %}
 
     {% endif %}
+
+
 
   {% endif %}
 

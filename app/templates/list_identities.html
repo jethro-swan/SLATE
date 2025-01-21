@@ -4,27 +4,29 @@
 
   <b>identites</b> |
   <!-- <a href="/identity/change"><b>change identity</b></a> | -->
-  <a href="/identity/create"><b>create new alias</b></a>
+  <a href="/create_secid"><b>create new alias</b></a>
   <br /><br />
   <ul>
-
-{% for identity in identities %}<!-- list of dictionaries -->
+    {% for identity in identities %}<!-- list of dictionaries -->
     <li>
-      <a href="/secid/manage/{{ identity.fph }}">
-        <b>{{ identity.hrns }}</b>
-      </a>
+      {% if identity.hrns == primary_identity_hrns %}
+      [<a href="/primid/manage/{{ identity.fph }}">manage</a>]
+      <b>
+        <a href="/identity/change/{{ identity.fph }}">{{ identity.hrns }}</a>
+      </b>
+      (login identity)
+      [<a href="/stewardships/{{ primary_identity_fph }}">stewardships</a>]
+      {% else %}
+      [<a href="/secid/manage/{{ identity.fph }}">manage</a>]
+      <b>
+        <a href="/identity/change/{{ identity.fph }}">{{ identity.hrns }}</a>
+      </b>
+      (alias)
+      {% endif %}
     </li>
-{% endfor %}
-
+    {% endfor %}
   </ul>
 
   <hr />
-
-
-<br /><br />
-<p class="shout">
-  Not yet fully implemented
-</p>
-
 
 {% endblock %}

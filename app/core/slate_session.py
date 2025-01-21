@@ -2,23 +2,19 @@ import os
 import sqlite3
 import pickle
 
-from .constants import ENTITIES_DB, SLATE_SESSION_DB
+from .constants import ENTITIES_DB, SLATE_SESSION_DB, DB_BKP_DIR
 
 from .common import filename_timestamp as timestamp
 from .common import nshash
 
+from .unix_functions import fcopy
+
 from flask import session
-
-
-
-
-
-
 
 #==============================================================================
 ## Create the SQLite slate_session database:
 ##
-## This is used to hold session data too large for Flask's seession cookies to
+## This is used to hold session data too large for Flask's session cookies to
 ## accommodate (i.e. not transferable via the  session[ ] dictionary).
 ##
 ## User-specific session data are
@@ -49,14 +45,15 @@ def create_slate_session_db():
         )
         os.remove(SLATE_SESSION_DB)
 
-    with sqlite3.connect(ENTITIES_DB) as conn:
+    with sqlite3.connect(SLATE_SESSION_DB) as conn:
         cursor = conn.cursor()
         cursor.execute(
             """
     	    CREATE TABLE IF NOT EXISTS slate_session (
                 session_id TEXT PRIMARY KEY,
                 currencies_available BLOB,
-                payment_options BLOB
+                payment_options BLOB,
+                payee_accounts_available BLOB
             );
             """
         )
@@ -64,14 +61,11 @@ def create_slate_session_db():
         cursor.close()
     return
 
-def save_payment_session_data(currencies_available, payment_options):
+
+def session_save_currencies_available(currencies_available, payment_options):
     with sqlite3.connect(SLATE_SESSION_DB) as conn:
         cursor = conn.cursor()
-        cursor.execute(
-            """
-            SELECT session_id FROM slate_session
-            """
-        )
+        cursor.execute("SELECT session_id FROM slate_session")
         result = cursor.fetchone()
         if result is not None:
             cursor.close()
@@ -97,7 +91,7 @@ def save_payment_session_data(currencies_available, payment_options):
     return
 
 
-def retrieve_payment_options():
+def session_retrieve_payment_options():
     with sqlite3.connect(SLATE_SESSION_DB) as conn:
         cursor = conn.cursor()
         cursor.execute(
@@ -119,6 +113,56 @@ def retrieve_payment_options():
         currency_options = pickle.loads(result[0])
         payment_options = pickle.loads(result[1])
     return currency_options, payment_options, ""
+
+
+def session_save_payee_accounts_available(payee_accounts_available):
+    with sqlite3.connect(SLATE_SESSION_DB) as conn:
+        cursor = conn.cursor()
+        cursor.execute("SELECT session_id FROM slate_session")
+        result = cursor.fetchone()
+        if result is not None:
+            cursor.close()
+            return
+        session_id = session["_id"]
+        cursor.execute(
+            """
+            INSERT INTO slate_session (
+                session_id,
+                payee_accounts_available
+            )
+            VALUES (?, ?)
+            """,
+            (
+                session["_id"],
+                pickle.dumps(payee_accounts_available)
+            )
+        )
+        conn.commit()
+        cursor.close()
+    return
+
+
+def session_retrieve_payee_accounts_available():
+    with sqlite3.connect(SLATE_SESSION_DB) as conn:
+        cursor = conn.cursor()
+        cursor.execute(
+            """
+            SELECT payee_accounts_available
+            FROM slate_session
+            WHERE session_id = ?
+            """,
+            (session["_id"],)
+        )
+        result = cursor.fetchone()
+        cursor.execute(
+            "DELETE FROM slate_session WHERE session_id = ?",
+            (session["_id"],)
+        )
+        cursor.close()
+        if result is None:
+            return [], {}, "No payee accounts available"
+        payee_accounts_available = pickle.loads(result[0])
+    return payee_accounts_available, ""
 
 
 def remove_slate_session_data():

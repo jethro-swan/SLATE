@@ -7,9 +7,11 @@ from datetime import datetime, date, time, timezone
 
 from .slate_core import identify_entity
 
-from .constants import MESSAGES_DB
+from .constants import MESSAGES_DB, DB_BKP_DIR
 
 from .common import timestamp, unixtime_int
+
+from .unix_functions import fcopy
 
 #==============================================================================
 

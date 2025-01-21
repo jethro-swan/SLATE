@@ -2,65 +2,202 @@
 
 {% block content %}
 
+{% if hub_mode == "slate_simple" %}
+<!-- --------------------------------------------------------------------------
+This is the simplified SLATE interface, listing only the *identities* and
+*currencies*, hiding the *accounts*.
+--------------------------------------------------------------------------- -->
+
+<table>
+  <tr>
+    <th>identity</th>
+    <th>currency</th>
+    <!--
+    <th>unit</th>
+    -->
+    <th>balance</th>
+  </tr>
+  {% for identity in identities %}<!-- list of dictionaries -->
+  {% for account in identity.accounts %}
+  <tr>
+    <td align="left">
+      <b>{{ identity.hrns }}</b>
+    </td>
+    <td align="left">
+      {% if account.primid_is_currency_steward %}
+      <a href="/currency/{{ account.currency_fph }}">
+        <b>{{ account.currency_hrns }}</b>
+      </a>
+      {% else %}
+        <b>{{ account.currency_hrns }}</b>
+      {% endif %}
+    </td>
+    <!--
+    <td>
+      {{ account.prefix }}{{ account.suffix }}
+    </td>
+    -->
+    {% if account.isneg %}
+    <td align="right" class="balneg">
+    {% else %}
+    <td align="right" class="balpos">
+    {% endif %}
+      <b>{{ account.balance }}</b>
+    </td>
+    <td align="left">
+      <a href="/pay/agent/{{ account.fph }}">
+        <b>pay</b>
+      </a>
+    </td>
+  </tr>
+  {% endfor %}
+  {% endfor %}
+</table>
+<hr />
+
+<a href="/create_namespace"><b>create new namespace</b></a>
+|
+<a href="/create_currency"><b>create new currency</b></a>
+
+{% endif %}
+
+{% if hub_mode == "slate_normal" %}
+<!-- --------------------------------------------------------------------------
+This is the original SLATE interface, listing *accounts* as well as
+*identities* and *currencies*.
+--------------------------------------------------------------------------- -->
+
 {% for identity in identities %}<!-- list of dictionaries -->
 
-  <div class="header">
-    <b>
-      <a href="/identity/change/{{ identity.fph }}">
-        {{ identity.hrns }}
+<div class="header">
+  <b>
+    <a href="/identity/change/{{ identity.fph }}">
+      {{ identity.hrns }}
+    </a>
+  </b>
+  ({{ identity.type }})
+  {% if identity.fph == primary_identity_fph %}
+  | <b><a href="/list_stewardships">stewardships</a></b>
+  | <a href="/create_secid"><b>new alias</b></a>
+  {% endif %}
+</div>
+<br /><br />
+<table>
+  <tr>
+    <th>account</th>
+    <th>unit</th>
+    <th>balance</th>
+    <th>currency</th>
+  </tr>
+{% for account in identity.accounts %}
+  <tr>
+    <td align="left">
+      <a href="/account/{{ account.fph }}/00000000000000000000000000000000">
+        <b>{{ account.hrns }}</b>
       </a>
-    </b>
-    ({{ identity.type }})
-    {% if identity.fph == primary_identity_fph %}
-    [ <b><a href="/list_stewardships">list stewardships</a></b> ]
+    </td>
+    <td>
+      {{ account.prefix }}{{ account.suffix }}
+    </td>
+    {% if account.isneg %}
+    <td align="right" class="balneg">
+    {% else %}
+    <td align="right" class="balpos">
     {% endif %}
-  </div>
-  <br /><br />
-  <table>
-    <tr>
-      <th>account</th>
-      <th>unit</th>
-      <th>balance</th>
-      <th>currency</th>
-    </tr>
-  {% for account in identity.accounts %}
-    <tr>
-      <td align="left">
-        <a href="/account/{{ account.fph }}/00000000000000000000000000000000">
-          <b>{{ account.hrns }}</b>
-        </a>
-      </td>
-      <td>
-        {{ account.prefix }}{{ account.suffix }}
-      </td>
-      {% if account.isneg %}
-      <td align="right" class="balneg">
+      <b>{{ account.balance }}</b>
+    </td>
+    <td align="left">
+      {% if account.primid_is_currency_steward %}
+      <a href="/currency/{{ account.currency_fph }}">
+        <b>{{ account.currency_hrns }}</b>
+      </a>
       {% else %}
-      <td align="right" class="balpos">
+        <b>{{ account.currency_hrns }}</b>
       {% endif %}
-        <b>{{ account.balance }}</b>
-      </td>
-      <td align="left">
-        {% if account.primid_is_currency_steward %}
-        <a href="/currency/{{ account.currency_fph }}">
-          <b>{{ account.currency_hrns }}</b>
-        </a>
-        {% else %}
-          <b>{{ account.currency_hrns }}</b>
-        {% endif %}
-      </td>
-    </tr>
-  {% endfor %}
-  </table>
-  <a href="/create_account/{{ identity.fph }}"><b>add account</b></a>
-  for
-  <b>{{ identity.hrns }}</b>
-  <br /><br />
+    </td>
+  </tr>
 {% endfor %}
-  <hr />
+</table>
+<a href="/create_account/{{ identity.fph }}"><b>add account</b></a>
+for
+<b>{{ identity.hrns }}</b>
+<br /><br />
+{% endfor %}
+<hr />
 
-  <a href="/create_namespace"><b>create new namespace</b></a>
-  |
-  <a href="/create_currency"><b>create new currency</b></a>
+<a href="/create_namespace"><b>create new namespace</b></a>
+|
+<a href="/create_currency"><b>create new currency</b></a>
+
+{% endif %}
+
+{% if hub_mode == "nests" %}
+<!-- --------------------------------------------------------------------------
+This section will be modified interface in due course to make it suitable for
+use in NESTS.
+--------------------------------------------------------------------------- -->
+
+{% for identity in identities %}<!-- list of dictionaries -->
+
+<div class="header">
+  <b>
+    <a href="/identity/change/{{ identity.fph }}">
+      {{ identity.hrns }}
+    </a>
+  </b>
+  ({{ identity.type }})
+  {% if identity.fph == primary_identity_fph %}
+  [ <b><a href="/list_stewardships">list stewardships</a></b> ]
+  {% endif %}
+</div>
+<br /><br />
+<table>
+  <tr>
+    <th>account</th>
+    <th>unit</th>
+    <th>balance</th>
+    <th>currency</th>
+  </tr>
+{% for account in identity.accounts %}
+  <tr>
+    <td align="left">
+      <a href="/account/{{ account.fph }}/00000000000000000000000000000000">
+        <b>{{ account.hrns }}</b>
+      </a>
+    </td>
+    <td>
+      {{ account.prefix }}{{ account.suffix }}
+    </td>
+    {% if account.isneg %}
+    <td align="right" class="balneg">
+    {% else %}
+    <td align="right" class="balpos">
+    {% endif %}
+      <b>{{ account.balance }}</b>
+    </td>
+    <td align="left">
+      {% if account.primid_is_currency_steward %}
+      <a href="/currency/{{ account.currency_fph }}">
+        <b>{{ account.currency_hrns }}</b>
+      </a>
+      {% else %}
+        <b>{{ account.currency_hrns }}</b>
+      {% endif %}
+    </td>
+  </tr>
+{% endfor %}
+</table>
+<a href="/create_account/{{ identity.fph }}"><b>add account</b></a>
+for
+<b>{{ identity.hrns }}</b>
+<br /><br />
+{% endfor %}
+<hr />
+
+<a href="/create_namespace"><b>create new namespace</b></a>
+|
+<a href="/create_currency"><b>create new currency</b></a>
+
+{% endif %}
 
 {% endblock %}
