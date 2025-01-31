@@ -38,18 +38,20 @@
     You can use this form to make a payment from this <b>account</b> to another
     in the same <b>currency</b>.
   </div>
+  <!--
   <p class="footnote">
     (If you know only the <b>account</b> to which you need to pay, you can
     <a href="/pay/account">do that directly</a>.)
   </p>
-  <br /><br />
+  -->
+  <br />
   <form action="" method="post" novalidate>
   {{ form.hidden_tag() }}
   {% if payee_account_hrns %}
     Paying to <span class="dark-red-bold">{{ payee_account_hrns }}</span>
   {% else %}
     <p>
-      {{ form.to_account_id.label }} (HRNS or FPH)<br />
+      {{ form.to_account_id.label }}<br />
       {{ form.to_account_id(size=32) }}
     </p>
   {% endif %}

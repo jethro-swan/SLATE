@@ -9,44 +9,44 @@
   <div>
     <div style="float:left; margin:2px;">
     {{ form.currency_name.label }}<br />
-    {{ form.currency_name(size=12, placeholder="name") }}
-    </div>
-    <div style="float:left; margin:2px;">
-      <br />.
+    {{ form.currency_name(size=10, placeholder="name") }} <b>.</b>
     </div>
     <div style="float:left; margin:2px;">
       {{ form.namespace_id.label }}<br />
-      {{ form.namespace_id(size=30, placeholder="parent namespace") }}
+      {{ form.namespace_id(size=20, placeholder="parent namespace") }}
     </div>
   </div>
-  <div>
-    {{ form.prefix_symbol.label }}<br />
-    {{ form.prefix_symbol(size=1) }} (any UTF-8 character)
-  </div>
-  <div>
-    {{ form.suffix_symbol.label }}<br />
-    {{ form.suffix_symbol(size=1) }} (any UTF-8 character)
+  <div style="float:left; margin:2px;">
+    <div>
+      {{ form.prefix_symbol.label }}<br />
+      {{ form.prefix_symbol(size=1) }} (any UTF-8 character)
+    </div>
+    <div>
+      {{ form.suffix_symbol.label }}<br />
+      {{ form.suffix_symbol(size=1) }} (any UTF-8 character)
+    </div>
+  <div style="float:left; margin:2px;">
+    <div>
+      {{ form.default_account_name.label }}<br />
+      {{ form.default_account_name(size=10, placeholder="default name") }}
+    </div>
   </div>
   <div style="float:left; margin:2px;">
-    {{ form.default_account_name.label }}<br />
-    {{ form.default_account_name(size=12, placeholder="default name") }}
+    <div>
+      <p>
+        {{ form.acct_same_name }} {{ form.acct_same_name.label }}
+      </p>
+      <p>
+        {{ form.acct_id_parent }} {{ form.acct_id_parent.label }}
+      </p>
+      <p>
+        {{ form.acct_immdt_crtn }} {{ form.acct_immdt_crtn.label }}
+      </p>
+      <p>
+        {{ form.create_currency() }}
+      </p>
+    </div>
   </div>
-  <div>
-    <p>
-      {{ form.acct_same_name }} {{ form.acct_same_name.label }}
-    </p>
-    <p>
-      {{ form.acct_id_parent }} {{ form.acct_id_parent.label }}
-    </p>
-    <p>
-      {{ form.acct_immdt_crtn }} {{ form.acct_immdt_crtn.label }}
-    </p>
-    <p>
-      {{ form.create_currency() }}
-    </p>
-  </div>
-
-  <hr />
 
   <p>
     {% for error in form.currency_name.errors %}
@@ -64,7 +64,5 @@
   </p>
 
 </form>
-
-<hr />
 
 {% endblock %}

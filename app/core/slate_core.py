@@ -87,6 +87,17 @@ def create_entities_db():
         fcopy(ENTITIES_DB, DB_BKP_DIR + '/entities_' + timestamp() + '.db')
         os.remove(ENTITIES_DB)
 
+    # If this entity is a *private namespace* (one that has ramified from a
+    # *primid* or *secid*, both that privacy and its owenerhip must be evident.
+    # By default, the ownership is inherited from the parent *namespace* but may
+    # be overridden.
+    #
+    # That ownership is not the same as a stewardship. If a *namespace* has an
+    # owner it needs no stewards and, if it is an *identity* serving as the
+    # root *namespace* of such a tree it cannot have stewards, but *namespaces*
+    # created as children/descendants of such a root may have stewards if the
+    # owner chooses to invite them.
+
     with sqlite3.connect(ENTITIES_DB) as conn:
         cursor = conn.cursor()
         # A table is created for the entities' common properties:
@@ -97,6 +108,8 @@ def create_entities_db():
                 parent_namespace_fph TEXT,
                 entity_type TEXT,
                 default_currency_fph TEXT DEFAULT '',
+                private_namespace INTEGER NOT NULL DEFAULT 0,
+                namespace_owner_fph TEXT DEFAULT '',
                 active INTEGER NOT NULL DEFAULT 1
             );
             """
@@ -205,6 +218,81 @@ def create_entities_db():
         )
         conn.commit()
         cursor.close()
+
+
+#==============================================================================
+## Get namespace owner
+#
+# Here, a *namespace* may also be a *primid* or *secid*.
+
+def get_private_namespace_details(namespace_identifier):
+
+    namespace_fph, \
+    namespace_hrns, \
+    namespace_type, \
+    m = identify_entity(namespace_identifier)
+
+    if not (namespace_type in ["namespace", "primid", "secid"]):
+        return False, "", "Entity cannot be a private namespace"
+
+    with sqlite3.connect(ENTITIES_DB) as conn:
+        cursor = conn.cursor()
+        cursor.execute(
+            """
+            SELECT private_namespace, namespace_owner
+            FROM entities_common
+            WHERE entity_fph = ?
+            """,
+            (namespace_fph,)
+        )
+        result = cursor.fetchone()
+        cursor.close()
+        if result is None:
+            return False, "", "Entity not identifiable as private namespace"
+        else:
+            private_namespace = result[0]
+            namespace_owner_fph = result[1]
+            if private_namespace:
+                return private_namespace, namespace_owner_fph, ""
+            else:
+                return False, "", "Entity is not a private namespace"
+
+#------------------------------------------------------------------------------
+
+def set_private_namespace_owner(namespace_identifier, identity_identifier):
+
+    namespace_fph, \
+    namespace_hrns, \
+    namespace_type, \
+    m = identify_entity(namespace_identifier)
+
+    if (namespace_type != "primid") and (namespace_type != "secid"):
+        return "Entity cannot be a private namespace"
+
+    identity_fph, \
+    identity_hrns, \
+    identity_type, \
+    m = identify_entity(identity_identifier)
+
+    if (identity_type != "primid") and (identity_type != "secid"):
+        return "Entity is not a namespace type"
+
+    with sqlite3.connect(ENTITIES_DB) as conn:
+        cursor = conn.cursor()
+        cursor.execute(
+            """
+            UPDATE entities_common
+            SET = ?
+            WHERE entity_fph = ?
+            """,
+            (identity_fph, namespace_fph)
+        )
+        conn.commit()
+        cursor.close()
+
+    return ""
+
+
 
 #==============================================================================
 ## The entities' common properties are recorded:

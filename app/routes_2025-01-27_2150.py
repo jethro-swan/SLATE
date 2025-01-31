@@ -40,7 +40,7 @@ from app.core.slate_session import session_save_currencies_available
 from app.core.slate_session import session_save_payment_options
 from app.core.slate_session import session_retrieve_payment_options
 #from app.core.slate_session import session_save_payee_accounts_available
-#from app.core.slate_session import session_retrieve_payee_accounts_available
+from app.core.slate_session import session_retrieve_payee_accounts_available
 from app.core.slate_session import remove_slate_session_data
 
 from app.core.regexp_list import re_fph, re_hrns, re_email
@@ -104,9 +104,7 @@ from app.models import User
 
 from app.forms import LoginForm, RegistrationForm
 from app.forms import LoginRecoveryForm, LoginResetForm
-from app.forms import PaymentToAccountForm
-from app.forms import PaymentToIdentityForm
-from app.forms import PaymentAccountPairForm
+from app.forms import PaymentToAccountForm, PaymentToIdentityForm
 from app.forms import CurrencyCreateForm
 from app.forms import AccountCreateForm
 from app.forms import NamespaceCreateForm
@@ -1769,28 +1767,6 @@ def pay_account():
         working_identity_type = working_identity_type
     )
 
-
-#=============================================================================
-#TEST STUFF
-
-def print_payments_session_variables():
-    #
-    # TEST STUFF
-    for key in [
-                    "payee_identity_fph",
-                    "payment_currency_fph",
-                    "number_of_payer_accounts",
-                    "number_of_payee_accounts",
-                    "payer_account_fph",
-                    "payee_account_fph"
-               ]:
-        print(key + " :: ", end="")
-        if key in session:
-            print(session[key])
-        else:
-            print()
-
-
 #=============================================================================
 # Make a payment to an *agent*+*currency* rather than to an *account*.
 #
@@ -1850,26 +1826,6 @@ def pay_agent():
         working_identity_type = primary_identity_type
     working_identity_type = etype_to_adtype(working_identity_type)
 
-    # Every process of payment to *identity*+*currency* begins here, so it is
-    # only here where the relevant persistent data needs to be cleared out.
-    #
-    # (1) Clear any existing data from the session dictionary:
-    if "payee_identity_fph" in session:
-        session.pop("payee_identity_fph")
-    if "payment_currency_fph" in session:
-        session.pop("payment_currency_fph")
-    if "number_of_payer_accounts" in session:
-        session.pop("number_of_payer_accounts")
-    if "number_of_payee_accounts" in session:
-        session.pop("number_of_payee_accounts")
-    if "payer_account_fph" in session:
-        session.pop("payer_account_fph")
-    if "payee_account_fph" in session:
-        session.pop("payee_account_fph")
-    # (2) Clear any existing data from the session database:
-    remove_slate_session_data()
-
-    # Now we need to acquire the *identity* and *account* form data:
     form = SpecifyPayeeAgentAndCurrencyForm()
     if form.validate_on_submit():
 
@@ -1880,22 +1836,18 @@ def pay_agent():
         if m:
             flash(m)
             return redirect("/pay/agent")
-        if payee_identity_fph == "":
-            flash("The identity is invalid")
+        if payee_identity_fph == "": # *agent* cannot be identified
             return redirect("/pay/agent")
-        session["payee_identity_fph"] = payee_identity_fph
 
         currency_fph, \
-        currency_hrns, \
+        currency__hrns, \
         etype, \
         m = identify_entity(form.currency_id.data)
         if m:
             flash(m)
             return redirect("/pay/agent")
-        if currency_fph == "":
-            flash("The currency cannot be identified")
+        if currency_fph == "": # *currency* cannot be identified
             return redirect("/pay/agent")
-        session["payment_currency_fph"] = currency_fph
 
         # First we need to find the payer *accounts* in the specified
         # *currency*:
@@ -1915,10 +1867,6 @@ def pay_agent():
             if account_currency_fph == currency_fph:
                 payee_options.append(payee_account_fph)
 
-        # These lists of payer and payee *account* options are now saved for
-        # use in the selection stages:
-        session_save_payment_options(payer_options, payee_options)
-
         # Unless both the payee and the payee have at least one *account* in
         # this *currency*, the payment cannpt be made.
         if len(payer_options) == 0:
@@ -1930,46 +1878,24 @@ def pay_agent():
 
         # If both the payer and the payee have only one *account* in this
         # *currency*, the payment can be made immediately.
-
-#        if (len(payer_options) == 1):
-#            session["number_of_payer_accounts"] = "one"
-#            payer_account_fph = payer_options[0]
-#            session["payer_account_fph"] = payer_account_fph
-#        else:
-#            session["number_of_payer_accounts"] = "many"
-#            payer_account_fph = ""
-#            session["payer_account_fph"] = "" # not yet known
-#
-#        if (len(payee_options) == 1):
-#            session["number_of_payee_accounts"] = "one"
-#            payee_account_fph = payee_options[0]
-#            session["payee_account_fph"] = payee_account_fph
-#        else:
-#            session["number_of_payee_accounts"] = "many"
-#            payee_account_fph = ""
-#            session["payee_account_fph"] = "" # not yet known
+        elif (len(payer_options) == 1) and (len(payee_options) == 1):
+            print("one account each")
+            payer_account_fph = payer_options[0]
+            payee_account_fph = payee_options[0]
+            return redirect(
+                "/pay/agent/payment/" \
+                + payer_account_fph + "/" \
+                + payee_account_fph
+            )
 
         # If either the payer or the payee has more than one *account* in this
         # *currency* a selection must be made. Therefore the list of options
-        # must be passed to one or both intermediate form/endpoint to allow the
-        # selection of *accounts*.
-
-#        print("In /pay/agent ...")
-#        print_payments_session_variables() ### TESTSTUFF
-
-
-        return redirect("/pay/select/payer") # next page
-
-#        if session["number_of_payer_accounts"] == "one":
-#            if session["number_of_payee_accounts"] == "one":
-#                # go straight to payment form:
-#                return redirect("/pay/agent/payment")
-#            else:
-#                # go straight to payee selection page:
-#                return redirect("/pay/select/payee")
-#        else:
-#            # go straight to payer selection page:
-#            return redirect("/pay/select/payer")
+        # must be passed to an intermediate form/endpoint to allow the
+        # selection of one or both *accounts*.
+        session_save_payment_options(payer_options, payee_options)
+        return redirect(
+            "/pay/agent/options/" + currency_fph + "/" + payee_identity_fph
+        )
 
     return render_template(
         "pay_agent_in_currency.html",
@@ -1979,6 +1905,8 @@ def pay_agent():
         form = form,
         logged_in = logged_in,
         hub_mode = hub_mode,
+        #currency_fph = currency_fph,
+        #currency_hrns = currency_hrns,
         primary_identity_type = "login identity",
         primary_identity_fph = primary_identity_fph,
         primary_identity_hrns = primary_identity_hrns,
@@ -1988,115 +1916,41 @@ def pay_agent():
     )
 
 #------------------------------------------------------------------------------
-# Select from available payer *accounts*:
+# Select from available payer and payee *accounts*:
 #
-@app.route("/pay/select/payer", methods = ["GET", "POST"])
+@app.route(
+        "/pay/agent/options/" \
+        + "<currency_fph>/" \
+        + "<payee_fph>",
+        methods = ["GET", "POST"]
+     )
 @login_required
-def select_payer_account():
+def select_account_pair(currency_fph = None, payee_fph = None):
 
-    # Hub operational mode (read from environment variable HUB_MODE)
-    hub_mode = get_hub_mode()
-    group = "home" # Used to control top menu behaviour.
-    logged_in = current_user.is_authenticated
-    page = "select_account_combination_in_currency"
-
-    previous_page = session["previous_page"] # Ensure correct page sequence
-    session["previous_page"] = page
-
-    primary_identity_fph, \
-    primary_identity_hrns, \
-    primary_identity_type, \
-    m = identify_entity(current_user.get_id())
-
-    if "working_identity" in session:
-        working_identity_fph, \
-        working_identity_hrns, \
-        working_identity_type, \
-        m = identify_entity(session["working_identity"])
-    else:
-        working_identity_fph = primary_identity_fph
-        session["working_identity"] = working_identity_fph
-        working_identity_hrns = primary_identity_hrns
-    working_identity_type = etype_to_adtype(working_identity_type)
-
-    # The original *identity*+*currency* data are retrieved for use in the
-    # template:
-    #
-    if not "payee_identity_fph" in session:
-        flash("Error: payee_identity_fph not in session dictionary")
-        return redirect("/pay/agent")
-    else:
-        payee_identity_hrns = fph_to_hrns(session["payee_identity_fph"])
-
-    if not "payment_currency_fph" in session:
-        flash("Error: payment_currency_fph not in session dictionary")
-        return redirect("/pay/agent")
-    else:
-        payment_currency_hrns = fph_to_hrns(session["payment_currency_fph"])
-
-    # The payer and payee *account* options lists are retrieved:
-    payer_accounts_available, \
-    payee_accounts_available, \
-    m = session_retrieve_payment_options()
-
-    # If there is only one payer *account* option, we can move straight on to
-    # the payee *account* selection stage. Otherwise we need to select the
-    # payer *account* from a list, in which case the selection is made by
-    # clicking on a link in a page rather than by using a form. Therefore the
-    # payee *account* FPH is passed in the URL:
-    #
-    if (len(payer_accounts_available) == 1):
-        payer_account_fph = payer_accounts_available[0]
-        session["payer_account_fph"] = payer_account_fph
-        return redirect("/pay/select/payee/<payer_account_fph>")
-    #
-    # Otherwise we need to select the payer *account* from a list.
-    payer_account_options = []
-    for payer_account_fph in payer_accounts_available:
-        a = {}
-        a["fph"] = payer_account_fph
-        a["hrns"] = fph_to_hrns(payer_account_fph)
-        payer_account_options.append(a)
-
-    return render_template(
-        "select_payer_account.html",
-        title = "Select the payer account",
-        page = page,
-        group = group,
-        logged_in = logged_in,
-        hub_mode = hub_mode,
-        primary_identity_type = "login identity",
-        primary_identity_fph = primary_identity_fph,
-        primary_identity_hrns = primary_identity_hrns,
-        working_identity_fph = working_identity_fph,
-        working_identity_hrns = working_identity_hrns,
-        working_identity_type = working_identity_type,
-        payee_identity_hrns = payee_identity_hrns,
-        payment_currency_hrns = payment_currency_hrns,
-        payer_account_options = payer_account_options
-    )
-
-#------------------------------------------------------------------------------
-# Select from available payee *accounts*:
-#
-@app.route("/pay/select/payee/<payer_account_fph>", methods = ["GET", "POST"])
-@login_required
-def select_payee_account(payer_account_fph = None):
-
-    if payer_account_fph is None:
-        flash("Payer account not specified in URL")
+    if currency_fph is None:
+        flash("Invalid currency in URL")
         return redirect("/pay/agent")
 
-    payer_account_fph, \
-    payer_account_hrns, \
+    currency_fph, \
+    currency_hrns, \
     etype, \
-    m = identify_entity(payer_account_fph)
+    m = identify_entity(currency_fph)
     if m:
         flash(m)
-    if payer_account_fph == "":
-        flash("Invalid payer account specified in URL")
+        flash("Invalid currency in URL")
         return redirect("/pay/agent")
-    #session["payer_account_fph"] = payer_account_fph
+    if payee_fph is None:
+        flash("Invalid payee in URL")
+        return redirect("/pay/agent")
+
+    payee_fph, \
+    payee_hrns, \
+    etype, \
+    m = identify_entity(payee_fph)
+    if m:
+        flash(m)
+        flash("Invalid payee in URL")
+        return redirect("/pay/agent")
 
     # Hub operational mode (read from environment variable HUB_MODE)
     hub_mode = get_hub_mode()
@@ -2106,6 +1960,8 @@ def select_payee_account(payer_account_fph = None):
 
     previous_page = session["previous_page"] # Ensure correct page sequence
     session["previous_page"] = page
+
+    print("+++ previous_page = " + previous_page)
 
     primary_identity_fph, \
     primary_identity_hrns, \
@@ -2123,83 +1979,135 @@ def select_payee_account(payer_account_fph = None):
         working_identity_hrns = primary_identity_hrns
     working_identity_type = etype_to_adtype(working_identity_type)
 
-    # The original *identity*+*currency* data are retrieved for use in the
-    # template:
-    #
-    if not "payee_identity_fph" in session:
-        flash("Error: payee_identity_fph not in session dictionary")
-        return redirect("/pay/agent")
-    else:
-        payee_identity_hrns = fph_to_hrns(session["payee_identity_fph"])
-
-    if not "payment_currency_fph" in session:
-        flash("Error: payment_currency_fph not in session dictionary")
-        return redirect("/pay/agent")
-    else:
-        payment_currency_hrns = fph_to_hrns(session["payment_currency_fph"])
-
     payer_accounts_available, \
     payee_accounts_available, \
     m = session_retrieve_payment_options()
 
-    # If there is only one payee *account* option, we can move straight on to
-    # the payment stage. Otherwise we need to select the payee *account* from a
-    # list, in which case the selection is made by clicking on a link in a page
-    # rather than by using a form. Therefore the payee *account* FPH is passed
-    # in the URL:
-    #
-    if (len(payee_accounts_available) == 1):
-        payee_account_fph = payee_accounts_available[0]
-        session["payee_account_fph"] = payee_account_fph
-        return redirect(
-                    "/pay/agent/payment/" \
-                    + payer_account_fph + "/" \
-                    + payee_account_fph
-               )
-    #
-    # Otherwise we need to select the payee *account* from a list.
+#    remove_slate_session_data()
+
+
+    form = SelectPayerAndPayeeAccountsForm()
+
+    # If either the payer or the payee has more than one *account* in this
+    # *currency* a selection must be made. Therefore the list of options
+    # must be passed to an intermediate form/endpoint to allow the
+    # selection of one or both *accounts*.
+    payer_account_options = []
+    if (len(payer_accounts_available) == 1):
+        single_payer_option = payer_accounts_available[0]
+    else:
+        single_payer_option = ""
+        for payer_account_fph in payer_accounts_available:
+            form.payer_account.choices.append(
+                (payer_account_fph, fph_to_hrns(payer_account_fph))
+            )
+#            a = {}
+#            a["fph"] = payer_account_fph
+#            a["hrns"] = fph_to_hrns(payer_account_fph)
+#            form.payer_account.choices.append(a)
+            #payer_account_options.append(a)
     payee_account_options = []
-    for payee_account_fph in payee_accounts_available:
-        a = {}
-        a["fph"] = payee_account_fph
-        a["hrns"] = fph_to_hrns(payee_account_fph)
-        payee_account_options.append(a)
+    if (len(payee_accounts_available) == 1):
+        single_payee_option = payee_accounts_available[0]
+    else:
+        single_payee_option = ""
+        for payee_account_fph in payee_accounts_available:
+            #a = {}
+            #a["fph"] = payee_account_fph
+            #a["hrns"] = fph_to_hrns(payee_account_fph)
+            form.payee_account.choices.append(
+                (payee_account_fph, fph_to_hrns(payee_account_fph))
+            )
+#            form.payee_account.choices.append(a)
+            #payee_account_options.append(a)
+
+    print(">>> single_payer_option = " + single_payer_option)
+    print(">>> single_payee_option = " + single_payee_option)
+
+
+    #form = SelectPayerAndPayeeAccountsForm()
+    print("+="*30)
+    if form.validate_on_submit():
+        print("-*"*30)
+
+        payer_account_fph = form.payer_account.data
+        payee_account_fph = form.payee_account.data
+
+        if payer_account_fph:
+            print(payer_account_fph)
+        else:
+            print("splat!")
+        if payee_account_fph:
+            print(payee_account_fph)
+        else:
+            print("boing!")
+
+        return redirect(
+            "/pay/agent/payment/" \
+            + currency_fph + "/" \
+            + payee_fph + "/" \
+            + payer_account_fph + "/" \
+            + payee_account_fph
+        )
+    #else:
+    print(form.errors)
+    print(form.payer_account.choices)
+    print(form.payee_account.choices)
+    print("-"*60)
+    return redirect("/pay/agent")
 
     return render_template(
-        "select_payee_account.html",
-        title = "Select the payee account",
+        "select_accounts.html",
+        title = "Select the payer and payee accounts",
         page = page,
         group = group,
+        form = form,
         logged_in = logged_in,
         hub_mode = hub_mode,
+        currency_fph = currency_fph,
+        currency_hrns = currency_hrns,
         primary_identity_type = "login identity",
         primary_identity_fph = primary_identity_fph,
         primary_identity_hrns = primary_identity_hrns,
         working_identity_fph = working_identity_fph,
         working_identity_hrns = working_identity_hrns,
         working_identity_type = working_identity_type,
-        payee_identity_hrns = payee_identity_hrns,
-        payment_currency_hrns = payment_currency_hrns,
-        payer_account_fph = payer_account_fph,
-        payer_account_hrns = payer_account_hrns,
-        payee_account_options = payee_account_options
+        single_payer_option = single_payer_option,
+        single_payer_option_hrns = fph_to_hrns(single_payer_option),
+        payer_account_options = payer_account_options,
+        single_payee_option = single_payee_option,
+        single_payee_option_hrns = fph_to_hrns(single_payee_option),
+        payee_account_options = payee_account_options,
+        payee_hrns = payee_hrns
     )
 
-
 #------------------------------------------------------------------------------
-# Make the payment:
+# Select from available payer and payee *accounts*:
 #
-@app.route("/pay/agent/payment/<payer_account_fph>/<payee_account_fph>",
-           methods = ["GET", "POST"]
-          )
+@app.route(
+        "/pay/agent/payment/" \
+        + "<currency_fph>/" \
+        + "<payee_fph>/" \
+        + "<payer_account_fph>/" \
+        + "<payee_account_fph>",
+        methods = ["GET", "POST"]
+     )
 @login_required
 def make_payment_between_selected_accounts(
+        currency_fph = None,
+        payee_fph = None,
         payer_account_fph = None,
         payee_account_fph = None
     ):
 
-    print_payments_session_variables() ### TESTSTUFF
+    print("^^^^^^^^^")
 
+    if currency_fph is None:
+        flash("Invalid payer currency in URL string")
+        return redirect("/home")
+    if payee_fph is None:
+        flash("Invalid payee in URL string")
+        return redirect("/home")
     if payer_account_fph is None:
         flash("Invalid payer account in URL string")
         return redirect("/home")
@@ -2207,15 +2115,35 @@ def make_payment_between_selected_accounts(
         flash("Invalid payee account in URL string")
         return redirect("/home")
 
-    print(">>> payer_account_fph = " + payer_account_fph)
+    print("*************")
+
+    currency_fph, \
+    currency_hrns, \
+    etype, \
+    m = identify_entity(currency_fph)
+    m = identify_entity(payer_account_fph)
+    if m:
+        flash(m)
+        return redirect("/home")
+    if currency_fph == "":
+        flash("Invalid payer currency in URL string")
+
+    payee_fph, \
+    payee_hrns, \
+    etype, \
+    m = identify_entity(payee_fph)
+    if m:
+        flash(m)
+        return redirect("/home")
+    if payee_fph == "":
+        flash("Invalid payee in URL string")
+
     payer_account_fph, \
     payer_account_hrns, \
     etype, \
     m = identify_entity(payer_account_fph)
-    print("<<< payer_account_fph = " + payer_account_fph)
     if m:
         flash(m)
-        print(m)
         return redirect("/home")
     if payer_account_fph == "":
         flash("No payer account in URL string")
@@ -2227,33 +2155,13 @@ def make_payment_between_selected_accounts(
     m = identify_entity(payee_account_fph)
     if m:
         flash(m)
-        print(m)
         return redirect("/home")
     if payee_account_fph == "":
         flash("No payee account in URL string")
         return redirect("/home")
 
-    # Clear out any existing session data relating to payments:
-    if "payee_identity_fph" in session:
-        payee_identity_fph = session["payee_identity_fph"]
-    if "payment_currency_fph" in session:
-        payment_currency_fph = session["payment_currency_fph"]
-    if "number_of_payer_accounts" in session:
-        number_of_payer_accounts = session["number_of_payer_accounts"]
-    if "number_of_payee_accounts" in session:
-        number_of_payee_accounts = session["number_of_payee_accounts"]
-    if "payer_account_fph" in session:
-        payer_account_fph = session["payer_account_fph"]
-    if "payee_account_fph" in session:
-        payee_account_fph = session["payee_account_fph"]
-
-    currency_fph, \
-    currency_hrns, \
-    currency_prefix, \
-    currency_suffix, \
-    default_account_name, \
-    stewards_list, \
-    m = get_currency_specific_properties(payment_currency_fph)
+    print("from: " + payer_account_hrns)
+    print("to: " + payee_account_hrns )
 
     # Hub operational mode (read from environment variable HUB_MODE)
     hub_mode = get_hub_mode()
@@ -2263,6 +2171,16 @@ def make_payment_between_selected_accounts(
 
     previous_page = session["previous_page"] # Ensure correct page sequence
     session["previous_page"] = page
+
+    print("%%%%%%%%%%%%%%%%%%%%")
+    print("previous_page = " + previous_page)
+
+    if previous_page != "select_account_combination_in_currency":
+        flash("Incorrect page succession")
+        return redirect("/home")
+
+    print("&&&&&&&&&&&&&&&&&&&&")
+
 
     primary_identity_fph, \
     primary_identity_hrns, \
@@ -2280,6 +2198,9 @@ def make_payment_between_selected_accounts(
         working_identity_hrns = primary_identity_hrns
     working_identity_type = etype_to_adtype(working_identity_type)
 
+    print("><><><><><><><><><")
+
+
     form = PaymentAccountPairForm()
     if form.validate_on_submit():
 
@@ -2288,10 +2209,10 @@ def make_payment_between_selected_accounts(
 
         amount = int(round(float(amount_entered)*100))
 
+
         m = payment(payer_account_fph, payee_account_fph, amount, annotation)
         if m:
             flash(m)
-            print(m)
             return redirect("/home")
 
         payer_currency_fph, \
@@ -2310,21 +2231,6 @@ def make_payment_between_selected_accounts(
             + integer_to_money_format(amount) \
             + currency_suffix
         )
-
-        # Clear out any existing session data relating to payments:
-        if "payee_identity_fph" in session:
-            session.pop("payee_identity_fph")
-        if "payment_currency_fph" in session:
-            session.pop("payment_currency_fph")
-        if "number_of_payer_accounts" in session:
-            session.pop("number_of_payer_accounts")
-        if "number_of_payee_accounts" in session:
-            session.pop("number_of_payee_accounts")
-        if "payer_account_fph" in session:
-            session.pop("payer_account_fph")
-        if "payee_account_fph" in session:
-            session.pop("payee_account_fph")
-
         return redirect("/home")
 
     return render_template(
@@ -2342,10 +2248,9 @@ def make_payment_between_selected_accounts(
         working_identity_type = working_identity_type,
         payer_account_fph = payer_account_fph,
         payer_account_hrns = payer_account_hrns,
-#        payee_account_known = payee_account_known,
+        payee_account_known = payee_account_known,
         payee_account_fph = payee_account_fph,
         payee_account_hrns = payee_account_hrns,
-        payee_identity_hrns = fph_to_hrns(payee_identity_fph),
         logged_in = logged_in,
         currency_prefix = currency_prefix,
         currency_suffix = currency_suffix,
@@ -2446,7 +2351,7 @@ def select_account_combination_in_currency(payee_identity_fph, currency_fph):
 @app.route("/select_payer_account/<payee_account_fph>",
            methods = ["GET", "POST"])
 @login_required
-def select_payer_account_(payee_account_fph):
+def select_payer_account(payee_account_fph):
 
     # Hub operational mode (read from environment variable HUB_MODE)
     hub_mode = get_hub_mode()

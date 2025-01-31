@@ -3,27 +3,23 @@
 {% block content %}
 
 <h2>create a new namespace</h2>
-<hr />
 
 <form action="" method="post" novalidate>
   {{ form.hidden_tag() }}
   <div>
     <div style="float:left; margin:2px;">
       {{ form.namespace_name.label }}<br />
-      {{ form.namespace_name(size=12, placeholder="name") }}
-    </div>
-    <div style="float:left; margin:2px;">
-      <br /><b>.</b>
+      {{ form.namespace_name(size=10, placeholder="name") }} <b>.</b>
     </div>
     <div style="float:left; margin:2px;">
       {{ form.parent_namespace_id.label }}<br />
-      {{ form.parent_namespace_id(size=30,
+      {{ form.parent_namespace_id(size=20,
       placeholder="parent namespace identifier") }}
     </div>
   </div>
   <div style="float:left; margin:2px;">
     {{ form.default_currency_id.label }}<br />
-    {{ form.default_currency_id(size=30,
+    {{ form.default_currency_id(size=20,
     placeholder="default currency identifier") }}
   </div>
   <p>

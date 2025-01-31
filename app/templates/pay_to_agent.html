@@ -4,10 +4,8 @@
 
 <h3>Make a payment to an agent</h3>
 
-{%  if hub_mode == "slate_simple" %}
-
 <p>
-  Paying from <b>identity</b> {{ working_identity_hrns }}
+  Paying from identity <b>{{ working_identity_hrns }}</b>
 </p>
 <form action="" method="post" autocomplete="off" novalidate>
   {{ form.hidden_tag() }}
@@ -17,23 +15,18 @@
   </p>
   {% else %}
   <p>
-    <b>{{ form.currency_id.label }}</b><br />
-    {{ form.currency_id(size=30) }}
-    <!--
+    {{ form.currency_id.label }}<br />
     <input
       type="text"
       name="currency_id"
-      value=""
+      value="{{ currency_fph }}"
       size="32"
       placeholder="Enter an identifier for the currency"
     />
-    -->
   </p>
   {% endif %}
   <p>
-    <b>{{ form.to_identity_id.label }}</b><br />
-    {{ form.to_identity_id(size=30) }}
-    <!--
+    {{ form.to_identity_id.label }}<br />
     <input
       type="text"
       name="to_identity_id"
@@ -41,10 +34,9 @@
       size="32"
       placeholder="Enter an identifier for the payee agent"
     />
-    -->
   </p>
   <p>
-    <b>{{ form.amount.label }}</b><br />
+    {{ form.amount.label }}<br />
     <input
       type="currency"
       name="amount"
@@ -56,32 +48,18 @@
       size="10"
       placeholder="Enter a payment value here"
     />
-
   </p>
   <p>
-    <b>{{ form.annotation.label }}</b><br />
-    {{ form.annotation(size=100) }}
+    {{ form.annotation.label }}<br />
+    {{ form.annotation(size=128) }}
   </p>
-
   <p>
+    <!--
     <input type="submit" value="pay">
-    <!--<b>{{ form.submit }}</b>-->
+    -->
+    {{ form.pay_agent() }}
   </p>
 </form>
 <hr />
-
-{% endif %}
-
-{% if hub_mode == "slate_normal" %}
-
-
-{% endif %}
-
-{% if hub_mode == "nests" %}
-
-
-{% endif %}
-
-
 
 {% endblock %}

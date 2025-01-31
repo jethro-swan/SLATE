@@ -1,0 +1,72 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<h3>Select the payer and payee accounts</h3>
+
+<form
+  name="SelectPayerAndPayeeAccountsForm"
+  method="POST"
+  action=""
+  autocomplete="off"
+  novalidate
+>
+{{ form.hidden_tag() }}
+{% if single_payer_option %}
+<p>
+  Paying from account <b>{{ single_payer_option }}</b> (belonging to
+  <b>{{ payee_hrns }})
+</p>
+{% else %}
+<p>
+  Select an account belong ing to <b>{{ working_identity_hrns }}</b> from which
+  to pay:
+</p>
+{{ form.payer_account.label }}
+<p>
+  {% for payer_account in payer_account_options %}
+  <input
+    type="radio"
+    name="payer"
+    value="{{ payer_account.fph }}"
+    id="{{ payer_account.fph }}"
+  />
+  <label for="{{ payer_account.fph }}">
+    <b>{{ payer_account.hrns }}</b>
+  </label>
+  <br />
+  {% endfor %}
+</p>
+{% endif %}
+<br />
+{% if single_payee_option %}
+<p>
+  Paying to account <b>{{ single_payee_option_hrns }}</b> (belonging to
+  <b>{{ payee_hrns }}</b>)
+</p>
+{% else %}
+<p>
+  Select an account belonging to <b>{{ payee_hrns }}</b> from which to pay:
+</p>
+{{ form.payee_account.label }}
+<p>
+  {% for payee_account in payee_account_options %}
+  <input
+    type="radio"
+    name="payee"
+    value="{{ payee_account.fph }}"
+    id="{{ payee_account.fph }}"
+  />
+  <label for="{{ payee_account.fph }}">
+    <b>{{ payee_account.hrns }}</b>
+  </label>
+  {% endfor %}
+</p>
+{% endif %}
+<br />
+<p>{{ form.select_accounts() }}</p>
+</form>
+
+<hr />
+
+{% endblock %}

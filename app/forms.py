@@ -18,6 +18,33 @@ from wtforms import TextAreaField, SelectField, RadioField, HiddenField
 from wtforms import IntegerField, DecimalField, FloatField
 from wtforms.validators import DataRequired, InputRequired, Email
 from wtforms.validators import Length, EqualTo
+from flask_wtf.file import FileField, FileRequired, FileAllowed
+
+
+
+#  --------------------------------------------------------------------
+
+class FileUploadForm(FlaskForm):
+    entity_type     = RadioField(
+                        "entity type",
+                        choices = [
+                                    ("namespaces", "namespaces"),
+                                    ("login_identities", "login identities"),
+                                    ("aliases", "aliases"),
+                                    ("currencies", "currencies"),
+                                    ("accounts", "accounts"),
+                                    ("payments", "payments")
+                                  ]
+                      )
+    csv_file        = FileField(
+                        "CSV file",
+                        validators = [
+                            #FileRequired(),
+                            FileAllowed(["csv"])
+                        ]
+                      )
+    upload_file     = SubmitField("upload CSV file")
+
 
 # payments --------------------------------------------------------------------
 
@@ -47,6 +74,48 @@ class SpecifyPayeeAccountForm(FlaskForm):
                         validators=[DataRequired("required")]
                       )
     submit          = SubmitField("list the accounts from which you can pay")
+
+
+class SpecifyPayeeAgentAndCurrencyForm(FlaskForm):
+    to_identity_id  = StringField(
+                        "payee agent identifier",
+                        validators=[DataRequired("required")]
+                      )
+    currency_id     = StringField(
+                        "currency identifier",
+                        validators=[DataRequired("required")]
+                      )
+    pay_agent       = SubmitField("identify options")
+
+
+class SelectPayerAndPayeeAccountsForm(FlaskForm):
+    payer_account   = RadioField(
+                          "select payer account",
+                          choices = [],
+                          validators=[DataRequired("required")]
+                      )
+    payee_account   = RadioField(
+                          "select payee account",
+                          choices = [],
+                          validators=[DataRequired("required")]
+                      )
+    select_accounts = SubmitField("select account pair")
+
+
+
+#class PaymentToAccountForm(Form):
+class PaymentAccountPairForm(FlaskForm):
+    amount          = StringField(
+                          "amount",
+                          validators=[DataRequired("required")]
+                      )
+    annotation      = TextAreaField("annotation")
+    submit          = SubmitField("pay")
+    # The remaining fields are in the HTML template.
+
+
+
+
 
 
 class SpecifyPayeeAgentForm(FlaskForm):
@@ -94,7 +163,7 @@ class PaymentToIdentityForm(FlaskForm):
 
 class CurrencyCreateForm(FlaskForm):
     currency_name   = StringField(
-                        "currency name",
+                        "name",
                         validators=[DataRequired("required")]
                       )
     namespace_id    = StringField(
@@ -143,7 +212,7 @@ class CurrencyCreateForm(FlaskForm):
 
 class AccountCreateForm(FlaskForm):
     account_name    = StringField(
-                        "account name",
+                        "name",
                         validators=[DataRequired("required")]
                       )
     namespace_id    = StringField(
@@ -164,11 +233,11 @@ class AccountCreateForm(FlaskForm):
 
 class NamespaceCreateForm(FlaskForm):
     namespace_name      = StringField(
-                            "namespace name",
+                            "name",
                             validators=[DataRequired("required")]
                           )
     parent_namespace_id = StringField(
-                            "parent namespace identifier",
+                            "parent namespace",
                             validators=[DataRequired("required")]
                           )
     default_currency_id = StringField(
@@ -186,7 +255,7 @@ class SecidCreateForm(FlaskForm):
                         validators=[DataRequired("required")]
                       )
     parent_namespace_id = StringField(
-                       "parent namespace identifier",
+                       "parent namespace",
                        validators=[DataRequired("required")]
                       )
     create_secid = SubmitField("create alias")

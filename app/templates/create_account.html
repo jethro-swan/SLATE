@@ -9,27 +9,21 @@
   <div>
     <div style="float:left; margin:2px;">
     {{ form.account_name.label }}<br />
-    {{ form.account_name(size=12, placeholder="name") }}
-    </div>
-    <div style="float:left; margin:2px;">
-      <br />.
+    {{ form.account_name(size=10, placeholder="name") }} <b>.</b>
     </div>
     <div style="float:left; margin:2px;">
       {{ form.namespace_id.label }}<br />
-      {{ form.namespace_id(size=30, placeholder="parent namespace") }}
+      {{ form.namespace_id(size=20, placeholder="parent namespace") }}
+    </div>
+    <div style="float:left; margin:2px;">
+      {{ form.currency_id.label }}<br />
+      {{ form.currency_id(size=20, placeholder="currency of account") }}
+    </div>
+    <div class="clear-both"></div>
+    <div style="float:left; margin:2px;">
+      {{ form.create_account() }}
     </div>
   </div>
-  <div>
-    {{ form.currency_id.label }}<br />
-    {{ form.currency_id(size=30, placeholder="currency of account") }}
-  </div>
-  <div>
-    <p>
-      {{ form.create_account() }}
-    </p>
-  </div>
-
-  <hr />
 
   <p>
     {% for error in form.account_name.errors %}
@@ -41,7 +35,5 @@
   </p>
 
 </form>
-
-<hr />
 
 {% endblock %}

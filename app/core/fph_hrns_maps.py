@@ -107,6 +107,10 @@ save_fph_to_map = hrns_to_fph # alias
 #------------------------------------------------------------------------------
 
 def delete_fph_from_map(fph):
+
+    if fph is None: ## 2025-01-212
+        fph = ""
+
     hrns = dbm_delete(FPH_TO_HRNS_MAP, fph)
     dbm_delete(FPH_TO_HRNS_MAP, fph)
     dbm_delete(HRNS_C_FPH_MAP, hrns)

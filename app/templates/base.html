@@ -104,11 +104,11 @@
 
     {% if current_user.is_authenticated %}
     You are logged in as
-    <span class="dark-green-bold">{{ primary_identity_hrns }}</span>
+    <b>{{ primary_identity_hrns }}</b>
     ({{ primary_identity_type }})
     <hr class="dashed" />
     Currently acting as
-    <span class="dark-green-bold" >{{ working_identity_hrns }}</span>
+    <b>{{ working_identity_hrns }}</b>
     ({{ working_identity_type }})<!--<br />
     [ <b><a href="/create_secid">create new alias</a></b> ]
     <br />-->
@@ -181,11 +181,28 @@
           </div>
         {% endif %}
 
+        {% if page == "pay_agent" %}
+          <div class="mba">
+            <a class="mba" href="/pay/agent">
+              pay agent
+            </a>
+          </div>
+        {% else %}
+          <div class="mb">
+            <a class="mb" href="/pay/agent">
+              pay agent
+            </a>
+          </div>
+        {% endif %}
+
+
+
+<!--
         &nbsp;&nbsp;
         <b><a href="/home/full">all payment options</a></b>
         &nbsp;|&nbsp;
         <b><a href="/home/new">new home</a></b>
-
+-->
       {% endif %}
 
     {% endif %}

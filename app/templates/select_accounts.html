@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<h3>Select the payer and payee accounts</h3>
+
+<form action="" method="post" novalidate>
+{{ form.hidden_tag() }}
+<p>
+  Select an account belonging to <b>{{ working_identity_hrns }}</b> from which
+  to pay:
+</p>
+{{ form.payer_account.label }}<br />
+{{ form.payer_account }}
+<br />
+<p>
+  Select an account belonging to <b>{{ payee_hrns }}</b> from which to pay:
+</p>
+<p>
+{{ form.payee_account.label }}<br />
+{{ form.payee_account }}<br />
+{% for error in form.payee_account.errors %}
+</p>
+<br />
+<p>{{ form.select_accounts() }}</p>
+</form>
+<hr />
+
+{% endblock %}

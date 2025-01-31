@@ -53,6 +53,7 @@ def create_slate_session_db():
                 session_id TEXT PRIMARY KEY,
                 currencies_available BLOB,
                 payment_options BLOB,
+                payer_accounts_available BLOB,
                 payee_accounts_available BLOB
             );
             """
@@ -70,7 +71,7 @@ def session_save_currencies_available(currencies_available, payment_options):
         if result is not None:
             cursor.close()
             return
-        session_id = session["_id"]
+        session_id = session["_id"] # from session dictionary
         cursor.execute(
             """
             INSERT INTO slate_session (
@@ -81,7 +82,7 @@ def session_save_currencies_available(currencies_available, payment_options):
             VALUES (?, ?, ?)
             """,
             (
-                session["_id"],
+                session["_id"], # from session dictionary
                 pickle.dumps(currencies_available),
                 pickle.dumps(payment_options)
             )
@@ -91,31 +92,7 @@ def session_save_currencies_available(currencies_available, payment_options):
     return
 
 
-def session_retrieve_payment_options():
-    with sqlite3.connect(SLATE_SESSION_DB) as conn:
-        cursor = conn.cursor()
-        cursor.execute(
-            """
-            SELECT currencies_available, payment_options
-            FROM slate_session
-            WHERE session_id = ?
-            """,
-            (session["_id"],)
-        )
-        result = cursor.fetchone()
-        cursor.execute(
-            "DELETE FROM slate_session WHERE session_id = ?",
-            (session["_id"],)
-        )
-        cursor.close()
-        if result is None:
-            return [], {}, "Payment options unavailable"
-        currency_options = pickle.loads(result[0])
-        payment_options = pickle.loads(result[1])
-    return currency_options, payment_options, ""
-
-
-def session_save_payee_accounts_available(payee_accounts_available):
+def session_save_payment_options(payer_account_options, payee_account_options):
     with sqlite3.connect(SLATE_SESSION_DB) as conn:
         cursor = conn.cursor()
         cursor.execute("SELECT session_id FROM slate_session")
@@ -123,53 +100,91 @@ def session_save_payee_accounts_available(payee_accounts_available):
         if result is not None:
             cursor.close()
             return
-        session_id = session["_id"]
+        session_id = session["_id"] # from session dictionary
         cursor.execute(
             """
             INSERT INTO slate_session (
                 session_id,
+                payer_accounts_available,
                 payee_accounts_available
             )
-            VALUES (?, ?)
+            VALUES (?, ?, ?)
             """,
             (
-                session["_id"],
-                pickle.dumps(payee_accounts_available)
+                session["_id"], # from session dictionary
+                pickle.dumps(payer_account_options),
+                pickle.dumps(payee_account_options)
             )
         )
         conn.commit()
         cursor.close()
     return
 
-
-def session_retrieve_payee_accounts_available():
+#==============================================================================
+#
+def session_retrieve_payment_options():
     with sqlite3.connect(SLATE_SESSION_DB) as conn:
         cursor = conn.cursor()
         cursor.execute(
             """
-            SELECT payee_accounts_available
+            SELECT payer_accounts_available, payee_accounts_available
             FROM slate_session
             WHERE session_id = ?
             """,
-            (session["_id"],)
+            (session["_id"],) # from session dictionary
         )
         result = cursor.fetchone()
-        cursor.execute(
-            "DELETE FROM slate_session WHERE session_id = ?",
-            (session["_id"],)
-        )
+#        cursor.execute(
+#            "DELETE FROM slate_session WHERE session_id = ?",
+#            (session["_id"],) # from session dictionary
+#        )
         cursor.close()
         if result is None:
-            return [], {}, "No payee accounts available"
-        payee_accounts_available = pickle.loads(result[0])
-    return payee_accounts_available, ""
+            return {}, {}, "Payment options unavailable"
+        if result[0] is None:
+            payer_account_options = []
+        else:
+            payer_account_options = pickle.loads(result[0])
+        if result[1] is None:
+            payee_account_options = []
+        else:
+            payee_account_options = pickle.loads(result[1])
+    return payer_account_options, payee_account_options, ""
+
+#------------------------------------------------------------------------------
+
+#def session_retrieve_payee_accounts_available():
+#    with sqlite3.connect(SLATE_SESSION_DB) as conn:
+#        cursor = conn.cursor()
+#        cursor.execute(
+#            """
+#            SELECT payee_accounts_available
+#            FROM slate_session
+#            WHERE session_id = ?
+#            """,
+#            (session["_id"],) # from session dictionary
+#        )
+#        result = cursor.fetchone()
+#        cursor.execute(
+#            "DELETE FROM slate_session WHERE session_id = ?",
+#            (session["_id"],)
+#        )
+#        cursor.close()
+#        if result is None:
+#            return [], {}, "No payee accounts available"
+#        payee_accounts_available = pickle.loads(result[0])
+#    return payee_accounts_available, ""
 
 
+#==============================================================================
+#
 def remove_slate_session_data():
     with sqlite3.connect(SLATE_SESSION_DB) as conn:
         cursor = conn.cursor()
         cursor.execute(
             "DELETE FROM slate_session WHERE session_id = ?",
-            (session["_id"],)
+            (session["_id"],) # from session dictionary
         )
     return
+
+#==============================================================================

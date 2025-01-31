@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<h3>Make a payment to an agent</h3>
+
+<form action="" method="post" autocomplete="off" novalidate>
+  {{ form.hidden_tag() }}
+  <p>
+    {{ form.to_identity_id.label }}<br />
+    {{ form.to_identity_id(size=30) }}<br />
+  </p>
+  <p>
+    {{ form.currency_id.label }}<br />
+    {{ form.currency_id(size=30) }}<br />
+  </p>
+  <p>
+    {{ form.pay_agent() }}
+  </p>
+</form>
+
+{% endblock %}

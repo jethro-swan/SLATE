@@ -2,7 +2,7 @@
 
 {% block content %}
 
-<h3>Select the account from which to pay</h3>
+<h3>Select the account to which to pay</h3>
 
 <p>
   Paying to identity <b>{{ payee_identity_hrns }}</b>
@@ -10,10 +10,10 @@
 </p>
 
 <ul>
-{% for payer_account in payer_account_options %}
+{% for payee_account in payee_account_options %}
 <li>
-  <a href="/pay/select/payee/{{ payer_account.fph }}">
-    <b>{{ payer_account.hrns }}</b>
+  <a href="/pay/agent/payment/{{ payer_account_fph }}/{{ payee_account.fph }}">
+    <b>{{ payee_account.hrns }}</b>
   </a>
 </li>
 {% endfor %}

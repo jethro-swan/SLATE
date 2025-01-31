@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<p>
+  Paying<br />
+  <ul>
+    <li>
+      from account <b>{{ payer_account_hrns }}</b>
+    </li>
+    <li>
+      to account <b>{{ payee_account_hrns }}</b><br />
+      belonging to identity {{ payee_identity_hrns }}
+    </li>
+    <li>
+      in currency <b>{{ currency_hrns }}</b>
+    </li>
+  </ul>
+</p>
+
+<form action="" method="post" novalidate>
+  {{ form.hidden_tag() }}
+  <p>
+    {{ form.amount.label }}<br />
+    <input
+      type="currency"
+      name="amount"
+      value="0.00"
+      id="pence"
+      min="0.00"
+      max="9999.99"
+      step="0.01"
+      size="10"
+      placeholder="Enter a payment value here"
+    />
+  </p>
+  <p>
+    {{ form.annotation.label }}<br />
+    {{ form.annotation(size=128) }}
+  </p>
+  <!--
+  <p>
+    <input type="submit" value="PAY">
+  </p>
+  -->
+  <p>
+    {{ form.submit() }}
+  </p>
+</form>
+
+
+{% endblock %}

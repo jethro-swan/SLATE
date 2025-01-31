@@ -2,30 +2,38 @@
 
 {% block content %}
 
-<h3>create a set of entities from an uploaded CSV file</h3>
+<h3>Bulk actions from an uploaded CSV file</h3>
+
+<p>
+  Here you can upload a CSV file to
+<ul>
+  <li>create a set of entities from an uploaded CSV file
+    <ul>
+      <li><b>namespaces</b></li>
+      <li><b>login identities</b> (a.k.a. <b>primary identities</b>)</li>
+      <li><b>aliases</b> (a.k.a. <b>secondary identities</b>)</li>
+      <li><b>currencies</b></li>
+      <li><b>accounts</b></li>
+    </ul>
+    or
+  </li>
+  <li>create a set of payments in a specified <b>currency</b></li>
+</ul>
+</p>
+<hr />
 
 <form method="POST" action="" enctype="multipart/form-data">
-  <fieldset>
-    <legend>Entity type to be created</legend>
-    <p><input type="radio" name="entity_type" id="namespaces" />
-    <label for="namespaces"></label></p>
-    <p><input type="radio" name="entity_type" id="login_identities" />
-    <label for="login_identities"></label></p>
-    {% if mode == rich %}
-    <p><input type="radio" name="entity_type" id="aliases" />
-    <label for="aliases"></label></p>
-    {% endif %}
-    <p><input type="radio" name="entity_type" id="currencies" />
-    <label for="currencies"></label></p>
-    {% if mode == rich %}
-    <p><input type="radio" name="entity_type" id="accounts" />
-    <label for="accounts"></label></p>
-    {% endif %}
-    <p><input type="radio" name="entity_type" id="payments" />
-    <label for="payments"></label></p>
-  </fieldset>
-  <p><input type="file" name="csv_file" accept=".csv"></p>
-  <p><input type="submit" value="upload CSV file"></p>
+  <p>
+    <b>{{ form.entity_type.label }}</b><br />
+    {{ form.entity_type() }}
+  </p>
+  <p>
+    <b>{{ form.csv_file.label }}</b><br />
+    {{ form.csv_file() }}<br /><br />
+  </p>
+  <p>
+    {{ form.upload_file() }}
+  </p>
 </form>
 
 
