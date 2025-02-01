@@ -2048,7 +2048,7 @@ def select_payer_account():
     if (len(payer_accounts_available) == 1):
         payer_account_fph = payer_accounts_available[0]
         session["payer_account_fph"] = payer_account_fph
-        return redirect("/pay/select/payee/<payer_account_fph>")
+        return redirect("/pay/select/payee/" + payer_account_fph)
     #
     # Otherwise we need to select the payer *account* from a list.
     payer_account_options = []
@@ -3100,12 +3100,9 @@ def create_account(owner_fph):
     hub_mode = get_hub_mode()
 
     page = "create_account"
-    previous_page = session["previous_page"]    # Add these two lines to all
-    session["previous_page"] = page             # endpoint handlers. Some (but
-                                                # but by no means all) screens
-                                                # should be able to follow only
-                                                # from a limited set of previous
-                                                # screens.
+    previous_page = session["previous_page"]
+    session["previous_page"] = page
+
     group = "home" # Used to control top menu behaviour.
 
     namespace_steward = False
@@ -3188,11 +3185,7 @@ def create_account(owner_fph):
             )
         if m:
             flash(m)
-        flash(
-            "A new account has been created, identified as \n" \
-            + account_hrns + " [" + account_fph + "]"
-        )
-        #return redirect("/create_account")
+        flash("A new account has been created, identified as " + account_hrns)
         return redirect("/home")
 
     return render_template(

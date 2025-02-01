@@ -15,13 +15,16 @@ This is the simplified SLATE interface, listing only the *identities* and
     <!--
     <th>unit</th>
     -->
+    <th>account</th>
     <th>balance</th>
   </tr>
   {% for identity in identities %}<!-- list of dictionaries -->
   {% for account in identity.accounts %}
   <tr>
     <td align="left">
-      <b>{{ identity.hrns }}</b>
+      <a href="/identity/change/{{ identity.fph }}">
+        <b>{{ identity.hrns }}</b>
+      </a>
     </td>
     <td align="left">
       {% if account.primid_is_currency_steward %}
@@ -31,6 +34,11 @@ This is the simplified SLATE interface, listing only the *identities* and
       {% else %}
         <b>{{ account.currency_hrns }}</b>
       {% endif %}
+    </td>
+    <td align="left">
+      <a href="/account/{{ account.fph }}/00000000000000000000000000000000">
+        <b>{{ account.hrns }}</b>
+      </a>
     </td>
     <!--
     <td>
@@ -45,7 +53,7 @@ This is the simplified SLATE interface, listing only the *identities* and
       <b>{{ account.balance }}</b>
     </td>
     <td align="left">
-      <a href="/pay/agent/{{ account.fph }}">
+      <a href="/account/{{ account.fph }}/00000000000000000000000000000000">
         <b>pay</b>
       </a>
     </td>
@@ -53,6 +61,28 @@ This is the simplified SLATE interface, listing only the *identities* and
   {% endfor %}
   {% endfor %}
 </table>
+<ul>
+  <li class="compact">
+    <p class="footnote">
+      Click on any entry in the <b>identity</b> column to change to that
+      working identity.
+    </p>
+  </li>
+  <li class="compact">
+    <p class="footnote">
+      Click on any entry in the <b>account</b> column to to make a payment
+      <em>from</em> that <b>account</b>.
+    </p>
+  </li>
+  <li class="compact">
+    <p class="footnote">
+      If you know only the <b>identity</b> of the <em>payee</em> and the
+      <b>currency</b> in which to pay, click on the <em>pay to agent</em>
+      button above. This will show you the options <em>from</em> and
+      <em>to</em> which to pay.
+    </p>
+  </li>
+</ul>
 <hr />
 
 <a href="/create_namespace"><b>create new namespace</b></a>

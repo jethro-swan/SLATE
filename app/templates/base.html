@@ -109,9 +109,7 @@
     <hr class="dashed" />
     Currently acting as
     <b>{{ working_identity_hrns }}</b>
-    ({{ working_identity_type }})<!--<br />
-    [ <b><a href="/create_secid">create new alias</a></b> ]
-    <br />-->
+    ({{ working_identity_type }})
     <hr class="dashed" />
     {% endif %}
 
@@ -147,17 +145,18 @@
 
         {% if page == "pay_agent" %}
           <div class="mba">
-            make a payment
+            pay to agent
           </div>
         {% else %}
           <div class="mb">
-            <a class="mb" href="/pay/agent/{{ working_identity_fph }}">
-              make a payment
+            <a class="mb" href="/pay/agent">
+              pay to agent
             </a>
           </div>
         {% endif %}
 
-
+        &nbsp;|
+        <b><a href="/create_secid">create new alias</a></b>
 
       {% endif %}
 
