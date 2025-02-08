@@ -128,21 +128,7 @@ class SpecifyPayeeAgentForm(FlaskForm):
                         "payee agent identifier",
                         validators=[DataRequired("required")]
                       )
-    currency_id     = StringField(
-                        "currency identifier",
-                        validators=[DataRequired("required")]
-                      )
-    amount          = StringField(
-    #amount          = DecimalField(
-    #amount          = FloatField(
-    #amount          = IntegerField(
-                          "amount",
-                          #places=2,
-                          validators=[DataRequired("required")]
-                      )
-    annotation      = TextAreaField("annotation")
-#    submit          = SubmitField("list the accounts from which you can pay")
-    submit          = SubmitField("pay")
+    submit          = SubmitField("specify payee identity")
 
 
 
@@ -227,7 +213,7 @@ class AccountCreateForm(FlaskForm):
                         "account currency",
                         validators=[DataRequired("required")]
                       )
-    create_account   = SubmitField("create account")
+    create_account   = SubmitField("create pairing")
 
 #------------------------------------------------------------------------------
 

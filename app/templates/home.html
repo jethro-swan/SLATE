@@ -10,13 +10,16 @@ This is the simplified SLATE interface, listing only the *identities* and
 
 <table>
   <tr>
-    <th>identity</th>
-    <th>currency</th>
+    <td class="h"><b>identity</b></td>
+    <td class="h">+</td>
+    <td class="h"><b>currency</b></td>
     <!--
     <th>unit</th>
     -->
-    <th>account</th>
-    <th>balance</th>
+    <!--
+    <td class="h"><b>pairing</b> (<b>account</b>)</td>
+    -->
+    <td class="h"><b>balance</b></td>
   </tr>
   {% for identity in identities %}<!-- list of dictionaries -->
   {% for account in identity.accounts %}
@@ -24,6 +27,11 @@ This is the simplified SLATE interface, listing only the *identities* and
     <td align="left">
       <a href="/identity/change/{{ identity.fph }}">
         <b>{{ identity.hrns }}</b>
+      </a>
+    </td>
+    <td align="left">
+      <a href="/account/{{ account.fph }}/0/{{ identity.fph }}">
+        <b>*</b>
       </a>
     </td>
     <td align="left">
@@ -35,11 +43,13 @@ This is the simplified SLATE interface, listing only the *identities* and
         <b>{{ account.currency_hrns }}</b>
       {% endif %}
     </td>
+    <!--
     <td align="left">
       <a href="/account/{{ account.fph }}/00000000000000000000000000000000">
         <b>{{ account.hrns }}</b>
       </a>
     </td>
+    -->
     <!--
     <td>
       {{ account.prefix }}{{ account.suffix }}
@@ -53,13 +63,32 @@ This is the simplified SLATE interface, listing only the *identities* and
       <b>{{ account.balance }}</b>
     </td>
     <td align="left">
+      <!--
       <a href="/account/{{ account.fph }}/00000000000000000000000000000000">
+      -->
+      <a href="/pay/from/{{ account.fph }}">
         <b>pay</b>
       </a>
     </td>
   </tr>
   {% endfor %}
   {% endfor %}
+  <!--
+  <tr>
+    <td>
+
+    </td>
+    <td>
+
+    </td>
+    <td>
+      Click on any <em>pairing</em> in this column to make a payment.
+    </td>
+    <td>
+
+    </td>
+  </tr>
+  -->
 </table>
 <ul>
   <li class="compact">
@@ -70,8 +99,20 @@ This is the simplified SLATE interface, listing only the *identities* and
   </li>
   <li class="compact">
     <p class="footnote">
-      Click on any entry in the <b>account</b> column to to make a payment
-      <em>from</em> that <b>account</b>.
+      Any entry in the <b>currency</b> column will appear as link if you are
+      one of its <em>stewards</em>.
+    </p>
+  </li>
+  <li class="compact">
+    <p class="footnote">
+      Click on any entry in the <b>pairing</b> (<b>account</b>) column to make
+      a payment.
+    </p>
+    <p class="footnote">
+      Please note that any such <b>pairing</b> can be identified uniquely by
+      its <b>account</b> identifier string. This provides the convenient
+      <u>option</u> of a unique identifier for the <b>pairing</b>, something
+      that can simplify payments in many circumstances.
     </p>
   </li>
   <li class="compact">
@@ -85,9 +126,9 @@ This is the simplified SLATE interface, listing only the *identities* and
 </ul>
 <hr />
 
-<a href="/create_namespace"><b>create new namespace</b></a>
+<a href="/create_namespace"><b>new namespace</b></a>
 |
-<a href="/create_currency"><b>create new currency</b></a>
+<a href="/create_currency"><b>new currency</b></a>
 
 {% endif %}
 

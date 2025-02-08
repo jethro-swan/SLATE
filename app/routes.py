@@ -36,6 +36,7 @@ from app.core.slate_core import get_hub_mode
 
 from app.core.slate_session import create_slate_session_db
 from app.core.slate_session import session_save_currencies_available
+from app.core.slate_session import session_retrieve_currencies_available
 #from app.core.slate_session import retrieve_currency_options
 from app.core.slate_session import session_save_payment_options
 from app.core.slate_session import session_retrieve_payment_options
@@ -1039,7 +1040,7 @@ def home():
         stewardships = stewardships
      )
 
-# ==============================================================================
+#==============================================================================
 # Payment optionspage (first version).
 #
 # This is an alternative view of the payment options available to that shown in
@@ -1358,7 +1359,6 @@ def currency_options():
             if not (c in currencies_list):
                 currencies_list.append(c)
 
-
             currencies_available.append(c_fph)
 
             # For the "/account/options" page we need a full dictionary of the
@@ -1388,6 +1388,11 @@ def currency_options():
 
             payment_options.append(p)
 
+            #print("currency available: " + fph_to_hrns(c_fph))
+
+            #print("payment option: ", end="")
+            #print(p)
+
     # We now have a list of *currencies* (each as a dictionary to be passed to
     # the "/currency/options" view).
     #
@@ -1400,6 +1405,9 @@ def currency_options():
     # to use the Flask  session[ ]  dictionary.
     session_save_currencies_available(currencies_available, payment_options)
     #session["payment_options"] = pickle.dumps(payment_options)
+
+    #print("session_save_currencies_available( ) done")
+
 
     # Although the *currency* selected is passed via the URL slug, we must
     # still be able to check that it is a valid option for the *agent* in this
@@ -1424,8 +1432,7 @@ def currency_options():
         working_identity_fph = working_identity_fph,
         working_identity_hrns = working_identity_hrns,
         working_identity_type = working_identity_type,
-        # List of *currencies* available:
-        currencies_list = currencies_list
+        currencies_list = currencies_list # list of *currencies* available
      )
 
 #------------------------------------------------------------------------------
@@ -1440,11 +1447,6 @@ def account_options(currency_fph):
     # Hub operational mode (read from environment variable HUB_MODE)
     hub_mode = get_hub_mode()
 
-#    print("currency_fph passed in URL is " + currency_fph)
-
-    hub_mode = get_hub_mode()   # This is read from an environment variable
-                                # configured at installation time.
-
     page = "payment_options"
     previous_page = session["previous_page"]
     session["previous_page"] = page
@@ -1453,9 +1455,23 @@ def account_options(currency_fph):
 
     currencies_available, \
     payment_options_list, \
-    m = session_retrieve_payment_options()
+    m = session_retrieve_currencies_available()
+    if m:
+        flash(m)
     if m == "Payment options unavailable":
+        #flash(m)
         return redirect("/currency/options")
+    #m = session_retrieve_payment_options()
+
+    #print("session_retrieve_currencies_available() done")
+
+    #for c_fph in currencies_available:
+    #    print("currency available: " + fph_to_hrns(c_fph))
+
+    #for p in payment_options_list:
+    #    print("payment option: ", end="")
+    #    print(p)
+
 
     currency_selected_hrns = fph_to_hrns(currency_fph)
 
@@ -1518,10 +1534,22 @@ def account_options(currency_fph):
 # or
 #   /pay_identity
 
-@app.route("/account/<payer_account_fph>/<payee_account_fph>",
+@app.route("/account/<payer_account_fph>/<payee_account_fph>/<owner_fph>",
            methods = ["GET", "POST"])
 @login_required
-def account(payer_account_fph, payee_account_fph):
+def account(payer_account_fph, payee_account_fph, owner_fph = None):
+
+    if owner_fph is not None:
+        account_owner_fph, \
+        account_owner_hrns, \
+        etype, \
+        m = identify_entity(owner_fph)
+        if m:
+            flash(m)
+            return redirect("/home")
+        if account_owner_fph == "":
+            flash("Invalid account owner in URL")
+            return redirect("/home")
 
     # Hub operational mode (read from environment variable HUB_MODE)
     hub_mode = get_hub_mode()
@@ -1529,13 +1557,8 @@ def account(payer_account_fph, payee_account_fph):
     group = "home" # Used to control top menu behaviour.
     logged_in = current_user.is_authenticated
 
-
-    previous_page = session["previous_page"]    # Add these two lines to all
-    session["previous_page"] = page             # endpoint handlers. Some (but
-                                                # but by no means all) screens
-                                                # should be able to follow only
-                                                # from a limited set of previous
-                                                # screens.
+    previous_page = session["previous_page"]
+    session["previous_page"] = page
 
     # The *primid* (or its alias *secid*) logged in currently:
     primary_identity_fph, \
@@ -1575,7 +1598,7 @@ def account(payer_account_fph, payee_account_fph):
     payee_account_known = False
     if payee_account_fph is not None:
         # A pseudo-FPH is used where only the payer account FPH is provided:
-        if payee_account_fph == "00000000000000000000000000000000":
+        if payee_account_fph == "0": # (obviously not a valid FPH)
             payee_account_fph = ""
             payee_account_hrns = ""
         else:
@@ -1691,6 +1714,7 @@ def account(payer_account_fph, payee_account_fph):
         working_identity_fph = working_identity_fph,
         working_identity_hrns = working_identity_hrns,
         working_identity_type = working_identity_type,
+        account_owner_hrns = account_owner_hrns,
         payer_account_fph = payer_account_fph,
         payer_account_hrns = payer_account_hrns,
         payee_account_known = payee_account_known,
@@ -1791,8 +1815,159 @@ def print_payments_session_variables():
             print()
 
 
+
 #=============================================================================
-# Make a payment to an *agent*+*currency* rather than to an *account*.
+# Make a payment to an *agent*+*currency* rather than to an *account*. This
+# endpoint is reached when a "pay" link is clicked in the "/home" screen table
+# (in )"slate_simple" mode).
+#
+@app.route("/pay/from/<payer_account_fph>", methods = ["GET", "POST"])
+@login_required
+def pay_from_account_to_agent(payer_account_fph = None):
+
+    if payer_account_fph is None:
+        flash("No payer account specified in URL")
+        return redirect("/home")
+    payer_account_fph, \
+    payer_account_hrns, \
+    etype, \
+    m = identify_entity(payer_account_fph)
+    if m:
+        flash(m)
+        return redirect("/home")
+    if payer_account_fph == "":
+        flash("Invalid FPH in URL")
+        return redirect("/home")
+    if etype != "account":
+        flash("Entity type of FPH in URL is not account")
+        return redirect("/home")
+
+    #payment_currency_fph = get_account_currency(payer_account_fph)
+    payment_currency_fph, \
+    payer_account_owner_fph, \
+    payer_account_balance, \
+    m = get_account_specific_properties(payer_account_fph)
+
+    if payer_account_balance < 0:
+        payer_account_balance_negative = True
+    else:
+        payer_account_balance_negative = False
+
+    # Hub operational mode (read from environment variable HUB_MODE)
+    hub_mode = get_hub_mode()
+    page = "payer_currency_known"
+    group = "home"
+    logged_in = current_user.is_authenticated
+
+    previous_page = session["previous_page"] # Ensure correct page sequence
+    session["previous_page"] = page
+
+    #print("previous_page = " + previous_page)
+
+    if (previous_page != "home") and (previous_page != "payer_currency_known"):
+        flash("Incorrect page succession")
+        return redirect("/home")
+
+    primary_identity_fph, \
+    primary_identity_hrns, \
+    primary_identity_type, \
+    m = identify_entity(current_user.get_id())
+
+    if "working_identity" in session:
+        working_identity_fph, \
+        working_identity_hrns, \
+        working_identity_type, \
+        m = identify_entity(session["working_identity"])
+    else:
+        working_identity_fph = primary_identity_fph
+        session["working_identity"] = working_identity_fph
+        working_identity_hrns = primary_identity_hrns
+        working_identity_type = primary_identity_type
+    working_identity_type = etype_to_adtype(working_identity_type)
+
+    # (1) Clear any existing data from the session dictionary:
+    if "payee_identity_fph" in session:
+        session.pop("payee_identity_fph")
+    if "payment_currency_fph" in session:
+        session.pop("payment_currency_fph")
+    if "number_of_payer_accounts" in session:
+        session.pop("number_of_payer_accounts")
+    if "number_of_payee_accounts" in session:
+        session.pop("number_of_payee_accounts")
+    if "payer_account_fph" in session:
+        session.pop("payer_account_fph")
+    if "payee_account_fph" in session:
+        session.pop("payee_account_fph")
+    # (2) Clear any existing data from the session database:
+    remove_slate_session_data()
+
+    session["payment_currency_fph"] = payment_currency_fph
+    session["payer_account_fph"] = payer_account_fph
+
+
+    # We now know both the payer *account* and the payment *currency*, so now
+    # we need to acquire the *identity* form data:
+    form = SpecifyPayeeAgentForm()
+    if form.validate_on_submit():
+
+        payee_identity_fph, \
+        payee_identity_hrns, \
+        etype, \
+        m = identify_entity(form.to_identity_id.data) # HRNS or FPH
+        if m:
+            flash(m)
+            return redirect("/home")
+        if payee_identity_fph == "":
+            flash("The identity is invalid")
+            return redirect("/home")
+        session["payee_identity_fph"] = payee_identity_fph
+
+        payer_options = []
+        payer_options.append(payer_account_fph) # single option already known
+
+        # Next we need to find the payee *accounts* in the specified
+        # *currency*:
+        payee_accounts, m = list_agent_accounts(payee_identity_fph)
+        payee_options = []
+        for payee_account_fph in payee_accounts:
+            account_currency_fph = get_account_currency(payee_account_fph)
+            if account_currency_fph == payment_currency_fph:
+                payee_options.append(payee_account_fph)
+
+        # These lists of payer and payee *account* options are now saved for
+        # use in the selection stages:
+        session_save_payment_options(payer_options, payee_options)
+
+        return redirect("/pay/select/payee/" + payer_account_fph) # next page
+
+    return render_template(
+        "pay_agent_in_known_currency.html",
+        title = "Make a payment to an agent in known currency",
+        page = page,
+        group = group,
+        form = form,
+        logged_in = logged_in,
+        hub_mode = hub_mode,
+        primary_identity_type = "login identity",
+        primary_identity_fph = primary_identity_fph,
+        primary_identity_hrns = primary_identity_hrns,
+        working_identity_fph = working_identity_fph,
+        working_identity_hrns = working_identity_hrns,
+        working_identity_type = working_identity_type,
+        payer_account_hrns = fph_to_hrns(payer_account_fph),
+        payer_identity_hrns = fph_to_hrns(payer_account_owner_fph),
+        payment_currency_hrns = fph_to_hrns(payment_currency_fph),
+        payer_account_balance = integer_to_money_format(payer_account_balance),
+        payer_account_balance_negative = payer_account_balance_negative
+    )
+
+
+
+
+
+#=============================================================================
+# Make a payment to an *agent*+*currency* rather than to an *account*. This
+# endpoint is reached when the "pay to agent" button is clicked.
 #
 @app.route("/pay/agent/", methods = ["GET", "POST"])
 @login_required
@@ -1831,7 +2006,7 @@ def pay_agent():
     previous_page = session["previous_page"] # Ensure correct page sequence
     session["previous_page"] = page
 
-    print("previous_page = " + previous_page)
+    #print("previous_page = " + previous_page)
 
     primary_identity_fph, \
     primary_identity_hrns, \
@@ -2207,15 +2382,15 @@ def make_payment_between_selected_accounts(
         flash("Invalid payee account in URL string")
         return redirect("/home")
 
-    print(">>> payer_account_fph = " + payer_account_fph)
+    #print(">>> payer_account_fph = " + payer_account_fph)
     payer_account_fph, \
     payer_account_hrns, \
     etype, \
     m = identify_entity(payer_account_fph)
-    print("<<< payer_account_fph = " + payer_account_fph)
+    #print("<<< payer_account_fph = " + payer_account_fph)
     if m:
         flash(m)
-        print(m)
+        #print(m)
         return redirect("/home")
     if payer_account_fph == "":
         flash("No payer account in URL string")
@@ -2227,7 +2402,7 @@ def make_payment_between_selected_accounts(
     m = identify_entity(payee_account_fph)
     if m:
         flash(m)
-        print(m)
+        #print(m)
         return redirect("/home")
     if payee_account_fph == "":
         flash("No payee account in URL string")
@@ -2291,7 +2466,7 @@ def make_payment_between_selected_accounts(
         m = payment(payer_account_fph, payee_account_fph, amount, annotation)
         if m:
             flash(m)
-            print(m)
+            #print(m)
             return redirect("/home")
 
         payer_currency_fph, \
@@ -3040,7 +3215,7 @@ def create_currency():
         namespace_fph, \
         namespace_hrns, \
         etype, \
-        m = identify_entity(form.namespace_id.data)
+        m = identify_entity(form.namespace_id.data.strip().lstrip("."))
         if m:
             flash(m)
             return redirect("/create_currency")
@@ -3069,7 +3244,6 @@ def create_currency():
             "A new currency has been created, identified as \n" \
             + currency_hrns + " [" + currency_fph + "]"
         )
-        #return redirect("/create_currency")
         return redirect("/home")
 
     return render_template(
@@ -3142,14 +3316,12 @@ def create_account(owner_fph):
         namespace_fph, \
         namespace_hrns, \
         etype, \
-        m = identify_entity(form.namespace_id.data) # parent *namespace*
+        m = identify_entity(form.namespace_id.data.strip().lstrip("."))
         if m:
             flash(m)
-            #return redirect("/create_account")
             return redirect("/home")
         if not namespace_fph:
             flash("Parent namespace does not exist")
-            #return redirect("/create_account")
             return redirect("/home")
 
         account_name = form.account_name.data
@@ -3158,7 +3330,6 @@ def create_account(owner_fph):
         if hrns_exists_already(proposed_hrns):
             flash(proposed_hrns + " is already registered")
             return redirect("/home")
-            #return redirect("/create_account")
 
         currency_id = form.currency_id.data
 
@@ -3172,7 +3343,6 @@ def create_account(owner_fph):
             return redirect("/home")
         if etype !=  "currency":
             flash(currency_id + " is not a currency")
-            #return redirect("/create_account")
             return redirect("/home")
 
         account_fph, \
@@ -3215,12 +3385,9 @@ def list_identiies():
     hub_mode = get_hub_mode()
 
     page = "list_identities"
-    previous_page = session["previous_page"]    # Add these two lines to all
-    session["previous_page"] = page             # endpoint handlers. Some (but
-                                                # but by no means all) screens
-                                                # should be able to follow only
-                                                # from a limited set of previous
-                                                # screens.
+    previous_page = session["previous_page"]
+    session["previous_page"] = page
+
     group = "home" # Used to control top menu behaviour.
 
     logged_in = current_user.is_authenticated
@@ -3254,7 +3421,6 @@ def list_identiies():
         s["hrns"] = fph_to_hrns(secid_fph)
         identities.append(s)
 
-
     return render_template(
         "list_identities.html",
         title = "List identities",
@@ -3282,12 +3448,8 @@ def create_secid():
 
     group = "home" # Used to control top menu behaviour.
     page = "create_secid"
-    previous_page = session["previous_page"]    # Add these two lines to all
-    session["previous_page"] = page             # endpoint handlers. Some (but
-                                                # but by no means all) screens
-                                                # should be able to follow only
-                                                # from a limited set of previous
-                                                # screens.
+    previous_page = session["previous_page"]
+    session["previous_page"] = page
 
     logged_in = current_user.is_authenticated
 
@@ -3312,7 +3474,7 @@ def create_secid():
         parent_namespace_fph, \
         parent_namespace_hrns, \
         parent_namespace_type, \
-        m = identify_entity(form.parent_namespace_id.data) # parent *namesapce*
+        m = identify_entity(form.parent_namespace_id.data.strip().lstrip("."))
         if m:
             flash(m)
             return redirect("/create_secid")
@@ -3376,13 +3538,7 @@ def create_secid():
         # at this point, the default *currency* of the parent *namespace* is
         # used as the initial default *currency* of the *alias-namespace*.
 
-
-
-
-
-
         return redirect("/home")
-        #return redirect("/home")
 
     return render_template(
         "create_secid.html",
@@ -3409,12 +3565,9 @@ def create_namespace():
     hub_mode = get_hub_mode()
 
     page = "create_namespace"
-    previous_page = session["previous_page"]    # Add these two lines to all
-    session["previous_page"] = page             # endpoint handlers. Some (but
-                                                # but by no means all) screens
-                                                # should be able to follow only
-                                                # from a limited set of previous
-                                                # screens.
+    previous_page = session["previous_page"]
+    session["previous_page"] = page
+
     group = "home" # Used to control top menu behaviour.
 
     namespace_steward = False
@@ -3422,8 +3575,6 @@ def create_namespace():
     paying = True
     logged_in = current_user.is_authenticated
 
-    #user = User(identity_fph) # Retrieve the user object
-    #primary_identity_fph = current_user.get_id()
     primary_identity_fph, \
     primary_identity_hrns, \
     primary_identity_type, \
@@ -3445,7 +3596,7 @@ def create_namespace():
         parent_namespace_fph, \
         parent_namespace_hrns, \
         etype, \
-        m = identify_entity(form.parent_namespace_id.data) # parent *namesapce*
+        m = identify_entity(form.parent_namespace_id.data.strip().lstrip("."))
         if m:
             flash(m)
             return redirect("/create_namespace")
@@ -3468,14 +3619,13 @@ def create_namespace():
                 namespace_name,
                 parent_namespace_fph,
                 default_currency_fph,
-                primary_identity_fph # the initial steward of this new *namespace*
+                primary_identity_fph
             )
         flash(
             "A new namespace has been created, identified as \n" \
             + namespace_hrns + " [" + namespace_fph + "]"
         )
-        return redirect("/create_namespace")
-        #return redirect("/home")
+        return redirect("/home")
 
     return render_template(
         "create_namespace.html",
@@ -3502,12 +3652,9 @@ def list_namespaces():
     hub_mode = get_hub_mode()
 
     page = "list_namespaces"
-    previous_page = session["previous_page"]    # Add these two lines to all
-    session["previous_page"] = page             # endpoint handlers. Some (but
-                                                # but by no means all) screens
-                                                # should be able to follow only
-                                                # from a limited set of previous
-                                                # screens.
+    previous_page = session["previous_page"]
+    session["previous_page"] = page
+
     group = "home" # Used to control top menu behaviour.
 
     namespace_steward = False
@@ -3535,7 +3682,6 @@ def list_namespaces():
         flash(m)
     available_namespaces = []
     for namespace in active_namespaces:
-#        print(namespace)
         n = {}
         n["fph"] = namespace
         n["hrns"] = fph_to_hrns(namespace)
@@ -3574,12 +3720,9 @@ def import_payments_set():
     hub_mode = get_hub_mode()
 
     page = "sandbox_payment_set_import"
-    previous_page = session["previous_page"]    # Add these two lines to all
-    session["previous_page"] = page             # endpoint handlers. Some (but
-                                                # but by no means all) screens
-                                                # should be able to follow only
-                                                # from a limited set of previous
-                                                # screens.
+    previous_page = session["previous_page"]
+    session["previous_page"] = page
+
     group = "home" # Used to control top menu behaviour.
 
     namespace_steward = True
@@ -3587,15 +3730,12 @@ def import_payments_set():
     paying = False
     logged_in = current_user.is_authenticated
 
-
     import_minimal_payment_set_as_csv(
         owner_identifier,
         currency_identifier,
         namespace_identifier,
         csv_file_path
     )
-
-
 
     return
 
@@ -3698,8 +3838,6 @@ def add_steward():
             flash("The steward must be the primary identity of an agent")
             return redirect("/currency/" + currency_fph)
     return
-
-
 
 #==============================================================================
 #

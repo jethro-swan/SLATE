@@ -1,0 +1,61 @@
+NAMESPACES
+
+name:parent namespace:initial steward:default currency
+e.g.
+"gc":"chep.mon.uk":"jw.chep.mon.uk":"hrs.chep.mon.uk"
+
+
+CURRENCIES
+
+name:parent namespace:initial steward:prefix:suffix:default account name
+e.g.
+"hrs":"chep.mon.uk":"jw.chep.mon.uk":"":"h":"hrs"
+
+
+ACCOUNTS
+
+account name:parent namespace:owner:currency
+e.g.
+"kwh":"jw.gc.chep.mon.uk":"jw.chep.mon.uk":"kwh.gc.chep.mon.uk"
+
+
+ALIASES
+
+name:parent namespace:login identity
+e.g.
+"js":"global.cc":"jw.gc.chep.mon.uk"
+
+
+LOGIN IDENTITIES
+
+name:parent namespace:real name:email1:email2:password:PIN
+e.g.
+"fred":gc.chep.mon.uk":"":"fred@dodgy.com":"":"bAdpA55w0rd":"314159"
+
+NB, optional fields (such as the user's real name or the second recovery email
+address) can be left as empty strings, as in this example.
+
+
+
+
+Such CSV files can be created easily using spreadsheet software.
+
+The separators might be tabs or semicolons rather than semicolons.
+
+
+
+
+Usage over SSH:
+
+e.g. running on the user's command line (locally):
+
+
+cat logins_026.csv | ssh -p 8804 slate_user_3@lrc.org.uk slate_import_logins
+
+Where
+   slate_user_3 	is the user's SSH login id
+   8804 		is port number forwarded to VM running SLATE instance
+   logins_026.csv 	is CSV file with the details to create a set of logins
+   slate_import_logins  is the script that parses the CSV file to create these
+
+This means that the CSV file does not need to be uploaded to the server

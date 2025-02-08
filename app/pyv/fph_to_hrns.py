@@ -1,9 +1,10 @@
+#!/home/john/NESTS/SLATE/venv/bin/python3
 #!/usr/bin/env python3
-
+import os
 import sys
-
-from .core.common import nshash
-from .core.fph_hrns_maps import fph_to_hrns
+#from app.core.slate_core import identify_entity, get_entity_type
+from app.core.common import nshash
+from app.core.fph_hrns_maps import fph_to_hrns, hrns_to_fph
 
 #ips = sys.argv[1]
 

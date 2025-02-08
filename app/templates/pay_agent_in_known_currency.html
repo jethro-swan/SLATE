@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<h3>Make a payment to an agent</h3>
+
+<p>
+  Make a payment from account <b>{{ payer_account_hrns }}</b>
+  <ul>
+    <li class="compact">belonging to <b>{{ payer_identity_hrns }}</b></li>
+    <li class="compact">in currency <b>{{ payment_currency_hrns }}</b></li>
+    <li class="compact">current balance = 
+      {% if payer_account_balance_negative %}
+      <span class="balneg">
+      {% else %}
+      <span class="balneg">
+      {% endif %}
+      <b>{{ payer_account_balance }}</b>
+      </span>
+    </li>
+  </ul>
+  to:
+</p>
+
+<form action="" method="post" autocomplete="off" novalidate>
+  {{ form.hidden_tag() }}
+  <p>
+    {{ form.to_identity_id.label }}<br />
+    {{ form.to_identity_id(size=30) }}<br />
+  </p>
+  <p>
+    {{ form.submit() }}
+  </p>
+</form>
+
+{% endblock %}

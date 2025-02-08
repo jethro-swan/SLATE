@@ -63,15 +63,16 @@ def create_slate_session_db():
     return
 
 
+#==============================================================================
+#
 def session_save_currencies_available(currencies_available, payment_options):
+    #session_id = session["_id"] # from session dictionary
     with sqlite3.connect(SLATE_SESSION_DB) as conn:
         cursor = conn.cursor()
-        cursor.execute("SELECT session_id FROM slate_session")
-        result = cursor.fetchone()
-        if result is not None:
-            cursor.close()
-            return
-        session_id = session["_id"] # from session dictionary
+        cursor.execute(
+            "DELETE FROM slate_session WHERE session_id = ?",
+            (session["_id"],) # from session dictionary
+        )
         cursor.execute(
             """
             INSERT INTO slate_session (
@@ -91,7 +92,38 @@ def session_save_currencies_available(currencies_available, payment_options):
         cursor.close()
     return
 
+#------------------------------------------------------------------------------
+#
+def session_retrieve_currencies_available():
+    with sqlite3.connect(SLATE_SESSION_DB) as conn:
+        cursor = conn.cursor()
+        cursor.execute(
+            """
+            SELECT currencies_available, payment_options
+            FROM slate_session
+            WHERE session_id = ?
+            """,
+            (session["_id"],) # from session dictionary
+        )
+        result = cursor.fetchone()
+        cursor.close()
+    if result is None:
+        return [], [], "Currency options unavailable"
+    m = ""
+    if result[0] is None:
+        currencies_available = []
+        m = "No currencies available"
+    else:
+        currencies_available = pickle.loads(result[0])
+    if result[1] is None:
+        payment_options = []
+        m = "No payment options available"
+    else:
+        payment_options = pickle.loads(result[1])
+    return currencies_available, payment_options, m
 
+#==============================================================================
+#
 def session_save_payment_options(payer_account_options, payee_account_options):
     with sqlite3.connect(SLATE_SESSION_DB) as conn:
         cursor = conn.cursor()
@@ -140,7 +172,8 @@ def session_retrieve_payment_options():
 #        )
         cursor.close()
         if result is None:
-            return {}, {}, "Payment options unavailable"
+            #return {}, {}, "Payment options unavailable"
+            return [], [], "Payment options unavailable"
         if result[0] is None:
             payer_account_options = []
         else:

@@ -5,6 +5,12 @@
 # and a fresh virtual environnment has been created using
 #    python3 -m venv venv
 
+python3 -m venv venv
+HERE=`pwd`
+cat $HERE > $HERE/venv/lib/python3.*/site-packages/slate.pth
+
+cd venv
+
 pip install bcrypt
 pip install xxhash
 pip install email_validator

@@ -9,7 +9,8 @@
 # excluded from the GIT tree:
 venv
 
-
+# The bulk entity creation CSV examples should be ignored (for now):
+csv_examples
 
 
 # Random debris ...

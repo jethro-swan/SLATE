@@ -118,11 +118,11 @@ def export_currency_journal_to_csv(currency_fph, sc=","):
     with open(dpath + "/.history", "r") as tr_f:
         while tr_line = tr_f.readline():
             tr = r_line.split("|")
-            write(csv_f, tr[0] + sc)                # date of transaction
-            write(csv_f, tr[1] + sc)                # time of transaction
-            write(csv_f, tr[3] + sc)                # transaction number
-            write(csv_f, tr[4] + sc)                # payer account FPH
-            write(csv_f, tr[5] + sc)                # payee account FPH
+            write(csv_f, "\"" + tr[0] + "\"" + sc)  # date of transaction
+            write(csv_f, "\"" + tr[1] + "\"" + sc)  # time of transaction
+            write(csv_f, "\"" + tr[3] + "\"" + sc)  # transaction number
+            write(csv_f, "\"" + tr[4] + "\"" + sc)  # payer account FPH
+            write(csv_f, "\"" + tr[5] + "\"" + sc)  # payee account FPH
             write(csv_f, fph_to_hrns(tr[4]) + sc)   # payer account HRNS
             write(csv_f, fph_to_hrns(tr[5]) + sc)   # payee account HRNS
             write(csv_f, v2dp(tr[5]) + sc)          # amount

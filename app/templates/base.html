@@ -103,13 +103,19 @@
   {% if logged_in %}
 
     {% if current_user.is_authenticated %}
-    You are logged in as
-    <b>{{ primary_identity_hrns }}</b>
-    ({{ primary_identity_type }})
+    <!--
+    Logged in as
+    -->
+    <b>Login identity</b> =
+    <b>{{ primary_identity_hrns }}</b> ({{ primary_identity_type }}) |
+    <b><a href="/create_secid">add alias</a></b>
     <hr class="dashed" />
-    Currently acting as
+    Working <b>identity</b> =
     <b>{{ working_identity_hrns }}</b>
-    ({{ working_identity_type }})
+    ({{ working_identity_type }}) |
+    <a href="/create_account/{{ working_identity_fph }}">
+      <b>join currency</b>
+    </a>
     <hr class="dashed" />
     {% endif %}
 
@@ -133,6 +139,7 @@
 
       {% if hub_mode == "slate_simple" %}
 
+        <!--
         {% if page == "currency_options" %}
           <div class="mba">
             <a class="mba" href="/currency/options">currencies available</a>
@@ -142,7 +149,7 @@
             <a class="mb" href="/currency/options">currencies available</a>
           </div>
         {% endif %}
-
+        -->
         {% if page == "pay_agent" %}
           <div class="mba">
             pay to agent
@@ -154,9 +161,6 @@
             </a>
           </div>
         {% endif %}
-
-        &nbsp;|
-        <b><a href="/create_secid">create new alias</a></b>
 
       {% endif %}
 
@@ -205,8 +209,6 @@
       {% endif %}
 
     {% endif %}
-
-
 
   {% endif %}
 

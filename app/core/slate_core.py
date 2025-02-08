@@ -403,16 +403,23 @@ def get_entity_type(entity_fph):
         )
         result = cursor.fetchone()
         cursor.close()
-        if result is not None:
-            entity_type = result[0]
-            if entity_type in [
-                                "namespace",
-                                "currency",
-                                "primid",
-                                "secid",
-                                "account"
-                              ]:
-                return entity_type, ""
+#    print(entity_fph + " >>> " + fph_to_hrns(entity_fph))
+    #print(result)
+    if result is not None:
+        entity_type = result[0]
+#        print(result[0])
+        return entity_type, ""
+#            if entity_type in [
+#                                "namespace",
+#                                "currency",
+#                                "primid",
+#                                "secid",
+#                                "account"
+#                              ]:
+#                return entity_type, ""
+#            else:
+#                return "", ""
+    else:
         return "", "Type cannot be identified for " + fph_to_hrns(entity_fph)
 
 #==============================================================================
@@ -672,7 +679,7 @@ def new_primid(
     primid_hrns = username + "." + namespace_hrns
 
     if fph_to_hrns(nshash(primid_hrns)):
-        return "", "", "", "An entity" + primid_hrns + " is already registered"
+        return "", "", "", "An entity " + primid_hrns + " is already registered"
 
     primid_fph, m = hrns_to_fph(primid_hrns)
     if m:
@@ -964,7 +971,6 @@ def new_currency(
                 currency_suffix,
                 default_account_name,
                 pickle.dumps([initial_steward_fph])
-#               stewards_fph_blob
             )
         )
         cursor.execute(
@@ -1715,11 +1721,9 @@ def list_currencies_in_common_by_hrns(a1_fph, a2_fph):
 
 def identify_entity(entity_identifier): # HRNS or FPH
     if not isinstance(entity_identifier, str):
-
-        #rint(entity_identifier)
-
         return "", "", "", ""
     entity_identifier =  entity_identifier.strip()
+
     if re_fph.match(entity_identifier): # this is an FPH
         entity_fph = entity_identifier.strip()
         #entity_hrns = fph_to_hrns(entity_fph).strip()
@@ -1737,7 +1741,7 @@ def identify_entity(entity_identifier): # HRNS or FPH
         if m:
             return "", "", "", m
         if entity_fph: # entity exists
-            entity_type , m = get_entity_type(entity_fph)
+            entity_type, m = get_entity_type(entity_fph)
             if m:
                 return "", "", "", m
             return entity_fph, entity_hrns, entity_type, ""
