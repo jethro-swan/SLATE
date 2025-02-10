@@ -41,7 +41,7 @@ def display_colour_subject_prefix(message_category):
 #==============================================================================
 #
 
-def create_hubs_db():
+def create_messages_db():
 
     # This database is used to hold short structured (JSON) messages
     # - *agent* to *agent*      one-to-one
@@ -258,7 +258,7 @@ def fetch_messages(recipient_identifier):
         for message in message_list:
             if message[2] < timestamp_now: # delete if due
                 m = {}
-                m["prefix_string"], \
+                m["prefix_string"]
                 m["rgb_colour"] = display_colour_subject_prefix(message[4])
                 m["message_id"]         = message[0] # integer
                 m["timestamp"]          = message[1] # integer
@@ -272,7 +272,7 @@ def fetch_messages(recipient_identifier):
                 m["sender_hrns"]        = fph_to_hrns(message[7]) # string
                 m["recipient_hrns"]     = fph_to_hrns(message[8]) # string
                 m["subject"]            = message[9] # string
-                m["message_body"]       = message[10] # list of dictionaries
+                m["message_body"]       = message[10] # string
                 #
                 # Can this message be displayed?
                 if (m["timestamp"] <  m["expiry_timestamp"]) or m["indelible"]:
@@ -293,3 +293,50 @@ def fetch_messages(recipient_identifier):
     return messages # list of dictionaries
 
 #==============================================================================
+# Are any messages available?
+#
+def messages_available(identity):
+    messages = fetch_messages(identity)
+    return len(messages) > 0
+
+
+
+
+
+# Delete all messages except those maeked indelible
+#
+def delete_all_messages(identity):
+
+
+    return number_of_messages_deleted
+
+# Delete all selected messages except those maeked indelible
+#
+def delete_selected_messages(identity, list_of_message_id):
+
+    return number_of_messages_deleted
+
+# Select messages from list:
+#
+def select_messages(identity, list_of_message_id):
+
+    return number_of_messages_selected
+
+# Delete specific message:
+#
+def delete_selected_messages(identity, message_id):
+
+    return
+
+# Mark specific message as delible:
+#
+def delete_selected_messages(identity, message_id):
+
+    return
+
+
+# Mark specific message as delible:
+#
+def delete_selected_messages(identity, message_id):
+
+    return

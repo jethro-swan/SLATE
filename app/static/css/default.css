@@ -111,6 +111,12 @@ a.mba:visited { color:#ffffff; }
 a.mba:active { color:#ffffff; }
 a.mba:hover { color:#ffffff; }
 
+a.mbp { text-decoration:none; }
+a.mbp:link { color:#ffff00; }
+a.mbp:visited { color:#ffff00; }
+a.mbp:active { color:#ffff00; }
+a.mbp:hover { color:#ffff00; }
+
 div.mb { /* menu button - upper row */
   color: #ffffff;
   display: block;
@@ -145,6 +151,24 @@ div.mba { /* menu button active */
   margin-bottom: 1px;
   float: left;
 }
+div.mbp { /* menu button - priority messages available */
+  color: #ffffff;
+  display: block;
+  border: 1px;
+  border-style: solid;
+  border-color: #800000;
+  background: #800000;
+  padding-left: 4px;
+  padding-right: 4px;
+  padding-top: 2px;
+  padding-bottom: 2px;
+  margin-left: 4px;
+  margin-right: 4px;
+  margin-top: 1px;
+  margin-bottom: 1px;
+  float: left;
+}
+
 
 div.mb2 { /* menu button - lower row */
   color: #ffffff;

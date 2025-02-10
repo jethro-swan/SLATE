@@ -6,7 +6,7 @@ from pathlib import Path
 from string import ascii_lowercase
 
 
-from .constants import ENTITIES_DB, PAYMENTS_DB, DB_DIR, DB_BKP_DIR
+from .constants import ENTITIES_DB, PAYMENTS_DB, DB_DIR, DB_BKP_DIR, HUBS_DB
 from .constants import FPH_TO_HRNS_MAP, HRNS_C_FPH_MAP
 from .constants import SUBSTRATE_FPH
 from .common import filename_timestamp as timestamp
@@ -218,6 +218,41 @@ def create_entities_db():
         )
         conn.commit()
         cursor.close()
+
+#==============================================================================
+## Entities may be identified either by HRNS or by FPH. Given that these are
+## very different in structure, they may be identified automatically:
+
+def identify_entity(entity_identifier): # HRNS or FPH
+    if not isinstance(entity_identifier, str):
+        return "", "", "", ""
+    entity_identifier =  entity_identifier.strip()
+
+    if re_fph.match(entity_identifier): # this is an FPH
+        entity_fph = entity_identifier.strip()
+        #entity_hrns = fph_to_hrns(entity_fph).strip()
+        entity_hrns = fph_to_hrns(entity_fph)
+        if entity_hrns: # entity exists
+            entity_type , m = get_entity_type(entity_fph)
+            if m:
+                return "", "", "", m
+            return entity_fph, entity_hrns, entity_type, ""
+        else:
+            return "", "", "", "Entity " + entity_fph + " does not exist.\n"
+    elif re_hrns.match(entity_identifier): # this is an HRNS
+        entity_hrns = entity_identifier.strip()
+        entity_fph, m = hrns_to_fph(entity_identifier)
+        if m:
+            return "", "", "", m
+        if entity_fph: # entity exists
+            entity_type, m = get_entity_type(entity_fph)
+            if m:
+                return "", "", "", m
+            return entity_fph, entity_hrns, entity_type, ""
+        else:
+            return "", "", "", "Entity " + entity_hrns + " does not exist.\n"
+    else: # this is not an entity
+        return "", "", "", entity_identifier + " is not an entity.\n"
 
 
 #==============================================================================
@@ -864,24 +899,32 @@ def new_namespace(
         initial_steward_fph
     ):
 
-    if not re_fph.match(parent_namespace_fph):
-        return "", "", "Invalid parent namespace FPH: " + parent_namespace_fph
+    parent_namespace_fph, \
+    parent_namespace_hrns, \
+    etype, \
+    m = identify_entity(parent_namespace_fph)
+    if parent_namespace_fph == "":
+        return "", "", "Parent namespace does not exist"
+#    elif m:
+#        return "", "", m
 
-    if not re_fph.match(initial_steward_fph):
-        return "", "", "Invalid initial steward FPH: " + initial_steward_fph
+    if not re_slatename.match(namespace_name):
+#        print("Groucho: " + namespace_name)
+        return "", "", namespace_name + " is not a valid name"
 
-    parent_namespace_hrns = fph_to_hrns(parent_namespace_fph)
-    if parent_namespace_hrns:
-        namespace_hrns = namespace_name + "." + parent_namespace_hrns
-    else:
-        namespace_hrns = namespace_name
+    namespace_hrns = namespace_name + "." + parent_namespace_hrns
 
-    if fph_to_hrns(nshash(namespace_hrns)):
-        return "", "", "An entity " + namespace_hrns + " is already registered"
+    existing_namespace_fph, \
+    existing_namespace_hrns, \
+    etype, \
+    m = identify_entity(namespace_hrns)
+    if existing_namespace_fph:
+#        print("Harpo")
+        return "", "", "Entity " + namespace_hrns + " is already registered"
 
     namespace_fph, m = hrns_to_fph(namespace_hrns)
 
-    #stewards_fph_blob = pickle.dumps(list([initial_steward_fph]))
+#    print(namespace_fph + " > " + namespace_hrns)
 
     add_entity_common_properties(
         namespace_fph,
@@ -1714,41 +1757,6 @@ def list_currencies_in_common_by_fph(a1_fph, a2_fph):
 def list_currencies_in_common_by_hrns(a1_fph, a2_fph):
     for currency_fph in list_currencies_in_common_by_fph(a1_fph, a2_fph):
         print(fph_to_hrns(currency_fph))
-
-#==============================================================================
-## Entities may be identified either by HRNS or by FPH. Given that these are
-## very different in structure, they may be identified automatically:
-
-def identify_entity(entity_identifier): # HRNS or FPH
-    if not isinstance(entity_identifier, str):
-        return "", "", "", ""
-    entity_identifier =  entity_identifier.strip()
-
-    if re_fph.match(entity_identifier): # this is an FPH
-        entity_fph = entity_identifier.strip()
-        #entity_hrns = fph_to_hrns(entity_fph).strip()
-        entity_hrns = fph_to_hrns(entity_fph)
-        if entity_hrns: # entity exists
-            entity_type , m = get_entity_type(entity_fph)
-            if m:
-                return "", "", "", m
-            return entity_fph, entity_hrns, entity_type, ""
-        else:
-            return "", "", "", "Entity " + entity_fph + " does not exist.\n"
-    elif re_hrns.match(entity_identifier): # this is an HRNS
-        entity_hrns = entity_identifier.strip()
-        entity_fph, m = hrns_to_fph(entity_identifier)
-        if m:
-            return "", "", "", m
-        if entity_fph: # entity exists
-            entity_type, m = get_entity_type(entity_fph)
-            if m:
-                return "", "", "", m
-            return entity_fph, entity_hrns, entity_type, ""
-        else:
-            return "", "", "", "Entity " + entity_hrns + " does not exist.\n"
-    else: # this is not an entity
-        return "", "", "", entity_identifier + " is not an entity.\n"
 
 #==============================================================================
 ##

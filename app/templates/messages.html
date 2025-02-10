@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<!-- Messages for the *primary identity* may include critical communications
+     from stewards or other indelible alerts. Therefore these are displayed in
+     all cases, above those for the current working *identity*.
+-->
+<h3>Messages received</h3>
+<ul>
+{% for recipient in message_recipients_list %}
+<li class="compact">
+  <a href="/message/show/{{ recipient.fph }}">{{ recipient.hrns }}</a>
+  {% if recipient.primd %}
+  (login/primary identity)
+  {% endif %}
+</li>
+{% endfor %}
+</ul>
+
+{% endblock %}

@@ -1,0 +1,72 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<!-- Messages for the *primary identity* may include critical communications
+     from stewards or other indelible alerts. Therefore these are displayed in
+     all cases, above those for the current working *identity*.
+-->
+{% if any_lid_messages %}
+<h3>Messages for {{ primary_identity_hrns }}</h3>
+<table>
+{% for m in lid_messages %}
+  <tr>
+    <td style="color:#{{ m.rgb_colour }}">{{ m.message_id }}</td>
+    <td>{{ m.timestamp }}</td>
+    <td>{{ m.category }}</td>
+  </tr>
+  {% if m.stewardship_hrns %}
+  <tr>
+    <td>Stewardship of:</td>
+    <td colspan="2">{{ m.stewardship_hrns }}</td>
+  </tr>
+  {% endif %}
+  <tr>
+    <td>From:</td>
+    <td colspan="2">{{ m.sender_hrns }}</td>
+  </tr>
+  <tr>
+    <td>To:</td>
+    <td colspan="2">{{ m.recipient_hrns }}</td>
+  </tr>
+  <tr>
+    <td colspan="3">Subject: {{ m.prefix_string }} {{ m.subject }}</td>
+  </tr>
+  <tr>
+    <td colspan="3">{{ m.message_body }}</td>
+  </tr>
+{% endfor %}
+</table>
+{% endif %}
+
+<!-- This section should be modified to display all messages for *secondary
+     identities*.
+-->
+{% if any_wid_messages %}
+<h3>Messages for {{ working_identity_hrns }}</h3>
+<table>
+{% for m in wid_messages %}
+  <tr>
+    <td style="color:#{{ m.rgb_colour }}">{{ m.message_id }}</td>
+    <td>{{ m.timestamp }}</td>
+    <td>{{ m.category }}</td>
+  </tr>
+  <tr>
+    <td>From:</td>
+    <td colspan="2">{{ m.sender_hrns }}</td>
+  </tr>
+  <tr>
+    <td>To:</td>
+    <td colspan="2">{{ m.recipient_hrns }}</td>
+  </tr>
+  <tr>
+    <td colspan="3">Subject: {{ m.prefix_string }} {{ m.subject }}</td>
+  </tr>
+  <tr>
+    <td colspan="3">{{ m.message_body }}</td>
+  </tr>
+{% endfor %}
+</table>
+{% endif %}
+
+{% endblock %}

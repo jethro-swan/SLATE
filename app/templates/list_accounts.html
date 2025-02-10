@@ -10,14 +10,11 @@ This is the simplified SLATE interface, listing only the *identities* and
 
 <table>
   <tr>
+    <td class="h"><b>account</b></td>
     <td class="h"><b>identity</b></td>
-    <td class="h">+</td>
     <td class="h"><b>currency</b></td>
     <!--
     <th>unit</th>
-    -->
-    <!--
-    <td class="h"><b>pairing</b> (<b>account</b>)</td>
     -->
     <td class="h"><b>balance</b></td>
   </tr>
@@ -25,13 +22,20 @@ This is the simplified SLATE interface, listing only the *identities* and
   {% for account in identity.accounts %}
   <tr>
     <td align="left">
-      <a href="/identity/change/{{ identity.fph }}">
-        <b>{{ identity.hrns }}</b>
+      <a href="/account/{{ account.fph }}/0">
+        <b>{{ account.hrns }}</b>
       </a>
     </td>
+    <!--
     <td align="left">
       <a href="/account/{{ account.fph }}/0/{{ identity.fph }}">
-        <b>*</b>
+        <b>{{ account.hrns }}</b>
+      </a>
+    </td>
+    -->
+    <td align="left">
+      <a href="/identity/change/{{ identity.fph }}">
+        <b>{{ identity.hrns }}</b>
       </a>
     </td>
     <td align="left">
@@ -44,13 +48,6 @@ This is the simplified SLATE interface, listing only the *identities* and
       {% endif %}
     </td>
     <!--
-    <td align="left">
-      <a href="/account/{{ account.fph }}/00000000000000000000000000000000">
-        <b>{{ account.hrns }}</b>
-      </a>
-    </td>
-    -->
-    <!--
     <td>
       {{ account.prefix }}{{ account.suffix }}
     </td>
@@ -61,14 +58,6 @@ This is the simplified SLATE interface, listing only the *identities* and
     <td align="right" class="balpos">
     {% endif %}
       <b>{{ account.balance }}</b>
-    </td>
-    <td align="left">
-      <!--
-      <a href="/account/{{ account.fph }}/00000000000000000000000000000000">
-      -->
-      <a href="/pay/from/{{ account.fph }}">
-        <b>pay</b>
-      </a>
     </td>
   </tr>
   {% endfor %}
@@ -129,8 +118,6 @@ This is the simplified SLATE interface, listing only the *identities* and
 <a href="/create_namespace"><b>new namespace</b></a>
 |
 <a href="/create_currency"><b>new currency</b></a>
-|
-<a href="/list/accounts"><b>list accounts</b></a>
 
 {% endif %}
 
@@ -201,8 +188,6 @@ for
 <a href="/create_namespace"><b>create new namespace</b></a>
 |
 <a href="/create_currency"><b>create new currency</b></a>
-|
-<a href="/list/accounts"><b>list accounts</b></a>
 
 {% endif %}
 
@@ -272,8 +257,6 @@ for
 <a href="/create_namespace"><b>create new namespace</b></a>
 |
 <a href="/create_currency"><b>create new currency</b></a>
-|
-<a href="/list/accounts"><b>list accounts</b></a>
 
 {% endif %}
 

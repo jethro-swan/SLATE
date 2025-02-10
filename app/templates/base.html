@@ -162,6 +162,26 @@
           </div>
         {% endif %}
 
+        {% if priority_messages %}
+          <div class="mbp">
+            <a class="mbp" href="/message/show">
+              messages
+            </a>
+          </div>
+        {% elif page == "show_messages" %}
+          <div class="mba">
+            <a class="mba" href="/message/show">
+              messages
+            </a>
+          </div>
+        {% else %}
+          <div class="mb">
+            <a class="mb" href="/message/show">
+              messages
+            </a>
+          </div>
+        {% endif %}
+
       {% endif %}
 
     {% endif %}
@@ -197,8 +217,6 @@
             </a>
           </div>
         {% endif %}
-
-
 
 <!--
         &nbsp;&nbsp;

@@ -6,9 +6,10 @@
 from app.core.fph_hrns_maps import create_maps, fph_to_hrns
 from app.core.slate_core import create_entities_db
 from app.core.slate_session import create_slate_session_db
-from app.core.slate_seed import create_seed_entities, create_quasitld_set
+from app.core.slate_core import create_hubs_db
 from app.core.payments import create_payments_db
-from app.core.messaging import create_hubs_db
+from app.core.messaging import create_messages_db
+from app.core.slate_seed import create_seed_entities, create_quasitld_set
 
 create_maps()
 create_entities_db()
@@ -16,6 +17,7 @@ create_slate_session_db()
 create_seed_entities()
 create_payments_db()
 create_hubs_db()
+create_messages_db()
 tld_fph_list, errors = create_quasitld_set(False)
 
 print("The following seed entities have been created (HRNS):")

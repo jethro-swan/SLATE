@@ -67,7 +67,7 @@ from app.core.uploads import csv_create_currencies
 from app.core.uploads import csv_create_accounts
 
 from app.core.messaging import display_colour_subject_prefix
-from app.core.messaging import create_hubs_db
+from app.core.messaging import create_messages_db
 from app.core.messaging import send_message
 from app.core.messaging import fetch_messages
 
@@ -751,7 +751,7 @@ def change_working_identity(new_identity_fph):
         working_identity_type = current_identity_type
         return redirect("/home")
 
-# ==============================================================================
+#==============================================================================
 # login landing page
 
 @app.route("/home/new", methods = ["GET", "POST"])
@@ -1039,6 +1039,183 @@ def home():
         secids = secids,
         stewardships = stewardships
      )
+
+
+
+
+#==============================================================================
+# This variant of the /home endpoint prioritizes *accounts* over *identities*
+# and *currencies*.
+#
+@app.route("/list/accounts", methods = ["GET", "POST"])
+@login_required
+def list_accounts():
+
+    # Hub operational mode (read from environment variable HUB_MODE)
+    hub_mode = get_hub_mode()
+
+    page = "list_accounts"
+    if "previous_page" in session: # already active
+        previous_page = session["previous_page"]
+    else: # initializing
+        previous_page = "home"
+    session["previous_page"] = page
+
+    group = "home" # Used to control top menu behaviour.
+
+    namespace_steward = False
+    currency_steward = False
+    paying = False
+    logged_in = current_user.is_authenticated
+
+    primary_identity_fph, \
+    primary_identity_hrns, \
+    primary_identity_type, \
+    m = identify_entity(current_user.get_id())
+
+    if "working_identity" in session:
+        working_identity_fph, \
+        working_identity_hrns, \
+        working_identity_type, \
+        m = identify_entity(session["working_identity"])
+    else:
+        working_identity_fph = primary_identity_fph
+        session["working_identity"] = working_identity_fph
+        working_identity_hrns = primary_identity_hrns
+        working_identity_type = primary_identity_type
+    working_identity_type = etype_to_adtype(working_identity_type)
+
+    # The user logs in as the *primid*, even if indirectly as one of its
+    # *secid*s, but once logged in will see all of its *identities* along with
+    # a list of *accounts* belonging to each. The user will also see a list of
+    # entities over which it holds/shares stewardship.
+
+    stewardships_list, m = list_stewardships(primary_identity_fph)
+
+    # Since a user may have *accounts* scattered across an arbitrary number of
+    # *namespaces*, it is necessary to maintain a list of these:
+
+    # A full list of *identities* is compiled, with the *primid* first:
+    identities_list = list_secids(primary_identity_fph)
+    identities_list.insert(0, primary_identity_fph)
+
+    identities = [] # list of *identity* dictionaries) to "home.html" template.
+
+    for id_fph in identities_list:
+
+        id = {} # the outer dictionary for this *identity*
+
+        id_fph, \
+        id_hrns, \
+        etype, \
+        m = identify_entity(id_fph)
+        if m:
+            flash(m)
+
+        id["fph"] = id_fph
+        id["hrns"] = fph_to_hrns(id_fph)
+        if etype == "primid":
+            id["type"] = "login identity"
+        elif etype == "secid":
+            id["type"] = "alias"
+        else:
+            etype == "poltergeist" # something to be investigated
+
+        accounts_list, m = list_agent_accounts(id_fph)
+        if m:
+            flash(m)
+
+        # List the *accounts* belonging to this *identity*:
+        accounts = [] # (second-level dictionary for iteration in template)
+        for account_fph in accounts_list:
+            # Fetch account details:
+            account_currency_fph, \
+            account_owner_fph, \
+            account_balance, \
+            m = get_account_specific_properties(account_fph)
+
+            # Fetch currency details:
+            currency_fph, \
+            currency_hrns, \
+            prefix, \
+            suffix, \
+            default_account_name, \
+            stewards_list, \
+            m = get_currency_specific_properties(account_currency_fph)
+
+            # Assemble a dictonary of *account* properties:
+            a = {}
+            a["fph"] = account_fph
+            a["hrns"] = fph_to_hrns(account_fph)
+            a["owner_fph"] = account_owner_fph
+            a["owner_hrns"] = fph_to_hrns(account_owner_fph)
+            a["balance"] = integer_to_money_format(account_balance)
+            a["isneg"] = (account_balance < 0)
+            a["prefix"] = prefix
+            a["suffix"] = suffix
+            #primid_currency_steward = (currency_fph in stewardships_list)
+            if currency_fph in stewardships_list:
+                primid_currency_steward = True
+            else:
+                primid_currency_steward = False
+            a["primid_is_currency_steward"] = primid_currency_steward
+            a["currency_fph"] = currency_fph
+            a["currency_hrns"] = currency_hrns
+            accounts.append(a)
+
+        id["accounts"] = accounts
+        identities.append(id)
+
+    # If this is a *primid*, fetch a list of its *secid*s and stewardships:
+    secid_list = list_secids(primary_identity_fph)
+    secids = []
+    for secid_fph in secid_list:
+        secid = {}
+        if secid_fph != "":
+            secid["fph"] = secid_fph
+            secid["hrns"] = fph_to_hrns(secid_fph)
+            secids.append(secid)
+
+    stewardships = []
+    for stewardship_fph in stewardships_list:
+        if stewardship_fph !=  "":
+            stewardship = {}
+            entity_fph, \
+            entity_hrns, \
+            etype, \
+            m = identify_entity(stewardship_fph)
+            stewardship["fph"] = stewardship_fph
+            stewardship["hrns"] = entity_hrns
+            stewardship["etype"] = etype
+            stewardships.append(stewardship)
+
+    return render_template(
+        "list_accounts.html",
+        title = "List accounts",
+        page = page,
+        group = group,
+        hub_mode = hub_mode,
+        development_mode = development_mode,
+        logged_in = logged_in,
+        primary_identity_type = "login identity",
+        primary_identity_fph = primary_identity_fph,
+        primary_identity_hrns = primary_identity_hrns,
+        working_identity_fph = working_identity_fph,
+        working_identity_hrns = working_identity_hrns,
+        working_identity_type = working_identity_type,
+
+        # List of (nested) dictionaries for display in "home.html":
+        identities = identities,
+        secids = secids,
+        stewardships = stewardships
+     )
+
+
+
+
+
+
+
 
 #==============================================================================
 # Payment optionspage (first version).
@@ -3604,7 +3781,20 @@ def create_namespace():
             flash("Parent namespace does not exist")
             return redirect("/create_namespace")
 
-        default_currency_fph = get_default_currency(parent_namespace_fph)
+        inh_default_currency_fph = get_default_currency(parent_namespace_fph)
+        print(
+            "inherited default currency = " \
+            + fph_to_hrns(inh_default_currency_fph)
+        )
+
+        default_currency_fph, \
+        default_currency_hrns, \
+        etype, \
+        m = identify_entity(form.default_currency_id.data.strip().lstrip("."))
+        if default_currency_fph == "":
+            default_currency_fph = inh_default_currency_fph
+            default_currency_hrns = fph_to_hrns(default_currency_fph)
+
 
         namespace_name = form.namespace_name.data
         # Check whether an entity with the proposed HRNS exists already.
@@ -4221,8 +4411,149 @@ def import_create_payments():
     return
 
 
+# messaging ===================================================================
+
+@app.route("/messages", methods = ["GET", "POST"])
+@login_required
+def messages():
+
+    # Hub operational mode (read from environment variable HUB_MODE)
+    hub_mode = get_hub_mode()
+
+    page = "messages"
+    if "previous_page" in session: # already active
+        previous_page = session["previous_page"]
+    else: # initializing
+        previous_page = "home"
+    session["previous_page"] = page
+
+    group = "home" # Used to control top menu behaviour.
+
+    hub_mode = get_hub_mode() ### New variable added
+
+    namespace_steward = False
+    currency_steward = False
+    paying = False
+    logged_in = current_user.is_authenticated
+
+    primary_identity_fph, \
+    primary_identity_hrns, \
+    primary_identity_type, \
+    m = identify_entity(current_user.get_id())
+
+    if "working_identity" in session:
+        working_identity_fph, \
+        working_identity_hrns, \
+        working_identity_type, \
+        m = identify_entity(session["working_identity"])
+    else:
+        working_identity_fph = primary_identity_fph
+        session["working_identity"] = working_identity_fph
+        working_identity_hrns = primary_identity_hrns
+        working_identity_type = primary_identity_type
+    working_identity_type = etype_to_adtype(working_identity_type)
+
+    lid_messages = fetch_messages(primary_identity_fph) # always displayed
+    wid_messages = fetch_messages(working_identity_fph)
+
+    # List all identities:
+    identity_list = []
+    identity_list.append(primary_identity_fph)
+    secids_list = list_secids(primary_identity_fph)
+    for secid_fph in secids_list:
+        identity_list.append(secid_fph)
+
+    # List identities for which messages are available:
+    message_recipients_list = []
+    for identity_fph in identity_list:
+        if messages_available(identity_fph):
+            m = {}
+            m["fph"] = identity_fph
+            m["hrns"] = fph_to_hrns(identity_fph)
+            if identity_fph == primary_identity_fph: # extend later
+                m["primid"] = True
+            else:
+                m["primid"] = False
+            message_recipients_list.append(m)
+
+    return render_template(
+        "messages.html",
+        title = "Messages",
+        page = page,
+        group = group,
+        hub_mode = hub_mode,
+        logged_in = logged_in,
+        primary_identity_type = "login identity",
+        primary_identity_fph = primary_identity_fph,
+        primary_identity_hrns = primary_identity_hrns,
+        working_identity_fph = working_identity_fph,
+        working_identity_hrns = working_identity_hrns,
+        working_identity_type = working_identity_type,
+        message_recipients_list = message_recipients_list
+    )
 
 
+@app.route("/messages/show/<recipient_fph>", methods = ["GET", "POST"])
+@login_required
+def show_messages(recipient_fph):
+
+    # Hub operational mode (read from environment variable HUB_MODE)
+    hub_mode = get_hub_mode()
+
+    page = "show_messages"
+    if "previous_page" in session: # already active
+        previous_page = session["previous_page"]
+    else: # initializing
+        previous_page = "home"
+    session["previous_page"] = page
+
+    group = "home" # Used to control top menu behaviour.
+
+    hub_mode = get_hub_mode() ### New variable added
+
+    namespace_steward = False
+    currency_steward = False
+    paying = False
+    logged_in = current_user.is_authenticated
+
+    primary_identity_fph, \
+    primary_identity_hrns, \
+    primary_identity_type, \
+    m = identify_entity(current_user.get_id())
+
+    if "working_identity" in session:
+        working_identity_fph, \
+        working_identity_hrns, \
+        working_identity_type, \
+        m = identify_entity(session["working_identity"])
+    else:
+        working_identity_fph = primary_identity_fph
+        session["working_identity"] = working_identity_fph
+        working_identity_hrns = primary_identity_hrns
+        working_identity_type = primary_identity_type
+    working_identity_type = etype_to_adtype(working_identity_type)
+
+    lid_messages = fetch_messages(primary_identity_fph) # always displayed
+    wid_messages = fetch_messages(working_identity_fph)
+
+    return render_template(
+        "display_messages.html",
+        title = "Messages",
+        page = page,
+        group = group,
+        hub_mode = hub_mode,
+        logged_in = logged_in,
+        primary_identity_type = "login identity",
+        primary_identity_fph = primary_identity_fph,
+        primary_identity_hrns = primary_identity_hrns,
+        working_identity_fph = working_identity_fph,
+        working_identity_hrns = working_identity_hrns,
+        working_identity_type = working_identity_type,
+        lid_messages = lid_messages,
+        any_lid_messages = len(lid_messages) > 0,
+        wid_messages = wid_messages,
+        any_wid_messages = len(wid_messages) > 0
+    )
 
 
 # help ========================================================================

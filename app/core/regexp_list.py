@@ -7,6 +7,10 @@ import sys
 
 re_realname = re.compile(r"")
 
+# Names in SLATE are limited to alphanumeric Latin characters:
+re_slatename = re.compile(r"^[a-zA-Z][a-zA-Z0-9]*$")
+#re_slatename = re.compile(r"^[a-fA-F0-9]{1,}$")
+
 re_access_token = re.compile(r"^[0-9a-fA-F]{32}$") # (currently same as for FPH)
 
 #re_password \

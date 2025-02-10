@@ -50,6 +50,7 @@ ENTITIES_DB         = "/var/slate/active/db/entities.db"
 PAYMENTS_DB         = "/var/slate/active/db/payments.db"
 SLATE_SESSION_DB    = "/var/slate/active/db/slate_session.db"
 MESSAGES_DB         = "/var/slate/active/db/messages.db"
+HUBS_DB             = "/var/slate/active/db/hubs.db"
 
 # DBM maps:
 MAP_BKP_DIR         = "/var/slate/active/maps/backups/"
