@@ -905,11 +905,8 @@ def new_namespace(
     m = identify_entity(parent_namespace_fph)
     if parent_namespace_fph == "":
         return "", "", "Parent namespace does not exist"
-#    elif m:
-#        return "", "", m
 
     if not re_slatename.match(namespace_name):
-#        print("Groucho: " + namespace_name)
         return "", "", namespace_name + " is not a valid name"
 
     namespace_hrns = namespace_name + "." + parent_namespace_hrns
@@ -919,12 +916,9 @@ def new_namespace(
     etype, \
     m = identify_entity(namespace_hrns)
     if existing_namespace_fph:
-#        print("Harpo")
         return "", "", "Entity " + namespace_hrns + " is already registered"
 
     namespace_fph, m = hrns_to_fph(namespace_hrns)
-
-#    print(namespace_fph + " > " + namespace_hrns)
 
     add_entity_common_properties(
         namespace_fph,
@@ -962,21 +956,45 @@ def new_currency(
     # The initial account in this currency is assigned to its initial steward
     # (which must exist already).
 
-    if not re_fph.match(parent_namespace_fph):
-        return "", "", "Invalid parent namespace FPH: " + parent_namespace_fph
+#    if not re_fph.match(parent_namespace_fph):
+#        return "", "", "Invalid parent namespace FPH: " + parent_namespace_fph
+#
+#    if not re_fph.match(initial_steward_fph):
+#        return "", "", "Invalid initial steward FPH: " + initial_steward_fph
 
-    if not re_fph.match(initial_steward_fph):
-        return "", "", "Invalid initial steward FPH: " + initial_steward_fph
+    parent_namespace_fph, \
+    parent_namespace_hrns, \
+    etype, \
+    m = identify_entity(parent_namespace_fph)
+    if parent_namespace_fph == "":
+        return "", "", "Parent namespace does not exist"
 
-    parent_namespace_hrns = fph_to_hrns(parent_namespace_fph)
+    if not re_slatename.match(currency_name):
+        return "", "", currency_name + " is not a valid name"
+
+    if not re_slatename.match(default_account_name):
+        return "", "", default_account_name + " is not a valid name"
+
     currency_hrns = currency_name + "." + parent_namespace_hrns
 
-    if fph_to_hrns(nshash(currency_hrns)):
-        return "", "", "An entity " + currency_hrns + " is already registered"
+    existing_currency_fph, \
+    existing_currency_hrns, \
+    etype, \
+    m = identify_entity(currency_hrns)
+    if existing_currency_fph:
+        return "", "", "Entity " + currency_hrns + " is already registered"
 
     currency_fph, m = hrns_to_fph(currency_hrns)
 
-    initial_steward_hrns = fph_to_hrns(initial_steward_fph)
+#    parent_namespace_hrns = fph_to_hrns(parent_namespace_fph)
+#    currency_hrns = currency_name + "." + parent_namespace_hrns
+#
+#    if fph_to_hrns(nshash(currency_hrns)):
+#        return "", "", "An entity " + currency_hrns + " is already registered"
+#
+#    currency_fph, m = hrns_to_fph(currency_hrns)
+#
+#    initial_steward_hrns = fph_to_hrns(initial_steward_fph)
 
     add_entity_common_properties(
         currency_fph,
@@ -985,14 +1003,6 @@ def new_currency(
         "", # empty because a *currency* cannot have a default *currency*
         True                    # active flag
     )
-
-
-    # TESTING
-#    print("initial_steward_fph = " + initial_steward_fph)
-#    stewards_fph_list = [initial_steward_fph]
-#    print("initial_stewards_list = ", end="")
-#    print(stewards_fph_list)
-#    stewards_fph_blob = pickle.dumps(stewards_fph_list)
 
     # Now add currency specific properties:
     with sqlite3.connect(ENTITIES_DB) as conn:
@@ -1026,17 +1036,18 @@ def new_currency(
         )
         stewardships_fph_blob = cursor.fetchone()[0]
         stewardships_fph_list = pickle.loads(stewardships_fph_blob)
-        stewardships_fph_list.append(currency_fph)
-        stewardships_fph_blob = pickle.dumps(stewardships_fph_list)
-        cursor.execute(
-            """
-            UPDATE primids
-            SET stewardships_fph_list = ?
-            WHERE entity_fph = ?
-            """,
-            (stewardships_fph_blob, initial_steward_fph)
-        )
-        conn.commit()
+        if not (currency_fph in stewardships_fph_list):
+            stewardships_fph_list.append(currency_fph)
+            stewardships_fph_blob = pickle.dumps(stewardships_fph_list)
+            cursor.execute(
+                """
+                UPDATE primids
+                SET stewardships_fph_list = ?
+                WHERE entity_fph = ?
+                """,
+                (stewardships_fph_blob, initial_steward_fph)
+            )
+            conn.commit()
         cursor.close()
 
     return currency_fph, currency_hrns, ""
@@ -1176,8 +1187,8 @@ def get_namespace_specific_properties(namespace_identifier):
             m = "Namespace " + fph_to_hrns(namespace_fph) + " not found"
             return "", [], False, m
         else:
-            stewards_fph_blob = result[1]
-            sandbox = result[2]
+            stewards_fph_blob = result[0]
+            sandbox = result[1]
             stewards_list = pickle.loads(stewards_fph_blob)
         cursor.execute(
             """
@@ -1193,7 +1204,6 @@ def get_namespace_specific_properties(namespace_identifier):
         else:
             default_currency_fph = result[0]
         return default_currency_fph, stewards_list, sandbox, ""
-
 
 #==============================================================================
 ## Set the default *currency* for the *namespace* (including that of a

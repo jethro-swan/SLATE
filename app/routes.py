@@ -2105,6 +2105,11 @@ def pay_from_account_to_agent(payer_account_fph = None):
         # Next we need to find the payee *accounts* in the specified
         # *currency*:
         payee_accounts, m = list_agent_accounts(payee_identity_fph)
+        if payer_account_fph in payee_accounts:
+            payee_accounts.remove(payer_account_fph)
+        if len(payee_accounts) == 0:
+            flash("There are no payee account options.")
+            return redirect("/home")
         payee_options = []
         for payee_account_fph in payee_accounts:
             account_currency_fph = get_account_currency(payee_account_fph)

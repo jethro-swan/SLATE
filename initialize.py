@@ -22,15 +22,15 @@ tld_fph_list, errors = create_quasitld_set(False)
 
 print("The following seed entities have been created (HRNS):")
 print("\tseed namespace  = \"cc\"")
-print("\tseed currency   = \"hours.cc\"")
-print("\tseed primid     = \"gaia.cc\"")
-print("\tseed account    = \"hours.gaia.cc\"")
+print("\tseed currency   = \"hrs.cc\"")
+print("\tseed primid     = \"adm.cc\"")
+print("\tseed account    = \"hrs.adm.cc\"")
 print()
 print(
     "You will be able to log in as the initial administrator (the seed " \
     + "identity) using the following details:"
 )
-print("\tusername = gaia.cc")
+print("\tusername = adm.cc")
 print("\tpassword = Gl0balM3ltd0wn")
 print("\tPIN      = 123456")
 print()

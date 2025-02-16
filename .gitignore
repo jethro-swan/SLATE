@@ -12,6 +12,11 @@ venv
 # The bulk entity creation CSV examples should be ignored (for now):
 csv_examples
 
+# Screenshots and user guide
+documentation
+
+
+
 
 # Random debris ...
 

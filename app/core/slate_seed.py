@@ -40,15 +40,15 @@ debugging = True
 #   namespaces create during installation. It belongs (at least initially) to
 #   the system adminstrator who creates the NESTS hub.
 #
-#   The default name (HRNS) of this primid is "gaia.cc".
+#   The default name (HRNS) of this primid is "adm.cc".
 #
 # - A currency (cc in scope) which can be can be used to create the initial
 #   accounts for the first new primids created. The default name (HRNS) of this
-#   currency is "hours.cc" and its default initial steward's HRNS for this is
-# "gaia.cc".
+#   currency is "hrs.cc" and its default initial steward's HRNS for this is
+# "adm.cc".
 #
-# - When the initial primid "gaia.cc" is created, an account with HRNS
-#   "hours.gaia.cc" is created for it in the currency "hours.cc" (the default
+# - When the initial primid "adm.cc" is created, an account with HRNS
+#   "hrs.adm.cc" is created for it in the currency "hrs.cc" (the default
 # currency for identities created within the "cc" namespace).
 
 def create_seed_entities():
@@ -107,13 +107,13 @@ def create_seed_entities():
     # Seed entities (see https://nests.lrc.org.uk/entity_dependencies.html)
     # by HRNS:
     seed_namespace_hrns     = "cc"
-    seed_currency_hrns      = "hours.cc"
-    seed_primid_hrns        = "gaia.cc"
-    seed_account_hrns       = "hours.gaia.cc"
-    #seed_namespace_hrns     = "global"
-    #seed_currency_hrns      = "hours.global"
-    #seed_primid_hrns        = "gaia.global"
-    #seed_account_hrns       = "hours.gaia.global"
+    seed_currency_hrns      = "hrs.cc"
+    seed_primid_hrns        = "adm.cc"
+    seed_account_hrns       = "hrs.adm.cc"
+    #seed_namespace_hrns     = "cc"
+    #seed_currency_hrns      = "hrs.cc"
+    #seed_primid_hrns        = "adm.cc"
+    #seed_account_hrns       = "hrs.adm.cc"
 
 
     # The *substrate* is the nameless *namespace* from which all others ramify,
@@ -127,45 +127,45 @@ def create_seed_entities():
 
     seed_namespace_fph, m       = hrns_to_fph(seed_namespace_hrns)
                                 # parent namespace: "" (the *substrate*)
-                                # initial steward:  "gaia.cc"
+                                # initial steward:  "adm.cc"
 
     seed_currency_fph, m        = hrns_to_fph(seed_currency_hrns)
     seed_currency_parent_hrns   = "cc"
-                                # initial steward:  "gaia.cc"
+                                # initial steward:  "adm.cc"
 
     seed_primid_fph, m          = hrns_to_fph(seed_primid_hrns)
     seed_primid_parent_hrns     = "cc"
-                                # initial account:  "hours.gaia.cc"
+                                # initial account:  "hrs.adm.cc"
                                 # stewardships:     "cc" (namespace)
-                                #                   "hours.cc" (currency)
+                                #                   "hrs.cc" (currency)
 
     seed_account_fph, m         = hrns_to_fph(seed_account_hrns)
-    seed_account_parent_hrns    = "gaia.cc"
-                                # owned by:         "gaia.cc"
-                                # in currency:      "hours.cc"
+    seed_account_parent_hrns    = "adm.cc"
+                                # owned by:         "adm.cc"
+                                # in currency:      "hrs.cc"
 
     # Every *namespace* or *currency* needs a set of stewards. At this point
-    # only one *primid* ("gaia.cc") exists so, for the time being, this
+    # only one *primid* ("adm.cc") exists so, for the time being, this
     # must serve as the sole steward for the "cc" *namespace* and the
-    # "hours.cc" *currency*.
+    # "hrs.cc" *currency*.
     #stewards_fph_list       = [seed_primid_fph]
     #stewards_fph_blob       = pickle.dumps(stewards_fph_list)
     #
-    # The these stewardships must be added to the seed *primid* ("gaia.cc"):
+    # The these stewardships must be added to the seed *primid* ("adm.cc"):
     #stewardships_fph_list   = [seed_namespace_hrns, seed_currency_hrns]
     #stewardships_fph_blob   = pickle.dumps(stewardships_fph_list)
     #
     # (In SLATE, these FPH lists are saved in SQLite as blobs, for which reason
     # they must be serialized. In NESTS, they are saved as simple text files.
 
-    # The seed *account* ("hours.gaia.cc") is in the seed *currency*
-    # ("hours.cc"):
+    # The seed *account* ("hrs.adm.cc") is in the seed *currency*
+    # ("hrs.cc"):
     #account_currency_fph    = seed_currency_fph
     # An *account* can obviously have only one *currency*, so this does not
     # have to be saved as a serialized list.
     #
-    # At this point, the seed *currency* ("hours.cc") has only one
-    # *account* ("hours.gaia.cc"):
+    # At this point, the seed *currency* ("hrs.cc") has only one
+    # *account* ("hrs.adm.cc"):
     #currency_accts_fph_list = [seed_account_fph]
     #currency_accts_fph_blob = pickle.dumps(currency_accts_fph_list)
 
@@ -241,7 +241,7 @@ def create_seed_entities():
                 seed_currency_fph,
                 "",         # currency prefix
                 "h",        # currency suffix
-                "hours",    # default *account* name
+                "hrs",    # default *account* name
                 pickle.dumps([seed_primid_fph]) # first steward added to list
             )
         )
@@ -359,7 +359,7 @@ def create_seed_entities():
 
 #==============================================================================
 # A set of "pseudo-TLD" root namespaces, each having the same null parent
-# nameaspace ("": substrate_fph) and the same initial steward ("gaia.cc":
+# nameaspace ("": substrate_fph) and the same initial steward ("adm.cc":
 # seed_primid_fph):
 
 def create_quasitld_set(full = False):
@@ -372,8 +372,8 @@ def create_quasitld_set(full = False):
     # These are recreated here in case it is necessary to callthis function
     # before create_seed_entities( ).
     substrate_fph = nshash("")
-    seed_primid_fph = nshash("gaia.cc")
-    seed_currency_fph = nshash("hours.cc")
+    seed_primid_fph = nshash("adm.cc")
+    seed_currency_fph = nshash("hrs.cc")
 
     errors = "\n"
     tld_fph_list = []
