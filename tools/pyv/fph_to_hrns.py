@@ -19,7 +19,7 @@ if script_name == "fph_to_hrns":
     fph = sys.argv[1]
     etype, m = get_entity_type(fph)
     #print(fph + " >>> " + etype, end="")
-    print(fph, end="")
+#    print(fph, end="")
     if m:
         print(" (" + m + ")")
     else:
@@ -27,7 +27,7 @@ if script_name == "fph_to_hrns":
     print(fph_to_hrns(fph) + " >>> " + etype)
 elif script_name == "hrns_to_fph":
     hrns = sys.argv[1]
-    print(hrns)
+#    print(hrns)
     fph_1 = nshash(hrns)
     fph_2, m = hrns_to_fph(hrns)
     if fph_1 != fph_2:

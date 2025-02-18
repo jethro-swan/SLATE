@@ -1,3 +1,4 @@
+#!/home/john/NESTS/SLATE/venv/bin/python3
 #!/usr/bin/env python3
 
 from core.auth import auth_hash, check_auth_hash

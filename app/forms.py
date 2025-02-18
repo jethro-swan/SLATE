@@ -16,13 +16,94 @@ from wtforms import StringField, PasswordField, BooleanField, SubmitField
 #from wtforms import TextField, TextAreaField, SelectField, RadioField
 from wtforms import TextAreaField, SelectField, RadioField, HiddenField
 from wtforms import IntegerField, DecimalField, FloatField
+from wtforms import DateField
 from wtforms.validators import DataRequired, InputRequired, Email
 from wtforms.validators import Length, EqualTo
 from flask_wtf.file import FileField, FileRequired, FileAllowed
 
+#==============================================================================
+# Messaging:
+
+# (1) Agent-to agent or agent-to-community:
+
+class UserMessageForm(FlaskForm):
+
+    # If broadcast box is checked. then for each of the following entity types
+    # - *primid*: the message will be sent to that *primid*
+    # - *secid*: the message will be sent to that *secod*
+    # - *currency*: the message will be sent to every *account* holder in that
+    #   *currency*.
+    #
+    # If broadcast box is not checked. then any attempt to send to an entity
+    # other than an *identity* will be rejected.
+
+    recipient       = StringField("Recipient") # *identity* or *currency*
+
+    broadcast       = BooleanField("Broadcast to currency users")
+
+    category        = RadioField(
+                        "Subject category",
+                        choices = [
+                                    ("payment_received", "payment received"),
+                                    ("offer", "offer"),
+                                    ("request", "request"),
+                                    ("payment_request", "payment request"),
+                                    ("event", "event")
+                                  ]
+                      )
+
+    subject         = StringField("Subject")
+
+    expiry_datetime = DateField("Date (YYYY-MM-DD)", format="%Y-%m-%d")
+
+    lifespan        = IntegerField("Life-span (days)")
+
+    message_body    = TextAreaField("Message")
+
+# (2) Steward-to-agent or steward-to-community:
+
+class StewardMessageForm(FlaskForm):
+
+    # If broadcast box is checked. then for each of the following entity types
+    # - *primid*: the message will be sent to that *primid*
+    # - *secid*: the message will be sent *primid* of this *secod*
+    # - *currency*: the message will be sent to the *primid* of each *account*
+    #   holder in that *currency*.
+    #
+    # If broadcast box is not checked. then any attempt to send to an entity
+    # other than an *identity* will be rejected.
+
+    recipient       = StringField("Recipient")
+
+    broadcast       = BooleanField("Broadcast to currency/namespace users")
+
+    category        = RadioField(
+                        "Subject category",
+                        choices = [
+                                    ("please_respond", "please respond"),
+                                    ("urgent", "urgent"),
+                                    ("very_urgent", "very_urgent"),
+                                    ("final", "final")
+                                  ]
+                      )
+
+    subject         = StringField("Subject")
+
+    indelible       = BooleanField("Indelible")
+
+    expiry_datetime = DateField("Date (YYYY-MM-DD)", format="%Y-%m-%d")
+
+    lifespan        = IntegerField("Life-span (days)")
+
+    stewardship_id  = StringField("Stewardship (entity)")
+
+    message_body    = TextAreaField("Message")
 
 
-#  --------------------------------------------------------------------
+
+
+
+#==============================================================================
 
 class FileUploadForm(FlaskForm):
     entity_type     = RadioField(

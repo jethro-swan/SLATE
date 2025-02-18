@@ -15,28 +15,19 @@ from .unix_functions import fcopy
 
 #==============================================================================
 
-def display_colour_subject_prefix(message_category):
-    prefix = []
-    colour = []
-    prefix.append("")
-    colour.append("#000000")
-    prefix.append("offer")
-    colour.append("#008000")
-    prefix.append("request")
-    colour.append("#408040")
-    prefix.append("event notification")
-    colour.append("FF8080")
-    prefix.append("please respond")
-    colour.append("4040F0")
-    prefix.append("urgent")
-    colour.append("#800000")
-    prefix.append("very_urgent")
-    colour.append("#A00000")
-    prefix.append("final")
-    colour.append("#D00000")
-    prefix_string = prefix[message_category]
-    rgb_colour = colour[message_category]
-    return prefix_string, rgb_colour
+def display_colour_subject_prefix(subject_prefix):
+    category_colour = {}
+    category_colour["payment received" : "#000040"]
+    category_colour["offer" : "#008000"]
+    category_colour["request" : "#408040"]
+    category_colour["payment request" : "#400000"]
+    category_colour["event" : "#FF8080"]
+    category_colour["please respond" : "#4040F0"]
+    category_colour["urgent" : "#800000"]
+    category_colour["very_urgent" : "#A00000"]
+    category_colour["final" : "#D00000"]
+    category_colour.setdefault(" ", "#000000")
+    return category_colour[subject_prefix]
 
 #==============================================================================
 #
@@ -136,17 +127,13 @@ def create_messages_db():
 def send_message(
         sender_identifier,      # FPH or HRNS
         recipient_identifier,   # FPH or HRNS
-        subject,                # text
-        longevity,              # lifespan (seconds)
-        expiry_year,    #
-        expiry_month,   ######### date+time for scheduled removal
-        expiry_day,     #
-        expiry_hour,    #       Values entered in form validated on submission
-        expiry_minute,  #
-        expiry_second,  #
-        message_body,           # text
+        subject_prefix,         # string
+        subject,                # string
+        longevity,              # integer: lifespan (seconds)
+        expiry_datetime,        # string: YYYY-MM-DD_mm:ss
+        message_body,           # string
         indelible = False,      # boolean
-        expiry_timestamp = "",  # text
+        expiry_timestamp = 0    # integer
     ):
 
     sender_fph, \
@@ -163,10 +150,25 @@ def send_message(
     if m:
         return "Recipient unknown"
 
-    if isinstance(subject, str):
+    if not isinstance(subject_prefix, str):
+        return "Invalid subject prefix string"
+
+    category_colour = {}
+    category_colour["payment received" : "#000040"]
+    category_colour["offer" : "#008000"]
+    category_colour["request" : "#408040"]
+    category_colour["payment request" : "#400000"]
+    category_colour["event" : "#FF8080"]
+    category_colour["please respond" : "#4040F0"]
+    category_colour["urgent" : "#800000"]
+    category_colour["very_urgent" : "#A00000"]
+    category_colour["final" : "#D00000"]
+    category_colour.setdefault(" ", "#000000")
+
+    if not isinstance(subject, str):
         return "Invalid subject string"
 
-    if isinstance(body, str):
+    if not isinstance(body, str):
         return "Invalid message body"
 
     try: # if the deletion date+time is valid
@@ -292,12 +294,60 @@ def fetch_messages(recipient_identifier):
 #    return message_count, messages # list of dictionaries
     return messages # list of dictionaries
 
+
 #==============================================================================
 # Are any messages available?
 #
-def messages_available(identity):
-    messages = fetch_messages(identity)
-    return len(messages) > 0
+
+
+def messages_available(recipient_identifier):
+    recipient_fph, \
+    recipient_hrns, \
+    recipient_type, \
+    m = identify_entity(recipient_identifier)
+
+    with sqlite3.connect(MESSAGES_DB) as conn:
+        cursor = conn.cursor()
+        cursor.execute(
+            """
+            SELECT message_id
+            FROM messages
+            WHERE recipient_fph = ?
+            """,
+            (recipient_fph,)
+        )
+        message_list = list(cursor.fetchall())
+        if (message_list is None):
+            cursor.close()
+            return 0, 0 # no messages returned
+
+        number_of_messages = len(message_list)
+        # If the recipient is a *primid*, some messages may be indelible:
+        if recipient_type != "primid":
+            cursor.close()
+            return number_of_messages, 0 # no indelible messages returned
+
+        cursor.execute(
+            """
+            SELECT indelible
+            FROM messages
+            WHERE recipient_fph = ?
+            """,
+            (recipient_fph,)
+        )
+        indelible_message_list = list(cursor.fetchall())
+        cursor.close()
+    number_of_indelible_messages = len(indelible_message_list)
+    if (indelible_message_list is None):
+        return number_of_messages, 0 # no indelible messages found
+    return number_of_messages, len(indelible_message_list)
+
+#==============================================================================
+# Are any messages available?
+#
+#def messages_available(identity):
+#    messages = fetch_messages(identity)
+#   return len(messages) > 0
 
 
 
@@ -321,22 +371,3 @@ def delete_selected_messages(identity, list_of_message_id):
 def select_messages(identity, list_of_message_id):
 
     return number_of_messages_selected
-
-# Delete specific message:
-#
-def delete_selected_messages(identity, message_id):
-
-    return
-
-# Mark specific message as delible:
-#
-def delete_selected_messages(identity, message_id):
-
-    return
-
-
-# Mark specific message as delible:
-#
-def delete_selected_messages(identity, message_id):
-
-    return

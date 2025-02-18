@@ -108,8 +108,8 @@ def create_entities_db():
                 parent_namespace_fph TEXT,
                 entity_type TEXT,
                 default_currency_fph TEXT DEFAULT '',
-                private_namespace INTEGER NOT NULL DEFAULT 0,
-                namespace_owner_fph TEXT DEFAULT '',
+                private INTEGER NOT NULL DEFAULT 0,
+                owner_fph TEXT DEFAULT '',
                 active INTEGER NOT NULL DEFAULT 1
             );
             """
@@ -274,7 +274,7 @@ def get_private_namespace_details(namespace_identifier):
         cursor = conn.cursor()
         cursor.execute(
             """
-            SELECT private_namespace, namespace_owner
+            SELECT private, namespace_owner
             FROM entities_common
             WHERE entity_fph = ?
             """,
@@ -285,10 +285,10 @@ def get_private_namespace_details(namespace_identifier):
         if result is None:
             return False, "", "Entity not identifiable as private namespace"
         else:
-            private_namespace = result[0]
-            namespace_owner_fph = result[1]
-            if private_namespace:
-                return private_namespace, namespace_owner_fph, ""
+            private = result[0]
+            owner_fph = result[1]
+            if private:
+                return private, owner_fph, ""
             else:
                 return False, "", "Entity is not a private namespace"
 
@@ -317,7 +317,7 @@ def set_private_namespace_owner(namespace_identifier, identity_identifier):
         cursor.execute(
             """
             UPDATE entities_common
-            SET = ?
+            SET owner_fph = ?
             WHERE entity_fph = ?
             """,
             (identity_fph, namespace_fph)
@@ -342,7 +342,9 @@ def add_entity_common_properties(
         parent_namespace_fph,
         entity_type,
         default_currency_fph,
-        active
+        private, # boolean
+        owner_fph,
+        active # boolean
     ):
     with sqlite3.connect(ENTITIES_DB) as conn:
         cursor = conn.cursor()
@@ -353,16 +355,20 @@ def add_entity_common_properties(
                 parent_namespace_fph,
                 entity_type,
                 default_currency_fph,
+                private,
+                owner_fph,
                 active
             )
-            VALUES (?, ?, ?, ?, ?)
+            VALUES (?, ?, ?, ?, ?, ?, ?)
             """,
             (
                 entity_fph,
                 parent_namespace_fph,
                 entity_type,
                 default_currency_fph,
-                active
+                int(private),
+                owner_fph,
+                int(active)
             )
         )
         conn.commit()
@@ -376,9 +382,12 @@ def add_entity_common_properties(
 
 def get_entity_common_properties(entity_id): # FPH or HRNS
 
-    entity_fph, entity_hrns, entity_type, m = identify_entity(entity_id)
+    entity_fph, \
+    entity_hrns, \
+    etype, \
+    m = identify_entity(entity_id)
     if m:
-        return "", "", "", False, m
+        return "", "", "", False, "", False, m
 
     #if not re_fph.match(entity_fph):
     #    return entity_fph, "", False, entity + " is not an FPH"
@@ -387,7 +396,7 @@ def get_entity_common_properties(entity_id): # FPH or HRNS
         cursor = conn.cursor()
         cursor.execute(
             """
-            SELECT parent_namespace_fph, active
+            SELECT parent_namespace_fph, private, owner_fph, active
             FROM entities_common
             WHERE entity_fph = ?
             """,
@@ -395,28 +404,95 @@ def get_entity_common_properties(entity_id): # FPH or HRNS
         )
         result = cursor.fetchone()
         cursor.close()
-    if result is not None:
-        parent_namespace_fph = result[0]
-        active = result[1]
-        return entity_fph, parent_namespace_fph, entity_type, active, ""
-    else:
-        return entity_fph, "", "", False, "Entity " + entity_fph + "not found"
+    if result is None:
+        return entity_fph, "", "", False, "", False, "Not found"
+
+    parent_ns_fph = result[0]
+    private = result[1]
+    owner_fph = result[2]
+    active = result[3]
+    return entity_fph, parent_ns_fph, etype, private, owner_fph, active, ""
 
 #==============================================================================
 ## Check whether an entity is currently active:
 
 def entity_is_active(entity_id):
 
-    entity_fph, entity_hrns, entity_type, m = identify_entity(entity_id)
+    entity_fph, \
+    entity_hrns, \
+    entity_type, \
+    m = identify_entity(entity_id)
     if m:
         return False, m
 
     entity_fph, \
     parent_namespace_fph, \
     entity_type, \
+    private, \
+    owner_fph, \
     active, \
-    m = get_entity_common_properties(entity_id)
+    m = get_entity_common_properties(entity_fph)
     return active, m
+
+
+#==============================================================================
+## Check whether a *namespace* is private:
+
+def privacy(entity_id): # *namespace*, *primid* or *secid*
+
+    entity_fph, \
+    entity_hrns, \
+    etype, \
+    m = identify_entity(entity_id)
+    if m:
+        return False
+    if not (etype in ["namespace", "primid", "secid"]):
+        return False
+
+    entity_fph, \
+    parent_namespace_fph, \
+    entity_type, \
+    private, \
+    owner_fph, \
+    active, \
+    m = get_entity_common_properties(entity_fph)
+    if m:
+        return False
+    return private
+
+#==============================================================================
+## Get owner of entity:
+def get_owner(entity_id):
+
+    entity_fph, \
+    entity_hrns, \
+    etype, \
+    m = identify_entity(entity_id)
+    if m:
+        return ""
+    if not (etype in ["account", "namespace", "primid", "secid"]):
+        return ""
+
+    entity_fph, \
+    parent_namespace_fph, \
+    entity_type, \
+    private, \
+    owner_fph, \
+    active, \
+    m = get_entity_common_properties(entity_fph)
+    if m:
+        return False
+    return owner_fph
+
+
+
+
+
+
+
+
+
+
 
 #==============================================================================
 ## Get the entity's type:
@@ -630,6 +706,8 @@ def account_status(account_fph):
     entity_fph, \
     parent_namespace_fph, \
     entity_type, \
+    private, \
+    owner_fph, \
     active, \
     m = get_entity_common_properties(account_fph)
     if m:
@@ -664,6 +742,7 @@ def namespace_status(namespace_fph):
     entity_fph, \
     parent_namespace_fph, \
     entity_type, \
+    private, \
     active, \
     m = get_entity_common_properties(namespace_fph)
     if m:
@@ -673,9 +752,9 @@ def namespace_status(namespace_fph):
 
     stewards_list, m = list_stewards(namespace_fph)
     if m:
-        return False, False, [], m
+        return False, private, False, [], m
 
-    return True, active, stewards_list, ""
+    return True, private, active, stewards_list, ""
 
 
 
@@ -762,6 +841,8 @@ def new_primid(
         parent_namespace_fph,
         "primid",
         get_default_currency(parent_namespace_fph),
+        True,       # This is a *primid* so the root of a private *namesapce*
+        primid_fph, # owned by this *primid*.
         True
     )
 
@@ -830,6 +911,8 @@ def new_secid(
         parent_namespace_fph,
         "secid",
         get_default_currency(parent_namespace_fph),
+        True,       # this is a *secid* so the root of a private *namesapce*
+        secid_fph,  # owned by this *secid*.
         True
     )
     # Add the *secid*-specific properties:
@@ -918,6 +1001,7 @@ def new_namespace(
     if existing_namespace_fph:
         return "", "", "Entity " + namespace_hrns + " is already registered"
 
+    # The HRNS and FPH are added to the FPH>HRNS and HRNS>FPH maps:
     namespace_fph, m = hrns_to_fph(namespace_hrns)
 
     add_entity_common_properties(
@@ -925,6 +1009,8 @@ def new_namespace(
         parent_namespace_fph,
         "namespace",
         default_currency_fph,
+        privacy(parent_namespace_fph), # the parent *namespace* MAY be private
+        get_owner(parent_namespace_fph),
         True
     )
 
@@ -1000,7 +1086,9 @@ def new_currency(
         currency_fph,
         parent_namespace_fph,
         "currency",             # entity type
-        "", # empty because a *currency* cannot have a default *currency*
+        "",     # Empty because a *currency* cannot have a default *currency*
+        False,  # Not applicable
+        "",     # Not applicable: a *currency* does not have an owner
         True                    # active flag
     )
 
@@ -1108,9 +1196,11 @@ def new_account(
 
     add_entity_common_properties(
         account_fph,
-        owner_fph,
+        owner_fph, ## NB, currently stored in *accounts* table
         "account",
         "", # empty because an *account* does not have a default *currency*
+        False, # not applicable to *account*
+        owner_fph, ## NB, in future may be stored in *entities_common* table
         True
     )
 

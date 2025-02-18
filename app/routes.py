@@ -70,6 +70,7 @@ from app.core.messaging import display_colour_subject_prefix
 from app.core.messaging import create_messages_db
 from app.core.messaging import send_message
 from app.core.messaging import fetch_messages
+from app.core.messaging import messages_available
 
 from app.core.mail_temp import temp_mail_send
 
@@ -893,6 +894,20 @@ def home():
         working_identity_type = primary_identity_type
     working_identity_type = etype_to_adtype(working_identity_type)
 
+    number_of_primid_messages, \
+    number_of_indelible_messages = messages_available(primary_identity_fph)
+    if number_of_indelible_messages > 0:
+        number_of_indelible_messages = str(number_of_indelible_messages)
+    else:
+        number_of_indelible_messages = ""
+
+    number_of_wid_messages, d = messages_available(working_identity_fph)
+    number_of_messages = number_of_wid_messages + number_of_primid_messages
+    if number_of_messages > 0:
+        number_of_messages = str(number_of_messages)
+    else:
+        number_of_messages = ""
+
     # The user logs in as the *primid*, even if indirectly as one of its
     # *secid*s, but once logged in will see all of its *identities* along with
     # a list of *accounts* belonging to each. The user will also see a list of
@@ -1037,8 +1052,10 @@ def home():
         # List of (nested) dictionaries for display in "home.html":
         identities = identities,
         secids = secids,
-        stewardships = stewardships
-     )
+        stewardships = stewardships,
+        number_of_indelible_messages = number_of_indelible_messages,
+        number_of_messages = number_of_messages
+    )
 
 
 
@@ -3424,7 +3441,8 @@ def create_currency():
             )
         flash(
             "A new currency has been created, identified as \n" \
-            + currency_hrns + " [" + currency_fph + "]"
+            + currency_hrns
+#            + currency_hrns + " [" + currency_fph + "]"
         )
         return redirect("/home")
 
@@ -3682,7 +3700,8 @@ def create_secid():
             )
         flash(
             "A new alias has been created, identified as \n" \
-            + secid_hrns + " [" + secid_fph + "]"
+            + secid_hrns
+#            + secid_hrns + " [" + secid_fph + "]"
         )
 
         # An *account* is now created for this new *alias* in the default
@@ -3818,7 +3837,8 @@ def create_namespace():
             )
         flash(
             "A new namespace has been created, identified as \n" \
-            + namespace_hrns + " [" + namespace_fph + "]"
+            + namespace_hrns
+#            + namespace_hrns + " [" + namespace_fph + "]"
         )
         return redirect("/home")
 
@@ -3981,7 +4001,8 @@ def add_steward():
         return redirect("/home")
     if etype == "namespace":
         namespace_exists, \
-        namespace_active, \
+        namespace_private, \
+        namespace_active,
         stewards_list, \
         m = namespace_status(namespace_fph)
     elif etype == "currency":
@@ -4418,7 +4439,7 @@ def import_create_payments():
 
 # messaging ===================================================================
 
-@app.route("/messages", methods = ["GET", "POST"])
+@app.route("/message/list", methods = ["GET", "POST"])
 @login_required
 def messages():
 
@@ -4471,7 +4492,9 @@ def messages():
     # List identities for which messages are available:
     message_recipients_list = []
     for identity_fph in identity_list:
-        if messages_available(identity_fph):
+        number_of_messages, \
+        number_of_indelible_messages = messages_available(identity_fph)
+        if number_of_messages > 0:
             m = {}
             m["fph"] = identity_fph
             m["hrns"] = fph_to_hrns(identity_fph)
@@ -4479,10 +4502,16 @@ def messages():
                 m["primid"] = True
             else:
                 m["primid"] = False
+            if number_of_indelible_messages > 0:
+                m["some_indelible"] = True
+            else:
+                m["some_indelible"] = False
+
+            print(m)
             message_recipients_list.append(m)
 
     return render_template(
-        "messages.html",
+        "messages_list.html",
         title = "Messages",
         page = page,
         group = group,

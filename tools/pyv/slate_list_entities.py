@@ -9,6 +9,7 @@ from app.core.slate_core import get_entity_type, identify_entity
 from app.core.slate_core import get_account_specific_properties
 from app.core.slate_core import get_namespace_specific_properties
 from app.core.slate_core import get_currency_specific_properties
+from app.core.slate_core import get_entity_common_properties
 from app.core.fph_hrns_maps import hrns_to_fph, fph_to_hrns
 
 with sqlite3.connect(ENTITIES_DB) as conn:
@@ -21,8 +22,8 @@ with sqlite3.connect(ENTITIES_DB) as conn:
             parent_namespace_fph,
             entity_type,
             default_currency_fph,
-            private_namespace,
-            namespace_owner_fph,
+            private,
+            owner_fph,
             active
         FROM entities_common
         """
@@ -44,8 +45,8 @@ entity_table.field_names = [
                              "entity HRNS",
                              "type",
                              "stewards | stewardships",
-                             "currency (A|D)",
-                             "owner (A|N)",
+                             "currency (A|N)",
+                             "owner (A|N|I)",
                              "private",
                              "active"
                            ]
@@ -152,15 +153,35 @@ for entity in entities_list:
         table_row.append("A: " + account_currency_hrns)
         table_row.append("A: " + account_owner_hrns)  # owner (*identity*)
     elif entity_type_1 in ["namespace", "primid", "secid"]:
-    #elif entity_type_1 == "namespace":
+        entity_fph, \
+        parent_ns_fph, \
+        etype, \
+        private, \
+        owner_fph, \
+        active, \
+        m = get_entity_common_properties(entity[0])
         table_row.append("N: " + fph_to_hrns(entity[3]))  # default *currency*
-        table_row.append("N: " + fph_to_hrns(entity[5]))  # owner (*identity*)
-#    elif entity_type_1 in ["primid", "secid"]:
-#        table_row.append("n/a")
-#        table_row.append("n/a")
+        if owner_fph:
+            if entity_type_1 == "namespace":
+                table_row.append("N: " + fph_to_hrns(owner_fph))
+            else:
+                table_row.append("I: " + fph_to_hrns(owner_fph))
+            # owner (*identity*)
+        else:
+            table_row.append("")
+        #table_row.append("N: " + fph_to_hrns(entity[5]))  # owner (*identity*)
     else:
         table_row.append("")
         table_row.append("")
+
+
+
+
+
+
+
+
+
 
     # column 6:
     if entity[4]:                               # private?
@@ -182,3 +203,35 @@ entity_table.add_rows(table_rows[0:])
 
 
 print(entity_table)
+
+print(
+    "\n\n" \
+    + "In the \"stewards | stewardships\" column:" \
+    + "\n\n" \
+    + "    If the entity type is an IDENTITY (a PRIMID or a SECID), the\n" \
+    + "    first two items in a list of stewarded entities (stewardships)\n" \
+    + "    is shown. If there are more than two (which will usually be the\n" \
+    + "    case), a count of stewardhips is shown." \
+    + "\n\n" \
+    + "    If the entity is of a stewarded type (a NAMESPACE or CURRENCY),\n" \
+    + "    the first two items in a list of stewards (PRIMIDS) is shown.\n" \
+    + "    If there are more than two stewards (which will usually be the.\n" \
+    + "    case), a count of stewards is shown.\n" \
+    + "\n\n" \
+    + "In the \"currency (A|N)\" column:" \
+    + "\n\n" \
+    + "    \"N\" indicates that this is the default CURRENCY of a NAMESPACE\n" \
+    + "        (used in the creation of new ACCOUNTS within this NAMESPACE)."
+    + "\n\n" \
+    + "    \"A\" indicates that this is the CURRENCY of an ACCOUNT." \
+    + "\n\n" \
+    + "In the \"owner (A|N|I)\" column:" \
+    + "\n\n" \
+    + "    \"I\" indicates the owner of an IDENTITY serving as the root of\n" \
+    + "        a private NAMESPACE tree (in which case it owns itself)." \
+    + "\n\n" \
+    + "    \"N\" indicates a NAMESPACE within such a private NAMESPACE tree." \
+    + "\n\n" \
+    + "    \"A\" indicates that this is the IDENTITY to which this ACCOUNT\n" \
+    + "        belongs (its owner).\n\n"
+)

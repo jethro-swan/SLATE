@@ -110,6 +110,15 @@ def payment(payer_fph, payee_fph, amount, annotation):
         conn.commit()
         cursor.close()
 
+    currency_fph, \
+    currency_hrns, \
+    prefix, \
+    suffix, \
+    default_account_name, \
+    stewards_list, \
+    m = get_currency_specific_properties(payer_currency_fph)
+
+
     #--------------------------------------------------------------------------
     # Then the payment is recorded in the journal:
 
@@ -134,7 +143,7 @@ def payment(payer_fph, payee_fph, amount, annotation):
                 ledger_timestamp(),
                 payer_fph,
                 payee_fph,
-                payer_currency_fph,
+                currency_fph,
                 amount,
                 payer_balance,
                 payee_balance,
@@ -143,6 +152,31 @@ def payment(payer_fph, payee_fph, amount, annotation):
         )
         conn.commit()
         cursor.close()
+
+    subject_line = "Payment received from " + fph_to_hrns(payer_fph)
+    message_body = "You have received a payment of " \
+                 + prefix + str(amount) + suffix \
+                 + "in currency " + currency_hrns \
+                 + "from " + fph_to_hrns(payer_fph) \
+                 + "="*40 \
+                 + annotation
+
+    send_message(
+        payer_fph,              # FPH or HRNS
+        payee_fph,              # FPH or HRNS
+        "payment",         # string
+        subject,                # string
+        longevity,              # integer: lifespan (seconds)
+        expiry_datetime,        # string: YYYY-MM-DD_mm:ss
+        message_body,           # string
+        indelible = False,      # boolean
+        expiry_timestamp = 0    # integer
+    )
+
+
+
+
+
 
     return ""
 

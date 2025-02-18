@@ -71,6 +71,16 @@ li.compact-footnote {
   color:#808080;
 }
 
+li.messages_available {
+  margin-left: -10px; margin-top: 0px; margin-bottom: 5px;
+}
+li.messages_indelible {
+  margin-left: -10px; margin-top: 0px; margin-bottom: 5px;
+}
+
+
+
+
 .pgrey { color: #808080; }
 
 a { text-decoration:none; }
@@ -99,23 +109,33 @@ div.header {
 
 }
 
+/* No messages and not on messages page */
 a.mb { text-decoration:none; }
 a.mb:link { color:#ffffff; }
 a.mb:visited { color:#ffffff; }
 a.mb:active { color:#ffffff; }
 a.mb:hover { color:#ffffff; }
 
+/* No messages but on messages page */
 a.mba { text-decoration:none; }
 a.mba:link { color:#ffffff; }
 a.mba:visited { color:#ffffff; }
 a.mba:active { color:#ffffff; }
 a.mba:hover { color:#ffffff; }
 
+/* High-priority messages */
 a.mbp { text-decoration:none; }
 a.mbp:link { color:#ffff00; }
 a.mbp:visited { color:#ffff00; }
 a.mbp:active { color:#ffff00; }
 a.mbp:hover { color:#ffff00; }
+
+/* How-priority messages */
+a.mbp { text-decoration:none; }
+a.mbp:link { color:#8080ff; }
+a.mbp:visited { color:#8080ff; }
+a.mbp:active { color:#8080ff; }
+a.mbp:hover { color:#8080ff; }
 
 div.mb { /* menu button - upper row */
   color: #ffffff;
@@ -168,6 +188,25 @@ div.mbp { /* menu button - priority messages available */
   margin-bottom: 1px;
   float: left;
 }
+div.mbn { /* menu button - priority messages available */
+  color: #000080;
+  display: block;
+  border: 1px;
+  border-style: solid;
+  border-color: #800000;
+  background: #800000;
+  padding-left: 4px;
+  padding-right: 4px;
+  padding-top: 2px;
+  padding-bottom: 2px;
+  margin-left: 4px;
+  margin-right: 4px;
+  margin-top: 1px;
+  margin-bottom: 1px;
+  float: left;
+}
+
+
 
 
 div.mb2 { /* menu button - lower row */

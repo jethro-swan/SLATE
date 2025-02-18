@@ -162,23 +162,46 @@
           </div>
         {% endif %}
 
-        {% if priority_messages %}
+        {% if number_of_indelible_messages %}
           <div class="mbp">
-            <a class="mbp" href="/message/show">
+            <a class="mbp" href="/message/list">
               messages
             </a>
+            {% if number_of_messages %}
+            ({{ number_of_messages }} |
+            <b>{{ number_of_indelible_messages }}</b>)
+            {% else %}
+            (0 | {{ number_of_indelible_messages }})
+            {% endif %}
+          </div>
+        {% elif number_of_messages %}
+          <div class="mbn">
+            <a class="mbn" href="/message/list">
+              messages
+            </a>
+            {% if number_of_messages %}
+            ({{ number_of_messages }})
+            {% else %}
+            (0)
+            {% endif %}
           </div>
         {% elif page == "show_messages" %}
           <div class="mba">
-            <a class="mba" href="/message/show">
+            <a class="mba" href="/message/list">
               messages
             </a>
+            {% if number_of_messages %}
+            ({{ number_of_messages }})
+            {% else %}
+            (0)
+            {% endif %}
           </div>
         {% else %}
           <div class="mb">
-            <a class="mb" href="/message/show">
+            <a class="mb" href="/message/list">
               messages
             </a>
+            (0)
           </div>
         {% endif %}
 

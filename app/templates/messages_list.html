@@ -7,14 +7,21 @@
      all cases, above those for the current working *identity*.
 -->
 <h3>Messages received</h3>
+<p>
+  Your following <b>identities</b> have received messages:
+</p>
 <ul>
 {% for recipient in message_recipients_list %}
-<li class="compact">
-  <a href="/message/show/{{ recipient.fph }}">{{ recipient.hrns }}</a>
-  {% if recipient.primd %}
-  (login/primary identity)
+  {% if recipient.some_indelible %}
+  <li class="messages_indelible">
+  {% else %}
+  <li class="messages_available">
   {% endif %}
-</li>
+    <a href="/message/show/{{ recipient.fph }}">{{ recipient.hrns }}</a>
+    {% if recipient.primid %}
+    (login/primary identity)
+    {% endif %}
+  </li>
 {% endfor %}
 </ul>
 

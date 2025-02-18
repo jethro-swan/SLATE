@@ -28,10 +28,13 @@ def dbm_fetch(dbm_file, key):
 
 # Delete a key:value pair from the specified DBM file:
 def dbm_delete(dbm_file, key):
+    if key is None:
+        return
     with dbm.open(dbm_file, 'w') as db:
         k = key.encode("utf-8")
         if k in db:
             del db[key.encode("utf-8")]
+    return
 
 # List the keys in the specified DBM file:
 def dbm_keys(dbm_file):

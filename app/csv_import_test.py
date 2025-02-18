@@ -1,3 +1,5 @@
+#!/home/john/NESTS/SLATE/venv/bin/python3
+
 from core.csv_import import import_minimal_payment_set_as_csv
 
 

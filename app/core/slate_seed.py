@@ -193,6 +193,8 @@ def create_seed_entities():
         substrate_fph,
         "namespace",
         seed_currency_fph,
+        False,
+        "", # This is not a private *namespace* so has no owner
         True
     )
     with sqlite3.connect(ENTITIES_DB) as conn:
@@ -222,6 +224,8 @@ def create_seed_entities():
         nshash(seed_currency_parent_hrns),
         "currency",
         seed_currency_fph,
+        False,
+        "", # Not applicable
         True
     )
     with sqlite3.connect(ENTITIES_DB) as conn:
@@ -272,7 +276,9 @@ def create_seed_entities():
         nshash(seed_account_parent_hrns),
         "account",
         "",
-        True
+        False,
+        seed_primid_fph,    # NB, in future owner_fph may be stored in the
+        True                # "entities_common" table rather than "accounts"
     )
     # Then the type-specific properties are added:
     with sqlite3.connect(ENTITIES_DB) as conn:
@@ -307,6 +313,8 @@ def create_seed_entities():
         nshash(seed_primid_parent_hrns),
         "primid",
         seed_currency_fph,
+        True,
+        seed_primid_fph,
         True
     )
     # Then the type-specific properties are added:

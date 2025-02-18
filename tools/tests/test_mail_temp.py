@@ -1,3 +1,5 @@
+#!/home/john/NESTS/SLATE/venv/bin/python3
+
 from core.mail_temp import temp_mail_send
 from core.common import filename_timestamp
 
