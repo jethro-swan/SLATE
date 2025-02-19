@@ -9,9 +9,12 @@ from .slate_core import identify_entity
 
 from .constants import MESSAGES_DB, DB_BKP_DIR
 
-from .common import timestamp, unixtime_int
+from .common import filename_timestamp as timestamp
+from .common import unixtime_int
 
 from .unix_functions import fcopy
+
+from .regexp_list import re_datestamp
 
 #==============================================================================
 
@@ -125,15 +128,17 @@ def create_messages_db():
 #
 
 def send_message(
+        message_timestamp,
         sender_identifier,      # FPH or HRNS
         recipient_identifier,   # FPH or HRNS
+        category,
         subject_prefix,         # string
         subject,                # string
+        stewardship_id,
         longevity,              # integer: lifespan (seconds)
         expiry_datetime,        # string: YYYY-MM-DD_mm:ss
         message_body,           # string
-        indelible = False,      # boolean
-        expiry_timestamp = 0    # integer
+        indelible = False       # boolean
     ):
 
     sender_fph, \
@@ -150,38 +155,78 @@ def send_message(
     if m:
         return "Recipient unknown"
 
+    if stewardship_id:
+        stewardship_fph, \
+        stewardship_hrns, \
+        etype, \
+        m = identify_entity(stewardship_id)
+    else:
+        stewardship_fph = ""
+        stewardship_hrns = ""
+        etype = ""
+
     if not isinstance(subject_prefix, str):
         return "Invalid subject prefix string"
-
-    category_colour = {}
-    category_colour["payment received" : "#000040"]
-    category_colour["offer" : "#008000"]
-    category_colour["request" : "#408040"]
-    category_colour["payment request" : "#400000"]
-    category_colour["event" : "#FF8080"]
-    category_colour["please respond" : "#4040F0"]
-    category_colour["urgent" : "#800000"]
-    category_colour["very_urgent" : "#A00000"]
-    category_colour["final" : "#D00000"]
-    category_colour.setdefault(" ", "#000000")
 
     if not isinstance(subject, str):
         return "Invalid subject string"
 
-    if not isinstance(body, str):
+    subject = subject_prefix + ": " + subject
+
+    if not isinstance(message_body, str):
         return "Invalid message body"
 
-    try: # if the deletion date+time is valid
-        deletion_scheduled = datetime.datetime(
-                                 expiry_year, expiry_month, expiry_day,
-                                 expiry_hour, expiry_minute, expiry_second
-                             )
-    except:
-        if longevity: # if the deletion lifespan is valid
-            if isinstance(longevity, int):
-                deletion_scheduled = longevity + datetime.now(timezone.utc)
+    timestamp_now = datetime.now(timezone.utc)
+
+    #print("message_timestamp = " + str(message_timestamp))
+    print("message_timestamp = " +  message_timestamp)
+
+    if expiry_datetime: # no expiry if ""
+        if not re_datestamp.match(expiry_datetime):
+            return "Invalid expiry date and time"
         else:
-            deletion_scheduled = 0 # not sceduled for deletion
+            expiry_dt = expiry_datetime.split("_")
+            expiry_date = expiry_dt[0]
+            expiry_time = expiry_dt[1]
+            expiry_d = expiry_date.split("-")
+            expiry_year = expiry_d[0]
+            expiry_month = expiry_d[1]
+            expiry_day = expiry_d[2]
+            expiry_t = expiry_time.split(":")
+            expiry_hour = expiry_t[0]
+            expiry_minute = expiry_t[1]
+            expiry_second = expiry_t[2]
+
+            try: # if the deletion date+time is valid
+                deletion_scheduled = datetime.datetime(
+                                         expiry_year, expiry_month, expiry_day,
+                                         expiry_hour, expiry_minute,
+                                         expiry_second
+                                     )
+            except:
+                if longevity: # if the deletion lifespan is valid
+                    if isinstance(longevity, int):
+                        deletion_scheduled = longevity + timestamp_now
+                                           #+ datetime.now(timezone.utc)
+                    else:
+                        deletion_scheduled = 0 # not scheduled for deletion
+    else:
+        deletion_scheduled = 0 # not scheduled for deletion
+
+    print("Payment message:")
+    print("\t" + message_timestamp)
+    print("\t" + str(expiry_datetime))
+    print("\t" + str(deletion_scheduled))
+    print("\t" + category)
+    print("\t" + str(indelible))
+    print("\t" + stewardship_id)
+    print("\t" + sender_fph)
+    print("\t" + recipient_fph)
+    print("\t" + subject)
+    print("\t" +  message_body)
+
+
+
 
     with sqlite3.connect(MESSAGES_DB) as conn:
         cursor = conn.cursor()
@@ -202,8 +247,8 @@ def send_message(
             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """,
             (
-                timestamp,
-                expiry_timestamp,
+                message_timestamp,
+                expiry_datetime,
                 deletion_scheduled,
                 category,
                 indelible,
@@ -216,6 +261,21 @@ def send_message(
         )
         conn.commit()
         cursor.close()
+
+
+    print("Payment message:")
+    print("\t" + message_timestamp)
+    print("\t" + str(expiry_datetime))
+    print("\t" + str(deletion_scheduled))
+    print("\t" + category)
+    print("\t" + str(indelible))
+    print("\t" + stewardship_id)
+    print("\t" + sender_fph)
+    print("\t" + recipient_fph)
+    print("\t" + subject)
+    print("\t" +  message_body)
+
+
 
     return ""
 
@@ -281,7 +341,7 @@ def fetch_messages(recipient_identifier):
                     messages.append(m)
             else:
                 cursor.execute(
-                    "DELETE FROM messages WHERE message_id =?",
+                    "DELETE FROM messages WHERE message_id = ?",
                     (message[0],)
                 )
             conn.commit()

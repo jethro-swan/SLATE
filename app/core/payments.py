@@ -9,19 +9,30 @@ from prettytable import PrettyTable
 from .constants import ENTITIES_DB, PAYMENTS_DB, DB_DIR, DB_BKP_DIR
 #from .constants import SLATE_EXPORT, SLATE_IMPORT
 #from constants import FPH_TO_HRNS_MAP, HRNS_C_FPH_MAP
+
 from .common import filename_timestamp as timestamp
 from .common import ledger_timestamp
 from .common import nshash
+
 from .fph_hrns_maps import hrns_to_fph, fph_to_hrns, create_maps
+
 from .dbm_functions import dbm_store, dbm_fetch, dbm_delete, dbm_keys
 from .dbm_functions import dbm_create_map
+
 from .auth import auth_hash
+
 from .regexp_list import *
+
 from .unix_functions import fcopy
+
 from .slate_core import account_status
 from .slate_core import list_currencies_in_common_by_fph
 from .slate_core import list_currencies_in_common_by_hrns
 from .slate_core import identify_entity
+from .slate_core import get_currency_specific_properties
+
+from .messaging import send_message
+
 from .display import integer_to_money_format
 
 from app import app
@@ -122,6 +133,8 @@ def payment(payer_fph, payee_fph, amount, annotation):
     #--------------------------------------------------------------------------
     # Then the payment is recorded in the journal:
 
+    payment_timestamp = ledger_timestamp()
+
     #date_and_time = ledger_timestamp()
     with sqlite3.connect(PAYMENTS_DB) as conn:
         cursor = conn.cursor()
@@ -140,7 +153,7 @@ def payment(payer_fph, payee_fph, amount, annotation):
             VALUES (?, ?, ?, ?, ?, ?, ?, ?)
             """,
             (
-                ledger_timestamp(),
+                payment_timestamp,
                 payer_fph,
                 payee_fph,
                 currency_fph,
@@ -153,26 +166,31 @@ def payment(payer_fph, payee_fph, amount, annotation):
         conn.commit()
         cursor.close()
 
-    subject_line = "Payment received from " + fph_to_hrns(payer_fph)
+    subject_line = "from " + fph_to_hrns(payer_fph)
+
     message_body = "You have received a payment of " \
                  + prefix + str(amount) + suffix \
-                 + "in currency " + currency_hrns \
-                 + "from " + fph_to_hrns(payer_fph) \
-                 + "="*40 \
+                 + " in currency " + currency_hrns \
+                 + " from " + fph_to_hrns(payer_fph) \
+                 + "\n"+ "="*40 + "\n" \
                  + annotation
 
-    send_message(
-        payer_fph,              # FPH or HRNS
-        payee_fph,              # FPH or HRNS
-        "payment",         # string
-        subject,                # string
-        longevity,              # integer: lifespan (seconds)
-        expiry_datetime,        # string: YYYY-MM-DD_mm:ss
-        message_body,           # string
-        indelible = False,      # boolean
-        expiry_timestamp = 0    # integer
-    )
-
+    m = send_message(
+            payment_timestamp,  # message timestamp
+            payer_fph,          # sender_id
+            payee_fph,          # recipient_id
+            "payment",          # subject prefix string
+            "payment received", # subject prefix string
+            subject_line,       # subject
+            "",                 # stewardship_id (n/a)
+            0,                  # longevity (indefinite)
+            "",                 # expiry_datetime (no expiry)
+            message_body,       #
+            False               # indelibility
+        )
+    if m:
+        print("Problem in  send_message( )  function")
+        print(m)
 
 
 
