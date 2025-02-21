@@ -6,34 +6,54 @@
      from stewards or other indelible alerts. Therefore these are displayed in
      all cases, above those for the current working *identity*.
 -->
-{% if any_lid_messages %}
-<h3>Messages for {{ primary_identity_hrns }}</h3>
+{% if any_messages %}
+<h3>Messages for {{ recipient_hrns }}</h3>
 <table>
-{% for m in lid_messages %}
+{% for m in message_list %}
   <tr>
-    <td style="color:#{{ m.rgb_colour }}">{{ m.message_id }}</td>
-    <td>{{ m.timestamp }}</td>
-    <td>{{ m.category }}</td>
+    <td>Message ID:</td>
+    <td style="color:{{ m.rgb_colour }};">{{ m.message_id }}</td>
+  </tr>
+  <tr>
+    <td>Sent on:</td>
+    <td style="color:{{ m.rgb_colour }}">{{ m.timestamp }}</td>
+  </tr>
+  <tr>
+    <td>Category:</td>
+    <td style="color:{{ m.rgb_colour }}"><b>{{ m.category }}</b></td>
   </tr>
   {% if m.stewardship_hrns %}
   <tr>
     <td>Stewardship of:</td>
-    <td colspan="2">{{ m.stewardship_hrns }}</td>
+    <td>{{ m.stewardship_hrns }}</td>
   </tr>
   {% endif %}
   <tr>
     <td>From:</td>
-    <td colspan="2">{{ m.sender_hrns }}</td>
+    <td><b>{{ m.sender_hrns }}</b></td>
   </tr>
   <tr>
     <td>To:</td>
-    <td colspan="2">{{ m.recipient_hrns }}</td>
+    <td><b>{{ m.recipient_hrns }}</b></td>
   </tr>
   <tr>
-    <td colspan="3">Subject: {{ m.prefix_string }} {{ m.subject }}</td>
+    <td>Subject:</td>
+    <td>{{ m.prefix_string }} {{ m.subject }}</td>
   </tr>
   <tr>
-    <td colspan="3">{{ m.message_body }}</td>
+    <td colspan="2">{{ m.message_body }}</td>
+  </tr>
+  <tr>
+    <td colspan="2">
+      <a href="/message/delete/{{ m.message_id }}">delete message</a> |
+      <!-- This will require a new flag "archived" in the "messages" table -->
+      <a href="/message/archive/{{ m.message_id }}">archive message</a>
+    </td>
+    <tr>
+      <td colspan="2" style="border:0px;">
+
+      </td>
+    </tr>
   </tr>
 {% endfor %}
 </table>

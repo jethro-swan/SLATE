@@ -4,6 +4,9 @@
 def integer_to_money_format(amount):
     return "{:10.2f}".format(amount/100)
 
+def integer_to_money_s_format(amount):
+    return "{:1.2f}".format(amount/100)
+
 
 def thick_line():
     print("\n" + "="*160 + "\n")

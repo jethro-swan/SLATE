@@ -151,22 +151,16 @@
         {% endif %}
         -->
         {% if page == "pay_agent" %}
-          <div class="mba">
-            pay to agent
-          </div>
+          <div class="mba">pay to agent</div>
         {% else %}
           <div class="mb">
-            <a class="mb" href="/pay/agent">
-              pay to agent
-            </a>
+            <a class="mb" href="/pay/agent">pay to agent</a>
           </div>
         {% endif %}
 
         {% if number_of_indelible_messages %}
           <div class="mbp">
-            <a class="mbp" href="/message/list">
-              messages
-            </a>
+            <a class="mbp" href="/message/list">messages</a>
             {% if number_of_messages %}
             ({{ number_of_messages }} |
             <b>{{ number_of_indelible_messages }}</b>)
@@ -176,9 +170,7 @@
           </div>
         {% elif number_of_messages %}
           <div class="mbn">
-            <a class="mbn" href="/message/list">
-              messages
-            </a>
+            <a class="mbn" href="/message/list">messages</a>
             {% if number_of_messages %}
             ({{ number_of_messages }})
             {% else %}
@@ -187,9 +179,7 @@
           </div>
         {% elif page == "show_messages" %}
           <div class="mba">
-            <a class="mba" href="/message/list">
-              messages
-            </a>
+            <a class="mba" href="/message/list">messages</a>
             {% if number_of_messages %}
             ({{ number_of_messages }})
             {% else %}
@@ -198,10 +188,7 @@
           </div>
         {% else %}
           <div class="mb">
-            <a class="mb" href="/message/list">
-              messages
-            </a>
-            (0)
+            <a class="mb" href="/message/list">messages</a> (0)
           </div>
         {% endif %}
 
@@ -215,29 +202,21 @@
 
         {% if page == "currency_options" %}
           <div class="mba">
-            <a class="mba" href="/currency/options">
-              currencies available
-            </a>
+            <a class="mba" href="/currency/options">currencies available</a>
           </div>
         {% else %}
           <div class="mb">
-            <a class="mb" href="/currency/options">
-              currencies available
-            </a>
+            <a class="mb" href="/currency/options">currencies available</a>
           </div>
         {% endif %}
 
         {% if page == "pay_agent" %}
           <div class="mba">
-            <a class="mba" href="/pay/agent">
-              pay agent
-            </a>
+            <a class="mba" href="/pay/agent">pay agent</a>
           </div>
         {% else %}
           <div class="mb">
-            <a class="mb" href="/pay/agent">
-              pay agent
-            </a>
+            <a class="mb" href="/pay/agent">pay agent</a>
           </div>
         {% endif %}
 

@@ -9,15 +9,22 @@ from string import ascii_lowercase
 from .constants import ENTITIES_DB, PAYMENTS_DB, DB_DIR, DB_BKP_DIR, HUBS_DB
 from .constants import FPH_TO_HRNS_MAP, HRNS_C_FPH_MAP
 from .constants import SUBSTRATE_FPH
+
 from .common import filename_timestamp as timestamp
 from .common import nshash
+
 from .fph_hrns_maps import hrns_to_fph, fph_to_hrns, create_maps
 from .fph_hrns_maps import delete_fph_from_map
+
 from .dbm_functions import dbm_store, dbm_fetch, dbm_delete, dbm_keys
 from .dbm_functions import dbm_create_map
+
 from .auth import auth_hash, check_auth_hash, generate_access_token
+
 from .regexp_list import *
+
 from .unix_functions import fcopy
+
 from .cctld_list import *
 
 #------------------------------------------------------------------------------
@@ -233,7 +240,7 @@ def identify_entity(entity_identifier): # HRNS or FPH
         #entity_hrns = fph_to_hrns(entity_fph).strip()
         entity_hrns = fph_to_hrns(entity_fph)
         if entity_hrns: # entity exists
-            entity_type , m = get_entity_type(entity_fph)
+            entity_type, m = get_entity_type(entity_fph)
             if m:
                 return "", "", "", m
             return entity_fph, entity_hrns, entity_type, ""
@@ -1645,7 +1652,7 @@ def list_primid_accounts_in_currency(primid_identifier, currency_identifier):
             SELECT entity_fph FROM accounts
             WHERE account_currency_fph = ?, account_owner_fph ?
             """,
-            (currency_fph,primid_fph)
+            (currency_fph, primid_fph)
         )
         result_list = cursor.fetchall()
         cursor.close()

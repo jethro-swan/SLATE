@@ -33,7 +33,7 @@ from .slate_core import get_currency_specific_properties
 
 from .messaging import send_message
 
-from .display import integer_to_money_format
+from .display import integer_to_money_format, integer_to_money_s_format
 
 from app import app
 
@@ -166,27 +166,31 @@ def payment(payer_fph, payee_fph, amount, annotation):
         conn.commit()
         cursor.close()
 
-    subject_line = "from " + fph_to_hrns(payer_fph)
+    payer_account_owner_hrns = fph_to_hrns(payer_account_owner_fph)
+    payee_account_owner_hrns = fph_to_hrns(payee_account_owner_fph)
+
+    subject_line = "from " + payer_account_owner_hrns
 
     message_body = "You have received a payment of " \
-                 + prefix + str(amount) + suffix \
+                 + prefix + integer_to_money_s_format(amount) + suffix \
                  + " in currency " + currency_hrns \
-                 + " from " + fph_to_hrns(payer_fph) \
-                 + "\n"+ "="*40 + "\n" \
+                 + " from account " + fph_to_hrns(payer_fph) \
+                 + " belonging to " + payer_account_owner_hrns \
+                 + "\n\n" \
                  + annotation
 
     m = send_message(
-            payment_timestamp,  # message timestamp
-            payer_fph,          # sender_id
-            payee_fph,          # recipient_id
-            "payment",          # subject prefix string
-            "payment received", # subject prefix string
-            subject_line,       # subject
-            "",                 # stewardship_id (n/a)
-            0,                  # longevity (indefinite)
-            "",                 # expiry_datetime (no expiry)
-            message_body,       #
-            False               # indelibility
+            payment_timestamp,          # message timestamp
+            payer_account_owner_fph,    # sender_id
+            payee_account_owner_fph,    # recipient_id
+            "payment",                  # category
+            "payment received",         # subject prefix string
+            subject_line,               # subject
+            "",                         # stewardship_id (n/a)
+            0,                          # longevity (indefinite)
+            "",                         # expiry_datetime (no expiry)
+            message_body,               #
+            False                       # indelibility
         )
     if m:
         print("Problem in  send_message( )  function")

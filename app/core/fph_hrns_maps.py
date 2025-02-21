@@ -48,7 +48,7 @@ def create_maps(): # MDB map
 
 def fph_to_hrns(fph):
     if re_fph.match(fph):
-        hrns = dbm_fetch(FPH_TO_HRNS_MAP, fph)
+        hrns = dbm_fetch(FPH_TO_HRNS_MAP, fph).strip()
         return hrns
     else:
         return ""

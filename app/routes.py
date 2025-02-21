@@ -894,19 +894,49 @@ def home():
         working_identity_type = primary_identity_type
     working_identity_type = etype_to_adtype(working_identity_type)
 
-    number_of_primid_messages, \
-    number_of_indelible_messages = messages_available(primary_identity_fph)
-    if number_of_indelible_messages > 0:
-        number_of_indelible_messages = str(number_of_indelible_messages)
+
+    # List all identities:
+    identity_list = []
+    identity_list.append(primary_identity_fph)
+    secids_list = list_secids(primary_identity_fph)
+    for secid_fph in secids_list:
+        identity_list.append(secid_fph)
+
+    print("Indentities listed:")
+    for identity_fph in identity_list:
+        print("\t" + fph_to_hrns(identity_fph))
+
+    total_number_of_messages = 0
+    total_number_of_indelible_messages = 0
+    # List identities for which messages are available:
+    message_recipients_list = [] # (list of dictionaries for template)
+    for identity_fph in identity_list:
+        number_of_messages, \
+        number_of_indelible_messages = messages_available(identity_fph)
+
+        print("number_of_messages = " + str(number_of_messages))
+        print(
+            "number_of_indelible_messages = " \
+            + str(number_of_indelible_messages)
+        )
+        total_number_of_messages += number_of_messages
+        total_number_of_indelible_messages += number_of_indelible_messages
+
+    if total_number_of_messages > 0:
+        number_of_messages = str(total_number_of_messages)
+    else:
+        number_of_messages = ""
+    if total_number_of_indelible_messages > 0:
+        number_of_indelible_messages = str(total_number_of_indelible_messages)
     else:
         number_of_indelible_messages = ""
 
-    number_of_wid_messages, d = messages_available(working_identity_fph)
-    number_of_messages = number_of_wid_messages + number_of_primid_messages
-    if number_of_messages > 0:
-        number_of_messages = str(number_of_messages)
-    else:
-        number_of_messages = ""
+#    number_of_wid_messages, d = messages_available(working_identity_fph)
+#    number_of_messages = number_of_wid_messages + number_of_primid_messages
+#    if number_of_messages > 0:
+#        number_of_messages = str(number_of_messages)
+#    else:
+#        number_of_messages = ""
 
     # The user logs in as the *primid*, even if indirectly as one of its
     # *secid*s, but once logged in will see all of its *identities* along with
@@ -2423,6 +2453,12 @@ def select_payer_account():
         payer_account_fph = payer_accounts_available[0]
         session["payer_account_fph"] = payer_account_fph
         return redirect("/pay/select/payee/" + payer_account_fph)
+
+    # If there are no payee *accounts* available, give up:
+    elif (len(payer_accounts_available) == 0):
+        flash("There are no account options from which to pay.")
+        return redirect("/home")
+
     #
     # Otherwise we need to select the payer *account* from a list.
     payer_account_options = []
@@ -2530,7 +2566,13 @@ def select_payee_account(payer_account_fph = None):
                     + payer_account_fph + "/" \
                     + payee_account_fph
                )
-    #
+
+    # If there are no payee *account* options, give up:
+    elif (len(payee_accounts_available) == 0):
+        flash("There are no account options to which to pay.")
+        return redirect("/home")
+
+
     # Otherwise we need to select the payee *account* from a list.
     payee_account_options = []
     for payee_account_fph in payee_accounts_available:
@@ -4479,9 +4521,6 @@ def messages():
         working_identity_type = primary_identity_type
     working_identity_type = etype_to_adtype(working_identity_type)
 
-    lid_messages = fetch_messages(primary_identity_fph) # always displayed
-    wid_messages = fetch_messages(working_identity_fph)
-
     # List all identities:
     identity_list = []
     identity_list.append(primary_identity_fph)
@@ -4489,11 +4528,26 @@ def messages():
     for secid_fph in secids_list:
         identity_list.append(secid_fph)
 
+    print("Indentities listed:")
+    for identity_fph in identity_list:
+        print("\t" + fph_to_hrns(identity_fph))
+
+    total_number_of_messages = 0
+    total_number_of_indelible_messages = 0
     # List identities for which messages are available:
-    message_recipients_list = []
+    message_recipients_list = [] # (list of dictionaries for template)
     for identity_fph in identity_list:
         number_of_messages, \
         number_of_indelible_messages = messages_available(identity_fph)
+
+        print("number_of_messages = " + str(number_of_messages))
+        print(
+            "number_of_indelible_messages = " \
+            + str(number_of_indelible_messages)
+        )
+        total_number_of_messages += number_of_messages
+        total_number_of_indelible_messages += number_of_indelible_messages
+
         if number_of_messages > 0:
             m = {}
             m["fph"] = identity_fph
@@ -4510,6 +4564,15 @@ def messages():
             print(m)
             message_recipients_list.append(m)
 
+    if total_number_of_messages > 0:
+        number_of_messages = str(total_number_of_messages)
+    else:
+        number_of_messages = ""
+    if total_number_of_indelible_messages > 0:
+        number_of_indelible_messages = str(total_number_of_indelible_messages)
+    else:
+        number_of_indelible_messages = ""
+
     return render_template(
         "messages_list.html",
         title = "Messages",
@@ -4523,11 +4586,13 @@ def messages():
         working_identity_fph = working_identity_fph,
         working_identity_hrns = working_identity_hrns,
         working_identity_type = working_identity_type,
-        message_recipients_list = message_recipients_list
+        message_recipients_list = message_recipients_list,
+        number_of_messages = number_of_messages,
+        number_of_indelible_messages = number_of_indelible_messages
     )
 
 
-@app.route("/messages/show/<recipient_fph>", methods = ["GET", "POST"])
+@app.route("/message/show/<recipient_fph>", methods = ["GET", "POST"])
 @login_required
 def show_messages(recipient_fph):
 
@@ -4567,11 +4632,57 @@ def show_messages(recipient_fph):
         working_identity_type = primary_identity_type
     working_identity_type = etype_to_adtype(working_identity_type)
 
-    lid_messages = fetch_messages(primary_identity_fph) # always displayed
-    wid_messages = fetch_messages(working_identity_fph)
+
+    # NB, this bit has been duplicated from "/home" so should be moved into a
+    # function in app/core/messaging.py
+    #
+    # List all identities:
+    identity_list = []
+    identity_list.append(primary_identity_fph)
+    secids_list = list_secids(primary_identity_fph)
+    for secid_fph in secids_list:
+        identity_list.append(secid_fph)
+    total_number_of_messages = 0
+    total_number_of_indelible_messages = 0
+    # List identities for which messages are available:
+    message_recipients_list = [] # (list of dictionaries for template)
+    for identity_fph in identity_list:
+        number_of_messages, \
+        number_of_indelible_messages = messages_available(identity_fph)
+        total_number_of_messages += number_of_messages
+        total_number_of_indelible_messages += number_of_indelible_messages
+    if total_number_of_messages > 0:
+        number_of_messages = str(total_number_of_messages)
+    else:
+        number_of_messages = ""
+    if total_number_of_indelible_messages > 0:
+        number_of_indelible_messages = str(total_number_of_indelible_messages)
+    else:
+        number_of_indelible_messages = ""
+
+    recipient_fph, \
+    recipient_hrns, \
+    etype, \
+    m = identify_entity(recipient_fph)
+    if not (etype in ["primid", "secid"]):
+        flash("Recipient is not an agent")
+        return redirect("/home")
+
+    message_list = fetch_messages(recipient_fph)
+    any_messages = len(message_list) > 0
+
+    print("-"*80)
+    print(message_list)
+    print("-"*80)
+
+
+
+
+
+
 
     return render_template(
-        "display_messages.html",
+        "messages_show.html",
         title = "Messages",
         page = page,
         group = group,
@@ -4583,10 +4694,11 @@ def show_messages(recipient_fph):
         working_identity_fph = working_identity_fph,
         working_identity_hrns = working_identity_hrns,
         working_identity_type = working_identity_type,
-        lid_messages = lid_messages,
-        any_lid_messages = len(lid_messages) > 0,
-        wid_messages = wid_messages,
-        any_wid_messages = len(wid_messages) > 0
+        recipient_hrns = recipient_hrns,
+        any_messages = any_messages,
+        message_list = message_list,
+        number_of_indelible_messages = number_of_indelible_messages,
+        number_of_messages = number_of_messages
     )
 
 

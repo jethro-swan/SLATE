@@ -7,10 +7,12 @@ from datetime import datetime, date, time, timezone
 
 from .slate_core import identify_entity
 
+from .fph_hrns_maps import hrns_to_fph, fph_to_hrns
+
 from .constants import MESSAGES_DB, DB_BKP_DIR
 
 from .common import filename_timestamp as timestamp
-from .common import unixtime_int
+from .common import unixtime_int, unixtime_str
 
 from .unix_functions import fcopy
 
@@ -20,15 +22,16 @@ from .regexp_list import re_datestamp
 
 def display_colour_subject_prefix(subject_prefix):
     category_colour = {}
-    category_colour["payment received" : "#000040"]
-    category_colour["offer" : "#008000"]
-    category_colour["request" : "#408040"]
-    category_colour["payment request" : "#400000"]
-    category_colour["event" : "#FF8080"]
-    category_colour["please respond" : "#4040F0"]
-    category_colour["urgent" : "#800000"]
-    category_colour["very_urgent" : "#A00000"]
-    category_colour["final" : "#D00000"]
+    category_colour["payment received"] = "#000040"
+    category_colour["offer"] = "#008000"
+    category_colour["request"] = "#408040"
+    category_colour["payment"] = "#400000"
+    category_colour["payment request"] = "#400000"
+    category_colour["event"] = "#FF8080"
+    category_colour["please respond"] = "#4040F0"
+    category_colour["urgent"] = "#800000"
+    category_colour["very_urgent"] = "#A00000"
+    category_colour["final"] = "#D00000"
     category_colour.setdefault(" ", "#000000")
     return category_colour[subject_prefix]
 
@@ -66,7 +69,7 @@ def create_messages_db():
                 deletion_scheduled INTEGER DEFAULT 0,
                 category INTEGER DEFAULT 0,
                 indelible INTEGER DEFAULT 0,
-                stewardship_id TEXT,
+                stewardship_fph TEXT,
                 sender_fph TEXT,
                 recipient_fph TEXT,
                 subject TEXT,
@@ -131,7 +134,7 @@ def send_message(
         message_timestamp,
         sender_identifier,      # FPH or HRNS
         recipient_identifier,   # FPH or HRNS
-        category,
+        category,               # string
         subject_prefix,         # string
         subject,                # string
         stewardship_id,
@@ -171,6 +174,7 @@ def send_message(
     if not isinstance(subject, str):
         return "Invalid subject string"
 
+#    subject = subject_prefix + ": " + subject
     subject = subject_prefix + ": " + subject
 
     if not isinstance(message_body, str):
@@ -213,21 +217,6 @@ def send_message(
     else:
         deletion_scheduled = 0 # not scheduled for deletion
 
-    print("Payment message:")
-    print("\t" + message_timestamp)
-    print("\t" + str(expiry_datetime))
-    print("\t" + str(deletion_scheduled))
-    print("\t" + category)
-    print("\t" + str(indelible))
-    print("\t" + stewardship_id)
-    print("\t" + sender_fph)
-    print("\t" + recipient_fph)
-    print("\t" + subject)
-    print("\t" +  message_body)
-
-
-
-
     with sqlite3.connect(MESSAGES_DB) as conn:
         cursor = conn.cursor()
         cursor.execute(
@@ -238,7 +227,7 @@ def send_message(
                 deletion_scheduled,
                 category,
                 indelible,
-                stewardship_id,
+                stewardship_fph,
                 sender_fph,
                 recipient_fph,
                 subject,
@@ -252,7 +241,7 @@ def send_message(
                 deletion_scheduled,
                 category,
                 indelible,
-                stewardship_id,
+                stewardship_fph,
                 sender_fph,
                 recipient_fph,
                 subject,
@@ -262,20 +251,17 @@ def send_message(
         conn.commit()
         cursor.close()
 
-
     print("Payment message:")
-    print("\t" + message_timestamp)
-    print("\t" + str(expiry_datetime))
-    print("\t" + str(deletion_scheduled))
-    print("\t" + category)
-    print("\t" + str(indelible))
-    print("\t" + stewardship_id)
-    print("\t" + sender_fph)
-    print("\t" + recipient_fph)
-    print("\t" + subject)
-    print("\t" +  message_body)
-
-
+    print(message_timestamp)
+    print(str(expiry_datetime))
+    print(str(deletion_scheduled))
+    print(category)
+    print(str(indelible))
+    print(stewardship_hrns)
+    print(fph_to_hrns(sender_fph))
+    print(fph_to_hrns(recipient_fph))
+    print(subject)
+    print(message_body)
 
     return ""
 
@@ -299,7 +285,7 @@ def fetch_messages(recipient_identifier):
                 deletion_scheduled,
                 category,
                 indelible,
-                stewardship_id,
+                stewardship_fph,
                 sender_fph,
                 recipient_fph,
                 subject,
@@ -313,33 +299,42 @@ def fetch_messages(recipient_identifier):
 #        cursor.close()
         if message_list is None:
             return 0, [] # no messages returned
+
+        print("="*80)
+        print(message_list)
+        print("="*80)
+
 #        message_count = 0
         timestamp_now = datetime.now(timezone.utc)
         deletions_due = []
         messages = [] # list of dictionaries
         for message in message_list:
-            if message[2] < timestamp_now: # delete if due
+            if message[2]:
+                expiry_timestamp = int(message[2])
+            else:
+                expiry_timestamp = 0
+            delete = bool(message[3])
+            indelible = bool(message[5])
+            # Display if indelible deletion not due
+            if (expiry_timestamp < unixtime_int()) or indelible:
                 m = {}
-                m["prefix_string"]
                 m["rgb_colour"] = display_colour_subject_prefix(message[4])
                 m["message_id"]         = message[0] # integer
                 m["timestamp"]          = message[1] # integer
                 m["expiry_timestamp"]   = message[2] # integer
-                m["delete"]             = message[3] # boolean
+                m["delete"]             = delete     # boolean
                 m["category"]           = message[4] # string
-                m["prefix_string"]      = prefix_string # string
-                m["rgb_colour"]         = rgb_colour # string
-                m["indelible"]          = message[5] # boolean
+                m["indelible"]          = indelible  # boolean
+                m["stewardship_fph"]    = message[6]
                 m["stewardship_hrns"]   = fph_to_hrns(message[6]) # string
+                m["sender_fph"]         = message[7]
                 m["sender_hrns"]        = fph_to_hrns(message[7]) # string
+                m["recipient_fph"]      = message[8]
                 m["recipient_hrns"]     = fph_to_hrns(message[8]) # string
                 m["subject"]            = message[9] # string
                 m["message_body"]       = message[10] # string
-                #
-                # Can this message be displayed?
-                if (m["timestamp"] <  m["expiry_timestamp"]) or m["indelible"]:
-                    messages.append(m)
-            else:
+                messages.append(m)
+            elif expiry_timestamp: # delete only if expiry_timestamp is set
                 cursor.execute(
                     "DELETE FROM messages WHERE message_id = ?",
                     (message[0],)
@@ -347,11 +342,6 @@ def fetch_messages(recipient_identifier):
             conn.commit()
         cursor.close()
 
-
-
-#            message_count += 1
-
-#    return message_count, messages # list of dictionaries
     return messages # list of dictionaries
 
 
@@ -361,46 +351,51 @@ def fetch_messages(recipient_identifier):
 
 
 def messages_available(recipient_identifier):
+
     recipient_fph, \
     recipient_hrns, \
     recipient_type, \
     m = identify_entity(recipient_identifier)
 
+    print("recipient_fph = " + recipient_fph)
+    print("recipient_hrns = " + recipient_hrns)
+
     with sqlite3.connect(MESSAGES_DB) as conn:
         cursor = conn.cursor()
         cursor.execute(
-            """
-            SELECT message_id
-            FROM messages
-            WHERE recipient_fph = ?
-            """,
+            "SELECT message_id FROM messages WHERE recipient_fph = ?",
             (recipient_fph,)
         )
-        message_list = list(cursor.fetchall())
-        if (message_list is None):
+        #message_list = list(cursor.fetchall())
+        message_id_list = list(cursor.fetchall())
+        if message_id_list is None:
             cursor.close()
             return 0, 0 # no messages returned
+        print(message_id_list)
 
-        number_of_messages = len(message_list)
+        number_of_messages = len(message_id_list)
+        print(
+            recipient_hrns + " has received "
+            + str(number_of_messages) + " messages"
+        )
+
         # If the recipient is a *primid*, some messages may be indelible:
         if recipient_type != "primid":
-            cursor.close()
-            return number_of_messages, 0 # no indelible messages returned
-
+            return number_of_messages, 0
         cursor.execute(
             """
             SELECT indelible
             FROM messages
-            WHERE recipient_fph = ?
+            WHERE recipient_fph = ? AND indelible = 1
             """,
             (recipient_fph,)
         )
         indelible_message_list = list(cursor.fetchall())
         cursor.close()
-    number_of_indelible_messages = len(indelible_message_list)
-    if (indelible_message_list is None):
-        return number_of_messages, 0 # no indelible messages found
-    return number_of_messages, len(indelible_message_list)
+        if indelible_message_list is None:
+            return number_of_messages, 0 # no indelible messages found
+        else:
+            return number_of_messages, len(indelible_message_list)
 
 #==============================================================================
 # Are any messages available?

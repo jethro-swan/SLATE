@@ -125,17 +125,17 @@ a.mba:hover { color:#ffffff; }
 
 /* High-priority messages */
 a.mbp { text-decoration:none; }
-a.mbp:link { color:#ffff00; }
-a.mbp:visited { color:#ffff00; }
-a.mbp:active { color:#ffff00; }
-a.mbp:hover { color:#ffff00; }
+a.mbp:link { color:#ffffff; }
+a.mbp:visited { color:#ffffff; }
+a.mbp:active { color:#ffffff; }
+a.mbp:hover { color:#ffffff; }
 
 /* How-priority messages */
-a.mbp { text-decoration:none; }
-a.mbp:link { color:#8080ff; }
-a.mbp:visited { color:#8080ff; }
-a.mbp:active { color:#8080ff; }
-a.mbp:hover { color:#8080ff; }
+a.mbn { text-decoration:none; }
+a.mbn:link { color:#ffffff; }
+a.mbn:visited { color:#ffffff; }
+a.mbn:active { color:#ffffff; }
+a.mbn:hover { color:#ffffff; }
 
 div.mb { /* menu button - upper row */
   color: #ffffff;
@@ -189,12 +189,12 @@ div.mbp { /* menu button - priority messages available */
   float: left;
 }
 div.mbn { /* menu button - priority messages available */
-  color: #000080;
+  color: #ffffff;
   display: block;
   border: 1px;
   border-style: solid;
-  border-color: #800000;
-  background: #800000;
+  border-color: #000060;
+  background: #000080;
   padding-left: 4px;
   padding-right: 4px;
   padding-top: 2px;
