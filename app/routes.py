@@ -4671,16 +4671,6 @@ def show_messages(recipient_fph):
     message_list = fetch_messages(recipient_fph)
     any_messages = len(message_list) > 0
 
-    print("-"*80)
-    print(message_list)
-    print("-"*80)
-
-
-
-
-
-
-
     return render_template(
         "messages_show.html",
         title = "Messages",

@@ -6,6 +6,7 @@ from string import ascii_lowercase
 from datetime import datetime, date, time, timezone
 
 from .slate_core import identify_entity
+from .slate_core import account_status
 
 from .fph_hrns_maps import hrns_to_fph, fph_to_hrns
 
@@ -13,6 +14,8 @@ from .constants import MESSAGES_DB, DB_BKP_DIR
 
 from .common import filename_timestamp as timestamp
 from .common import unixtime_int, unixtime_str
+
+from .display import integer_to_money_s_format
 
 from .unix_functions import fcopy
 
@@ -72,6 +75,9 @@ def create_messages_db():
                 stewardship_fph TEXT,
                 sender_fph TEXT,
                 recipient_fph TEXT,
+                payer_account_fph TEXT,
+                payee_account_fph TEXT,
+                amount INTEGER,
                 subject TEXT,
                 message_body TEXT
             );
@@ -140,6 +146,9 @@ def send_message(
         stewardship_id,
         longevity,              # integer: lifespan (seconds)
         expiry_datetime,        # string: YYYY-MM-DD_mm:ss
+        payer_account_fph,      # string
+        payee_account_fph,      # string
+        amount,                 # integer
         message_body,           # string
         indelible = False       # boolean
     ):
@@ -147,22 +156,22 @@ def send_message(
     sender_fph, \
     sender_hrns, \
     etype, \
-    m = identify_entity(sender_identifier)
-    if m:
+    em = identify_entity(sender_identifier)
+    if em:
         return "Sender unknown"
 
     recipient_fph, \
     recipient_hrns, \
     etype, \
-    m = identify_entity(recipient_identifier)
-    if m:
+    em = identify_entity(recipient_identifier)
+    if em:
         return "Recipient unknown"
 
     if stewardship_id:
         stewardship_fph, \
         stewardship_hrns, \
         etype, \
-        m = identify_entity(stewardship_id)
+        em = identify_entity(stewardship_id)
     else:
         stewardship_fph = ""
         stewardship_hrns = ""
@@ -175,7 +184,8 @@ def send_message(
         return "Invalid subject string"
 
 #    subject = subject_prefix + ": " + subject
-    subject = subject_prefix + ": " + subject
+    if subject_prefix:
+        subject = subject_prefix + ": " + subject
 
     if not isinstance(message_body, str):
         return "Invalid message body"
@@ -230,10 +240,13 @@ def send_message(
                 stewardship_fph,
                 sender_fph,
                 recipient_fph,
+                payer_account_fph,
+                payee_account_fph,
+                amount,
                 subject,
                 message_body
             )
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """,
             (
                 message_timestamp,
@@ -244,6 +257,9 @@ def send_message(
                 stewardship_fph,
                 sender_fph,
                 recipient_fph,
+                payer_account_fph,
+                payee_account_fph,
+                amount,
                 subject,
                 message_body
             )
@@ -272,7 +288,7 @@ def fetch_messages(recipient_identifier):
     recipient_fph, \
     recipient_hrns, \
     recipient_type, \
-    m = identify_entity(recipient_identifier)
+    em = identify_entity(recipient_identifier)
 
     with sqlite3.connect(MESSAGES_DB) as conn:
         cursor = conn.cursor()
@@ -288,6 +304,9 @@ def fetch_messages(recipient_identifier):
                 stewardship_fph,
                 sender_fph,
                 recipient_fph,
+                payer_account_fph,
+                payee_account_fph,
+                amount,
                 subject,
                 message_body
             FROM messages
@@ -296,15 +315,9 @@ def fetch_messages(recipient_identifier):
             (recipient_fph,)
         )
         message_list = list(cursor.fetchall())
-#        cursor.close()
         if message_list is None:
             return 0, [] # no messages returned
 
-        print("="*80)
-        print(message_list)
-        print("="*80)
-
-#        message_count = 0
         timestamp_now = datetime.now(timezone.utc)
         deletions_due = []
         messages = [] # list of dictionaries
@@ -319,21 +332,54 @@ def fetch_messages(recipient_identifier):
             if (expiry_timestamp < unixtime_int()) or indelible:
                 m = {}
                 m["rgb_colour"] = display_colour_subject_prefix(message[4])
-                m["message_id"]         = message[0] # integer
-                m["timestamp"]          = message[1] # integer
-                m["expiry_timestamp"]   = message[2] # integer
-                m["delete"]             = delete     # boolean
-                m["category"]           = message[4] # string
-                m["indelible"]          = indelible  # boolean
-                m["stewardship_fph"]    = message[6]
-                m["stewardship_hrns"]   = fph_to_hrns(message[6]) # string
-                m["sender_fph"]         = message[7]
-                m["sender_hrns"]        = fph_to_hrns(message[7]) # string
-                m["recipient_fph"]      = message[8]
-                m["recipient_hrns"]     = fph_to_hrns(message[8]) # string
-                m["subject"]            = message[9] # string
-                m["message_body"]       = message[10] # string
+                m["message_id"] = message[0] # integer
+                m["timestamp"] = message[1] # integer
+                m["expiry_timestamp"] = message[2] # integer
+                m["delete"] = delete     # boolean
+                m["category"] = message[4] # string
+                m["indelible"] = indelible  # boolean
+                m["stewardship_fph"] = message[6]
+                m["stewardship_hrns"] = fph_to_hrns(message[6]) # string
+                m["sender_fph"] = message[7]
+                m["sender_hrns"] = fph_to_hrns(message[7]) # string
+                m["recipient_fph"] = message[8]
+                m["recipient_hrns"] = fph_to_hrns(message[8]) # string
+
+                payer_account_fph = message[9]
+                m["payer_account_fph"] = payer_account_fph
+                m["payer_account_hrns"] = fph_to_hrns(payer_account_fph)
+                payer_account_exists, \
+                payer_account_active, \
+                payer_account_currency_fph, \
+                payer_account_owner_fph, \
+                payer_account_balance, \
+                em = account_status(payer_account_fph)
+                m["payer_identity_hrns"] = fph_to_hrns(payer_account_owner_fph)
+
+                payee_account_fph = message[10]
+                m["payee_account_fph"] = payee_account_fph
+                m["payee_account_hrns"] = fph_to_hrns(payee_account_fph)
+                payee_account_exists, \
+                payee_account_active, \
+                payee_account_currency_fph, \
+                payee_account_owner_fph, \
+                payee_account_balance, \
+                em = account_status(payee_account_fph)
+                m["payee_identity_hrns"] = fph_to_hrns(payer_account_owner_fph)
+
+                if payer_account_currency_fph == payee_account_currency_fph:
+                    m["currency_hrns"] = fph_to_hrns(payer_account_currency_fph)
+                else:
+                    continue    # omit this message from list returned (should
+                                # never happen)
+
+                m["amount"] = integer_to_money_s_format(message[11])
+
+                m["subject"] = message[12] # string
+
+                m["message_body"] = message[13] # string
                 messages.append(m)
+
             elif expiry_timestamp: # delete only if expiry_timestamp is set
                 cursor.execute(
                     "DELETE FROM messages WHERE message_id = ?",
@@ -355,7 +401,7 @@ def messages_available(recipient_identifier):
     recipient_fph, \
     recipient_hrns, \
     recipient_type, \
-    m = identify_entity(recipient_identifier)
+    em = identify_entity(recipient_identifier)
 
     print("recipient_fph = " + recipient_fph)
     print("recipient_hrns = " + recipient_hrns)

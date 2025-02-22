@@ -193,8 +193,8 @@ div.mbn { /* menu button - priority messages available */
   display: block;
   border: 1px;
   border-style: solid;
-  border-color: #000060;
-  background: #000080;
+  border-color: #0000e0;
+  background: #0000e0;
   padding-left: 4px;
   padding-right: 4px;
   padding-top: 2px;
@@ -246,6 +246,21 @@ div.mb2a { /* menu button active - lower row */
 
 .clear-both { clear: both; }
 
+table.msg {
+  border: 0px solid #ffffff;
+  border-spacing: 0;
+}
+td.msg {
+  font-size: 1.0em; background: #ffffff;
+  padding-top: 1px; padding-left: 4px; padding-right: 4px; padding-bottom: 1px;
+  border: 0px solid #ffffff;
+}
+td.msg-box {
+  font-size: 1.0em; background: #ffffff;
+  padding-top: 1px; padding-left: 4px; padding-right: 4px; padding-bottom: 1px;
+  border: 1px solid #c0c0c0;
+  margin-top: 10px; margin-left: 4px; margin-right: 4px; margin-bottom: 8px;
+}
 
 table {
   border: 1px solid #c0c0c0;

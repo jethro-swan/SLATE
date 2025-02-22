@@ -72,51 +72,51 @@ def create_payments_db():
 #==============================================================================
 # Make payment from one account to another (specified by FPH):
 
-def payment(payer_fph, payee_fph, amount, annotation):
+def payment(payer_account_fph, payee_account_fph, amount, annotation):
 
-    payer_exists, \
-    payer_active, \
-    payer_currency_fph, \
+    payer_account_exists, \
+    payer_account_active, \
+    payer_account_currency_fph, \
     payer_account_owner_fph, \
-    payer_balance, m = account_status(payer_fph)
-    if not payer_exists:
-        return "Payer account " + payer_fph + " does not exist"
-    if not payer_active:
-        return "Payer account " + payer_fph + " is inactive"
+    payer_account_balance, m = account_status(payer_account_fph)
+    if not payer_account_exists:
+        return "Payer account " + payer_account_fph + " does not exist"
+    if not payer_account_active:
+        return "Payer account " + payer_account_fph + " is inactive"
 
-    payee_exists, \
-    payee_active, \
-    payee_currency_fph, \
+    payee_account_exists, \
+    payee_account_active, \
+    payee_account_currency_fph, \
     payee_account_owner_fph, \
-    payee_balance, m = account_status(payee_fph)
-    if not payee_exists:
-        return "Payee account " + payee_fph + " does not exist"
-    if not payee_active:
-        return "Payee account " + payee_fph + " is inactive"
+    payee_account_balance, m = account_status(payee_account_fph)
+    if not payee_account_exists:
+        return "Payee account " + payee_account_fph + " does not exist"
+    if not payee_account_active:
+        return "Payee account " + payee_account_fph + " is inactive"
 
     if not re_pvalue.match(str(amount)):
         return str(amount) + " is not a valid payment"
 
-    if payer_currency_fph != payee_currency_fph:
-        return "Accounts " + payer_fph + " and " + payee_fph + " are not in " \
-               "the same currency"
+    if payer_account_currency_fph != payee_account_currency_fph:
+        return "Accounts " + payer_account_fph + " and " + payee_account_fph \
+               + " are not in the same currency"
 
     #--------------------------------------------------------------------------
     # First the balances are adjusted:
     #
-    payer_balance -= amount
-    payee_balance += amount
+    payer_account_balance -= amount
+    payee_account_balance += amount
     #
     with sqlite3.connect(ENTITIES_DB) as conn:
         cursor = conn.cursor()
         # First the balances are adjusted:
         cursor.execute(
             "UPDATE accounts SET account_balance = ? WHERE entity_fph = ?",
-            (payer_balance, payer_fph)
+            (payer_account_balance, payer_account_fph)
         )
         cursor.execute(
             "UPDATE accounts SET account_balance = ? WHERE entity_fph = ?",
-            (payee_balance, payee_fph)
+            (payee_account_balance, payee_account_fph)
         )
         conn.commit()
         cursor.close()
@@ -127,7 +127,7 @@ def payment(payer_fph, payee_fph, amount, annotation):
     suffix, \
     default_account_name, \
     stewards_list, \
-    m = get_currency_specific_properties(payer_currency_fph)
+    m = get_currency_specific_properties(payer_account_currency_fph)
 
 
     #--------------------------------------------------------------------------
@@ -154,12 +154,12 @@ def payment(payer_fph, payee_fph, amount, annotation):
             """,
             (
                 payment_timestamp,
-                payer_fph,
-                payee_fph,
+                payer_account_fph,
+                payee_account_fph,
                 currency_fph,
                 amount,
-                payer_balance,
-                payee_balance,
+                payer_account_balance,
+                payee_account_balance,
                 annotation
             )
         )
@@ -169,26 +169,34 @@ def payment(payer_fph, payee_fph, amount, annotation):
     payer_account_owner_hrns = fph_to_hrns(payer_account_owner_fph)
     payee_account_owner_hrns = fph_to_hrns(payee_account_owner_fph)
 
-    subject_line = "from " + payer_account_owner_hrns
+    subject_line = "Payment received from " + payer_account_owner_hrns
 
-    message_body = "You have received a payment of " \
-                 + prefix + integer_to_money_s_format(amount) + suffix \
-                 + " in currency " + currency_hrns \
-                 + " from account " + fph_to_hrns(payer_fph) \
-                 + " belonging to " + payer_account_owner_hrns \
-                 + "\n\n" \
-                 + annotation
+    message_body = annotation
+    ## TO DO:
+    # Add fields to table to accommodate the special case of payments:
+    # e.g.
+    #   payer_account
+    #   payee_account
+    #   currency
+    #   amount
+    #   annotation
+
+
+
 
     m = send_message(
             payment_timestamp,          # message timestamp
             payer_account_owner_fph,    # sender_id
             payee_account_owner_fph,    # recipient_id
             "payment",                  # category
-            "payment received",         # subject prefix string
+            "",         # subject prefix string
             subject_line,               # subject
             "",                         # stewardship_id (n/a)
             0,                          # longevity (indefinite)
             "",                         # expiry_datetime (no expiry)
+            payer_account_fph,      # string
+            payee_account_fph,      # string
+            amount,                 # integer
             message_body,               #
             False                       # indelibility
         )

@@ -20,7 +20,7 @@ from app.core.fph_hrns_maps import fph_to_hrns, hrns_to_fph
 # and  slate_import_currencies  is this script, which sits somewhere easily
 # found in the PATH (typically /usr/local/bin/).
 
-re_currency_csv_line = re.compile(r'^(\".*\":){5}\".*\"$')
+re_currency_csv_line = re.compile(r'^((\".*\":)|:){5}\".*\"$')
 
 errors = []
 currencies_created = []

@@ -22,7 +22,7 @@ from app.core.regexp_list import re_realname, re_email, re_password, re_pin
 # and  slate_import_primids  is this script, which sits somewhere easily
 # found in the PATH (typically /usr/local/bin/).
 
-re_primid_csv_line = re.compile(r'^(\".*\":){6}\".*\"$')
+re_primid_csv_line = re.compile(r'^((\".*\":)|:){6}\".*\"$')
 
 
 errors = []

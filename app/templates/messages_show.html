@@ -8,52 +8,85 @@
 -->
 {% if any_messages %}
 <h3>Messages for {{ recipient_hrns }}</h3>
-<table>
+<table class="msg">
 {% for m in message_list %}
+  <!--
   <tr>
-    <td>Message ID:</td>
-    <td style="color:{{ m.rgb_colour }};">{{ m.message_id }}</td>
+    <td class="msg">Message ID:</td>
+    <td class="msg" style="color:{{ m.rgb_colour }};">{{ m.message_id }}</td>
+  </tr>
+  -->
+  <tr>
+    <td class="msg">Date &amp; time:</td>
+    <td class="msg" style="color:{{ m.rgb_colour }}">{{ m.timestamp }}</td>
   </tr>
   <tr>
-    <td>Sent on:</td>
-    <td style="color:{{ m.rgb_colour }}">{{ m.timestamp }}</td>
-  </tr>
-  <tr>
-    <td>Category:</td>
-    <td style="color:{{ m.rgb_colour }}"><b>{{ m.category }}</b></td>
+    <td class="msg">Category:</td>
+    <td class="msg" style="color:{{ m.rgb_colour }}"><b>{{ m.category }}</b></td>
   </tr>
   {% if m.stewardship_hrns %}
   <tr>
-    <td>Stewardship of:</td>
-    <td>{{ m.stewardship_hrns }}</td>
+    <td class="msg">Stewardship of:</td>
+    <td class="msg">{{ m.stewardship_hrns }}</td>
   </tr>
   {% endif %}
   <tr>
-    <td>From:</td>
-    <td><b>{{ m.sender_hrns }}</b></td>
+    <td class="msg">From:</td>
+    <td class="msg">{{ m.sender_hrns }}</td>
   </tr>
   <tr>
-    <td>To:</td>
-    <td><b>{{ m.recipient_hrns }}</b></td>
+    <td class="msg">To:</td>
+    <td class="msg">{{ m.recipient_hrns }}</td>
   </tr>
   <tr>
-    <td>Subject:</td>
-    <td>{{ m.prefix_string }} {{ m.subject }}</td>
+    <td class="msg">Subject:</td>
+    <td class="msg">{{ m.prefix_string }} {{ m.subject }}</td>
+  </tr>
+  {% if m.category == "payment" %}
+  <tr>
+    <td class="msg">Payer identity:</td>
+    <td class="msg">{{ m.payer_identity_hrns }}</td>
   </tr>
   <tr>
-    <td colspan="2">{{ m.message_body }}</td>
+    <td class="msg">Payer account:</td>
+    <td class="msg">{{ m.payer_account_hrns }}</td>
   </tr>
   <tr>
-    <td colspan="2">
+    <td class="msg">Payee identity:</td>
+    <td class="msg">{{ m.payee_identity_hrns }}</td>
+  </tr>
+  <tr>
+    <td class="msg">Payee account:</td>
+    <td class="msg">{{ m.payee_account_hrns }}</td>
+  </tr>
+  <tr>
+    <td class="msg">Amount:</td>
+    <td class="msg">{{ m.amount }}</td>
+  </tr>
+  <tr>
+    <td class="msg">Currency:</td>
+    <td class="msg">{{ m.currency_hrns }}</td>
+  </tr>
+  <tr>
+    <td class="msg">Annotation:</td>
+    <td class="msg">{{ m.message_body }}</td>
+  </tr>
+  {% else %}
+  <tr>
+    <td class="msg-box" colspan="2">{{ m.message_body }}</td>
+  </tr>
+  {% endif %}
+  <tr>
+    <td class="msg" colspan="2">
+      <!-- These both call for some JavaScript woowoo to compile the deletion
+           and archiving lists locally before sending them back to the server.
+      -->
       <a href="/message/delete/{{ m.message_id }}">delete message</a> |
       <!-- This will require a new flag "archived" in the "messages" table -->
       <a href="/message/archive/{{ m.message_id }}">archive message</a>
     </td>
-    <tr>
-      <td colspan="2" style="border:0px;">
-
-      </td>
-    </tr>
+  <tr>
+    <td class="msg" colspan="2"><hr size="1" /></td>
   </tr>
 {% endfor %}
 </table>
