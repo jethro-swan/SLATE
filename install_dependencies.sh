@@ -37,3 +37,5 @@ pip install prettyprint
 pip install wonderwords
 
 pip install Faker
+
+pip install arrow

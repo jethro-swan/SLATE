@@ -7,6 +7,9 @@ import pickle
 import bcrypt
 from itsdangerous import URLSafeTimedSerializer
 
+from datetime import datetime, date
+
+
 ## SLATE components: -----------------------------------------------------------
 
 from app.core.constants import NSS
@@ -14,6 +17,8 @@ from app.core.constants import NSS
 
 from app.core.fph_hrns_maps import hrns_to_fph, fph_to_hrns
 from app.core.fph_hrns_maps import hrns_exists_already
+
+from app.core.common import unixtime_int
 
 from app.core.slate_core import get_entity_type, get_account_currency
 from app.core.slate_core import identify_entity, get_primid
@@ -66,11 +71,13 @@ from app.core.uploads import csv_create_identities
 from app.core.uploads import csv_create_currencies
 from app.core.uploads import csv_create_accounts
 
-from app.core.messaging import display_colour_subject_prefix
+#from app.core.messaging import display_colour_subject_prefix
+#from app.core.messaging import category_display_colour
 from app.core.messaging import create_messages_db
 from app.core.messaging import send_message
 from app.core.messaging import fetch_messages
 from app.core.messaging import messages_available
+from app.core.messaging import delete_message
 
 from app.core.mail_temp import temp_mail_send
 
@@ -118,6 +125,7 @@ from app.forms import SpecifyPayeeAgentForm
 from app.forms import SelectPayerAndPayeeAccountsForm
 from app.forms import SpecifyPayeeAgentAndCurrencyForm
 from app.forms import StewardAddForm
+from app.forms import UserMessageForm
 #from app.forms import TQueueForm
 from app.forms import FileUploadForm
 
@@ -303,7 +311,7 @@ def register():
         # If control reaches this point then *namespace* (whether specified
         # in the form or in the URL) exists.
 
-        if form.password_repeat.data !=  form.password.data:
+        if form.password_repeat.data != form.password.data:
             flash("The passwords not not match")
             return redirect("/register")
 
@@ -4592,9 +4600,172 @@ def messages():
     )
 
 
+
+@app.route("/message/send", methods = ["GET", "POST"])
+@login_required
+def message_send():
+
+    # Hub operational mode (read from environment variable HUB_MODE)
+    hub_mode = get_hub_mode()
+
+    page = "send_message"
+    if "previous_page" in session: # already active
+        previous_page = session["previous_page"]
+    else: # initializing
+        previous_page = "home"
+    session["previous_page"] = page
+
+    group = "home" # Used to control top menu behaviour.
+
+    hub_mode = get_hub_mode() ### New variable added
+
+    namespace_steward = False
+    currency_steward = False
+    paying = False
+    logged_in = current_user.is_authenticated
+
+    primary_identity_fph, \
+    primary_identity_hrns, \
+    primary_identity_type, \
+    m = identify_entity(current_user.get_id())
+
+    if "working_identity" in session:
+        working_identity_fph, \
+        working_identity_hrns, \
+        working_identity_type, \
+        m = identify_entity(session["working_identity"])
+    else:
+        working_identity_fph = primary_identity_fph
+        session["working_identity"] = working_identity_fph
+        working_identity_hrns = primary_identity_hrns
+        working_identity_type = primary_identity_type
+    working_identity_type = etype_to_adtype(working_identity_type)
+
+    form = UserMessageForm()
+    if form.validate_on_submit():
+
+        recipient_fph, \
+        recipient_hrns, \
+        recipient_type, \
+        m = identify_entity(form.recipient.data)
+        if m:
+            flash(m)
+            return redirect("/home")
+        if recipient_fph == "":
+            flash("Recipient cannot be identified")
+            return redirect("/home")
+
+        if not (recipient_type in ["primid", "secid", "currency"]):
+            flash("Invalid recipient type")
+            return redirect("/home")
+
+        if recipient_type == "currency":
+            if form.broadcast.data:
+                #broadcast_to_currency_users(recipient_fph)
+                flash("broadcast_to_currency_users( )  not yet implemented")
+                return redirect("/home")
+            else:
+                flash("Cannot broadcast to currency users if box unticked")
+                return redirect("/home")
+
+        now = datetime.now()
+        message_timestamp = now.strftime("%Y-%m-%d_%H:%M:%S")
+        print("message_timestamp = ", end="")
+        print(message_timestamp)
+        print("now = ", end="")
+        print(now)
+#        today = date.now()
+#        print("today = ", end="")
+#        print(today)
+
+#        date_time = now.strftime("%Y-%m-%d_%H:%M:%S")
+        date_today = now.strftime("%Y%m%d")
+
+        category = form.category.data
+        print("category = ", end="")
+        print(category)
+
+        subject = form.subject.data
+
+        #expiry_datetime = form.expiry_date.data + "_00:00:00"
+        #expiry_datetime = form.expiry_datetime.data
+        expiry_date = form.expiry_date.data
+        print("expiry_date = ", end="")
+        print(expiry_date)
+        expiry_date_ = expiry_date.strftime("%Y%m%d")
+        print("expiry_date_ = ", end="")
+        print(expiry_date_)
+        expiry_datetime = expiry_date.strftime("%Y-%m-%d_%H:%M:%S")
+
+
+
+
+        #if expiry_datetime < now:
+        if expiry_date_ < date_today:
+            flash("The expiry date cannot be in the past.")
+
+        lifespan = form.lifespan.data
+        longevity = lifespan + unixtime_int()
+        #unixtime = unixtime_int()
+
+        message_body = form.message_body.data
+
+
+        print("To: " + recipient_hrns)
+        print("Category: " + category)
+        print("Subject: " + subject)
+        print("Expiry date: ", end="")
+        print(expiry_date)
+        print("Message body: " + message_body)
+
+        em = send_message(
+                message_timestamp,
+                working_identity_fph,   # FPH or HRNS
+                recipient_fph,          # FPH or HRNS
+                category,               # string
+                "",                     # string
+                subject,                # string
+                "",
+                longevity,              # integer: lifespan (seconds)
+                expiry_datetime,        # string: YYYY-MM-DD_hh:mm:ss
+                "",                     # string
+                "",                     # string
+                "",                     # integer
+                message_body,           # string
+                False                   # boolean
+            )
+        if em:
+            flash(em)
+            return redirect("/home")
+        else:
+            return redirect("/message/list")
+
+
+    return render_template(
+        "message_send.html",
+        title = "Send user message",
+        page = page,
+        group = group,
+        hub_mode = hub_mode,
+        logged_in = logged_in,
+        primary_identity_type = "login identity",
+        primary_identity_fph = primary_identity_fph,
+        primary_identity_hrns = primary_identity_hrns,
+        working_identity_fph = working_identity_fph,
+        working_identity_hrns = working_identity_hrns,
+        working_identity_type = working_identity_type,
+        form = form
+    )
+
+
+
+
+
+
+
 @app.route("/message/show/<recipient_fph>", methods = ["GET", "POST"])
 @login_required
-def show_messages(recipient_fph):
+def messages_show(recipient_fph):
 
     # Hub operational mode (read from environment variable HUB_MODE)
     hub_mode = get_hub_mode()
@@ -4690,6 +4861,58 @@ def show_messages(recipient_fph):
         number_of_indelible_messages = number_of_indelible_messages,
         number_of_messages = number_of_messages
     )
+
+
+# Delete a single message:
+#
+@app.route("/message/delete/<recipient_fph>/<message_id>",
+           methods = ["GET", "POST"])
+@login_required
+def message_delete(recipient_fph, message_id):
+
+    primid_fph, \
+    primid_hrns, \
+    primid_type, \
+    m = identify_entity(current_user.get_id())
+
+    recipient_fph, \
+    recipient_hrns, \
+    recipient_type, \
+    m = identify_entity(recipient_fph)
+
+    if recipient_fph == "":
+        flash("ERROR: recipient is unregistered")
+        return redirect("/home")
+
+    if (recipient_type == "primid") and (recipient_fph != primid_fph):
+        flash("ERROR: recipient is incorrect primid")
+        return redirect("/home")
+
+    if (recipient_type == "secid"):
+        secids_list = list_secids(primid_fph)
+        if not (recipient_fph in secids_list):
+            flash("ERROR: recipient secid does not belong to current primid")
+            return redirect("/home")
+
+    if not isinstance(message_id, str):
+        flash("ERROR: invalid message ID in URL")
+        return redirect("/home")
+
+    if "previous_page" in session: # already active
+        previous_page = session["previous_page"]
+    else: # initializing
+        previous_page = "home"
+
+    em = delete_message(message_id)
+    if em:
+        flash(em)
+
+    return redirect("/message/show/" + recipient_fph)
+
+
+
+
+
 
 
 # help ========================================================================

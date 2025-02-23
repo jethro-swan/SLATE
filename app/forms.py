@@ -16,7 +16,7 @@ from wtforms import StringField, PasswordField, BooleanField, SubmitField
 #from wtforms import TextField, TextAreaField, SelectField, RadioField
 from wtforms import TextAreaField, SelectField, RadioField, HiddenField
 from wtforms import IntegerField, DecimalField, FloatField
-from wtforms import DateField
+from wtforms import DateField, DateTimeField
 from wtforms.validators import DataRequired, InputRequired, Email
 from wtforms.validators import Length, EqualTo
 from flask_wtf.file import FileField, FileRequired, FileAllowed
@@ -37,12 +37,15 @@ class UserMessageForm(FlaskForm):
     # If broadcast box is not checked. then any attempt to send to an entity
     # other than an *identity* will be rejected.
 
-    recipient       = StringField("Recipient") # *identity* or *currency*
+    recipient       = StringField(
+                          "Recipient",
+                          validators=[DataRequired("required")]
+                      ) # *identity* or *currency*
 
-    broadcast       = BooleanField("Broadcast to currency users")
+    broadcast       = BooleanField("Broadcast")
 
     category        = RadioField(
-                        "Subject category",
+                        "Category",
                         choices = [
                                     ("payment_received", "payment received"),
                                     ("offer", "offer"),
@@ -52,13 +55,26 @@ class UserMessageForm(FlaskForm):
                                   ]
                       )
 
-    subject         = StringField("Subject")
+    subject         = StringField(
+                          "Subject",
+                          validators=[DataRequired("required")]
+                      )
 
-    expiry_datetime = DateField("Date (YYYY-MM-DD)", format="%Y-%m-%d")
+#    expiry_datetime = DateTimeField(
+#                          "Expiry date/time",
+#                          format="%Y-%m-%d %H:%M:%S"
+#                      )
 
-    lifespan        = IntegerField("Life-span (days)")
+    expiry_date     = DateField(
+                          "Expiry date",
+                          format="%Y-%m-%d"
+                      )
+
+    lifespan        = IntegerField("Lifespan (days)")
 
     message_body    = TextAreaField("Message")
+
+    submit          = SubmitField("SEND")
 
 # (2) Steward-to-agent or steward-to-community:
 
@@ -99,6 +115,7 @@ class StewardMessageForm(FlaskForm):
 
     message_body    = TextAreaField("Message")
 
+    submit          = SubmitField("send")
 
 
 

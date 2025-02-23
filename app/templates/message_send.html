@@ -1,0 +1,78 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<h3>Send a message</h3>
+
+<p class="footnote">
+  You can use this form to send a message from the current working
+  <b>identity</b> to any other known <b>identity</b>.
+</p>
+<p class="footnote">
+  You can also broadcast a message to all users of a specified <b>currency</b>
+  (if enabled by its <em>stewards</em>, and if the "broadcast" box is ticked).
+  This would be used typically to advertise an <em>offer</em>, a
+  <em>request</em> or an <em>event</em>.
+</p>
+
+<form action="" method="post" autocomplete="off" novalidate>
+{{ form.hidden_tag() }}
+<table class="msg">
+  <tr valign="top">
+    <td class="msg">{{ form.recipient.label }}</td>
+    <td class="msg">{{ form.recipient(size=15, placeholder="recipient") }}</td>
+  </tr>
+  <tr valign="top">
+    <td class="msg">{{ form.broadcast.label }}</td>
+    <td class="msg">{{ form.broadcast() }}</td>
+  </tr>
+  <tr valign="top">
+    <td class="msg">{{ form.category.label }}</td>
+    <td class="msg">{{ form.category() }}</td>
+  </tr>
+  <tr valign="top">
+    <td class="msg">{{ form.subject.label }}</td>
+    <td class="msg">{{ form.subject(size=30, placeholder="subject") }}</td>
+  </tr>
+  <tr valign="top">
+    <td class="msg">{{ form.expiry_date.label }}</td>
+    <td class="msg">{{ form.expiry_date() }}</td>
+  </tr>
+  <tr valign="top">
+    <td class="msg">{{ form.lifespan.label }}</td>
+    <td class="msg">{{ form.lifespan(size=3) }}</td>
+  </tr>
+  <tr valign="top">
+    <td class="msg">{{ form.message_body.label  }}</td>
+    <td class="msg">{{ form.message_body(size=50) }}</td>
+  </tr>
+  <tr valign="top">
+    <td class="msg" colspan="2">{{ form.submit() }}</td>
+  </tr>
+</table>
+
+{% for error in form.recipient.errors %}
+<span style="color: red;">[{{ error }}]</span><br />
+{% endfor %}
+{% for error in form.broadcast.errors %}
+<span style="color: red;">[{{ error }}]</span><br />
+{% endfor %}
+{% for error in form.category.errors %}
+<span style="color: red;">[{{ error }}]</span><br />
+{% endfor %}
+{% for error in form.subject.errors %}
+<span style="color: red;">[{{ error }}]</span><br />
+{% endfor %}
+{% for error in form.expiry_date.errors %}
+<span style="color: red;">[{{ error }}]</span><br />
+{% endfor %}
+{% for error in form.lifespan.errors %}
+<span style="color: red;">[{{ error }}]</span><br />
+{% endfor %}
+{% for error in form.message_body.errors %}
+<span style="color: red;">[{{ error }}]</span><br />
+{% endfor %}
+
+</form>
+
+{% endblock %}

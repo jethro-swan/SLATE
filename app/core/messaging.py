@@ -4,6 +4,7 @@ import os
 import pickle
 from string import ascii_lowercase
 from datetime import datetime, date, time, timezone
+import calendar
 
 from .slate_core import identify_entity
 from .slate_core import account_status
@@ -23,13 +24,14 @@ from .regexp_list import re_datestamp
 
 #==============================================================================
 
-def display_colour_subject_prefix(subject_prefix):
+#def display_colour_subject_prefix(subject_prefix):
+def category_display_colour(subject_prefix):
     category_colour = {}
     category_colour["payment received"] = "#000040"
     category_colour["offer"] = "#008000"
     category_colour["request"] = "#408040"
     category_colour["payment"] = "#400000"
-    category_colour["payment request"] = "#400000"
+    category_colour["payment_request"] = "#400000"
     category_colour["event"] = "#FF8080"
     category_colour["please respond"] = "#4040F0"
     category_colour["urgent"] = "#800000"
@@ -193,7 +195,7 @@ def send_message(
     timestamp_now = datetime.now(timezone.utc)
 
     #print("message_timestamp = " + str(message_timestamp))
-    print("message_timestamp = " +  message_timestamp)
+#    print("message_timestamp = " +  message_timestamp)
 
     if expiry_datetime: # no expiry if ""
         if not re_datestamp.match(expiry_datetime):
@@ -220,7 +222,8 @@ def send_message(
             except:
                 if longevity: # if the deletion lifespan is valid
                     if isinstance(longevity, int):
-                        deletion_scheduled = longevity + timestamp_now
+                        deletion_scheduled = int(unixtime_int() > longevity)
+                        #deletion_scheduled = longevity + timestamp_now
                                            #+ datetime.now(timezone.utc)
                     else:
                         deletion_scheduled = 0 # not scheduled for deletion
@@ -267,18 +270,6 @@ def send_message(
         conn.commit()
         cursor.close()
 
-    print("Payment message:")
-    print(message_timestamp)
-    print(str(expiry_datetime))
-    print(str(deletion_scheduled))
-    print(category)
-    print(str(indelible))
-    print(stewardship_hrns)
-    print(fph_to_hrns(sender_fph))
-    print(fph_to_hrns(recipient_fph))
-    print(subject)
-    print(message_body)
-
     return ""
 
 #==============================================================================
@@ -323,7 +314,26 @@ def fetch_messages(recipient_identifier):
         messages = [] # list of dictionaries
         for message in message_list:
             if message[2]:
-                expiry_timestamp = int(message[2])
+                #expiry_timestamp = int(message[2])
+                #expiry_timestamp = message[2]
+
+                ets = message[2].split("_")
+                ed = ets[0].split("-")
+                et = ets[1].split(":")
+                year = int(ed[0])
+                month = int(ed[1])
+                day = int(ed[2])
+                hour = int(et[0])
+                minute = int(et[1])
+                second = int(et[2])
+                eds = datetime(year, month, day, hour, minute, second)
+                #expiry_timestamp = time.mktime(eds.timetuple())
+                expiry_timestamp = calendar.timegm(eds.timetuple())
+
+
+
+
+
             else:
                 expiry_timestamp = 0
             delete = bool(message[3])
@@ -331,10 +341,10 @@ def fetch_messages(recipient_identifier):
             # Display if indelible deletion not due
             if (expiry_timestamp < unixtime_int()) or indelible:
                 m = {}
-                m["rgb_colour"] = display_colour_subject_prefix(message[4])
+                m["rgb_colour"] = category_display_colour(message[4])
                 m["message_id"] = message[0] # integer
                 m["timestamp"] = message[1] # integer
-                m["expiry_timestamp"] = message[2] # integer
+                m["expiry_timestamp"] = message[2] #
                 m["delete"] = delete     # boolean
                 m["category"] = message[4] # string
                 m["indelible"] = indelible  # boolean
@@ -373,7 +383,10 @@ def fetch_messages(recipient_identifier):
                     continue    # omit this message from list returned (should
                                 # never happen)
 
-                m["amount"] = integer_to_money_s_format(message[11])
+                if isinstance(message[11], int):
+                    m["amount"] = integer_to_money_s_format(message[11])
+                else:
+                    m["amount"] = ""
 
                 m["subject"] = message[12] # string
 
@@ -394,8 +407,6 @@ def fetch_messages(recipient_identifier):
 #==============================================================================
 # Are any messages available?
 #
-
-
 def messages_available(recipient_identifier):
 
     recipient_fph, \
@@ -450,6 +461,24 @@ def messages_available(recipient_identifier):
 #    messages = fetch_messages(identity)
 #   return len(messages) > 0
 
+
+def delete_message(message_id):
+
+    if not isinstance(message_id, str):
+        return "message_id is not a string"
+    elif not message_id.isdigit():
+        return "message_id is not an integer"
+
+    with sqlite3.connect(MESSAGES_DB) as conn:
+        cursor = conn.cursor()
+        cursor.execute(
+            "DELETE FROM messages WHERE message_id = ?",
+            (int(message_id),)
+        )
+        conn.commit()
+        cursor.close()
+
+    return ""
 
 
 

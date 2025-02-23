@@ -81,9 +81,14 @@
       <!-- These both call for some JavaScript woowoo to compile the deletion
            and archiving lists locally before sending them back to the server.
       -->
-      <a href="/message/delete/{{ m.message_id }}">delete message</a> |
+      <a href="/message/delete/{{ m.recipient_fph }}/{{ m.message_id }}">
+        delete message
+      </a>
       <!-- This will require a new flag "archived" in the "messages" table -->
+      <!--
+       |
       <a href="/message/archive/{{ m.message_id }}">archive message</a>
+      -->
     </td>
   <tr>
     <td class="msg" colspan="2"><hr size="1" /></td>

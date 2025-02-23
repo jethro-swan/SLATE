@@ -705,7 +705,7 @@ def retrieve_primid_access_details(primid_identifier):
 #
 def account_status(account_fph):
     if not re_fph.match(account_fph):
-        return "", "", 0, "Invalid FPH: " + account_fph
+        return False, False, "", "", 0, "Invalid FPH: " + account_fph
 
     #account_fph = "'" + account_fph + "'"
     # wrapped to enable SQLite to accept it.
