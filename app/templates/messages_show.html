@@ -30,6 +30,7 @@
     <td class="msg">{{ m.stewardship_hrns }}</td>
   </tr>
   {% endif %}
+  {% if m.category != "payment" %}
   <tr>
     <td class="msg">From:</td>
     <td class="msg">{{ m.sender_hrns }}</td>
@@ -38,6 +39,7 @@
     <td class="msg">To:</td>
     <td class="msg">{{ m.recipient_hrns }}</td>
   </tr>
+  {% endif %}
   <tr>
     <td class="msg">Subject:</td>
     <td class="msg">{{ m.prefix_string }} {{ m.subject }}</td>

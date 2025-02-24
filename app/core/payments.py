@@ -200,9 +200,9 @@ def payment(payer_account_fph, payee_account_fph, amount, annotation):
             message_body,               #
             False                       # indelibility
         )
-    if m:
-        print("Problem in  send_message( )  function")
-        print(m)
+#    if m:
+#        print("Problem in  send_message( )  function")
+#        print(m)
 
 
 

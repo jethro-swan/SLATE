@@ -252,12 +252,12 @@ table.msg {
 }
 td.msg {
   font-size: 1.0em; background: #ffffff;
-  padding-top: 4px; padding-left: 4px; padding-right: 4px; padding-bottom: 4px;
+  padding-top: 2px; padding-left: 4px; padding-right: 4px; padding-bottom: 2px;
   border: 0px solid #ffffff;
 }
 td.msg-box {
   font-size: 1.0em; background: #ffffff;
-  padding-top: 1px; padding-left: 4px; padding-right: 4px; padding-bottom: 1px;
+  padding-top: 2px; padding-left: 4px; padding-right: 4px; padding-bottom: 2px;
   border: 1px solid #c0c0c0;
   margin-top: 10px; margin-left: 4px; margin-right: 4px; margin-bottom: 8px;
 }

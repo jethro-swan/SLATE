@@ -910,9 +910,9 @@ def home():
     for secid_fph in secids_list:
         identity_list.append(secid_fph)
 
-    print("Indentities listed:")
-    for identity_fph in identity_list:
-        print("\t" + fph_to_hrns(identity_fph))
+#    print("Indentities listed:")
+#    for identity_fph in identity_list:
+#        print("\t" + fph_to_hrns(identity_fph))
 
     total_number_of_messages = 0
     total_number_of_indelible_messages = 0
@@ -922,11 +922,11 @@ def home():
         number_of_messages, \
         number_of_indelible_messages = messages_available(identity_fph)
 
-        print("number_of_messages = " + str(number_of_messages))
-        print(
-            "number_of_indelible_messages = " \
-            + str(number_of_indelible_messages)
-        )
+#        print("number_of_messages = " + str(number_of_messages))
+#        print(
+#            "number_of_indelible_messages = " \
+#            + str(number_of_indelible_messages)
+#        )
         total_number_of_messages += number_of_messages
         total_number_of_indelible_messages += number_of_indelible_messages
 
@@ -3856,10 +3856,10 @@ def create_namespace():
             return redirect("/create_namespace")
 
         inh_default_currency_fph = get_default_currency(parent_namespace_fph)
-        print(
-            "inherited default currency = " \
-            + fph_to_hrns(inh_default_currency_fph)
-        )
+#        print(
+#            "inherited default currency = " \
+#            + fph_to_hrns(inh_default_currency_fph)
+#        )
 
         default_currency_fph, \
         default_currency_hrns, \
@@ -4536,9 +4536,9 @@ def messages():
     for secid_fph in secids_list:
         identity_list.append(secid_fph)
 
-    print("Indentities listed:")
-    for identity_fph in identity_list:
-        print("\t" + fph_to_hrns(identity_fph))
+#    print("Indentities listed:")
+#    for identity_fph in identity_list:
+#        print("\t" + fph_to_hrns(identity_fph))
 
     total_number_of_messages = 0
     total_number_of_indelible_messages = 0
@@ -4548,11 +4548,11 @@ def messages():
         number_of_messages, \
         number_of_indelible_messages = messages_available(identity_fph)
 
-        print("number_of_messages = " + str(number_of_messages))
-        print(
-            "number_of_indelible_messages = " \
-            + str(number_of_indelible_messages)
-        )
+#        print("number_of_messages = " + str(number_of_messages))
+#        print(
+#            "number_of_indelible_messages = " \
+#            + str(number_of_indelible_messages)
+#        )
         total_number_of_messages += number_of_messages
         total_number_of_indelible_messages += number_of_indelible_messages
 
@@ -4569,7 +4569,7 @@ def messages():
             else:
                 m["some_indelible"] = False
 
-            print(m)
+#            print(m)
             message_recipients_list.append(m)
 
     if total_number_of_messages > 0:
@@ -4670,10 +4670,10 @@ def message_send():
 
         now = datetime.now()
         message_timestamp = now.strftime("%Y-%m-%d_%H:%M:%S")
-        print("message_timestamp = ", end="")
-        print(message_timestamp)
-        print("now = ", end="")
-        print(now)
+#        print("message_timestamp = ", end="")
+#        print(message_timestamp)
+#        print("now = ", end="")
+#        print(now)
 #        today = date.now()
 #        print("today = ", end="")
 #        print(today)
@@ -4682,19 +4682,19 @@ def message_send():
         date_today = now.strftime("%Y%m%d")
 
         category = form.category.data
-        print("category = ", end="")
-        print(category)
+#        print("category = ", end="")
+#        print(category)
 
         subject = form.subject.data
 
         #expiry_datetime = form.expiry_date.data + "_00:00:00"
         #expiry_datetime = form.expiry_datetime.data
         expiry_date = form.expiry_date.data
-        print("expiry_date = ", end="")
-        print(expiry_date)
+#        print("expiry_date = ", end="")
+#        print(expiry_date)
         expiry_date_ = expiry_date.strftime("%Y%m%d")
-        print("expiry_date_ = ", end="")
-        print(expiry_date_)
+#        print("expiry_date_ = ", end="")
+#        print(expiry_date_)
         expiry_datetime = expiry_date.strftime("%Y-%m-%d_%H:%M:%S")
 
 
@@ -4711,12 +4711,12 @@ def message_send():
         message_body = form.message_body.data
 
 
-        print("To: " + recipient_hrns)
-        print("Category: " + category)
-        print("Subject: " + subject)
-        print("Expiry date: ", end="")
-        print(expiry_date)
-        print("Message body: " + message_body)
+#        print("To: " + recipient_hrns)
+#        print("Category: " + category)
+#        print("Subject: " + subject)
+#        print("Expiry date: ", end="")
+#        print(expiry_date)
+#        print("Message body: " + message_body)
 
         em = send_message(
                 message_timestamp,

@@ -414,8 +414,8 @@ def messages_available(recipient_identifier):
     recipient_type, \
     em = identify_entity(recipient_identifier)
 
-    print("recipient_fph = " + recipient_fph)
-    print("recipient_hrns = " + recipient_hrns)
+#    print("recipient_fph = " + recipient_fph)
+#    print("recipient_hrns = " + recipient_hrns)
 
     with sqlite3.connect(MESSAGES_DB) as conn:
         cursor = conn.cursor()
@@ -428,13 +428,13 @@ def messages_available(recipient_identifier):
         if message_id_list is None:
             cursor.close()
             return 0, 0 # no messages returned
-        print(message_id_list)
+#        print(message_id_list)
 
         number_of_messages = len(message_id_list)
-        print(
-            recipient_hrns + " has received "
-            + str(number_of_messages) + " messages"
-        )
+#        print(
+#            recipient_hrns + " has received "
+#            + str(number_of_messages) + " messages"
+#        )
 
         # If the recipient is a *primid*, some messages may be indelible:
         if recipient_type != "primid":
