@@ -8,12 +8,12 @@ import os
 import sys
 from pathlib import Path
 
-from .regexp_list import re_fph, re_hrns
+from app.core.regexp_list import re_fph, re_hrns
 
-from .unix_functions import fcopy
+from app.core.unix_functions import fcopy
 
-from .constants import TIMESTAMP_FMT, FNAME_DATETIME_FMT, LEDGER_DATETIME_FMT
-
+from app.core.constants import TIMESTAMP_FMT, FNAME_DATETIME_FMT
+from app.core.constants import LEDGER_DATETIME_FMT
 
 #==============================================================================
 # 2024-08-18: IMPORTANT

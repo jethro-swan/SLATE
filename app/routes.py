@@ -60,7 +60,7 @@ from app.core.auth import check_auth_hash, authenticate_pin
 from app.core.logging import log_event
 
 from app.core.payments import payment
-#from app.core.payments import dump_account_payments
+
 from app.core.exports import list_payments_for_account
 from app.core.exports import dump_account_payments_csv
 from app.core.exports import list_payments_in_currency
