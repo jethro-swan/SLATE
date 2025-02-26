@@ -65,6 +65,9 @@ ul.uldisc {
 li.compact {
   margin-left: -10px; margin-top: 0px; margin-bottom: 5px;
 }
+li.compact2 {
+  margin-left: -15px; margin-top: 1px; margin-bottom: 1px;
+}
 li.compact-footnote {
   margin-left: -20px; margin-top: 0px; margin-bottom: -0px;
   font-size: 11px;

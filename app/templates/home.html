@@ -8,6 +8,17 @@ This is the simplified SLATE interface, listing only the *identities* and
 *currencies*, hiding the *accounts*.
 --------------------------------------------------------------------------- -->
 
+<h3>Your identities:</h3>
+<ul>
+{% for identity in identities %}<!-- list of dictionaries -->
+<li class="compact2">
+  <a href="/identity/change/{{ identity.fph }}"><b>{{ identity.hrns }}</b></a>
+  {% if identity.hrns == primary_identity_hrns %}(login identity){% endif %}
+</li>
+{% endfor %}
+</ul>
+
+<h3>Your accounts:</h3>
 <table>
   <tr>
     <td class="h"><b>identity</b></td>
@@ -73,6 +84,7 @@ This is the simplified SLATE interface, listing only the *identities* and
   </tr>
   {% endfor %}
   {% endfor %}
+
   <!--
   <tr>
     <td>
@@ -90,6 +102,7 @@ This is the simplified SLATE interface, listing only the *identities* and
   </tr>
   -->
 </table>
+
 <ul>
   <li class="compact">
     <p class="footnote">

@@ -3,17 +3,18 @@ import sqlite3
 import os
 import pickle
 
-from .constants import ENTITIES_DB
-from .common import nshash
-from .regexp_list import *
-from .slate_core import hrns_to_fph
-from .slate_core import add_entity_common_properties
-from .slate_core import new_account
-from .slate_core import new_namespace
-from .auth import auth_hash
+from app.core.constants import ENTITIES_DB
+from app.core.common import nshash
+from app.core.regexp_list import *
+from app.core.slate_core import hrns_to_fph, fph_to_hrns
+from app.core.slate_core import add_entity_common_properties
+from app.core.slate_core import new_account
+from app.core.slate_core import new_namespace
+from app.core.slate_core import identify_entity
+from app.core.auth import auth_hash
 #from .slate_core import add_namespace_specific_properties
 #from .slate_core import add_account_specific_properties
-from .cctld_list import *
+from app.core.cctld_list import *
 
 debugging = True
 
@@ -394,9 +395,40 @@ def create_quasitld_set(full = False):
                 seed_currency_fph,
                 seed_primid_fph
             )
+        if m:
+            print(m)
         errors += m + "\n"
         tld_fph_list.append(namespace_fph)
 
     return tld_fph_list, errors
+
+
+# A set of single-letter sandbox root *namesapces* is created:
+def create_sandbox_root_set():
+
+    # These are recreated here in case it is necessary to callthis function
+    # before create_seed_entities( ).
+    s_fph, m = hrns_to_fph("s")
+    seed_primid_fph, m  = hrns_to_fph("adm.cc")
+    seed_currency_fph, m  = hrns_to_fph("hrs.cc")
+
+    errors = "\n"
+    fph_of = {}
+    for s in ["s", "a", "b", "c", "d", "e", "f", "g", "h", "i", "j"]:
+        namespace_fph, \
+        namespace_hrns, \
+        m = new_namespace(s, s_fph, seed_currency_fph, seed_primid_fph)
+        if m:
+            print(s + ": ", end="")
+            print(m)
+
+        print(namespace_fph + " > " + namespace_hrns)
+
+        fph_of[namespace_hrns] = namespace_fph
+        errors += m + "\n"
+
+    return fph_of, errors
+
+
 
 #==============================================================================

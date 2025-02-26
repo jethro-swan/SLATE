@@ -1,3 +1,5 @@
+#!/home/john/NESTS/SLATE/venv/bin/python3
+#!/home/slate/SLATE/venv/bin/python3
 #!/usr/bin/env python3
 
 # This script can be run to (re)initialize the SLATE installation at any time.
@@ -11,16 +13,28 @@ from app.core.payments import create_payments_db
 from app.core.messaging import create_messages_db
 from app.core.slate_seed import create_seed_entities, create_quasitld_set
 
+print("creating DBM maps")
 create_maps()
+print("creating entities databases (SQLite)")
 create_entities_db()
+print("creating session databases (SQLite)")
 create_slate_session_db()
+print("creating seed entities")
 create_seed_entities()
+print("creating payments databases (SQLite)")
 create_payments_db()
+print("creating hubs databases (SQLite)")
 create_hubs_db()
+print("creating messages databases (SQLite)")
 create_messages_db()
+print("creating quasi-TLD root namespace set")
 tld_fph_list, errors = create_quasitld_set(False)
+#print(errors)
+#print(tld_fph_list)
+#for n_fph in tld_fph_list:
+#    print(fph_to_hrns(n_fph))
 
-print("The following seed entities have been created (HRNS):")
+print("\n\nThe following seed entities have been created (HRNS):")
 print("\tseed namespace  = \"cc\"")
 print("\tseed currency   = \"hrs.cc\"")
 print("\tseed primid     = \"adm.cc\"")

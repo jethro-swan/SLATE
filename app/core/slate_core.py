@@ -6,26 +6,27 @@ from pathlib import Path
 from string import ascii_lowercase
 
 
-from .constants import ENTITIES_DB, PAYMENTS_DB, DB_DIR, DB_BKP_DIR, HUBS_DB
-from .constants import FPH_TO_HRNS_MAP, HRNS_C_FPH_MAP
-from .constants import SUBSTRATE_FPH
+from app.core.constants import ENTITIES_DB, PAYMENTS_DB, DB_DIR, DB_BKP_DIR
+from app.core.constants import HUBS_DB
+from app.core.constants import FPH_TO_HRNS_MAP, HRNS_C_FPH_MAP
+from app.core.constants import SUBSTRATE_FPH
 
-from .common import filename_timestamp as timestamp
-from .common import nshash
+from app.core.common import filename_timestamp as timestamp
+from app.core.common import nshash
 
-from .fph_hrns_maps import hrns_to_fph, fph_to_hrns, create_maps
-from .fph_hrns_maps import delete_fph_from_map
+from app.core.fph_hrns_maps import hrns_to_fph, fph_to_hrns, create_maps
+from app.core.fph_hrns_maps import delete_fph_from_map
 
-from .dbm_functions import dbm_store, dbm_fetch, dbm_delete, dbm_keys
-from .dbm_functions import dbm_create_map
+from app.core.dbm_functions import dbm_store, dbm_fetch, dbm_delete, dbm_keys
+from app.core.dbm_functions import dbm_create_map
 
-from .auth import auth_hash, check_auth_hash, generate_access_token
+from app.core.auth import auth_hash, check_auth_hash, generate_access_token
 
-from .regexp_list import *
+from app.core.regexp_list import *
 
-from .unix_functions import fcopy
+from app.core.unix_functions import fcopy
 
-from .cctld_list import *
+from app.core.cctld_list import *
 
 #------------------------------------------------------------------------------
 # In NESTS the FPH has so far been formed as the hash of the FIP, but making it
@@ -231,9 +232,14 @@ def create_entities_db():
 ## very different in structure, they may be identified automatically:
 
 def identify_entity(entity_identifier): # HRNS or FPH
+
     if not isinstance(entity_identifier, str):
         return "", "", "", ""
-    entity_identifier =  entity_identifier.strip()
+
+    entity_identifier = entity_identifier.strip()
+
+    if entity_identifier == SUBSTRATE_FPH:
+        return entity_identifier, "", "namespace", ""
 
     if re_fph.match(entity_identifier): # this is an FPH
         entity_fph = entity_identifier.strip()
@@ -799,8 +805,14 @@ def new_primid(
     namespace_hrns = fph_to_hrns(parent_namespace_fph)
     primid_hrns = username + "." + namespace_hrns
 
-    if fph_to_hrns(nshash(primid_hrns)):
-        return "", "", "", "An entity " + primid_hrns + " is already registered"
+    entity_fph, \
+    entity_hrns, \
+    etype, \
+    m = identify_entity(primid_hrns)
+#    if m:
+#        print(m)
+    if entity_fph:
+        return "", "", "", primid_hrns + " exists already (" + etype + ")"
 
     primid_fph, m = hrns_to_fph(primid_hrns)
     if m:
@@ -906,8 +918,18 @@ def new_secid(
 
     parent_namespace_hrns = fph_to_hrns(parent_namespace_fph)
     secid_hrns = username + "." + parent_namespace_hrns
-    if fph_to_hrns(nshash(secid_hrns)):
-        return "", "", "A entity " + secid_hrns + " is already registered"
+#    if fph_to_hrns(nshash(secid_hrns)):
+#        return "", "", "A entity " + secid_hrns + " is already registered"
+    #
+    entity_fph, \
+    entity_hrns, \
+    etype, \
+    m = identify_entity(secid_hrns)
+#    if m:
+#        print(m)
+    if entity_fph:
+        return "", "", secid_hrns + " exists already (" + etype + ")"
+
     else:
         secid_fph, m = hrns_to_fph(secid_hrns)
         if m:
@@ -988,25 +1010,41 @@ def new_namespace(
         default_currency_fph,
         initial_steward_fph
     ):
-
-    parent_namespace_fph, \
-    parent_namespace_hrns, \
-    etype, \
-    m = identify_entity(parent_namespace_fph)
+    # The substrate is a special case of parent *namespace* (nameless):
+    if parent_namespace_fph == SUBSTRATE_FPH:
+        parent_namespace_hrns = ""
+        etype = "namespace"
+    else:
+        parent_namespace_fph, \
+        parent_namespace_hrns, \
+        etype, \
+        m = identify_entity(parent_namespace_fph)
     if parent_namespace_fph == "":
         return "", "", "Parent namespace does not exist"
 
     if not re_slatename.match(namespace_name):
         return "", "", namespace_name + " is not a valid name"
 
-    namespace_hrns = namespace_name + "." + parent_namespace_hrns
+    if parent_namespace_hrns:
+        namespace_hrns = namespace_name + "." + parent_namespace_hrns
+    else:
+        namespace_hrns = namespace_name
 
     existing_namespace_fph, \
     existing_namespace_hrns, \
     etype, \
     m = identify_entity(namespace_hrns)
-    if existing_namespace_fph:
-        return "", "", "Entity " + namespace_hrns + " is already registered"
+#    if existing_namespace_fph:
+#        return "", "", "Entity " + namespace_hrns + " is already registered"
+    #
+    entity_fph, \
+    entity_hrns, \
+    etype, \
+    m = identify_entity(namespace_hrns)
+#    if m:
+#        print(m)
+    if entity_fph:
+        return "", "", namespace_hrns + " exists already (" + etype + ")"
 
     # The HRNS and FPH are added to the FPH>HRNS and HRNS>FPH maps:
     namespace_fph, m = hrns_to_fph(namespace_hrns)
@@ -1046,14 +1084,8 @@ def new_currency(
         currency_suffix,
         default_account_name
     ):
-    # The initial account in this currency is assigned to its initial steward
-    # (which must exist already).
-
-#    if not re_fph.match(parent_namespace_fph):
-#        return "", "", "Invalid parent namespace FPH: " + parent_namespace_fph
-#
-#    if not re_fph.match(initial_steward_fph):
-#        return "", "", "Invalid initial steward FPH: " + initial_steward_fph
+    # The initial *account* in this *currency* is assigned to its initial
+    # steward (which must exist already).
 
     parent_namespace_fph, \
     parent_namespace_hrns, \
@@ -1070,32 +1102,24 @@ def new_currency(
 
     currency_hrns = currency_name + "." + parent_namespace_hrns
 
-    existing_currency_fph, \
-    existing_currency_hrns, \
+    entity_fph, \
+    entity_hrns, \
     etype, \
     m = identify_entity(currency_hrns)
-    if existing_currency_fph:
-        return "", "", "Entity " + currency_hrns + " is already registered"
+#    if m:
+#        print(m)
+    if entity_fph:
+        return "", "", currency_hrns + " exists already (" + etype + ")"
 
     currency_fph, m = hrns_to_fph(currency_hrns)
-
-#    parent_namespace_hrns = fph_to_hrns(parent_namespace_fph)
-#    currency_hrns = currency_name + "." + parent_namespace_hrns
-#
-#    if fph_to_hrns(nshash(currency_hrns)):
-#        return "", "", "An entity " + currency_hrns + " is already registered"
-#
-#    currency_fph, m = hrns_to_fph(currency_hrns)
-#
-#    initial_steward_hrns = fph_to_hrns(initial_steward_fph)
 
     add_entity_common_properties(
         currency_fph,
         parent_namespace_fph,
         "currency",             # entity type
-        "",     # Empty because a *currency* cannot have a default *currency*
-        False,  # Not applicable
-        "",     # Not applicable: a *currency* does not have an owner
+        "",                     # Not applicable
+        False,                  # Not applicable
+        "",                     # Not applicable
         True                    # active flag
     )
 
@@ -1196,8 +1220,17 @@ def new_account(
     if account_name == "":
         account_name = default_account_name
 
-    if fph_to_hrns(nshash(account_hrns)):
-        return "", "", "An entity " + account_hrns + " is already registered"
+#    if fph_to_hrns(nshash(account_hrns)):
+#        return "", "", "An entity " + account_hrns + " is already registered"
+    #
+    entity_fph, \
+    entity_hrns, \
+    etype, \
+    m = identify_entity(account_hrns)
+#    if m:
+#        print(m)
+    if entity_fph:
+        return "", "", account_hrns + " exists already (" + etype + ")"
 
     account_fph, m = hrns_to_fph(account_hrns)
 
@@ -1818,14 +1851,69 @@ def list_accounts_in_namespace(namespace_fph = ""):
 
 
 #==============================================================================
-# List all namespaces named within the specified namespace:
+# List all namespaces:
+def list_all_namespaces():
+
+    with sqlite3.connect(ENTITIES_DB) as conn:
+        cursor = conn.cursor()
+        cursor.execute(
+            "SELECT entity_fph FROM namespaces",
+            (namespace_fph,)
+        )
+        result = cursor.fetchall()
+        cursor.close()
+        if result is None:
+            return []
+        else:
+            return result
+
+# List all currencies:
+def list_all_currencies():
+
+    with sqlite3.connect(ENTITIES_DB) as conn:
+        cursor = conn.cursor()
+        cursor.execute(
+            "SELECT entity_fph FROM currencies",
+            (namespace_fph,)
+        )
+        result = cursor.fetchall()
+        cursor.close()
+        if result is None:
+            return []
+        else:
+            return result
+
+
+# List all currencies:
+def list_all_currencies():
+
+    with sqlite3.connect(ENTITIES_DB) as conn:
+        cursor = conn.cursor()
+        cursor.execute(
+            "SELECT entity_fph FROM currencies",
+            (namespace_fph,)
+        )
+        result = cursor.fetchall()
+        cursor.close()
+        if result is None:
+            return []
+        else:
+            return result
+
+
+
+
+
+
+#==============================================================================
+# List all *namespaces* named within the specified *namespace*:
 def list_namespaces_in_namespace(namespace_fph = ""):
 
     return namespace_fph_list # list
 
 
 #==============================================================================
-# List all namespaces named within the specified namespace:
+# List all *namespaces* nbelow the specified *namespace*:
 def list_namespaces_below_namespace(namespace_fph = ""):
 
     return namespace_fph_list # list

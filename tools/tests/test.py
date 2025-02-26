@@ -13,45 +13,45 @@ import secrets
 from prettytable import PrettyTable
 from wonderwords import RandomWord
 
-from core.constants import ENTITIES_DB, PAYMENTS_DB, DB_DIR, FPH_TO_HRNS_MAP
-from core.constants import HRNS_C_FPH_MAP
-from core.common import nshash
-from core.common import filename_timestamp as timestamp
-from core.fph_hrns_maps import hrns_to_fph, fph_to_hrns, create_maps
-from core.dbm_functions import dbm_list_entries, dbm_keys
-from core.slate_core import create_entities_db
-from core.slate_core import new_namespace, new_currency, new_account
-from core.slate_core import new_primid, new_secid
-from core.slate_core import identify_entity, get_currency_name
-from core.slate_core import list_primid_accounts, list_secid_accounts
-from core.slate_core import list_primid_currencies, list_secid_currencies
-from core.slate_core import list_accounts_in_currency
-from core.slate_core import get_entity_type
-#from core.slate_core import get_auth_data
-from core.slate_core import account_status
-from core.slate_core import add_stewardship, remove_stewards
-from core.slate_core import list_stewards, list_stewardships
-from core.slate_core import list_active_namespaces
-from core.slate_core import list_primids
-from core.slate_seed import create_seed_entities, create_quasitld_set
-from core.payments import create_payments_db, payment
-from core.payments import dump_currency_payments_table
-from core.auth import auth_hash, check_auth_hash
-#from core.auth import authenticate_web_access, authenticate_cli_access
-#from core.auth import authenticate_cli_access
-from core.auth import list_password_characters, password_valid
-from core.auth import generate_password, list_url_safe_password_characters
-from core.auth import url_safe_password_valid, generate_url_safe_password
-from core.auth import generate_access_token
-#from core.auth import pin_random_ord, pin_prompt_message, authenticate_pin
-#from core.auth import pin_random_ord, pin_prompt_message, authenticate_pin
-from core.display import integer_to_money_format
-from core.display import thin_line, thick_line, title_line, thin_title_line
-from core.display import yN, Yn, yesno, get_cli_number_input, pause
-from core.slate_login import get_auth_data
-from core.logging import log_event
-#from core.cctld_list import cctld_reduced_list, cctld_reduced_set
-#from core.cctld_list import cctld_reduced_list2, cctld_reduced_set2
+from app.core.constants import ENTITIES_DB, PAYMENTS_DB, DB_DIR
+from app.core.constants import FPH_TO_HRNS_MAP, HRNS_C_FPH_MAP
+from app.core.common import nshash
+from app.core.common import filename_timestamp as timestamp
+from app.core.fph_hrns_maps import hrns_to_fph, fph_to_hrns, create_maps
+from app.core.dbm_functions import dbm_list_entries, dbm_keys
+from app.core.slate_core import create_entities_db
+from app.core.slate_core import new_namespace, new_currency, new_account
+from app.core.slate_core import new_primid, new_secid
+from app.core.slate_core import identify_entity, get_currency_name
+from app.core.slate_core import list_primid_accounts, list_secid_accounts
+from app.core.slate_core import list_primid_currencies, list_secid_currencies
+from app.core.slate_core import list_accounts_in_currency
+from app.core.slate_core import get_entity_type
+#from app.core.slate_core import get_auth_data
+from app.core.slate_core import account_status
+from app.core.slate_core import add_stewardship, remove_stewards
+from app.core.slate_core import list_stewards, list_stewardships
+from app.core.slate_core import list_active_namespaces
+from app.core.slate_core import list_primids
+from app.core.slate_seed import create_seed_entities, create_quasitld_set
+from app.core.payments import create_payments_db, payment
+from app.core.payments import dump_currency_payments_table
+from app.core.auth import auth_hash, check_auth_hash
+#from app.core.auth import authenticate_web_access, authenticate_cli_access
+#from app.core.auth import authenticate_cli_access
+from app.core.auth import list_password_characters, password_valid
+from app.core.auth import generate_password, list_url_safe_password_characters
+from app.core.auth import url_safe_password_valid, generate_url_safe_password
+from app.core.auth import generate_access_token
+#from app.core.auth import pin_random_ord, pin_prompt_message, authenticate_pin
+#from app.core.auth import pin_random_ord, pin_prompt_message, authenticate_pin
+from app.core.display import integer_to_money_format
+from app.core.display import thin_line, thick_line, title_line, thin_title_line
+from app.core.display import yN, Yn, yesno, get_cli_number_input, pause
+from app.core.slate_login import get_auth_data
+from app.core.logging import log_event
+#from app.core.cctld_list import cctld_reduced_list, cctld_reduced_set
+#from app.core.cctld_list import cctld_reduced_list2, cctld_reduced_set2
 
 #==============================================================================
 # Initialize Faker object

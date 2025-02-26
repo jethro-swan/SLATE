@@ -7,7 +7,7 @@ cctld_list = [ # used in: seed.py
     "ac", "ad", "ae", "af", "ag", "ai", "al", "am", "ao", "aq", "ar", "as",
     "at", "au", "aw", "ax", "az", "ba", "bb", "bd", "be", "bf", "bg", "bh",
     "bi", "bj", "bm", "bn", "bo", "bq", "br", "bs", "bt", "bw", "by", "bz",
-    "ca", "cc", "cd", "cf", "cg", "ch", "ci", "ck", "cl", "cm", "cn", "co",
+    "ca", "cd", "cf", "cg", "ch", "ci", "ck", "cl", "cm", "cn", "co",
     "cr", "cu", "cv", "cw", "cx", "cy", "cz", "de", "dj", "dk", "dm", "do",
     "dz", "ec", "ee", "eg", "eh", "er", "es", "et", "eu", "fi", "fj", "fk",
     "fm", "fo", "fr", "ga", "gd", "ge", "gf", "gg", "gh", "gi", "gl", "gm",
@@ -24,8 +24,9 @@ cctld_list = [ # used in: seed.py
     "ss", "st", "su", "sv", "sx", "sy", "sz", "tc", "td", "tf", "tg", "th",
     "tj", "tk", "tl", "tm", "tn", "to", "tr", "tt", "tv", "tw", "tz", "ua",
     "ug", "uk", "us", "uy", "uz", "va", "vc", "ve", "vg", "vi", "vn", "vu",
-    "wf", "ws", "ye", "yt", "za", "zm", "zw"
+    "wf", "ws", "ye", "yt", "za", "zm", "zw", "s"
 ]
+# NB, "cc" has been omitted becauseit is used as the seed *namespace*.
 
 cctld_set = set(cctld_list)
 
@@ -276,14 +277,16 @@ cctld_list2 = { # used in: seed.py
     "yt" : "Mayotte",
     "za" : "South Africa",
     "zm" : "Zambia",
-    "zw" : "Zimbabwe"
+    "zw" : "Zimbabwe",
+    "s" : "sandbox"
 }
 
 cctld_set2 = set(cctld_list2.keys())
 
 ###############################################################################
 
-cctld_reduced_list = [ "cc", "uk", "es", "fr", "de", "ca", "us" ]
+cctld_reduced_list = [ "uk", "es", "fr", "de", "ca", "us", "au", "s" ]
+# NB, "cc" has been omitted becauseit is used as the seed *namespace*.
 
 cctld_reduced_set = set(cctld_reduced_list)
 
@@ -294,7 +297,9 @@ cctld_reduced_list2 = { # used in: seed.py
     "de" : "Germany",
     "es" : "Spain",
     "fr" : "France",
-    "us" : "United States of America"
+    "au" : "Australia",
+    "us" : "United States of America",
+    "s" : "sandbox"
 }
 
 cctld_reduced_set2 = set(cctld_reduced_list2.keys())

@@ -22,8 +22,8 @@ if script_name == "fph_to_hrns":
 #    print(fph, end="")
     if m:
         print(" (" + m + ")")
-    else:
-        print()
+#    else:
+#        print()
     print(fph_to_hrns(fph) + " >>> " + etype)
 elif script_name == "hrns_to_fph":
     hrns = sys.argv[1]
