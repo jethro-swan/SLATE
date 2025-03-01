@@ -109,8 +109,28 @@ div.header {
   margin-bottom: 1px;
   float: left;
   width: 100%;
-
 }
+
+div.form-box {
+  display: block;
+  border-width: 0px;
+  border-style: solid;
+  border-color: #c8e0c8;
+  padding-left: 1px;
+  padding-right: 1px;
+  padding-top: 1px;
+  padding-bottom: 1px;
+  margin-left: 1px;
+  margin-right: 1px;
+  margin-top: 1px;
+  margin-bottom: 1px;
+  float: left;
+  width: 100%;
+}
+
+
+
+
 
 /* No messages and not on messages page */
 a.mb { text-decoration:none; }

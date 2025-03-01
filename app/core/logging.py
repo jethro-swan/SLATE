@@ -3,7 +3,7 @@
 import datetime
 import os
 
-from .constants import SLATE_LOGS, LOG_DATETIME_FMT
+from app.core.constants import SLATE_LOGS, LOG_DATETIME_FMT
 
 #from core.constants import *
 

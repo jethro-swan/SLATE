@@ -13,8 +13,33 @@ def dbm_create_map(dbm_file):
 
 # Add a key:value pair to the specified DBM file:
 def dbm_store(dbm_file, key, value):
-    with dbm.open(dbm_file, 'c') as db:
+
+    # Original version:
+#    with dbm.open(dbm_file, 'c') as db:
+#        db[key.encode("utf-8")] = value.encode("utf-8")
+
+# 2025-03-01: experimental change
+    try:
+        db = dbm.open(dbm_file, 'c')
+    except:
+        db.close()
+        return False
+    finally:
         db[key.encode("utf-8")] = value.encode("utf-8")
+        db.close()
+        return True
+
+
+
+#    db = dbm.open(dbm_file, 'c')
+#    try:
+#        db.acquire_lock()
+#        db[key.encode("utf-8")] = value.encode("utf-8")
+#        db.release_lock()
+#    finally:
+#        db.close()
+
+
 
 # Retrieve a value corresponding to the specified key in the DBM file:
 def dbm_fetch(dbm_file, key):

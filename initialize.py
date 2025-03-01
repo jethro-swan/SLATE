@@ -12,6 +12,9 @@ from app.core.slate_core import create_hubs_db
 from app.core.payments import create_payments_db
 from app.core.messaging import create_messages_db
 from app.core.slate_seed import create_seed_entities, create_quasitld_set
+from app.core.constants import SLATE_LOGS, SLATE_LOGS_BKP_DIR
+from app.core.constants import DEBUG_LOG, ERROR_LOG, AUTH_LOG, ACTIVITY_LOG
+
 
 print("creating DBM maps")
 create_maps()

@@ -20,6 +20,13 @@
     </p>
     -->
     <p>
+      {{ form.password.label }}<br />
+      {{ form.password(size=32) }}
+      {% for error in form.password.errors %}
+        <span style="color: red;">[{{ error }}]</span>
+      {% endfor %}
+    </p>
+    <p>
     {{ form.pro }}
     {{ form.pin_prompt.data }}
     </p>
@@ -28,13 +35,6 @@
       {{ form.pse(size=3) }}
       {{ pin_form_message }}
       {% for error in form.pse.errors %}
-        <span style="color: red;">[{{ error }}]</span>
-      {% endfor %}
-    </p>
-    <p>
-      {{ form.password.label }}<br />
-      {{ form.password(size=32) }}
-      {% for error in form.password.errors %}
         <span style="color: red;">[{{ error }}]</span>
       {% endfor %}
     </p>

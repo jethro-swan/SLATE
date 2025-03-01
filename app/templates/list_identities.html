@@ -2,10 +2,15 @@
 
 {% block content %}
 
-  <b>identites</b> |
+  <h3>Your identites</h3>
   <!-- <a href="/identity/change"><b>change identity</b></a> | -->
-  <a href="/create_secid"><b>create new alias</b></a>
-  <br /><br />
+  <p>
+    Your <b>identities</b> are all listed below, starting with your <b>login
+    identity</b> followed by its <b>aliases</b> (if any). You can click on any
+    to change immediately to that <em>working</em> <b>identity</b> or you can
+    <a href="/create_secid"><b>create a new alias</b></a>.
+  </p>
+  <br />
   <ul>
     {% for identity in identities %}<!-- list of dictionaries -->
     <li>
@@ -21,7 +26,6 @@
       <b>
         <a href="/identity/change/{{ identity.fph }}">{{ identity.hrns }}</a>
       </b>
-      (alias)
       {% endif %}
     </li>
     {% endfor %}

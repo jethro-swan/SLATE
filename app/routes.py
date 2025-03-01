@@ -329,7 +329,7 @@ def register():
             )
         if m:
             log_event("error", "primid creation", m)
-            flash("The primid cannot be created. See error log.")
+            flash(m)
             return redirect("/register")
 
         # An initial *account* will now be created (in the new *primid*'s
@@ -2622,7 +2622,7 @@ def make_payment_between_selected_accounts(
         payee_account_fph = None
     ):
 
-    print_payments_session_variables() ### TESTSTUFF
+#    print_payments_session_variables() ### TESTSTUFF
 
     if payer_account_fph is None:
         flash("Invalid payer account in URL string")
@@ -3253,7 +3253,7 @@ def manage_secid(secid_fph):
 #        print(secid_fph + " > " + fph_to_hrns(secid_fph))
 
     return render_template(
-        "manage_secids.html",
+        "manage_secid.html",
         title = "Manage an alias",
         page = page,
         group = group,

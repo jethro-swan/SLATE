@@ -96,10 +96,17 @@ def hrns_to_fph(hrns): # returns FPH and message
         # The collision-causing HRNS is now added to the FPH in the HRNS>FPH
         # exception map (which will usually be empty and will never grow beyond
         # a very small size) to be queried hereafter by hrns_to_fph(hrns).
-        dbm_store(HRNS_C_FPH_MAP, hrns, fph)
+##        dbm_store(HRNS_C_FPH_MAP, hrns, fph)
+# 2025-03-01: experimental change
+        while not dbm_store(HRNS_C_FPH_MAP, hrns, fph):
+            continue
     # In either case, the FPH:HRNS pair is added to the FPH>HRNS map to be used
     # hereafter by fph_to_hrns(fph).
-    dbm_store(FPH_TO_HRNS_MAP, fph, hrns)
+##    dbm_store(FPH_TO_HRNS_MAP, fph, hrns)
+# 2025-03-01: experimental change
+    while not dbm_store(FPH_TO_HRNS_MAP, fph, hrns):
+        continue
+
     return fph, ""
 
 save_fph_to_map = hrns_to_fph # alias

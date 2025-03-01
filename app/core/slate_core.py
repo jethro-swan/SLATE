@@ -818,10 +818,11 @@ def new_primid(
         delete_fph_from_map(primid_fph)
         return "", "", "", m
 
-    if not re_realname.match(realname):
-        errors += "Invalid real name \"" + realname + "\" discarded " \
-               + "so the primid has been created without a real name.\n"
-        primid_realname = ""
+    if realname:
+        if not re_realname.match(realname):
+            errors += "Invalid real name \"" + realname + "\" discarded " \
+                   + "so the primid has been created without a real name.\n"
+            primid_realname = ""
 
     # The *primid* cannot be created if no valid primary email address has been
     # provided:
@@ -1152,8 +1153,12 @@ def new_currency(
             """,
             (initial_steward_fph,)
         )
-        stewardships_fph_blob = cursor.fetchone()[0]
-        stewardships_fph_list = pickle.loads(stewardships_fph_blob)
+        result = cursor.fetchone()
+        if result is not None:
+            stewardships_fph_blob = result[0]
+            stewardships_fph_list = pickle.loads(stewardships_fph_blob)
+        else:
+            stewardships_fph_list = []
         if not (currency_fph in stewardships_fph_list):
             stewardships_fph_list.append(currency_fph)
             stewardships_fph_blob = pickle.dumps(stewardships_fph_list)

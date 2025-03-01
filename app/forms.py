@@ -376,7 +376,8 @@ class LoginForm(FlaskForm):
     pin_prompt, pin_subset_indices = pin_subset_prompt()
     pro             = HiddenField(pin_subset_indices)
     #pro             = HiddenField(default=pro_a)
-    pse             = PasswordField(
+##    pse             = PasswordField(
+    pse             = StringField(
                          pin_prompt,
                          #render_kw={"autocomplete": "off"},
                          render_kw={"autocomplete": "new-password"},
@@ -453,7 +454,8 @@ class LoginResetForm(FlaskForm):
 class RegistrationForm(FlaskForm):
     # The [username] must be unique within the [namespace] specified:
     username        = StringField(
-                        "identity",
+                        "username",
+                        render_kw={"placeholder": "short & simple"},
                         validators=[DataRequired("required")]
                       )
     #username      = StringField("identity")
@@ -469,9 +471,18 @@ class RegistrationForm(FlaskForm):
 
     # The following two are not assigned validators because one or both values
     # may be provided via the URL:
-    namespace       = StringField("parent namespace for new user")
-    realname        = StringField("real name")
-    currency        = StringField("currency for initial account")
+    namespace       = StringField(
+                          "parent namespace for username",
+                          render_kw={"placeholder": "parent namespace"}
+                      )
+    realname        = StringField(
+                          "real name",
+                          render_kw={"placeholder": "Your real name"}
+                      )
+    currency        = StringField(
+                          "currency for new user's initial account",
+                          render_kw={"placeholder": "currency identifier"},
+                      )
 
     # The drop-down version commented out below works, but is more trouble than
     # it's worth ...
@@ -545,12 +556,19 @@ class RegistrationForm(FlaskForm):
     # choose to use them to receive notifications:
     #email_1         = StringField("email address 1",
     #                    validators=[DataRequired("required"), Email()])
-    email_1             = StringField("email address 1")
+    email_1             = StringField(
+                              "recovery email address 1",
+                              render_kw={"placeholder": "required"},
+                              validators=[DataRequired("required")]
+                          )
 #    save_email_1        = BooleanField("save for notifications")
     #email_2         = StringField(
     #                    "email address 2",
     #                    validators=[Email()])
-    email_2             = StringField("email address 2")
+    email_2             = StringField(
+                              "recovery email address 2",
+                              render_kw={"placeholder": "(optional)"}
+                          )
 #    save_email_2        = BooleanField("save for notifications")
     # By default, a hash of the email addressis stored instead. This enables
     # the email addresses to be used for access-recovery purposes.
@@ -574,6 +592,7 @@ class RegistrationForm(FlaskForm):
     #recovery_q_2   = StringField("")
     password            = PasswordField(
                             "password",
+                            render_kw = {"placeholder": "unguessable string"},
                             validators=[
                                 #DataRequired("required")
                                 InputRequired(),
@@ -585,7 +604,8 @@ class RegistrationForm(FlaskForm):
                           )
     password_repeat     = PasswordField("repeat password")
 
-    pin                 = PasswordField(
+##    pin                 = PasswordField(
+    pin                 = StringField(
                             "PIN",
                             validators=[
                                 DataRequired(),

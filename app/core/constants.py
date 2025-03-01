@@ -29,6 +29,7 @@ DEBUG_LOG           = SLATE_LOGS + "debug.log"
 ERROR_LOG           = SLATE_LOGS + "error.log"
 AUTH_LOG            = SLATE_LOGS + "auth.log"
 ACTIVITY_LOG        = SLATE_LOGS + "activity.log"
+SLATE_LOGS_BKP_DIR  = SLATE_LOGS + "backups/"
 
 # Formatting:
 NS_SEPARATOR        = "."

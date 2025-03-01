@@ -88,7 +88,7 @@ re_pvalue = re.compile(r"^\d{1,}$")
 #------------------------------------------------------------------------------
 # Transaction ID:
 
-
+re_filename =re.compile(r"^[a-zA-Z0-9_]{1,}$")
 
 
 re_datestamp = re.compile(r"^[\d]{4}-[\d]{2}-[\d]{2}_[\d]{2}:[\d]{2}:[\d]{2}$")
