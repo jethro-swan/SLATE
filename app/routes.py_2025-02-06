@@ -118,7 +118,6 @@ from app.forms import PaymentToIdentityForm
 from app.forms import PaymentAccountPairForm
 from app.forms import CurrencyCreateForm
 from app.forms import AccountCreateForm
-from app.forms import AccountCreateFormMinimal
 from app.forms import NamespaceCreateForm
 from app.forms import SecidCreateForm
 from app.forms import SpecifyPayeeAccountForm
@@ -250,41 +249,27 @@ def register():
     # overlay.
 
     if form.validate_on_submit():
-
-        username = form.username.data
-
-        if hub_mode == "slate_minimal":
-            namespace_identifier, m = hrns_to_fph("cc")
-        else:
-            namespace_identifier = form.namespace.data.strip().lstrip(".")
-
-        if hub_mode == "slate_minimal":
-            currency_identifier, m = hrns_to_fph("hrs.cc")
-        else:
-            currency_identifier = form.currency.data.strip()
-
-        if form.realname.data is not None:
-            real_name = form.realname.data
-        else:
-            real_name = ""
-
-        email1 = form.email_1.data          # required
-        if form.email_2.data is not None:
-            email2 = form.email_2.data      # optional
-        else:
-            email2 = ""
-
-        password = form.password.data
-        pin = form.pin.data
-
+#        flash(
+#            "Registration submitted for user {}".format(
+#                # The username captured here is not the same as the login
+#                # identity which comprises: username.namespace (parent)
+#                form.username.data,
+#                form.namespace.data,
+#                form.realname.data,
+#                form.currency.data,
+#                form.email_1.data,
+#                form.email_2.data,
+#                form.password.data,
+#                form.password_repeat.data,
+#                form.pin.data
+#            )
+#        )
         # At this point the initial *currency* may have been specified in
         # either the URL or the form. If the *currency* FPH was specified in
         # the URL, the *currency* HRNS field will not have been displayed.
 
-#        if hub_mode == "slate_minimal":
-#            currency_identifier, m = hrns_to_fph("hrs.cc")
-#        else:
-#            currency_identifier = form.currency.data.strip()  # (from the form)
+#        currency_identifier = form.currency.data  # (from the form)
+        currency_identifier = form.currency.data.strip()  # (from the form)
         # The identify_entity( ) function determines whether either is valid.
         currency_fph, \
         currency_hrns, \
@@ -307,11 +292,7 @@ def register():
         # been displayed.
 
 #        namespace_identifier = form.namespace.data
-
-#        if hub_mode == "slate_minimal":
-#            namespace_fph, m = hrns_to_fph("cc")
-#        else:
-#            namespace_identifier = form.namespace.data.strip().lstrip(".")
+        namespace_identifier = form.namespace.data.strip().lstrip(".")
         # The identify_entity( ) function determines whether either is valid.
         namespace_fph, \
         namespace_hrns, \
@@ -330,20 +311,9 @@ def register():
         # If control reaches this point then *namespace* (whether specified
         # in the form or in the URL) exists.
 
-
-
-
         if form.password_repeat.data != form.password.data:
             flash("The passwords not not match")
             return redirect("/register")
-
-        print("form.username.data = " + username)
-        print("namespace_fph      = " + namespace_fph)
-        print("form.realname.data = " + real_name)
-        print("form.email_1.data  = " + email1)
-        print("form.password.data = " + password)
-        print("form.pin.data      = " + pin)
-
 
         primid_fph, \
         primid_hrns, \
@@ -1016,6 +986,12 @@ def home():
         if m:
             flash(m)
 
+
+
+        form = PaymentToAccountForm()
+
+
+
         # List the *accounts* belonging to this *identity*:
         accounts = [] # (second-level dictionary for iteration in template)
         for account_fph in accounts_list:
@@ -1076,6 +1052,13 @@ def home():
 #            payment_option.append(p)
             # This is a temporary fudge.
 
+
+            #???
+#            form.payer_account_fph.choices.append(account_fph)
+
+
+
+
         id["accounts"] = accounts
         identities.append(id)
 
@@ -1102,21 +1085,113 @@ def home():
             stewardship["etype"] = etype
             stewardships.append(stewardship)
 
+    form = PaymentToAccountForm()
+    if form.validate_on_submit():
+
+        print("Groucho")
+
+        payer_account_fph, \
+        payer_account_hrns, \
+        etype, \
+        m = identify_entity(form.payer_account_fph.data)
+
+        print("payer_account_fph = " + payer_account_fph)
+
+        payee_account_identifier = form.to_account_id.data # HRNS or FPH
+        amount_entered = form.amount.data
+        annotation = form.annotation.data
+
+        amount = int(round(float(amount_entered)*100))
+
+        if (payee_account_identifier is not None) and payee_account_identifier:
+            payee_account_fph, \
+            payee_account_hrns, \
+            etype, \
+            m = identify_entity(payee_account_identifier)
+
+            if etype !=  "account":
+                flash(payee_account_identifier + " is not an account")
+                return redirect("/account/" + payer_account_fph)
+
+            print("payee_account_hrns = " + payee_account_hrns)
+
+        if payee_account_fph == payer_account_fph:
+            flash("An account cannot pay to itself")
+            return redirect("/account/" + payer_account_fph)
+
+        payer_currency_fph, \
+        payer_owner_fph, \
+        payer_balance, \
+        m = get_account_specific_properties(payer_account_fph)
+
+        payee_currency_fph, \
+        payee_owner_fph, \
+        payee_balance, \
+        m = get_account_specific_properties(payee_account_fph)
+
+        if payee_currency_fph !=  payer_currency_fph:
+            flash(
+                "The payer account  " + payer_account_hrns + "  and the " \
+                + "payee account  " + payee_account_hrns \
+                + "  are not in the same currency."
+            )
+            return redirect(
+                "/account/" + payer_account_fph + payer_account_fph
+            )
+
+        # If control reaches this point, the two *accounts* are in the same
+        # *currency* so the payment can be made:
+        m = payment(payer_account_fph, payee_account_fph, amount, annotation)
+        if m:
+            flash(m)
+            #return redirect("/account/" + payer_account_fph)
+            return redirect("/home")
+
+#        payer_currency_fph, \
+#        payer_owner_fph, \
+#        payer_balance, \
+#        m = get_account_specific_properties(payer_account_fph)
+#
+#        payee_currency_fph, \
+#        payee_owner_fph, \
+#        payee_balance, \
+#        m = get_account_specific_properties(payee_account_fph)
+
+        flash(
+            "Payment submitted: " \
+            + currency_prefix \
+            + integer_to_money_format(amount) \
+            + currency_suffix
+        )
+        return redirect("/home")
+
     return render_template(
         "home.html",
         title = "Home",
         page = page,
+        form = form,
         group = group,
         hub_mode = hub_mode,
-        development_mode = development_mode,
-        logged_in = logged_in,
         primary_identity_type = "login identity",
         primary_identity_fph = primary_identity_fph,
         primary_identity_hrns = primary_identity_hrns,
         working_identity_fph = working_identity_fph,
         working_identity_hrns = working_identity_hrns,
         working_identity_type = working_identity_type,
-
+#        account_owner_hrns = account_owner_hrns,
+#        payer_account_fph = payer_account_fph,
+#        payer_account_hrns = payer_account_hrns,
+#        payee_account_known = payee_account_known,
+#        payee_account_fph = payee_account_fph,
+#        payee_account_hrns = payee_account_hrns,
+#        account_balance = integer_to_money_format(payer_balance),
+#        account_balance_is_negative = account_balance_is_negative,
+        logged_in = logged_in,
+#        currency_prefix = currency_prefix,
+#        currency_suffix = currency_suffix,
+#        currency_fph = currency_fph,
+#        currency_hrns = currency_hrns,
+#        payer_balance = payer_balance,
         # List of (nested) dictionaries for display in "home.html":
         identities = identities,
         secids = secids,
@@ -1124,6 +1199,23 @@ def home():
         number_of_indelible_messages = number_of_indelible_messages,
         number_of_messages = number_of_messages
     )
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -1928,7 +2020,7 @@ def account(payer_account_fph, payee_account_fph, owner_fph = None):
         payee_balance, \
         m = get_account_specific_properties(payee_account_fph)
 
-        if payee_currency_fph != payer_currency_fph:
+        if payee_currency_fph !=  payer_currency_fph:
             flash(
                 "The payer account  " + payer_account_hrns + "  and the " \
                 + "payee account  " + payee_account_hrns \
@@ -1943,9 +2035,7 @@ def account(payer_account_fph, payee_account_fph, owner_fph = None):
         m = payment(payer_account_fph, payee_account_fph, amount, annotation)
         if m:
             flash(m)
-            #return redirect("/account/" + payer_account_fph)
-            #return redirect("/account/" + payer_account_fph)
-            return redirect("/home")
+            return redirect("/account/" + payer_account_fph)
 
         payer_currency_fph, \
         payer_owner_fph, \
@@ -3593,12 +3683,25 @@ def create_account(owner_fph):
         working_identity_hrns = primary_identity_hrns
         working_identity_type = etype_to_adtype(working_identity_type)
 
-    if hub_mode == "slate_minimal":
-        form = AccountCreateFormMinimal()
-    else:
-        form = AccountCreateForm()
-
+    form = AccountCreateForm()
     if form.validate_on_submit():
+        namespace_fph, \
+        namespace_hrns, \
+        etype, \
+        m = identify_entity(form.namespace_id.data.strip().lstrip("."))
+        if m:
+            flash(m)
+            return redirect("/home")
+        if not namespace_fph:
+            flash("Parent namespace does not exist")
+            return redirect("/home")
+
+        account_name = form.account_name.data
+        # Check whether an entity with the proposed HRNS exists already.
+        proposed_hrns = account_name + "." + namespace_hrns
+        if hrns_exists_already(proposed_hrns):
+            flash(proposed_hrns + " is already registered")
+            return redirect("/home")
 
         currency_id = form.currency_id.data
 
@@ -3614,62 +3717,6 @@ def create_account(owner_fph):
             flash(currency_id + " is not a currency")
             return redirect("/home")
 
-        # 2025-03-13:
-        # If mode = "slate_minimal", the *identity* is always a *primid* and
-        # can have no more than one *account* in any *currency*:
-        #
-#        accounts_fph_list, m = list_primid_accounts(primary_identity_fph)
-        accounts_fph_list, m = list_agent_accounts(primary_identity_fph)
-        for account_fph in accounts_fph_list:
-            account_currency_fph = get_account_currency(account_fph)
-            if account_currency_fph == currency_fph:
-                flash("You are already using currency " + currency_hrns)
-                return redirect("/home")
-
-
-        if hub_mode != "slate_minimal":
-            namespace_fph, \
-            namespace_hrns, \
-            etype, \
-            m = identify_entity(form.namespace_id.data.strip().lstrip("."))
-            if m:
-                flash(m)
-                return redirect("/home")
-            if not namespace_fph:
-                flash("Parent namespace does not exist")
-                return redirect("/home")
-
-            account_name = form.account_name.data
-            # Check whether an entity with the proposed HRNS exists already.
-            proposed_hrns = account_name + "." + namespace_hrns
-            if hrns_exists_already(proposed_hrns):
-                flash(proposed_hrns + " is already registered")
-                return redirect("/home")
-
-        else:
-            # 2025-03-13:
-            # Temporary fudge for automatic account naming:
-            #n = primary_identity_hrns.split(".")
-
-            #account_name = primary_identity_hrns + "." + currency_hrns
-            #namespace_fph = hrns_to_fph("cc")
-            # Since this account name is hidden, it can be safely constructed
-            # from a concatentation of *primid* and *currency* HRNS and placed
-            # in the "cc" seed *namespace*.
-
-            currency_fph, \
-            currency_hrns, \
-            prefix, \
-            suffix, \
-            default_account_name, \
-            stewards_list, \
-            m = get_currency_specific_properties(currency_fph)
-
-            account_name = default_account_name
-            namespace_fph = primary_identity_fph
-
-
-
         account_fph, \
         account_hrns, \
         m = new_account(
@@ -3680,17 +3727,8 @@ def create_account(owner_fph):
             )
         if m:
             flash(m)
-        if hub_mode != "slate_minimal":
-            flash("A new account " + account_hrns + " has been created")
+        flash("A new account has been created, identified as " + account_hrns)
         return redirect("/home")
-
-
-
-
-
-
-
-
 
     return render_template(
         "create_account.html",

@@ -26,6 +26,18 @@ from app.core.slate_seed import create_sandbox_root_set
 from app.core.common import filename_timestamp
 from app.core.regexp_list import *
 
+
+
+
+# For each new test entity set created, the file written by the simulation
+# script needs to be cleared out:
+if os.path.exists("temp/payments_made"):
+    os.remove("temp/payments_made")
+
+if os.path.exists("temp/currencies_created"):
+    os.remove("temp/currencies_created")
+
+
 #-------------------------------------------------------------------------------
 #n_currencies = 10
 #n_agents = 200
@@ -106,7 +118,7 @@ ap.add_argument(
 )
 args = ap.parse_args()
 
-n_currencies = int(args.n_currencies)
+n_currencies = int(args.n_currencies) - 1
 
 n_agents = int(args.n_agents)
 
@@ -229,10 +241,19 @@ while c_count < n_currencies:
     l_currencies.append(currency_fph)
     c_count += 1
 
+#with open("temp/edge_colours", "w") as f:
+#    for currency_fph in l_currencies:
+#        f.write(currency_fph)
+
+with open("temp/currencies_created", "w") as f:
+    for currency_fph in l_currencies:
+        f.write(currency_fph + "\n")
+
+
+
 # A collection of *secids* is created, each belonging the the steward "primd*
 # created above. Each has at most one *account* in any particular *currency* in
-# order to simplify the simulation. This ensures that the number of *
-#print("\nCreating sandbox agents' identities (secids):")
+# order to simplify the simulation.
 s_count = 0
 while s_count < n_agents:
     n = random_char()

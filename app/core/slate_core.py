@@ -77,7 +77,12 @@ def get_hub_mode():
     hub_mode = os.environ.get("HUB_MODE")
     if hub_mode is None:
         return "slate_normal"
-    elif hub_mode in ["slate_normal", "slate_simple", "nests"]:
+    elif hub_mode in [
+                        "slate_normal", 
+                        "slate_simple",
+                        "slate_minimal",
+                        "nests"
+                     ]:
         return hub_mode
     else:
         return "slate_normal"

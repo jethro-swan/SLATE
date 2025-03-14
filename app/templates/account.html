@@ -11,10 +11,12 @@
         </a>
       </td>
     </tr>
+    {% if  hub_mode != "slate_minimal" %}
     <tr valign="top">
       <td colspan=""><b>owner</b> (<b>identity</b>)</td>
       <td colspan="2"><b>{{ account_owner_hrns }}</b></td>
     </tr>
+    {% endif %}
     <tr valign="top">
       <td><b>currency</b></td>
       <td colspan="2">

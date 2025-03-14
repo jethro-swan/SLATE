@@ -2,68 +2,6 @@
 
 {% block content %}
 
-{% if hub_mode == "slate_minimal" %}
-
-<!-- --------------------------------------------------------------------------
-This is the most simplified SLATE interface, listing only the *accounts* and
-*currencies*, hiding the *secids* (if any). In this view, the only *identity*
-is the *primid*, no link is provided create *secids*. This part is achieved by
-slightly re-ordering top menu items in  app/te,plates/base.html  to hide the
-"craete alias" link and to associate the "join currency" link with the *primid*.
---------------------------------------------------------------------------- -->
-
-<h3>Your accounts:</h3>
-
-<table>
-  <tr valign="bottom">
-    <td class="h"><b>currency</b></td>
-    <td class="h"><b>balance</b></td>
-    <td></td>
-  </tr>
-  {% for identity in identities %}<!-- list of dictionaries -->
-  {% for account in identity.accounts %}
-  <tr>
-    <td align="left">
-      {% if account.primid_is_currency_steward %}
-      <a href="/currency/{{ account.currency_fph }}">
-        <b>{{ account.currency_hrns }}</b>
-      </a>
-      {% else %}
-        <b>{{ account.currency_hrns }}</b>
-      {% endif %}
-    </td>
-    {% if account.isneg %}
-    <td align="right" class="balneg">
-    {% else %}
-    <td align="right" class="balpos">
-    {% endif %}
-      <b>{{ account.balance }}</b>
-    </td>
-    <!--
-    <td align="left">
-      <a href="/account/{{ account.fph }}/0/{{ identity.fph }}">
-        <b>pay</b>
-      </a>
-    </td>
-    -->
-    <td align="left">
-      <a href="/pay/agent">
-        <b>pay</b>
-      </a>
-    </td>
-  </tr>
-  {% endfor %}
-  {% endfor %}
-</table>
-
-<hr />
-
-<a href="/create_namespace"><b>new namespace</b></a>
-|
-<a href="/create_currency"><b>new currency</b></a>
-
-{% endif %}
-
 {% if hub_mode == "slate_simple" %}
 <!-- --------------------------------------------------------------------------
 This is the simplified SLATE interface, listing only the *identities* and

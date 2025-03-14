@@ -1,18 +1,10 @@
 <!doctype html>
 <html>
   <head>
-    {% if hub_mode == "nests" %}
-      {% if title %}
-        <title>NESTS - {{ title }}</title>
-      {% else %}
-        <title>NESTS</title>
-      {% endif %}
+    {% if title %}
+      <title>SLATE - {{ title }}</title>
     {% else %}
-      {% if title %}
-        <title>SLATE - {{ title }}</title>
-      {% else %}
-        <title>SLATE</title>
-      {% endif %}
+      <title>SLATE</title>
     {% endif %}
 
     <link rel="stylesheet"
@@ -61,51 +53,12 @@
       <div class="mb"><a class="mb" href="/home">home</a></div>
     {% endif %}
 
-
-    {% if  hub_mode != "slate_minimal" %}
     {% if page == "identities" %}
       <div class="mba">list identities</div>
     {% else %}
       <div class="mb">
         <a class="mb" href="/identity/list">identities</a>
       </div>
-    {% endif %}
-    {% endif %}
-
-    {% if hub_mode == "slate_minimal" %}
-    {% if number_of_indelible_messages %}
-      <div class="mbp">
-        <a class="mbp" href="/message/list">messages</a>
-        {% if number_of_messages %}
-        ({{ number_of_messages }} |
-        <b>{{ number_of_indelible_messages }}</b>)
-        {% else %}
-        (0 | {{ number_of_indelible_messages }})
-        {% endif %}
-      </div>
-    {% elif number_of_messages %}
-      <div class="mbn">
-        <a class="mbn" href="/message/list">messages</a>
-        {% if number_of_messages %}
-        ({{ number_of_messages }})
-        {% else %}
-        (0)
-        {% endif %}
-      </div>
-    {% elif page == "show_messages" %}
-      <div class="mba">
-        <a class="mba" href="/message/list">messages</a>
-        {% if number_of_messages %}
-        ({{ number_of_messages }})
-        {% else %}
-        (0)
-        {% endif %}
-      </div>
-    {% else %}
-      <div class="mb">
-        <a class="mb" href="/message/list">messages</a> (0)
-      </div>
-    {% endif %}
     {% endif %}
 
     <div class="mb">
@@ -150,15 +103,9 @@
   {% if logged_in %}
 
     {% if current_user.is_authenticated %}
-
-    {% if  hub_mode == "slate_minimal" %}
-    <b>Login identity</b> =
-    <b>{{ primary_identity_hrns }}</b> |
-    <a href="/create_account/{{ working_identity_fph }}">
-      <b>join currency</b>
-    </a>
-    <hr class="dashed" />
-    {% else %}
+    <!--
+    Logged in as
+    -->
     <b>Login identity</b> =
     <b>{{ primary_identity_hrns }}</b> ({{ primary_identity_type }}) |
     <b><a href="/create_secid">add alias</a></b>
@@ -170,9 +117,6 @@
       <b>join currency</b>
     </a>
     <hr class="dashed" />
-    {% endif %}
-
-
     {% endif %}
 
   {% else %}
@@ -255,7 +199,7 @@
     <!-- ------------------------------------------------------------------ -->
     {% if current_user.is_authenticated %}
 
-      {% if hub_mode != "slate_minimal" %}
+      {% if hub_mode == "slate_minimal" %}
 
         <!--
         {% if page == "currency_options" %}
@@ -268,7 +212,6 @@
           </div>
         {% endif %}
         -->
-        <!--
         {% if page == "pay_agent" %}
           <div class="mba">pay to agent</div>
         {% else %}
@@ -276,7 +219,6 @@
             <a class="mb" href="/pay/agent">pay to agent</a>
           </div>
         {% endif %}
-      -->
 
         {% if number_of_indelible_messages %}
           <div class="mbp">

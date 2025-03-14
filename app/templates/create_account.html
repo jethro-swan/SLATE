@@ -11,6 +11,10 @@
 <form action="" method="post" novalidate>
   {{ form.hidden_tag() }}
   <div>
+    <!-- If in slate_minimal mode, the *agent* is limited to at most one
+         *account* per *currency* and that *account* is named automatically.
+    -->
+    {% if hub_mode != "slate_minimal" %}
     <div style="float:left; margin:2px;">
       {% if hub_mode == "slate_simple" %}
       pairing name<br />
@@ -23,6 +27,7 @@
       {{ form.namespace_id.label }}<br />
       {{ form.namespace_id(size=20, placeholder="parent namespace") }}
     </div>
+    {% endif %}
     <div style="float:left; margin:2px;">
       {% if hub_mode == "slate_simple" %}
       currency<br />
@@ -38,12 +43,14 @@
   </div>
 
   <p>
+    {% if hub_mode != "slate_minimal" %}
     {% for error in form.account_name.errors %}
       <span style="color: red;">[{{ error }}]</span>
     {% endfor %}
     {% for error in form.namespace_id.errors %}
       <span style="color: red;">[{{ error }}]</span>
     {% endfor %}
+    {% endif %}
   </p>
 
 </form>

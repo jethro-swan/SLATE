@@ -23,6 +23,11 @@
           <span style="color: red;">[{{ error }}]</span>
         {% endfor %}
       </div>
+    {% elif hub_mode == "slate_minimal" %}
+      <div style="float:left; margin:2px;">
+        {{ form.username.label }}<br />
+        {{ form.username(size=10) }}
+      </div>
     {% else %}
       <div style="float:left; margin:2px;">
         {{ form.username.label }}<br />
@@ -52,9 +57,9 @@
       You have been invited to create an <b>account</b> in the
       <b>currency</b>
       <span class="dark-green-bold">{{ initial_currency_hrns }}</span>
-    {% else %}
+    {% elif hub_mode != "slate_minimal" %}
       {{ form.currency.label }}<br />
-      {{ form.currency(size=20) }}
+      {{ form.currency(size=10) }}
       {% for error in form.currency.errors %}
         <span style="color: red;">[{{ error }}]</span>
       {% endfor %}
@@ -74,14 +79,14 @@
     <div class="form-box">
       <div style="float:left; margin:2px;">
         {{ form.email_1.label }}<br />
-        {{ form.email_1(size=22) }}
+        {{ form.email_1(size=20) }}
         {% if notification_option_included %}
         {{ form.save_email_2 }} {{ form.save_email_2.label }}
         {% endif %}
       </div>
       <div style="float:left; margin:2px;">
         {{ form.email_2.label }}<br />
-        {{ form.email_2(size=22) }}
+        {{ form.email_2(size=20) }}
         {% if notification_option_included %}
         {{ form.save_email_1 }} {{ form.save_email_1.label }}
         {% endif %}
@@ -93,14 +98,14 @@
     <div class="form-box">
       <div style="float:left; margin:2px;">
         {{ form.password.label }}<br />
-        {{ form.password(size=22) }}
+        {{ form.password(size=20) }}
         {% for error in form.password.errors %}
           <span style="color: red;">[{{ error }}]</span>
         {% endfor %}
       </div>
       <div style="float:left; margin:2px;">
         {{ form.password_repeat.label }}<br />
-        {{ form.password_repeat(size=22) }}
+        {{ form.password_repeat(size=20) }}
         {% for error in form.password_repeat.errors %}
           <span style="color: red;">[{{ error }}]</span>
         {% endfor %}

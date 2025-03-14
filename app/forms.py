@@ -148,7 +148,16 @@ class FileUploadForm(FlaskForm):
 
 #class PaymentToAccountForm(Form):
 class PaymentToAccountForm(FlaskForm):
-    to_account_id   = StringField("payee account identifier")
+    to_account_id   = StringField(
+                          "payee account",
+                          render_kw = { "placeholder":
+                                        "payee account identifier"
+                                      }
+                      )
+#   payer_account_fph = RadioField(
+#                            "payer account",
+#                            choices = []
+#                        )
     amount          = StringField(
     #amount          = DecimalField(
     #amount          = FloatField(
@@ -157,7 +166,12 @@ class PaymentToAccountForm(FlaskForm):
                           #places=2,
                           validators=[DataRequired("required")]
                       )
-    annotation      = TextAreaField("annotation")
+    annotation      = TextAreaField(
+                          "annotation",
+                          render_kw = { "placeholder":
+                                        "Enter a short description here"
+                                      },
+                      )
     submit          = SubmitField("pay")
 
 
@@ -312,6 +326,24 @@ class AccountCreateForm(FlaskForm):
                         validators=[DataRequired("required")]
                       )
     create_account   = SubmitField("create pairing")
+
+
+
+#------------------------------------------------------------------------------
+
+class AccountCreateFormMinimal(FlaskForm):
+    currency_id     = StringField(
+                        "currency",
+                        validators=[DataRequired("required")]
+                      )
+    create_account   = SubmitField("create pairing")
+
+
+
+
+
+
+
 
 #------------------------------------------------------------------------------
 

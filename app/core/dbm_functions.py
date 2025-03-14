@@ -43,6 +43,8 @@ def dbm_store(dbm_file, key, value):
 
 # Retrieve a value corresponding to the specified key in the DBM file:
 def dbm_fetch(dbm_file, key):
+
+    # Original version:
     with dbm.open(dbm_file, 'r') as db:
         k = key.encode("utf-8")
         if k in db:
@@ -50,6 +52,25 @@ def dbm_fetch(dbm_file, key):
         else:
             value = ""
     return value
+
+# 2025-03-03: experimental change
+#    try:
+#        db = dbm.open(dbm_file, 'r')
+#    except:
+#        db.close()
+#        return "", False
+#    finally:
+#        k = key.encode("utf-8")
+#        if k in db:
+#            value = db[k].decode("utf-8")
+#        else:
+#            value = ""
+#    return value, True
+
+
+
+
+
 
 # Delete a key:value pair from the specified DBM file:
 def dbm_delete(dbm_file, key):

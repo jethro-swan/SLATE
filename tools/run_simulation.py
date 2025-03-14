@@ -100,6 +100,7 @@ with open("temp/" + output_filename, "a") as f:
         #
         payee_account_currency_fph = ""
         payee_account_fph = ""
+        payee_account_owner_fph = ""
         while (payer_account_currency_fph != payee_account_currency_fph) \
               or (payer_account_fph == payee_account_fph):
             payee_account_fph = random.choice(l_accounts)

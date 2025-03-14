@@ -14,11 +14,15 @@ slightly re-ordering top menu items in  app/te,plates/base.html  to hide the
 
 <h3>Your accounts:</h3>
 
+<form action="" method="post" novalidate>
+{{ form.hidden_tag() }}
+
 <table>
-  <tr valign="bottom">
+  <tr>
     <td class="h"><b>currency</b></td>
+    <td class="h"><b>account</b></td>
     <td class="h"><b>balance</b></td>
-    <td></td>
+    <td class="h"><b>select</b></td>
   </tr>
   {% for identity in identities %}<!-- list of dictionaries -->
   {% for account in identity.accounts %}
@@ -32,6 +36,11 @@ slightly re-ordering top menu items in  app/te,plates/base.html  to hide the
         <b>{{ account.currency_hrns }}</b>
       {% endif %}
     </td>
+    <td align="left">
+      <a href="/account/{{ account.fph }}/0/{{ identity.fph }}">
+        <b>{{ account.hrns }}</b>
+      </a>
+    </td>
     {% if account.isneg %}
     <td align="right" class="balneg">
     {% else %}
@@ -39,28 +48,82 @@ slightly re-ordering top menu items in  app/te,plates/base.html  to hide the
     {% endif %}
       <b>{{ account.balance }}</b>
     </td>
-    <!--
     <td align="left">
-      <a href="/account/{{ account.fph }}/0/{{ identity.fph }}">
-        <b>pay</b>
-      </a>
-    </td>
-    -->
-    <td align="left">
-      <a href="/pay/agent">
-        <b>pay</b>
-      </a>
+      <input
+        type="radio"
+        id="{{ account.fph }}"
+        name="payer_account_fph"
+        value="{{ account.fph }}"
+      >
     </td>
   </tr>
   {% endfor %}
   {% endfor %}
 </table>
 
+  <br />
+  {% if payee_account_hrns %}
+    Paying to <span class="dark-red-bold">{{ payee_account_hrns }}</span>
+  {% else %}
+    <p>
+      {{ form.to_account_id.label }}<br />
+      {{ form.to_account_id(size=32) }}
+      {% for error in form.to_account_id.errors %}
+      <br /><span style="color: red;">[{{ error }}]</span>
+      {% endfor %}
+    </p>
+  {% endif %}
+  <p>
+    {{ form.amount.label }}<br />
+    <input
+      type="currency"
+      name="amount"
+      value="0.00"
+      id="pence"
+      min="0.00"
+      max="9999.99"
+      step="0.01"
+      size="10"
+      placeholder="Enter a payment value here"
+    />
+    {% for error in form.amount.errors %}
+    <br /><span style="color: red;">[{{ error }}]</span>
+    {% endfor %}
+  </p>
+  <p>
+    {{ form.annotation.label }}<br />
+    {{ form.annotation(size=128) }}
+    {% for error in form.annotation.errors %}
+    <br /><span style="color: red;">[{{ error }}]</span>
+    {% endfor %}
+  </p>
+  <p>
+    <input type="submit" value="PAY">
+  </p>
+
+</form>
+
 <hr />
 
 <a href="/create_namespace"><b>new namespace</b></a>
 |
 <a href="/create_currency"><b>new currency</b></a>
+
+{% for error in form.to_account_id.errors %}
+<br /><span style="color: red;">[{{ error }}]</span>
+{% endfor %}
+
+{% for error in form.amount.errors %}
+<br /><span style="color: red;">[{{ error }}]</span>
+{% endfor %}
+
+
+{% for error in form.payer_account_fph.errors %}
+<br /><span style="color: red;">[{{ error }}]</span>
+{% endfor %}
+
+
+
 
 {% endif %}
 

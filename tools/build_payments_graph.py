@@ -57,33 +57,25 @@ from app.core.display import integer_to_money_s_format
 data_dir = "temp"
 
 colours = [
-    "#000000", "#ff0000", "#ff7f00", "#ffff00", "#00ff00",
-    "#0000ff", "#4b0082", "#8f00ff"
-
+    "#ff0000",  # red
+    "#ff8000",  # orange
+    "#4c9900",  # green
+    "#006666",  # tealish
+    "#0066cc",  # blue
+    "#330066",  # indigoish
+    "#4c0099",  # violet
+    "#994c00",  # yellowish ochre
+    "#ffff00",  # yellow
+    "#9999ff"   # lilacish
 ]
 
-
-input_filename = "payments_made"
-
-with open("temp/" + input_filename, "r") as f:
-    payments_list = f.readlines()
-
-for payment_row in payments_list:
-    p = payment_row.strip().split(":")
-    payer_account_fph = p[0]
-    payer_identity_fph = p[1]
-    payee_identity_fph = p[2]
-    payee_account_fph = p[3]
-    currency_fph = p[4]
-    amount = p[5]
-    print(
-        "Payment from account " + fph_to_hrns(payer_account_fph) \
-        + " to account " + fph_to_hrns(payer_identity_fph) \
-        + " (from identity " + fph_to_hrns(payee_account_fph) \
-        + " to identity " + fph_to_hrns(payee_identity_fph) + ")" \
-        + " of " + amount + " in currency " + fph_to_hrns(currency_fph)
-    )
-
+colour_index = 0
+colour_map = {}
+with open("temp/currencies_created", "r") as f:
+    currencies_list = f.readlines()
+    for currency_fph in currencies_list:
+        colour_map[currency_fph.strip()] = colours[colour_index]
+        colour_index += 1
 
 #-------------------------------------------------------------------------------
 # The data directory tree is created if it does not exist already:
@@ -93,10 +85,68 @@ if not os.path.exists(data_dir + "/gv"):
     os.mkdir(data_dir + "/gv")
 if not os.path.exists(data_dir + "/output"):
     os.mkdir(data_dir + "/output")
+gvdir = data_dir + "/gv/"
+gvfile = gvdir + "pgraph.dot"
+gpng = gvdir + "pgraph" + filename_timestamp() + ".png"
+gsvg = gvdir + "pgraph" + filename_timestamp() + ".svg"
+
+input_filename = "payments_made"
+
+with open("temp/" + input_filename, "r") as f:
+    payments_list = f.readlines()
 
 
+# The GraphViz DOT file is opened:
+gvf = open(gvfile, "w")
+gvf.write(
+        "digraph payments {\n" \
+        + "\trankdir=LR\n" \
+        + "\tnode [shape=circle]\n" \
+        + "\tfontsize=\"30\"\n"
+    )
+# Added to remove need to show HRNS in node labels:
+node_label = {}
+node_number = 0
+
+for payment_row in payments_list:
+    p = payment_row.strip().split(":")
+    payer_account_fph = p[0]
+    payer_account_hrns = fph_to_hrns(payer_account_fph)
+    payer_identity_fph = p[1]
+    payer_identity_hrns = fph_to_hrns(payer_identity_fph)
+    payee_account_fph = p[2]
+    payee_account_hrns = fph_to_hrns(payee_account_fph)
+    payee_identity_fph = p[3]
+    payee_identity_hrns = fph_to_hrns(payee_identity_fph)
+    currency_fph = p[4]
+    currency_hrns = fph_to_hrns(currency_fph)
+    amount = p[5]
+    edge_colour = colour_map[currency_fph]
+
+    if not (payer_identity_fph in node_label.keys()):
+        node_label[payer_identity_fph] = str(node_number).zfill(3)
+        node_number += 1
+    if not (payee_identity_fph in node_label.keys()):
+        node_label[payee_identity_fph] = str(node_number).zfill(3)
+        node_number += 1
+#    print(node_label)
+#    gvf.write(
+#        "\t"
+#        + "\"" + payer_identity_hrns + "\" -> \"" + payee_identity_hrns \
+#        + "\" [color=\"" + edge_colour + "\"" \
+#        + " penwidth=\"2.0\" fontname=\"Verdana\"]\n"
+#    )
+    gvf.write(
+        "\t\"" \
+        + node_label[payer_identity_fph] \
+        + "\" -> \"" \
+        + node_label[payee_identity_fph] \
+        + "\" [color=\"" + edge_colour + "\"" \
+        + " penwidth=\"2.0\" fontname=\"Verdana\"]\n"
+    )
+gvf.write("}\n")
+gvf.close()
 
 
-
-
-# os.system("dot -Tpng " + gvfile2 + " -o " + gpath)
+os.system("dot -Tpng " + gvfile + " -o " + gpng)
+#os.system("dot -Tsvg " + gvfile + " -o " + gsvg)
