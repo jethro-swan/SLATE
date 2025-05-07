@@ -46,11 +46,22 @@ slightly re-ordering top menu items in  app/te,plates/base.html  to hide the
       </a>
     </td>
     -->
-    <td align="left">
-      <a href="/pay/agent">
+     <td align="left">
+      <a href="/pay/agent/">
         <b>pay</b>
       </a>
     </td>
+    <!--
+    -->
+
+    <!--
+    <td align="left">
+      <a href="/pay/agent/direct/{{ account.currency_fph }}/{{ identity.fph }}">
+        <b>pay</b>
+      </a>
+    </td>
+    -->
+
   </tr>
   {% endfor %}
   {% endfor %}
@@ -84,9 +95,12 @@ This is the simplified SLATE interface, listing only the *identities* and
 <h3>Your accounts:</h3>
 <table>
   <tr>
-    <td class="h"><b>identity</b></td>
-    <td class="h">+</td>
     <td class="h"><b>currency</b></td>
+    <!--
+    <td class="h">+</td>
+    -->
+    <td class="h"><b>account</b></td>
+
     <!--
     <th>unit</th>
     -->
@@ -94,20 +108,16 @@ This is the simplified SLATE interface, listing only the *identities* and
     <td class="h"><b>pairing</b> (<b>account</b>)</td>
     -->
     <td class="h"><b>balance</b></td>
+
+    <td class="h"><b>volume</b></td>
+
+    <td class="h"><b>identity</b></td>
+
   </tr>
   {% for identity in identities %}<!-- list of dictionaries -->
   {% for account in identity.accounts %}
   <tr>
-    <td align="left">
-      <a href="/identity/change/{{ identity.fph }}">
-        <b>{{ identity.hrns }}</b>
-      </a>
-    </td>
-    <td align="left">
-      <a href="/account/{{ account.fph }}/0/{{ identity.fph }}">
-        <b>*</b>
-      </a>
-    </td>
+
     <td align="left">
       {% if account.primid_is_currency_steward %}
       <a href="/currency/{{ account.currency_fph }}">
@@ -117,6 +127,16 @@ This is the simplified SLATE interface, listing only the *identities* and
         <b>{{ account.currency_hrns }}</b>
       {% endif %}
     </td>
+
+    <td align="left">
+      <a href="/account/{{ account.fph }}/0/{{ identity.fph }}">
+        <b>{{ account.hrns }}</b>
+        <!--
+        <b>*</b>
+        -->
+      </a>
+    </td>
+
     <!--
     <td align="left">
       <a href="/account/{{ account.fph }}/00000000000000000000000000000000">
@@ -136,14 +156,27 @@ This is the simplified SLATE interface, listing only the *identities* and
     {% endif %}
       <b>{{ account.balance }}</b>
     </td>
+
+    <td align="right">
+      <b>{{ account.volume }}</b>
+    </td>
+
     <td align="left">
-      <!--
+      <a href="/identity/change/{{ identity.fph }}">
+        <b>{{ identity.hrns }}</b>
+      </a>
+    </td>
+
+    <!--
+    <td align="left">
       <a href="/account/{{ account.fph }}/00000000000000000000000000000000">
       -->
+      <!--
       <a href="/pay/from/{{ account.fph }}">
         <b>pay</b>
       </a>
     </td>
+    -->
   </tr>
   {% endfor %}
   {% endfor %}

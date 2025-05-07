@@ -1,4 +1,4 @@
-#!/home/john/NESTS/SLATE/venv/bin/python3
+#!/home/slate/SLATE/venv/bin/python3
 
 import sqlite3
 import os
@@ -147,6 +147,7 @@ for entity in entities_list:
         currency_fph, \
         owner_fph, \
         balance, \
+        volume, \
         m = get_account_specific_properties(entity[0])
         account_owner_hrns = fph_to_hrns(owner_fph)
         account_currency_hrns = fph_to_hrns(currency_fph)

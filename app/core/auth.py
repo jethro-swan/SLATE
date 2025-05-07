@@ -12,10 +12,10 @@ import sys
 import sqlite3
 #import logging
 
-from .dbm_functions import dbm_store, dbm_fetch, dbm_delete
-from .regexp_list import re_email
-from .common import nshash
-from .logging import log_event
+from app.core.dbm_functions import dbm_store, dbm_fetch, dbm_delete
+from app.core.regexp_list import re_email
+from app.core.common import nshash
+from app.core.logging import log_event
 
 #------------------------------------------------------------------------------
 # Used to authenticate both passwords and recovery details (email addresses or

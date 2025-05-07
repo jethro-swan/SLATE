@@ -4,7 +4,7 @@
   <form action="" method="post" autocomplete="off" novalidate>
     {{ form.hidden_tag() }}
     <p>
-      {{ form.identity.label }} (HRNS or FPH)<br />
+      {{ form.identity.label }}<br />
       {{ form.identity(size=32) }}
       {% for error in form.identity.errors %}
         <span style="color: red;">[{{ error }}]</span>

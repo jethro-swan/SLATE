@@ -1,4 +1,3 @@
-#!/home/john/NESTS/SLATE/venv/bin/python3
 #!/home/slate/SLATE/venv/bin/python3
 #!/usr/bin/env python3
 

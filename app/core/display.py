@@ -2,7 +2,10 @@
 # Account balances are stored as integers, assuming cents (euros or dollars) or
 # pence (sterling) to be the smallest value.
 def integer_to_money_format(amount):
-    return "{:10.2f}".format(amount/100)
+    if amount is not None:
+        return "{:10.2f}".format(amount/100)
+    else:
+        return ""
 
 def integer_to_money_s_format(amount):
     return "{:1.2f}".format(amount/100)

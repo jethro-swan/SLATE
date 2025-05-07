@@ -78,7 +78,9 @@ def payment(payer_account_fph, payee_account_fph, amount, annotation):
     payer_account_active, \
     payer_account_currency_fph, \
     payer_account_owner_fph, \
-    payer_account_balance, m = account_status(payer_account_fph)
+    payer_account_balance, \
+    payer_volume, \
+    m = account_status(payer_account_fph)
     if not payer_account_exists:
         return "Payer account " + payer_account_fph + " does not exist"
     if not payer_account_active:
@@ -88,7 +90,9 @@ def payment(payer_account_fph, payee_account_fph, amount, annotation):
     payee_account_active, \
     payee_account_currency_fph, \
     payee_account_owner_fph, \
-    payee_account_balance, m = account_status(payee_account_fph)
+    payee_account_balance, \
+    payee_volume, \
+    m = account_status(payee_account_fph)
     if not payee_account_exists:
         return "Payee account " + payee_account_fph + " does not exist"
     if not payee_account_active:
@@ -106,17 +110,30 @@ def payment(payer_account_fph, payee_account_fph, amount, annotation):
     #
     payer_account_balance -= amount
     payee_account_balance += amount
+
+    # Added 2025-03-18
+    volume_increase = abs(amount)
+    payer_volume += volume_increase
+    payee_volume += volume_increase
     #
     with sqlite3.connect(ENTITIES_DB) as conn:
         cursor = conn.cursor()
         # First the balances are adjusted:
         cursor.execute(
-            "UPDATE accounts SET account_balance = ? WHERE entity_fph = ?",
-            (payer_account_balance, payer_account_fph)
+            """
+            UPDATE accounts
+            SET account_balance = ?, volume = ?
+            WHERE entity_fph = ?
+            """,
+            (payer_account_balance, payer_volume, payer_account_fph)
         )
         cursor.execute(
-            "UPDATE accounts SET account_balance = ? WHERE entity_fph = ?",
-            (payee_account_balance, payee_account_fph)
+            """
+            UPDATE accounts
+            SET account_balance = ?, volume = ?
+            WHERE entity_fph = ?
+            """,
+            (payee_account_balance, payee_volume, payee_account_fph)
         )
         conn.commit()
         cursor.close()

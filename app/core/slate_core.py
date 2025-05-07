@@ -9,6 +9,7 @@ from app.core.constants import ENTITIES_DB, PAYMENTS_DB, DB_DIR, DB_BKP_DIR
 from app.core.constants import HUBS_DB
 from app.core.constants import FPH_TO_HRNS_MAP, HRNS_C_FPH_MAP
 from app.core.constants import SUBSTRATE_FPH
+from app.core.constants import VERSION
 
 from app.core.common import filename_timestamp as timestamp
 from app.core.common import nshash
@@ -76,16 +77,24 @@ def create_hubs_db():
 def get_hub_mode():
     hub_mode = os.environ.get("HUB_MODE")
     if hub_mode is None:
-        return "slate_normal"
+        return "slate_simple"
     elif hub_mode in [
-                        "slate_normal", 
+                        "slate_normal",
                         "slate_simple",
                         "slate_minimal",
                         "nests"
                      ]:
         return hub_mode
     else:
-        return "slate_normal"
+        return "slate_simple"
+
+# Get version number:
+def get_version():
+    with open(VERSION, "r") as v_file:
+        version = v_file.read()
+    return version
+
+
 
 
 #==============================================================================
@@ -166,7 +175,9 @@ def create_entities_db():
                 primid_email_1_hash TEXT NOT NULL,
                 primid_email_2_hash TEXT,
                 secids_fph_list BLOB,
+                ahids_fph_list BLOB,
                 accounts_fph_list BLOB,
+                pmap BLOB,
                 stewardships_fph_list BLOB,
                 password_hash BLOB NOT NULL,
                 pin TEXT,
@@ -186,6 +197,10 @@ def create_entities_db():
             """
         )
         # Create currencies table:
+        #
+        # Added 2025-03-18:
+        #   category TEXT       currency type
+        #
         cursor.execute(
             """
             CREATE TABLE IF NOT EXISTS currencies (
@@ -194,18 +209,36 @@ def create_entities_db():
                 currency_suffix TEXT,
                 default_account_name TEXT DEFAULT 'local',
                 stewards_fph_list BLOB,
-                sandbox INTEGER NOT NULL DEFAULT 0
+                sandbox INTEGER NOT NULL DEFAULT 0,
+                category TEXT
             );
             """
         )
         # Create accounts table:
+        #
+        # Added 2025-03-18:
+        #   type TEXT       currency type
+        #   vector BLOB
+        #   vector_map BLOB
+        #   matrix BLOB
+        #   matrix_map BLOB
+        #   ts_pointer BLOB
+        #   volume INTEGER NOT NULL DEFAULT 0
+        #
         cursor.execute(
             """
             CREATE TABLE IF NOT EXISTS accounts (
                 entity_fph TEXT PRIMARY KEY,
                 account_owner_fph TEXT NOT NULL,
                 account_currency_fph TEXT NOT NULL,
-                account_balance INTEGER NOT NULL DEFAULT 0
+                account_balance INTEGER NOT NULL DEFAULT 0,
+                volume INTEGER NOT NULL DEFAULT 0,
+                type TEXT,
+                vector BLOB,
+                vector_map BLOB,
+                matrix BLOB,
+                matrix_map BLOB,
+                ts_pointer BLOB
             );
             """
         )
@@ -326,8 +359,8 @@ def set_private_namespace_owner(namespace_identifier, identity_identifier):
     identity_type, \
     m = identify_entity(identity_identifier)
 
-    if (identity_type != "primid") and (identity_type != "secid"):
-        return "Entity is not a namespace type"
+#    if (identity_type != "primid") and (identity_type != "secid"):
+#        return "Entity is not a namespace type"
 
     with sqlite3.connect(ENTITIES_DB) as conn:
         cursor = conn.cursor()
@@ -715,7 +748,7 @@ def retrieve_primid_access_details(primid_identifier):
 #
 def account_status(account_fph):
     if not re_fph.match(account_fph):
-        return False, False, "", "", 0, "Invalid FPH: " + account_fph
+        return False, False, "", "", 0, 0, "Invalid FPH: " + account_fph
 
     #account_fph = "'" + account_fph + "'"
     # wrapped to enable SQLite to accept it.
@@ -728,18 +761,21 @@ def account_status(account_fph):
     active, \
     m = get_entity_common_properties(account_fph)
     if m:
-        return False, False, "", "", 0, m
+        return False, False, "", "", 0, 0, m
     if entity_type != "account":
-        return False, False, "", "", 0, account_fph + " is not an account"
+        return False, False, "", "", 0, 0, account_fph + " is not an account"
 
     currency_fph, \
     owner_fph, \
     balance, \
+    volume, \
     m = get_account_specific_properties(account_fph)
     if m:
-        return False, False, "", "", 0, m
+        return False, False, "", "", 0, 0, m
+    if volume is None:
+        volume = 0
 
-    return True, active, currency_fph, owner_fph, balance, ""
+    return True, active, currency_fph, owner_fph, balance, volume, ""
 
 #==============================================================================
 
@@ -764,8 +800,8 @@ def namespace_status(namespace_fph):
     m = get_entity_common_properties(namespace_fph)
     if m:
         return False, False, [], m
-    if entity_type != "namespace":
-        return False, False, [], namespace_fph + " is not a namespace"
+#    if entity_type != "namespace":
+#        return False, False, [], namespace_fph + " is not a namespace"
 
     stewards_list, m = list_stewards(namespace_fph)
     if m:
@@ -804,8 +840,8 @@ def new_primid(
     etype, m = get_entity_type(parent_namespace_fph)
     if m:
         return "", "", "", m # parent_namespace_fph is invalid
-    if etype != "namespace":
-        return "", "", "", parent_namespace_fph + " is not a namespace"
+##    if etype != "namespace":
+##        return "", "", "", parent_namespace_fph + " is not a namespace"
     namespace_hrns = fph_to_hrns(parent_namespace_fph)
     primid_hrns = username + "." + namespace_hrns
 
@@ -880,6 +916,7 @@ def new_primid(
                 primid_email_1_hash,
                 primid_email_2_hash,
                 secids_fph_list,
+                ahids_fph_list,
                 accounts_fph_list,
                 stewardships_fph_list,
                 password_hash,
@@ -1371,7 +1408,8 @@ def set_default_currency(entity_identifier, currency_identifier):
     # The "default_currency_fph" field has now been moved from the "namespaces"
     # table to the "entities_common" table.
 
-    if not (entity_type in ["namespace", "primid", "secid"]):
+# 2025-04-08: *currency* added ti list
+    if not (entity_type in ["namespace", "primid", "secid", "currency"]):
         return fph_to_hrns(entity_identifier) + " is not a namespace type"
 
     with sqlite3.connect(ENTITIES_DB) as conn:
@@ -1397,7 +1435,9 @@ def get_default_currency(entity_identifier):
     entity_type, \
     m = identify_entity(entity_identifier)
 
-    if not (entity_type in ["namespace", "primid", "secid"]):
+
+    # 2025-04-08: *currency* added ti list
+    if not (entity_type in ["namespace", "primid", "secid", "currency"]):
         return fph_to_hrns(entity_identifier) + " is not a namespace type"
 
     with sqlite3.connect(ENTITIES_DB) as conn:
@@ -1974,7 +2014,8 @@ def get_account_specific_properties(account_fph):
 
         cursor.execute(
             """
-            SELECT account_owner_fph, account_currency_fph, account_balance
+            SELECT account_owner_fph, account_currency_fph, account_balance,
+                   volume
             FROM accounts
             WHERE entity_fph = ?
             """,
@@ -1987,16 +2028,17 @@ def get_account_specific_properties(account_fph):
         owner_fph = result[0]
         currency_fph = result[1]
         balance = result[2]
+        volume = result[3]
     else: # no record for account_fph
-        return "", "", 0, "Account not found"
+        return "", "", 0, 0, "Account not found"
 
     if not re_fph.match(owner_fph):
-        return "", "", 0, "Invalid owner FPH: " + owner_fph
+        return "", "", 0, 0, "Invalid owner FPH: " + owner_fph
 
     if not re_fph.match(currency_fph):
-        return "", "", 0, "Invalid currency FPH: " + currency_fph
+        return "", "", 0, 0, "Invalid currency FPH: " + currency_fph
 
-    return currency_fph, owner_fph, balance, ""
+    return currency_fph, owner_fph, balance, volume, ""
 
 #------------------------------------------------------------------------------
 # Add a stewardship to a *primid* and a steward to a *namespace* or *currency*:
@@ -2205,7 +2247,7 @@ def list_stewards(entity_fph):
     if not re_fph.match(entity_fph):
         return [], entity_fph + " is not an FPH"
 
-    etype , m = get_entity_type(entity_fph)
+    etype, m = get_entity_type(entity_fph)
     if etype == "namespace":
         table = " namespaces "
     elif etype == "currency":

@@ -13,8 +13,8 @@ venv
 csv_examples
 
 # Screenshots and user guide
-documentation
-notes
+documentation/*
+notes/*
 
 
 
@@ -42,6 +42,7 @@ coredefs.sh
 end_points.txt
 deflist*
 seed_primid_details.txt
+tools/islands31
 
 __pycache__
 

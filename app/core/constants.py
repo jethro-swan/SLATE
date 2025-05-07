@@ -61,3 +61,6 @@ HRNS_C_FPH_MAP      = "/var/slate/active/maps/FPH_to_HRNS_collision_map.dbm"
 #HRNS_C_FPH_MAP      = "/var/slate/db/FPH_to_HRNS_collision_map.dbm"
 
 SUBSTRATE_FPH       = nshash("")
+
+# Temporary kludge:
+VERSION             = "/home/slate/SLATE/version"

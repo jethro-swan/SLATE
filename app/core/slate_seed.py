@@ -4,6 +4,7 @@ import os
 import pickle
 
 from app.core.constants import ENTITIES_DB
+from app.core.constants import SUBSTRATE_FPH
 from app.core.common import nshash
 from app.core.regexp_list import *
 from app.core.slate_core import hrns_to_fph, fph_to_hrns
@@ -105,16 +106,25 @@ def create_seed_entities():
     #     The first *root namespace* created (the "seed namespace") is named
     #     "cc".
 
+
+    # 2025-04-06: Changes to accommodate use of any entity identifier as a
+    # *namespace* identifier, e.g.
+    #   cc  as both seed *namespace* and seed *currency*
+#    seed_namespace_hrns     = "cc"
+    seed_currency_hrns      = "cc"
+    seed_primid_hrns        = "adm.cc"
+    seed_account_hrns       = "cc.adm.cc"
+
     # Seed entities (see https://nests.lrc.org.uk/entity_dependencies.html)
     # by HRNS:
-    seed_namespace_hrns     = "cc"
-    seed_currency_hrns      = "hrs.cc"
-    seed_primid_hrns        = "adm.cc"
-    seed_account_hrns       = "hrs.adm.cc"
-    #seed_namespace_hrns     = "cc"
-    #seed_currency_hrns      = "hrs.cc"
-    #seed_primid_hrns        = "adm.cc"
-    #seed_account_hrns       = "hrs.adm.cc"
+    # Previous version:
+#    seed_namespace_hrns     = "cc"
+#    seed_currency_hrns      = "hrs.cc"
+#    seed_primid_hrns        = "adm.cc"
+#    seed_account_hrns       = "hrs.adm.cc"
+
+
+
 
 
     # The *substrate* is the nameless *namespace* from which all others ramify,
@@ -122,17 +132,27 @@ def create_seed_entities():
     # already been added to the FPH>HRNS map (at the point of its creation
     # - see fph_hrns_maps.py).
     substrate_hrns = ""
-    substrate_fph = nshash("")
+    #substrate_fph = nshash("")
+    substrate_fph, m = hrns_to_fph(substrate_hrns) ### 2025-04-26
+    if m:
+        print("Problem mapping substrate HRNS (\"\") to FPH")
+
+
 
     # The seed entities are now added to the FPH>HRNS map:
 
-    seed_namespace_fph, m       = hrns_to_fph(seed_namespace_hrns)
-                                # parent namespace: "" (the *substrate*)
-                                # initial steward:  "adm.cc"
+#    seed_namespace_fph, m       = hrns_to_fph(seed_namespace_hrns)
+#                                # parent namespace: "" (the *substrate*)
+#                                # initial steward:  "adm.cc"
 
     seed_currency_fph, m        = hrns_to_fph(seed_currency_hrns)
-    seed_currency_parent_hrns   = "cc"
+    #seed_currency_parent_hrns   = "cc"
+    seed_currency_parent_fph    = SUBSTRATE_FPH
                                 # initial steward:  "adm.cc"
+
+    seed_namespace_fph = seed_currency_fph
+
+
 
     seed_primid_fph, m          = hrns_to_fph(seed_primid_hrns)
     seed_primid_parent_hrns     = "cc"
@@ -189,40 +209,45 @@ def create_seed_entities():
     # NB  The *namespace* "cc" is a "root" *namespace*. Therefore it has no
     #     named parent *namespace*.
     #
-    add_entity_common_properties(
-        seed_namespace_fph,
-        substrate_fph,
-        "namespace",
-        seed_currency_fph,
-        False,
-        "", # This is not a private *namespace* so has no owner
-        True
-    )
-    with sqlite3.connect(ENTITIES_DB) as conn:
-        cursor = conn.cursor()
-        cursor.execute(
-            """
-            INSERT INTO namespaces (
-                entity_fph,
-                stewards_fph_list,
-                sandbox
-            )
-            VALUES (?, ?, ?)
-            """,
-            (
-                seed_namespace_fph,
-                pickle.dumps([seed_primid_fph]),
-                False
-            )
-        )
-        conn.commit()
-        cursor.close()
+
+# 2025-04-08:   The seed *currency* identifier now serves also as the seed
+#               *namespace*'s identifer'
+
+#    add_entity_common_properties(
+#        seed_namespace_fph,
+#        substrate_fph,
+#        "namespace",
+#        seed_currency_fph,
+#        False,
+#        "", # This is not a private *namespace* so has no owner
+#        True
+#    )
+#    with sqlite3.connect(ENTITIES_DB) as conn:
+#        cursor = conn.cursor()
+#        cursor.execute(
+#            """
+#            INSERT INTO namespaces (
+#                entity_fph,
+#                stewards_fph_list,
+#                sandbox
+#            )
+#            VALUES (?, ?, ?)
+#            """,
+#            (
+#                seed_namespace_fph,
+#                pickle.dumps([seed_primid_fph]),
+#                False
+#            )
+#        )
+#        conn.commit()
+#        cursor.close()
 
     #--------------------------------------------------------------------------
     # Seed *currency*:
     add_entity_common_properties(
         seed_currency_fph,
-        nshash(seed_currency_parent_hrns),
+        seed_currency_parent_fph,
+        #nshash(seed_currency_parent_hrns),
         "currency",
         seed_currency_fph,
         False,
@@ -245,8 +270,10 @@ def create_seed_entities():
             (
                 seed_currency_fph,
                 "",         # currency prefix
-                "h",        # currency suffix
-                "hrs",    # default *account* name
+##                "h",        # currency suffix
+##                "hrs",    # default *account* name
+                "",        # currency suffix
+                "cc",    # default *account* name
                 pickle.dumps([seed_primid_fph]) # first steward added to list
             )
         )
@@ -382,7 +409,8 @@ def create_quasitld_set(full = False):
     # before create_seed_entities( ).
     substrate_fph = nshash("")
     seed_primid_fph = nshash("adm.cc")
-    seed_currency_fph = nshash("hrs.cc")
+##    seed_currency_fph = nshash("hrs.cc")
+    seed_currency_fph = nshash("cc")
 
     errors = "\n"
     tld_fph_list = []
@@ -410,7 +438,8 @@ def create_sandbox_root_set():
     # before create_seed_entities( ).
     s_fph, m = hrns_to_fph("s")
     seed_primid_fph, m  = hrns_to_fph("adm.cc")
-    seed_currency_fph, m  = hrns_to_fph("hrs.cc")
+##    seed_currency_fph, m  = hrns_to_fph("hrs.cc")
+    seed_currency_fph, m  = hrns_to_fph("cc")
 
     errors = "\n"
     fph_of = {}

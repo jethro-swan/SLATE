@@ -1,14 +1,14 @@
 #!/home/john/NESTS/SLATE/venv/bin/python3
 #!/usr/bin/env python3
 
-from core.auth import auth_hash, check_auth_hash
-from core.auth import authenticate_web_access, authenticate_cli_access
-from core.auth import list_password_characters, password_valid
-from core.auth import generate_password, list_url_safe_password_characters
-from core.auth import url_safe_password_valid, generate_url_safe_password
-from core.auth import generate_access_token
-from core.auth import pin_random_ord, pin_prompt_message, authenticate_pin
-from core.display import thinline, thickline, title_line
+from app.core.auth import auth_hash, check_auth_hash
+#from app.core.auth import authenticate_web_access, authenticate_cli_access
+from app.core.auth import list_password_characters, password_valid
+from app.core.auth import generate_password, list_url_safe_password_characters
+from app.core.auth import url_safe_password_valid, generate_url_safe_password
+from app.core.auth import generate_access_token
+from app.core.auth import pin_random_ord, pin_prompt_message, authenticate_pin
+from app.core.display import thinline, thickline, title_line
 
 #def thickline():
 #    print("\n" + "="*160 + "\n")

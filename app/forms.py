@@ -200,6 +200,32 @@ class SpecifyPayeeAgentAndCurrencyForm(FlaskForm):
     pay_agent       = SubmitField("identify options")
 
 
+# Added 2025-03-17:
+class PayeeCurrencyAmountPaymentForm(FlaskForm):
+    to_identity_id  = StringField(
+                        "payee agent identifier",
+                        validators=[DataRequired("required")]
+                      )
+    currency_id     = StringField(
+                        "currency identifier",
+                        validators=[DataRequired("required")]
+                      )
+    amount          = StringField(
+                          "amount",
+                          validators=[DataRequired("required")]
+                      )
+    annotation      = TextAreaField("annotation")
+    submit          = SubmitField("pay")
+    # The remaining fields are in the HTML template.
+
+
+
+
+
+
+
+
+
 class SelectPayerAndPayeeAccountsForm(FlaskForm):
     payer_account   = RadioField(
                           "select payer account",
@@ -212,6 +238,14 @@ class SelectPayerAndPayeeAccountsForm(FlaskForm):
                           validators=[DataRequired("required")]
                       )
     select_accounts = SubmitField("select account pair")
+
+
+
+
+
+
+
+
 
 
 

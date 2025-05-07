@@ -2,12 +2,12 @@ import os
 import sqlite3
 import pickle
 
-from .constants import ENTITIES_DB, SLATE_SESSION_DB, DB_BKP_DIR
+from app.core.constants import ENTITIES_DB, SLATE_SESSION_DB, DB_BKP_DIR
 
-from .common import filename_timestamp as timestamp
-from .common import nshash
+from app.core.common import filename_timestamp as timestamp
+from app.core.common import nshash
 
-from .unix_functions import fcopy
+from app.core.unix_functions import fcopy
 
 from flask import session
 
@@ -127,12 +127,6 @@ def session_retrieve_currencies_available():
 def session_save_payment_options(payer_account_options, payee_account_options):
     with sqlite3.connect(SLATE_SESSION_DB) as conn:
         cursor = conn.cursor()
-        cursor.execute("SELECT session_id FROM slate_session")
-        result = cursor.fetchone()
-        if result is not None:
-            cursor.close()
-            return
-        session_id = session["_id"] # from session dictionary
         cursor.execute(
             """
             INSERT INTO slate_session (
@@ -166,13 +160,8 @@ def session_retrieve_payment_options():
             (session["_id"],) # from session dictionary
         )
         result = cursor.fetchone()
-#        cursor.execute(
-#            "DELETE FROM slate_session WHERE session_id = ?",
-#            (session["_id"],) # from session dictionary
-#        )
         cursor.close()
         if result is None:
-            #return {}, {}, "Payment options unavailable"
             return [], [], "Payment options unavailable"
         if result[0] is None:
             payer_account_options = []

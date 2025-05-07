@@ -1,6 +1,4 @@
-#!/home/john/NESTS/SLATE/venv/bin/python3
 #!/home/slate/SLATE/venv/bin/python3
-#!/usr/bin/env python3
 #
 # This is a simple CLI tool for the management of SLATE post-installation
 
