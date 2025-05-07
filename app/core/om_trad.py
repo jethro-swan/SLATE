@@ -26,23 +26,26 @@ import random
 import os
 import pickle
 
+
+
 from app.core.regexp_list import re_hrns, re_fph
 from app.core.slate_core import hrns_to_fph, fph_to_hrns
 from app.core.slate_core import add_entity_common_properties
 from app.core.slate_core import new_account
 from app.core.slate_core import identify_entity
+from app.core.slate_core import split_hrns
 
-
+from app.core.constants import ENTITIES_DB
 
 #=============================================================================
 
-def split_hrns(identifier_hrns):
-    if not re_hrns.match(identifier_hrns):
-        return "", ""
-    names = identifier_hrns.split(".")
-    name = names.pop(0)
-    parent_namespace_hrns = ".".join(names)
-    return name, parent_namespace_hrns
+##def split_hrns(identifier_hrns):
+##    if not re_hrns.match(identifier_hrns):
+##        return "", ""
+##    names = identifier_hrns.split(".")
+##    name = names.pop(0)
+##    parent_namespace_hrns = ".".join(names)
+##    return name, parent_namespace_hrns
 
 
 #=============================================================================
@@ -73,7 +76,7 @@ def retrieve_pmap(owner_primid_identifier):
             cursor.close()
             return {}, ""
         else:
-            pmap = pickle.loads(result)
+            pmap = pickle.loads(result[0])
             cursor.close()
         return pmap, ""     # dictionary of  account_holder_hrns:currency_hrns
                             # pairs for display in table.
@@ -105,14 +108,14 @@ def create_new_pairing(
     if (owner_type != "primid"):
         return "", owner_primid_identifier + " is not a primid"
 
-    # If the *account-holder* does not exist already it must be created:
+    # If the *account-holder* (*ahid*) does not exist already it must be
+    # created:
     #
     account_holder_fph, \
-    account_holder_hrns, \
+    do_not_overwrite_original_account_holder_hrns, \
     etype, \
     m = identify_entity(account_holder_hrns)
-    if m:
-        return "", m
+
     if account_holder_fph == "": # does not exist
 
         account_holder_name, parent_hrns = split_hrns(account_holder_hrns)
@@ -121,8 +124,6 @@ def create_new_pairing(
         parent_namespace_hrns, \
         etype, \
         m = identify_entity(parent_hrns)
-        if m:
-            return "", m
 
         if not re_hrns.match(parent_namespace_hrns):
             return "", "Invalid parent namespace: " + parent_namespace_hrns
@@ -154,9 +155,9 @@ def create_new_pairing(
     # that it is both unique and easily related to the two components of the
     # pairing. Therefore its name is constructed from the two:
     #
-    ah_id = "_".join(currency_hrns.split("."))
-    c_id = "_".join(account_holder_hrns.split("."))
-    account_name = "_".join([ah_id, "_P_", c_id])
+    ah_id = "^".join(account_holder_hrns.split("."))
+    c_id = "^".join(currency_hrns.split("."))
+    account_name = "_".join(["", ah_id, "&", c_id, ""])
     #
     # This name is then prefixed to the root of the owner *primid*'s private
     # *namespace*.
@@ -179,15 +180,23 @@ def create_new_pairing(
     # The pairings dictionary is retrieved. If none exists, an empty
     pmap, m = retrieve_pmap(owner_primid_identifier)
 
+    print(pmap)
+
     pmap[account_holder_hrns] = {}
     pmap[account_holder_hrns][currency_hrns] = account_fph
     #pmap[account_holder_hrns][currency_hrns] = account_fph
+
+    for ah in pmap.keys():
+        print(ah)
+        for c in pmap[ah].keys():
+            print("\t" + ah + " :: " + c + " > " + pmap[ah][c])
+
 
     with sqlite3.connect(ENTITIES_DB) as conn:
         cursor = conn.cursor()
         cursor.execute(
             "UPDATE primids SET pmap = ? WHERE entity_fph = ?",
-            (owner_fph, pickle.dumps(pmap))
+            (pickle.dumps(pmap), owner_fph)
         )
         conn.commit()
         cursor.close()

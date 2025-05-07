@@ -94,6 +94,16 @@ def get_version():
         version = v_file.read()
     return version
 
+#==============================================================================
+## Separate the entity's *name* from the identifier of its parent *namespace*:
+#
+def split_hrns(identifier_hrns):
+    if not re_hrns.match(identifier_hrns):
+        return "", ""
+    names = identifier_hrns.split(".")
+    name = names.pop(0)
+    parent_namespace_hrns = ".".join(names)
+    return name, parent_namespace_hrns
 
 
 
@@ -187,6 +197,8 @@ def create_entities_db():
             """
         )
         # Create secids table:
+        #
+        #
         cursor.execute(
             """
             CREATE TABLE IF NOT EXISTS secids (
@@ -196,6 +208,29 @@ def create_entities_db():
             );
             """
         )
+        # Create ahds (*account-holder identities*) table:
+        #
+        # Unlike *secids* or *primids", an *ahid* can have only one *account*
+        # in each *currency*. Therefore, the *accounts* belonging to each
+        # *ahid* are mapped from *currencies* in a dictionary:
+        #   {
+        #       currency1_hrns : account1_fph,
+        #       currency2_hrns : account2_fph,
+        #       ...
+        #   }
+        #
+##        cursor.execute(
+##            """
+##            CREATE TABLE IF NOT EXISTS ahids (
+##                entity_fph TEXT,
+##                primid_fph TEXT,
+##                pairing_map BLOB
+##           );
+##            """
+##        )
+
+
+
         # Create currencies table:
         #
         # Added 2025-03-18:
@@ -916,14 +951,14 @@ def new_primid(
                 primid_email_1_hash,
                 primid_email_2_hash,
                 secids_fph_list,
-                ahids_fph_list,
+                pmap,
                 accounts_fph_list,
                 stewardships_fph_list,
                 password_hash,
                 pin,
                 access_token_hash
             )
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """,
             (
                 primid_fph,
@@ -931,6 +966,7 @@ def new_primid(
                 auth_hash(email_address_1),
                 auth_hash(email_address_2),
                 pickle.dumps(secids_fph_list),          # empty list
+                pickle.dumps({}),                       # empty dictionary
                 pickle.dumps(accounts_fph_list),        # empty list
                 pickle.dumps(stewardships_fph_list),    # empty list
                 #password_already_hashed,    # restored 2024-11-10 19.50
