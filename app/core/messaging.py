@@ -6,21 +6,21 @@ from string import ascii_lowercase
 from datetime import datetime, date, time, timezone
 import calendar
 
-from .slate_core import identify_entity
-from .slate_core import account_status
+from app.core.slate_core import identify_entity
+from app.core.slate_core import account_status
 
-from .fph_hrns_maps import hrns_to_fph, fph_to_hrns
+from app.core.fph_hrns_maps import hrns_to_fph, fph_to_hrns
 
-from .constants import MESSAGES_DB, DB_BKP_DIR
+from app.core.constants import MESSAGES_DB, DB_BKP_DIR
 
-from .common import filename_timestamp as timestamp
-from .common import unixtime_int, unixtime_str
+from app.core.common import filename_timestamp as timestamp
+from app.core.common import unixtime_int, unixtime_str
 
-from .display import integer_to_money_s_format
+from app.core.display import integer_to_money_s_format
 
-from .unix_functions import fcopy
+from app.core.unix_functions import fcopy
 
-from .regexp_list import re_datestamp
+from app.core.regexp_list import re_datestamp
 
 #==============================================================================
 
@@ -363,6 +363,7 @@ def fetch_messages(recipient_identifier):
                 payer_account_currency_fph, \
                 payer_account_owner_fph, \
                 payer_account_balance, \
+                payer_account_volume, \
                 em = account_status(payer_account_fph)
                 m["payer_identity_hrns"] = fph_to_hrns(payer_account_owner_fph)
 
@@ -374,6 +375,7 @@ def fetch_messages(recipient_identifier):
                 payee_account_currency_fph, \
                 payee_account_owner_fph, \
                 payee_account_balance, \
+                payee_account_volume, \
                 em = account_status(payee_account_fph)
                 m["payee_identity_hrns"] = fph_to_hrns(payer_account_owner_fph)
 

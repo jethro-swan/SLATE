@@ -53,9 +53,10 @@ def yesno(b):
     else:
         return "no"
 
-
+etypes = ["namespace", "currency", "account", "primid", "secid", "ahid"]
 def entity_type_verbose(etype):
-    if not (etype in ["namespace", "currency", "account", "primid", "secid"]):
+    if not (etype in etypes):
+    #if not (etype in ["namespace", "currency", "account", "primid", "secid"]):
         return ""
     if etype == "primid":
         return "login identity"

@@ -82,6 +82,7 @@ def get_hub_mode():
                         "slate_normal",
                         "slate_simple",
                         "slate_minimal",
+                        "om_trad",
                         "nests"
                      ]:
         return hub_mode
