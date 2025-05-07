@@ -139,7 +139,7 @@ def create_new_pairing(
         add_entity_common_properties(
             account_holder_fph,
             parent_namespace_fph,
-            "account_holder",
+            "ahid",
             "",         # n/a
             False,      # not applicable to *pairing*
             owner_fph,
