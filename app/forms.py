@@ -261,6 +261,25 @@ class PaymentAccountPairForm(FlaskForm):
 
 
 
+class SpecifyPayeeAccountHolderForm(FlaskForm):
+    payee_ahid      = StringField(
+                          "account-holder identity",
+                          validators=[DataRequired("required")]
+                      )
+    currency_id     = StringField("currency identifier")
+    amount          = DecimalField(
+                        "amount",
+                        validators=[DataRequired("required")]
+                      )
+    annotation      = TextAreaField("annotation")
+    submit          = SubmitField("pay")
+
+
+
+
+
+
+
 
 
 
@@ -359,8 +378,21 @@ class AccountCreateForm(FlaskForm):
                         "account currency",
                         validators=[DataRequired("required")]
                       )
-    create_account   = SubmitField("create pairing")
+    create_account   = SubmitField("create account")
 
+
+#------------------------------------------------------------------------------
+
+class PairingCreateForm(FlaskForm):
+    ahid_hrns       = StringField(
+                        "account-holder identity",
+                        validators=[DataRequired("required")]
+                      )
+    currency_id     = StringField(
+                        "currency",
+                        validators=[DataRequired("required")]
+                      )
+    create_account   = SubmitField("create pairing")
 
 
 #------------------------------------------------------------------------------

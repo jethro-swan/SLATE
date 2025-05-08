@@ -20,7 +20,7 @@
       href="{{ url_for('static', filename='css/default.css') }}"
     >
 
-	  <script
+    <script
       src="{{ url_for('static', filename='js/jquery-3.7.1.min.js') }}"
       type="text/javascript"
     >
@@ -57,8 +57,10 @@
       <div class="mb"><a class="mb" href="/home">home</a></div>
     {% endif %}
 
-
-    {% if  hub_mode != "slate_minimal" %}
+    <!-- The *secids* are listed only of SLATE is not running in slate_minimal
+         or om_trad mode.
+    -->
+    {% if  (hub_mode != "slate_minimal") and (hub_mode != "om_trad") %}
       {% if page == "identities" %}
         <div class="mba">list identities</div>
       {% else %}
@@ -120,12 +122,12 @@
 
   <!-- Test/development stuff -->
   &nbsp;&nbsp;v{{ version }}
-  {% if hub_mode == "slate_minimal" %}
-    [minimal mode]
-  {% if hub_mode == "om_trad" %}
-    [OM pairing mode]
-  {% elif hub_mode == "slate_simple" %}
+  {% if hub_mode == "slate_simple" %}
     [simple mode]
+  {% elif hub_mode == "om_trad" %}
+    [P-map mode]
+  {% elif hub_mode == "slate_minimal" %}
+    [minimal mode]
   {% elif hub_mode == "slate_normal" %}
     [normal mode]
   {% elif hub_mode == "nests" %}
@@ -141,7 +143,14 @@
 
   {% if logged_in %}
     {% if current_user.is_authenticated %}
-      {% if  hub_mode == "slate_minimal" %}
+      {% if hub_mode == "om_trad" %}
+        <b>Login identity</b> =
+        <b>{{ primary_identity_hrns }}</b> |
+        <a href="/create_ahid/{{ working_identity_fph }}">
+          <b>join currency</b>
+        </a>
+        <hr class="dashed" />
+      {% elif hub_mode == "slate_minimal" %}
         <b>Login identity</b> =
         <b>{{ primary_identity_hrns }}</b> |
         <a href="/create_account/{{ working_identity_fph }}">

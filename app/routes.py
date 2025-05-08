@@ -40,6 +40,12 @@ from app.core.slate_core import authenticate_primid_email
 from app.core.slate_core import get_hub_mode
 from app.core.slate_core import get_version
 
+from app.core.om_trad import retrieve_pmap
+from app.core.om_trad import create_new_pairing
+from app.core.om_trad import get_ahid_primid
+from app.core.om_trad import retrieve_pairing_account_fph
+from app.core.om_trad import ah_payment
+
 from app.core.slate_session import create_slate_session_db
 from app.core.slate_session import session_save_currencies_available
 from app.core.slate_session import session_retrieve_currencies_available
@@ -131,6 +137,7 @@ from app.forms import StewardAddForm
 from app.forms import UserMessageForm
 #from app.forms import TQueueForm
 from app.forms import FileUploadForm
+from app.forms import PairingCreateForm
 
 from markupsafe import escape
 
@@ -2064,6 +2071,64 @@ def account(payer_account_fph, payee_account_fph, owner_fph = None):
         payer_balance = payer_balance
     )
 
+# ==============================================================================
+#
+@app.route("/pay_to_ahid", methods = ["GET", "POST"])
+@login_required
+def pay_ahid():
+
+    # Hub operational mode (read from environment variable HUB_MODE)
+    hub_mode = get_hub_mode()
+
+    page = "pay_ahid"
+    group = "home" # Used to control top menu behaviour.
+    logged_in = current_user.is_authenticated
+
+    previous_page = session["previous_page"] # Ensure correct page sequence
+    session["previous_page"] = page
+
+    primary_identity_fph, \
+    primary_identity_hrns, \
+    primary_identity_type, \
+    m = identify_entity(current_user.get_id())
+
+    working_identity_fph = primary_identity_fph
+    working_identity_hrns = primary_identity_hrns
+    working_identity_type = primary_identity_type
+
+    form = SpecifyPayeeAccountHolderForm()
+    if form.validate_on_submit():
+        payee_ahid_fph, \
+        payee_ahid_hrns, \
+        etype, \
+        m = identify_entity(form.payee_ahid.data) # HRNS or FPH
+        if m:
+            flash(m)
+            return redirect("/pay_to_ahid")
+        if payee_ahid_fph == "":
+            return redirect("/pay_to_ahid")
+
+        return redirect("/home")
+
+    return render_template(
+        "pay_to_ahid.html",
+        title = "Make a payment to an account-holder",
+        page = page,
+        group = group,
+        form = form,
+        logged_in = logged_in,
+        hub_mode = hub_mode,
+        version = get_version(),
+        primary_identity_type = "login identity",
+        primary_identity_fph = primary_identity_fph,
+        primary_identity_hrns = primary_identity_hrns,
+        working_identity_fph = working_identity_fph,
+        working_identity_hrns = working_identity_hrns,
+        working_identity_type = working_identity_type
+    )
+
+
+
 
 # ==============================================================================
 #
@@ -3854,7 +3919,114 @@ def create_currency():
         currency_steward = currency_steward
     )
 
-# create an account -----------------------------------------------------------
+# create an *ahid*-*currency* pairing -----------------------------------------
+@app.route("/create_ahid/<owner_fph>", methods = ["GET", "POST"])
+@login_required
+def create_ahid(owner_fph):
+
+    # Hub operational mode (read from environment variable HUB_MODE)
+    hub_mode = get_hub_mode()
+
+    page = "create_account"
+    previous_page = session["previous_page"]
+    session["previous_page"] = page
+
+    group = "home" # Used to control top menu behaviour.
+
+    namespace_steward = False
+    currency_steward = False
+    paying = True
+    logged_in = current_user.is_authenticated
+
+    owner_fph, \
+    owner_hrns, \
+    owner_type, \
+    m = identify_entity(owner_fph)
+    if m:
+        flash(m)
+        return redirect("/home")
+    if owner_fph == "":
+        flash("The owner FPH in the URL cannot be identified")
+        return redirect("/home")
+
+    if hub_mode != "om_trad":
+        flash("This endpoint is not valid in the current mode.")
+        return redirect("/home")
+
+    primary_identity_fph, \
+    primary_identity_hrns, \
+    primary_identity_type, \
+    m = identify_entity(current_user.get_id())
+
+    # In om_trad mode the *working identity* is always the *primary identity*.
+    working_identity_fph = primary_identity_fph
+    working_identity_hrns = primary_identity_hrns
+    working_identity_type = primary_identity_type
+
+    form = PairingCreateForm()
+
+    if form.validate_on_submit():
+
+        ahid_hrns = form.ahid_hrns.data
+        if not re_hrns.match(ahid_hrns):
+            flash(ahid_hrns + " is not a valid identifier string")
+            return redirect("/create_ahid/" + owner_fph)
+
+        currency_id = form.currency_id.data
+
+        currency_fph, \
+        currency_hrns, \
+        etype, \
+        m = identify_entity(currency_id)
+        if m:
+            flash(m)
+            return redirect("/home")
+        if etype !=  "currency":
+            flash(currency_id + " is not a currency")
+            #return redirect("/home")
+            return redirect("/create_ahid/" + owner_fph)
+
+        currency_fph, \
+        currency_hrns, \
+        prefix, \
+        suffix, \
+        default_account_name, \
+        stewards_list, \
+        m = get_currency_specific_properties(currency_fph)
+
+
+        account_fph = create_new_pairing(
+                          working_identity_fph,
+                          ahid_hrns,
+                          currency_hrns
+                      )
+
+
+
+        return redirect("/home")
+
+    return render_template(
+        "create_ahid_currency_pair.html",
+        title = "Pair an account-holder with a currency",
+        logged_in = logged_in,
+        page = page,
+        group = group,
+        hub_mode = hub_mode,
+        version = get_version(),
+        form = form,
+        primary_identity_type = "login identity",
+        primary_identity_fph = primary_identity_fph,
+        primary_identity_hrns = primary_identity_hrns,
+        working_identity_fph = working_identity_fph,
+        working_identity_hrns = working_identity_hrns,
+        working_identity_type = working_identity_type,
+        development_mode = development_mode,
+        namespace_steward = namespace_steward
+    )
+
+
+
+# create an *account* ---------------------------------------------------------
 @app.route("/create_account/<owner_fph>", methods = ["GET", "POST"])
 @login_required
 def create_account(owner_fph):

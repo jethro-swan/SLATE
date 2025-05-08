@@ -3,7 +3,55 @@
 import sqlite3
 import pickle
 
+
+
+from app.core.fph_hrns_maps import fph_to_hrns, hrns_to_fph
+
+from app.core.slate_core import new_namespace, new_currency
+from app.core.slate_core import split_hrns
+
 from app.core.om_trad import *
+
+
+primid_fph, m = hrns_to_fph("bb.cc")
+
+nslist = ["uk.cc", "mon.uk.cc", "chep.mon.uk.cc"]
+clist = ["kwh.cc", "hrs.cc", "kwh.uk.cc", "hrs.mon.uk.cc", "h.chep.mon.uk.cc"]
+
+for ns in nslist:
+    nsname, ns_parent_ns_hrns = split_hrns(ns)
+    parent_namespace_fph, m = hrns_to_fph(ns_parent_ns_hrns)
+
+    namespace_fph, \
+    namespace_hrns, \
+    m = new_namespace(
+            nsname,
+            parent_namespace_fph,
+            "cc",
+            primid_fph
+        )
+
+    print(namespace_fph + " > " + namespace_hrns)
+    print()
+
+for c in clist:
+    cname, c_parent_ns_hrns = split_hrns(c)
+    parent_namespace_fph, m = hrns_to_fph(c_parent_ns_hrns)
+
+    currency_fph, \
+    currency_hrns, \
+    m = new_currency(
+            cname,
+            parent_namespace_fph,
+            primid_fph,
+            "",
+            "",
+            "cname"
+        )
+
+    print(currency_fph + " > " + currency_hrns)
+    print()
+
 
 
 

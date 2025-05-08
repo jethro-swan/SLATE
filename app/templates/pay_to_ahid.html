@@ -1,0 +1,113 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+  <table border="0">
+    <tr valign="top">
+      <td colspan=""><b>account</b></td>
+      <td colspan="2">
+        <a href="/account_details/{{ payer_account_fph }}">
+          <b>{{ payer_account_hrns }}</b>
+        </a>
+      </td>
+    </tr>
+    {% if  hub_mode != "slate_minimal" %}
+    <tr valign="top">
+      <td colspan=""><b>owner</b> (<b>identity</b>)</td>
+      <td colspan="2"><b>{{ account_owner_hrns }}</b></td>
+    </tr>
+    {% endif %}
+    <tr valign="top">
+      <td><b>currency</b></td>
+      <td colspan="2">
+        <a href="/currency/{{ currency_fph }}">
+          <b>{{ currency_hrns }}</b>
+        </a>
+      </td>
+    </tr>
+    <tr valign="top">
+      <td><b>balance</b></td>
+      {% if account_balance_is_negative %}
+      <td align="right" class="balneg">
+      {% else %}
+      <td align="right" class="balpos">
+      {% endif %}
+        <b>{{ account_balance }}</b>
+      </td>
+      <td align="right">
+        {{ currency_prefix }}{{ currency_suffix }}
+      </td>
+    </tr>
+  </table>
+  <hr />
+  <div class="footnote">
+    You can use this form to make a payment from this <b>account</b> to another
+    in the same <b>currency</b>.
+  </div>
+  <!--
+  <p class="footnote">
+    (If you know only the <b>account</b> to which you need to pay, you can
+    <a href="/pay/account">do that directly</a>.)
+  </p>
+  -->
+  <br />
+  <form action="" method="post" novalidate>
+  {{ form.hidden_tag() }}
+  {% if payee_account_hrns %}
+    Paying to <span class="dark-red-bold">{{ payee_account_hrns }}</span>
+  {% else %}
+    <p>
+      {{ form.to_account_id.label }}<br />
+      {{ form.to_account_id(size=32) }}
+    </p>
+  {% endif %}
+  <p>
+    {{ form.amount.label }}<br />
+    <!--
+    {{ form.amount(size=32) }}
+    -->
+    <!--
+    <input type="number" placeholder="Enter a payment value here" />
+    -->
+    <input
+      type="currency"
+      name="amount"
+      value="0.00"
+      id="pence"
+      min="0.00"
+      max="9999.99"
+      step="0.01"
+      size="10"
+      placeholder="Enter a payment value here"
+    />
+  </p>
+  <p>
+    {{ form.annotation.label }}<br />
+    {{ form.annotation(size=128) }}
+  </p>
+  <p>
+    <input type="submit" value="PAY">
+  </p>
+  <!--
+  <p>
+    {{ form.submit() }}
+  </p>
+  -->
+  <hr />
+
+  <p>
+    <b><a href="/account/export/{{ payer_account_fph }}">Export journal</a></b>
+    (CSV) of all payments made to or from this account
+  </p>
+
+{% endblock %}
+
+<!--
+Add:
+- list of recent payments
+- link to complete (scrollable) list of payments
+- CSV export button
+
+
+
+-->

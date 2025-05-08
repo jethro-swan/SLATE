@@ -24,8 +24,6 @@ def thin_title_line(title):
     print("\n--- " + title + " " + "-"*(155 - len(title)) + "\n")
 
 
-
-
 def pause():
     input("\nPress ENTER to continue...\n")
 

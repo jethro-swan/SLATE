@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<h3>Pair account-holder with currency</h3>
+
+<form action="" method="post" novalidate>
+  {{ form.hidden_tag() }}
+  <div>
+    <div style="float:left; margin:2px;">
+      {{ form.ahid_hrns.label }}<br />
+      {{ form.ahid_hrns(size=20, placeholder="account-holder identity") }}
+    </div>
+    <div class="clear-both"></div>
+    <div style="float:left; margin:2px;">
+      {{ form.currency_id.label }}<br />
+      {{ form.currency_id(size=20, placeholder="currency") }}
+    </div>
+    <div class="clear-both"></div>
+    <div style="float:left; margin:2px;">
+      {{ form.create_account() }}
+    </div>
+  </div>
+</form>
+
+{% endblock %}

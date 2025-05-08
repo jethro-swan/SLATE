@@ -1,22 +1,22 @@
 #!/home/slate/SLATE/venv/bin/python3
 
 # This file contains functions to emulate the "traditional" OM mode pairing a
-# re-useable *account_holder* identifier with a *currency* identifier.
+# re-useable *ahid* identifier with a *currency* identifier.
 #
 # On the surface, the bahaviour is a little different from that of the
 # SLATE/NESTS approach in that the *account* created to represent the pairing
 # is only ever identified (to most users in "om_trad" mode) indirectly by
-# *account_holder* and *currency*.
+# *ahid* and *currency*.
 
-# The account_holder_hrns and currency_hrns are entered in a form.
+# The ahid_hrns and currency_hrns are entered in a form.
 # These are used to create a new pairing which maps to a new *account*.
 
-# The *account_holder* HRNS can be retrieved by FPH in the same way as any
+# The *ahid* HRNS can be retrieved by FPH in the same way as any
 # other entity type.
 
 # Each *primid* maintains a map of *pairings* as a dictionary of lists:
 #
-#   account_holder_hrns: [currency1_fph, currency2_fph, ...]
+#   ahid_hrns: [currency1_fph, currency2_fph, ...]
 #
 #
 #=============================================================================
@@ -50,14 +50,14 @@ from app.core.constants import ENTITIES_DB
 
 #=============================================================================
 
-def retrieve_pmap(owner_primid_identifier):
+def retrieve_pmap(owner_identifier):
 
     owner_fph, \
     owner_hrns, \
     owner_type, \
-    m = identify_entity(owner_primid_identifier)
+    m = identify_entity(owner_identifier)
     if (owner_type != "primid"):
-        return {}, owner_primid_identifier + " is not a primid"
+        return {}, owner_identifier + " is not a primid"
 
     with sqlite3.connect(ENTITIES_DB) as conn:
         cursor = conn.cursor()
@@ -78,16 +78,16 @@ def retrieve_pmap(owner_primid_identifier):
         else:
             pmap = pickle.loads(result[0])
             cursor.close()
-        return pmap, ""     # dictionary of  account_holder_hrns:currency_hrns
+        return pmap, ""     # dictionary of  ahid_hrns:currency_hrns
                             # pairs for display in table.
 
 
 #=============================================================================
 
 def create_new_pairing(
-        owner_primid_identifier,    # HRNS or FPH
-        account_holder_hrns,        # HRNS
-        currency_hrns               # HRNS
+        owner_identifier,   # HRNS or FPH
+        ahid_hrns,          # HRNS
+        currency_hrns       # HRNS
     ):
 
     # The *currency* and owner *primid* are validated before proceeding to
@@ -104,21 +104,20 @@ def create_new_pairing(
     owner_fph, \
     owner_hrns, \
     owner_type, \
-    m = identify_entity(owner_primid_identifier)
+    m = identify_entity(owner_identifier)
     if (owner_type != "primid"):
-        return "", owner_primid_identifier + " is not a primid"
+        return "", owner_identifier + " is not a primid"
 
-    # If the *account-holder* (*ahid*) does not exist already it must be
-    # created:
+    # If the *ahid* does not exist already it must be created:
     #
-    account_holder_fph, \
-    do_not_overwrite_original_account_holder_hrns, \
+    ahid_fph, \
+    do_not_overwrite_original_ahid_hrns, \
     etype, \
-    m = identify_entity(account_holder_hrns)
+    m = identify_entity(ahid_hrns)
 
-    if account_holder_fph == "": # does not exist
+    if ahid_fph == "": # does not exist
 
-        account_holder_name, parent_hrns = split_hrns(account_holder_hrns)
+        ahid_name, parent_hrns = split_hrns(ahid_hrns)
 
         parent_namespace_fph, \
         parent_namespace_hrns, \
@@ -128,16 +127,16 @@ def create_new_pairing(
         if not re_hrns.match(parent_namespace_hrns):
             return "", "Invalid parent namespace: " + parent_namespace_hrns
 
-        # The *account_holder* is added to the HRNS>FPH and FPH>HRNS maps:
+        # The *ahid* is added to the HRNS>FPH and FPH>HRNS maps:
         #
-        account_holder_fph, m = hrns_to_fph(account_holder_hrns)
+        ahid_fph, m = hrns_to_fph(ahid_hrns)
 
-        # The *account_holder* is then added to the entities_common table.
-        # (Unlike other entity types, *account_holder* has no table for
+        # The *ahid* is then added to the entities_common table.
+        # (Unlike other entity types, *ahid* has no table for
         # specific properties.)
         #
         add_entity_common_properties(
-            account_holder_fph,
+            ahid_fph,
             parent_namespace_fph,
             "ahid",
             "",         # n/a
@@ -147,7 +146,7 @@ def create_new_pairing(
         )
 
     # At this point, whether or not it has been necessary to create it, we now
-    # have both the HRNS and the FPH of the *account_holder*. It can now be
+    # have both the HRNS and the FPH of the *ahid*. It can now be
     # paired with the specified *currency* to index a new *account*.
 
     # The *account* created for this *account-holder"|*currency* pairing will
@@ -155,7 +154,7 @@ def create_new_pairing(
     # that it is both unique and easily related to the two components of the
     # pairing. Therefore its name is constructed from the two:
     #
-    ah_id = "^".join(account_holder_hrns.split("."))
+    ah_id = "^".join(ahid_hrns.split("."))
     c_id = "^".join(currency_hrns.split("."))
     account_name = "_".join(["", ah_id, "&", c_id, ""])
     #
@@ -171,25 +170,24 @@ def create_new_pairing(
             currency_fph
         )
 
-    # The *account_holder* may be paired with any *currency* (once only). These
+    # The *ahid* may be paired with any *currency* (once only). These
     # serve as the co-ordinates in a grid identifying the *account* created
     # above.
     #
     # If a *pairing* entity does not exist already it is created.
     #
     # The pairings dictionary is retrieved. If none exists, an empty
-    pmap, m = retrieve_pmap(owner_primid_identifier)
+    pmap, m = retrieve_pmap(owner_identifier)
 
     print(pmap)
 
-    pmap[account_holder_hrns] = {}
-    pmap[account_holder_hrns][currency_hrns] = account_fph
-    #pmap[account_holder_hrns][currency_hrns] = account_fph
+    pmap[ahid_hrns] = {}
+    pmap[ahid_hrns][currency_hrns] = account_fph
 
-    for ah in pmap.keys():
-        print(ah)
-        for c in pmap[ah].keys():
-            print("\t" + ah + " :: " + c + " > " + pmap[ah][c])
+    for ahid_hrns in pmap.keys():
+        print(ahid_hrns)
+        for c_hrns in pmap[ahid_hrns].keys():
+            print(ahid_hrns + " : " + c_hrns + " > " + pmap[ahid_hrns][c_hrns])
 
 
     with sqlite3.connect(ENTITIES_DB) as conn:
@@ -205,17 +203,34 @@ def create_new_pairing(
 
 #=============================================================================
 
+def get_ahid_primid(ahid_hrns):
 
+    with sqlite3.connect(ENTITIES_DB) as conn:
+        cursor = conn.cursor()
+        cursor.execute(
+            """
+            SELECT entity_type, owner_fph, active
+            FROM entities_common
+            WHERE entity_fph = ?
+            """,
+            (entity_fph,)
+        )
+        result = cursor.fetchone()
+        cursor.close()
+    if (result is None) or (not result[2]) or (result[0] != "ahid"):
+        return ""
+    else:
+        return result[1] # owner primid FPH
 
 #=============================================================================
 
 def retrieve_pairing_account_fph(
-        account_holder_hrns,    # HRNS
+        ahid_hrns,    # HRNS
         currency_identifier     # HRNS or FPH
     ):
 
-    if not re_hrns.match(account_holder_hrns):
-        return "", "", account_holder_hrns + " is not an account-holder"
+    if not re_hrns.match(ahid_hrns):
+        return "", "", ahid_hrns + " is not an account-holder"
 
     currency_fph, \
     currency_hrns, \
@@ -224,18 +239,20 @@ def retrieve_pairing_account_fph(
     if (etype != "currency"):
         return "", "", currency_fph + " is not a currency"
 
-    primid_fph = identify_account_holder_primid(account_holder_hrns)
+    primid_fph = get_ahid_primid(ahid_hrns)
+    if ahid_hrns:
+        pmap = get_ahid_pmap(primid_fph)
+    else:
+        return "", "", "Unable to retrieve pmap for ahid " + ahid_hrns
 
-    ah_currency_map = get_ah_currency_map(primid_fph)
+    if ah_currency_map[ahid_hrns] is None:
+        return "", "", ahid_hrns + " is not an account-holder"
 
-    if ah_currency_map[account_holder_hrns] is None:
-        return "", "", account_holder_hrns + " is not an account-holder"
-
-    if ah_currency_map[account_holder_hrns][currency_hrns] is None:
-        return "", account_holder_hrns \
+    if ah_currency_map[ahid_hrns][currency_hrns] is None:
+        return "", ahid_hrns \
                    + " does not have use of currency " + currency_hrns
     else:
-        account_fph = ah_currency_map[account_holder_hrns][currency_hrns]
+        account_fph = ah_currency_map[ahid_hrns][currency_hrns]
 
     entity_fph, \
     entity_hrns, \
@@ -262,8 +279,8 @@ def retrieve_pairing_account_fph(
 # Make payment from one account to another (specified by FPH):
 
 def ah_payment(
-        payer_account_holder_hrns,
-        payee_account_holder_hrns,
+        payer_ahid_hrns,
+        payee_ahid_hrns,
         currency_hrns,
         amount,
         annotation
@@ -432,8 +449,8 @@ def ah_payment(
 
 
 def make_om_payment(
-        payer_account_holder_hrns,
-        payee_account_holder_hrns,
+        payer_ahid_hrns,
+        payee_ahid_hrns,
         currency_hrns,
         amount,
         annotation
