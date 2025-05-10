@@ -91,3 +91,9 @@ for ahid_hrns in ["ah1.bb.cc", "ah2.bb.cc", "ah3.bb.cc", "ah4.bb.cc"]:
 pmap , m = retrieve_pmap("bb.cc")
 
 print(pmap)
+
+complete_parent_namespace_chain("zx.cv.l5.cald.mon.uk")
+#currency_fph, currency_hrns, m = create_import_currency("qw.er.ty.ui.pa.uk")
+#print(currency_fph)
+#print(currency_hrns)
+#print(m)

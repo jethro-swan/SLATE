@@ -79,6 +79,9 @@ def create_messages_db():
                 recipient_fph TEXT,
                 payer_account_fph TEXT,
                 payee_account_fph TEXT,
+                payer_ahid_fph TEXT,
+                payee_ahid_fph TEXT,
+                currency_fph TEXT,
                 amount INTEGER,
                 subject TEXT,
                 message_body TEXT
@@ -150,6 +153,9 @@ def send_message(
         expiry_datetime,        # string: YYYY-MM-DD_mm:ss
         payer_account_fph,      # string
         payee_account_fph,      # string
+        payer_ahid_fph,         # string
+        payee_ahid_fph,         # string
+        currency_fph,           # string
         amount,                 # integer
         message_body,           # string
         indelible = False       # boolean
@@ -245,11 +251,14 @@ def send_message(
                 recipient_fph,
                 payer_account_fph,
                 payee_account_fph,
+                payer_ahid_fph,
+                payee_ahid_fph,
+                currency_fph,
                 amount,
                 subject,
                 message_body
             )
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """,
             (
                 message_timestamp,
@@ -262,6 +271,9 @@ def send_message(
                 recipient_fph,
                 payer_account_fph,
                 payee_account_fph,
+                payer_ahid_fph,
+                payee_ahid_fph,
+                currency_fph,
                 amount,
                 subject,
                 message_body
@@ -297,6 +309,9 @@ def fetch_messages(recipient_identifier):
                 recipient_fph,
                 payer_account_fph,
                 payee_account_fph,
+                payer_ahid_fph,
+                payee_ahid_fph,
+                currency_fph,
                 amount,
                 subject,
                 message_body

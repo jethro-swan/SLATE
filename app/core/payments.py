@@ -201,14 +201,17 @@ def payment(payer_account_fph, payee_account_fph, amount, annotation):
             payer_account_owner_fph,    # sender_id
             payee_account_owner_fph,    # recipient_id
             "payment",                  # category
-            "",         # subject prefix string
+            "",                         # subject prefix string
             subject_line,               # subject
             "",                         # stewardship_id (n/a)
             0,                          # longevity (indefinite)
             "",                         # expiry_datetime (no expiry)
             payer_account_fph,      # string
             payee_account_fph,      # string
-            amount,                 # integer
+            "",             # payer_ahid_fph unused in this mode
+            "",             # payee_ahid_fph unused in this mode
+            "",             # currency_fph unused in this mode
+            amount,                     # integer
             message_body,               #
             False                       # indelibility
         )

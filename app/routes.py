@@ -131,6 +131,7 @@ from app.forms import SecidCreateForm
 from app.forms import SpecifyPayeeAccountForm
 from app.forms import SpecifyPayeeAgentForm
 from app.forms import SelectPayerAndPayeeAccountsForm
+from app.forms import SpecifyPayeeAccountHolderForm
 from app.forms import SpecifyPayeeAgentAndCurrencyForm
 from app.forms import PayeeCurrencyAmountPaymentForm
 from app.forms import StewardAddForm
@@ -2106,7 +2107,19 @@ def pay_ahid():
             flash(m)
             return redirect("/pay_to_ahid")
         if payee_ahid_fph == "":
+            flash("The specified account-holder does not exist")
             return redirect("/pay_to_ahid")
+        if etype != "ahid":
+            flash("The payee specified is not an account-holder")
+            return redirect("/pay_to_ahid")           
+
+        currency_fph, \
+        currency_hrns, \
+        etype, \
+        m = identify_entity(form.currency_id.data)
+
+        # MAKE PAYMENT HERE
+
 
         return redirect("/home")
 

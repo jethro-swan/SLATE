@@ -32,8 +32,13 @@ from app.core.regexp_list import re_hrns, re_fph
 from app.core.slate_core import hrns_to_fph, fph_to_hrns
 from app.core.slate_core import add_entity_common_properties
 from app.core.slate_core import new_account
+from app.core.slate_core import new_namespace
+from app.core.slate_core import new_primid
+from app.core.slate_core import new_currency
 from app.core.slate_core import identify_entity
 from app.core.slate_core import split_hrns
+
+from app.core.common import ledger_timestamp
 
 from app.core.constants import ENTITIES_DB
 
@@ -286,14 +291,17 @@ def ah_payment(
         annotation
     ):
 
-    # Identify the
-    #   payer_account_fph
-    #   payee_account_fph
-    # from the arguments submitted.
+    payer_account_fph, \
+    payer_primid_fph, \
+    m = retrieve_pairing_account_fph(payer_ahid_hrns, currency_hrns)
+    if m:
+        return "", "", m
 
-    #payer_account_fph
-    #payee_account_fph
-
+    payee_account_fph, \
+    payee_primid_fph, \
+    m = retrieve_pairing_account_fph(payee_ahid_hrns, currency_hrns)
+    if m:
+        return "", "", m
 
     payer_account_exists, \
     payer_account_active, \
@@ -303,9 +311,9 @@ def ah_payment(
     payer_volume, \
     m = account_status(payer_account_fph)
     if not payer_account_exists:
-        return "Payer account " + payer_account_fph + " does not exist"
+        return "", "", "Payer account " + payer_account_fph + " does not exist"
     if not payer_account_active:
-        return "Payer account " + payer_account_fph + " is inactive"
+        return "", "", "Payer account " + payer_account_fph + " is inactive"
 
     payee_account_exists, \
     payee_account_active, \
@@ -315,16 +323,12 @@ def ah_payment(
     payee_volume, \
     m = account_status(payee_account_fph)
     if not payee_account_exists:
-        return "Payee account " + payee_account_fph + " does not exist"
+        return "", "", "Payee account " + payee_account_fph + " does not exist"
     if not payee_account_active:
-        return "Payee account " + payee_account_fph + " is inactive"
+        return "", "", "Payee account " + payee_account_fph + " is inactive"
 
     if not re_pvalue.match(str(amount)):
         return str(amount) + " is not a valid payment"
-
-    if payer_account_currency_fph != payee_account_currency_fph:
-        return "Accounts " + payer_account_fph + " and " + payee_account_fph \
-               + " are not in the same currency"
 
     #--------------------------------------------------------------------------
     # First the balances are adjusted:
@@ -365,7 +369,7 @@ def ah_payment(
     suffix, \
     default_account_name, \
     stewards_list, \
-    m = get_currency_specific_properties(payer_account_currency_fph)
+    m = get_currency_specific_properties(currency_hrns)
 
     #--------------------------------------------------------------------------
     # Then the payment is recorded in the journal:
@@ -391,8 +395,8 @@ def ah_payment(
             """,
             (
                 payment_timestamp,
-                payer_account_fph,
-                payee_account_fph,
+                payer_ahid_fph,     # The *ahid* and *account* FPH are stored
+                payee_ahid_fph,     # in the same field (mode-dependent)
                 currency_fph,
                 amount,
                 payer_account_balance,
@@ -403,10 +407,10 @@ def ah_payment(
         conn.commit()
         cursor.close()
 
-    payer_account_owner_hrns = fph_to_hrns(payer_account_owner_fph)
-    payee_account_owner_hrns = fph_to_hrns(payee_account_owner_fph)
+    payer_ahid_hrns = fph_to_hrns(payer_ahid_fph)
+    payee_ahid_hrns = fph_to_hrns(payee_ahid_fph)
 
-    subject_line = "Payment received from " + payer_account_owner_hrns
+    subject_line = "Payment received from " + payer_ahid_hrns
 
     message_body = annotation
     ## TO DO:
@@ -419,17 +423,20 @@ def ah_payment(
     #   annotation
     m = send_message(
             payment_timestamp,          # message timestamp
-            payer_account_owner_fph,    # sender_id
-            payee_account_owner_fph,    # recipient_id
+            payer_ahid_fph,             # sender_id
+            payee_ahid_fph,             # recipient_id
             "payment",                  # category
-            "",         # subject prefix string
+            "",                         # subject prefix string
             subject_line,               # subject
             "",                         # stewardship_id (n/a)
             0,                          # longevity (indefinite)
             "",                         # expiry_datetime (no expiry)
-            payer_account_fph,      # string
-            payee_account_fph,      # string
-            amount,                 # integer
+            "",                 # payer_account_fph unused in this mode
+            "",                 # payee_account_fph unused in this mode
+            payee_ahid_fph,             # string
+            payee_ahid_fph,             # string
+            currency_fph,               # string
+            amount,                     # integer
             message_body,               #
             False                       # indelibility
         )
@@ -458,3 +465,75 @@ def make_om_payment(
 
 
     return status, m
+
+
+#==============================================================================
+# CSV import
+#
+# This is a little different from the CSV import system used for
+# *account*-to-*account* payments.
+# (1) It works only with the UTF-8 Latin character set
+# (2) It supports the automatic completion of incomplete namespace chains
+# (3) It allows for the import of mixed entity types using a single CSV file
+#
+# The input format is:
+#
+#   | *currency* | payer *ahid* | payee *ahid* | amount | annotation |
+#   | HRNS       | HRNS         | HRNS         |        |            |
+#
+
+def complete_parent_namespace_chain(identifier_hrns):
+    s_fph, m = hrns_to_fph("adm.cc")
+    c_fph, m = hrns_to_fph("cc")
+    entity_fph, entity_hrns, etype, m = identify_entity(identifier_hrns)
+    if entity_fph: # the entity exists already
+        return entity_fph, entity_hrns, identifier_hrns + " exist already"
+    if not re_hrns.match(identifier_hrns):
+        return "", "", identifier_hrns + " is invalid HRNS"
+    parent_namespace_chain_incomplete = True
+    chain_links = []
+    parent_hrns_ = identifier_hrns
+    parent_ns_fph = ""
+    while not parent_ns_fph:
+        parent_ns_fph, parent_ns_hrns, etype, m = identify_entity(parent_hrns_)
+        name, parent_hrns = split_hrns(parent_hrns_)
+        chain_links.append(name)
+        parent_hrns_ = parent_hrns
+    ns_fph = parent_ns_fph
+    chain_links.pop()
+    while len(chain_links) > 0:
+        ns_name = chain_links.pop()
+        ns_fph, ns_hrns, m = new_namespace(ns_name, ns_fph, c_fph, s_fph)
+    return ns_fph
+
+def create_import_primid(primid_hrns):
+    if not re_hrns.match(primid_hrns):
+        return "", "", primid_hrns + " is invalid HRNS"
+    primid_fph, primid_hrns, etype, m = identify_entity(primid_hrns)
+    if primid_fph: # the entity exists already
+        return primid_fph, primid_hrns, primid_hrns + " exist already"
+    name, parent_hrns = split_hrns(primid_hrns)
+    parent_fph = complete_parent_namespace_chain(parent_hrns)
+    primid_fph, primid_hrns, access_token,
+    m = new_primid(
+            username,
+            parent_namespace_fph,
+            realname,
+            email_address_1,
+            email_address_2,
+            password,
+            pin
+        )
+
+def create_import_currency(currency_hrns):
+    if not re_hrns.match(currency_hrns):
+        return "", "", currency_hrns + " is invalid HRNS"
+    s_fph, m = hrns_to_fph("adm.cc")
+    currency_fph, currency_hrns, etype, m = identify_entity(currency_hrns)
+    if currency_fph: # the entity exists already
+        return currency_fph, currency_hrns, currency_hrns + " exist already"
+    name, parent_hrns = split_hrns(currency_hrns)
+    parent_fph = complete_parent_namespace_chain(parent_hrns)
+    print(parent_fph)
+    c_fph, c_hrns, m = new_currency(name, parent_fph, s_fph, "", "", name)
+    return c_fph, c_hrns, m
