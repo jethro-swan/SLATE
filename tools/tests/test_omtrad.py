@@ -60,9 +60,12 @@ for c in clist:
 #print(name1 + " : " + namespace1)
 
 for ahid_hrns in ["ah1.bb.cc", "ah2.bb.cc", "ah3.bb.cc", "ah4.bb.cc"]:
+#for ahid_hrns in ["ah5.bb.cc", "ah6.bb.cc", "ah7.bb.cc", "ah8.bb.cc"]:
     for c_hrns in ["cc", "hrs.cc", "kwh.cc"]:
+    #for c_hrns in ["g£.cc", "MWh.cc", "g$.cc"]:
         p_fph = create_new_pairing("bb.cc", ahid_hrns, c_hrns)
         print(p_fph)
+
 
 #ah1_fph = create_new_pairing("bb.cc", "ah1.cc", "cc")
 
@@ -88,9 +91,11 @@ for ahid_hrns in ["ah1.bb.cc", "ah2.bb.cc", "ah3.bb.cc", "ah4.bb.cc"]:
 #            print(pmap)
 
 
-pmap , m = retrieve_pmap("bb.cc")
+pmap, m = retrieve_pmap("bb.cc")
 
+print("Retrieved pmap:")
 print(pmap)
+print()
 
 complete_parent_namespace_chain("zx.cv.l5.cald.mon.uk")
 #currency_fph, currency_hrns, m = create_import_currency("qw.er.ty.ui.pa.uk")

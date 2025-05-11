@@ -2,14 +2,88 @@
 
 {% block content %}
 
-{% if hub_mode == "slate_minimal" %}
+{% if hub_mode == "om_trad" %}
+<!-- --------------------------------------------------------------------------
+This interface implements the more tradional behaviour of previous open money
+implementations, identifying *accounts* as a single intersection on a notional
+grid, each column identifying a *currency* and each rows identifing an *ahid*
+(*account-holder identity*). Unlike a *primid* or a *secid*, an *ahid* can have
+no more than one *account* in any *currency*. This enable the *accounts* to be
+hidden.
+--------------------------------------------------------------------------- -->
 
+<h3>Your accounts:</h3>
+<table>
+  <tr>
+    <td class="h"><b>currency</b></td>
+    <td class="h"><b>account-holder</b></td>
+    <td class="h"><b>balance</b></td>
+    <td class="h"><b>volume</b></td>
+    <!--
+    <td class="h"><b>annotation</b></td>
+    -->
+  </tr>
+  {% for identity in identities %}<!-- list of dictionaries -->
+  {% for account in identity.accounts %}
+  <tr>
+    <td align="left">
+      {% if account.primid_is_currency_steward %}
+      <a href="/currency/{{ account.currency_fph }}">
+        <b>{{ account.currency_hrns }}</b>
+      </a>
+      {% else %}
+        <b>{{ account.currency_hrns }}</b>
+      {% endif %}
+    </td>
+    <td align="left">
+      <a href="/pay_to_ahid/{{ account.fph }}/0/{{ identity.fph }}">
+        <b>{{ account.hrns }}</b>
+      </a>
+    </td>
+    {% if account.isneg %}
+    <td align="right" class="balneg">
+    {% else %}
+    <td align="right" class="balpos">
+    {% endif %}
+      <b>{{ account.balance }}</b>
+    </td>
+    <td align="right">
+      <b>{{ account.volume }}</b>
+    </td>
+  </tr>
+  {% endfor %}
+  {% endfor %}
+</table>
+
+<ul>
+  <li class="compact">
+    <p class="footnote">
+      Click on any entry in the <b>account-holder</b> column to change to make
+      a payment.
+    </p>
+  </li>
+  <li class="compact">
+    <p class="footnote">
+      Any entry in the <b>currency</b> column will appear as link if you are
+      one of its <em>stewards</em>.
+    </p>
+  </li>
+</ul>
+<hr />
+
+<a href="/create_namespace"><b>new namespace</b></a>
+|
+<a href="/create_currency"><b>new currency</b></a>
+
+{% endif %}<!-- hub_mode == "om_trad" -->
+
+{% if hub_mode == "slate_minimal" %}
 <!-- --------------------------------------------------------------------------
 This is the most simplified SLATE interface, listing only the *accounts* and
 *currencies*, hiding the *secids* (if any). In this view, the only *identity*
 is the *primid*, no link is provided create *secids*. This part is achieved by
 slightly re-ordering top menu items in  app/te,plates/base.html  to hide the
-"craete alias" link and to associate the "join currency" link with the *primid*.
+"create alias" link and to associate the "join currency" link with the *primid*.
 --------------------------------------------------------------------------- -->
 
 <h3>Your accounts:</h3>
@@ -39,29 +113,11 @@ slightly re-ordering top menu items in  app/te,plates/base.html  to hide the
     {% endif %}
       <b>{{ account.balance }}</b>
     </td>
-    <!--
-    <td align="left">
-      <a href="/account/{{ account.fph }}/0/{{ identity.fph }}">
-        <b>pay</b>
-      </a>
-    </td>
-    -->
      <td align="left">
       <a href="/pay/agent/">
         <b>pay</b>
       </a>
     </td>
-    <!--
-    -->
-
-    <!--
-    <td align="left">
-      <a href="/pay/agent/direct/{{ account.currency_fph }}/{{ identity.fph }}">
-        <b>pay</b>
-      </a>
-    </td>
-    -->
-
   </tr>
   {% endfor %}
   {% endfor %}
@@ -73,51 +129,26 @@ slightly re-ordering top menu items in  app/te,plates/base.html  to hide the
 |
 <a href="/create_currency"><b>new currency</b></a>
 
-{% endif %}
+{% endif %}<!-- hub_mode == "slate_minimal" -->
 
 {% if hub_mode == "slate_simple" %}
 <!-- --------------------------------------------------------------------------
 This is the simplified SLATE interface, listing only the *identities* and
 *currencies*, hiding the *accounts*.
 --------------------------------------------------------------------------- -->
-<!--
-<h3>Your identities:</h3>
-<ul>
-{% for identity in identities %}--><!-- list of dictionaries -->
-<!--
-<li class="compact2">
-  <a href="/identity/change/{{ identity.fph }}"><b>{{ identity.hrns }}</b></a>
-  {% if identity.hrns == primary_identity_hrns %}(login identity){% endif %}
-</li>
-{% endfor %}
-</ul>
--->
+
 <h3>Your accounts:</h3>
 <table>
   <tr>
     <td class="h"><b>currency</b></td>
-    <!--
-    <td class="h">+</td>
-    -->
     <td class="h"><b>account</b></td>
-
-    <!--
-    <th>unit</th>
-    -->
-    <!--
-    <td class="h"><b>pairing</b> (<b>account</b>)</td>
-    -->
     <td class="h"><b>balance</b></td>
-
     <td class="h"><b>volume</b></td>
-
     <td class="h"><b>identity</b></td>
-
   </tr>
   {% for identity in identities %}<!-- list of dictionaries -->
   {% for account in identity.accounts %}
   <tr>
-
     <td align="left">
       {% if account.primid_is_currency_steward %}
       <a href="/currency/{{ account.currency_fph }}">
@@ -127,28 +158,11 @@ This is the simplified SLATE interface, listing only the *identities* and
         <b>{{ account.currency_hrns }}</b>
       {% endif %}
     </td>
-
     <td align="left">
       <a href="/account/{{ account.fph }}/0/{{ identity.fph }}">
         <b>{{ account.hrns }}</b>
-        <!--
-        <b>*</b>
-        -->
       </a>
     </td>
-
-    <!--
-    <td align="left">
-      <a href="/account/{{ account.fph }}/00000000000000000000000000000000">
-        <b>{{ account.hrns }}</b>
-      </a>
-    </td>
-    -->
-    <!--
-    <td>
-      {{ account.prefix }}{{ account.suffix }}
-    </td>
-    -->
     {% if account.isneg %}
     <td align="right" class="balneg">
     {% else %}
@@ -156,47 +170,17 @@ This is the simplified SLATE interface, listing only the *identities* and
     {% endif %}
       <b>{{ account.balance }}</b>
     </td>
-
     <td align="right">
       <b>{{ account.volume }}</b>
     </td>
-
     <td align="left">
       <a href="/identity/change/{{ identity.fph }}">
         <b>{{ identity.hrns }}</b>
       </a>
     </td>
-
-    <!--
-    <td align="left">
-      <a href="/account/{{ account.fph }}/00000000000000000000000000000000">
-      -->
-      <!--
-      <a href="/pay/from/{{ account.fph }}">
-        <b>pay</b>
-      </a>
-    </td>
-    -->
   </tr>
   {% endfor %}
   {% endfor %}
-
-  <!--
-  <tr>
-    <td>
-
-    </td>
-    <td>
-
-    </td>
-    <td>
-      Click on any <em>pairing</em> in this column to make a payment.
-    </td>
-    <td>
-
-    </td>
-  </tr>
-  -->
 </table>
 
 <ul>
@@ -241,7 +225,7 @@ This is the simplified SLATE interface, listing only the *identities* and
 |
 <a href="/list/accounts"><b>list accounts</b></a>
 
-{% endif %}
+{% endif %}<!-- hub_mode == "slate_simple" -->
 
 {% if hub_mode == "slate_normal" %}
 <!-- --------------------------------------------------------------------------
@@ -313,9 +297,10 @@ for
 |
 <a href="/list/accounts"><b>list accounts</b></a>
 
-{% endif %}
+{% endif %}<!-- hub_mode == "slate_normal" -->
 
 {% if hub_mode == "nests" %}
+
 <!-- --------------------------------------------------------------------------
 This section will be modified interface in due course to make it suitable for
 use in NESTS.
@@ -384,6 +369,6 @@ for
 |
 <a href="/list/accounts"><b>list accounts</b></a>
 
-{% endif %}
+{% endif %}<!-- hub_mode == "nests" -->
 
 {% endblock %}

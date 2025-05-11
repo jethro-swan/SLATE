@@ -26,6 +26,7 @@ from app.core.slate_core import new_primid, new_secid
 from app.core.slate_core import update_primid_access_details
 from app.core.slate_core import new_namespace, new_currency
 from app.core.slate_core import new_account
+from app.core.slate_core import account_status
 from app.core.slate_core import list_stewardships, list_stewards
 from app.core.slate_core import retrieve_primid_access_details
 from app.core.slate_core import list_agent_accounts, list_secids
@@ -933,10 +934,170 @@ def new_home():
 
 
 
+#
+@app.route("/home_ahc", methods = ["GET", "POST"])
+@login_required
+def home_ahc():
+
+    # Hub operational mode (read from environment variable HUB_MODE)
+    hub_mode = get_hub_mode()
+
+    if hub_mode != "om_trad":
+        flash("Operational mode invalid for this endpoint")
+        return redirect("/home")
+
+    page = "home_ahc"
+    if "previous_page" in session: # already active
+        previous_page = session["previous_page"]
+    else: # initializing
+        previous_page = "home"
+    session["previous_page"] = page
+
+    group = "home" # Used to control top menu behaviour.
+
+    namespace_steward = False
+    currency_steward = False
+    paying = False
+    logged_in = current_user.is_authenticated
+
+    primary_identity_fph, \
+    primary_identity_hrns, \
+    primary_identity_type, \
+    m = identify_entity(current_user.get_id())
+
+    # In om_trad mode, the working *identity* is always the *primid*.
+    working_identity_fph = primary_identity_fph
+    working_identity_hrns = primary_identity_hrns
+    working_identity_type = primary_identity_type
+
+    stewardships_list, m = list_stewardships(primary_identity_fph)
+
+    pmap_t, m = retrieve_pmap(primary_identity_fph)
+
+    print()
+    print(pmap_t)
+    print()
+
+    p_rows = []
+
+    for ahid_hrns in pmap_t.keys():
+        print(ahid_hrns)
+        for currency_hrns in pmap_t[ahid_hrns].keys():
+
+            print(" "*4 + currency_hrns)
+
+            account_fph = pmap_t[ahid_hrns][currency_hrns]
+            print(" "*8 + account_fph)
+
+            account_exists, \
+            account_active, \
+            account_currency_fph, \
+            account_owner_fph, \
+            account_balance, \
+            account_volume, \
+            m = account_status(account_fph)
+
+            if fph_to_hrns(account_currency_fph) != currency_hrns:
+                continue # (This should never happen)
+
+            currency_fph, \
+            currency_hrns, \
+            prefix, \
+            suffix, \
+            default_account_name, \
+            stewards_list, \
+            m = get_currency_specific_properties(account_currency_fph)
+
+            # Assemble a dictonary of *account* properties:
+            a = {}
+            a["fph"] = account_fph
+            #a["hrns"] = fph_to_hrns(account_fph)
+            a["owner_fph"] = account_owner_fph
+            a["owner_hrns"] = fph_to_hrns(account_owner_fph)
+            a["balance"] = integer_to_money_format(account_balance)
+            a["isneg"] = (account_balance < 0)
+            a["prefix"] = prefix
+            a["suffix"] = suffix
+            a["volume"] = integer_to_money_format(account_volume)
+            #primid_currency_steward = (currency_fph in stewardships_list)
+            if currency_fph in stewardships_list:
+                primid_currency_steward = True
+            else:
+                primid_currency_steward = False
+            a["steward"] = primid_currency_steward
+            a["currency_fph"] = currency_fph
+            a["currency_hrns"] = currency_hrns
+
+            pmap_t[ahid_hrns][currency_hrns] = a    # This replaces account_fph
+                                                    # with a dictionary listing
+                                                    # its current properties.
+
+            p_row = {}
+            p_row["currency_hrns"] = currency_hrns
+            p_row["ahid_hrns"] = ahid_hrns
+            p_row["ahid_fph"], m = hrns_to_fph(ahid_hrns)
+            p_row["account_fph"] = account_fph
+            p_row["account_owner_fph"] = account_owner_fph
+            p_row["account_owner_hrns"] = fph_to_hrns(account_owner_fph)
+            p_row["balance"] = integer_to_money_format(account_balance)
+            p_row["isneg"] = (account_balance < 0)
+            p_row["prefix"] = prefix
+            p_row["suffix"] = suffix
+            p_row["volume"] = integer_to_money_format(account_volume)
+            if currency_fph in stewardships_list:
+                p_row["primid_currency_steward"] = True
+            else:
+                p_row["primid_currency_steward"] = False
+            p_row["primid_currency_steward"] = primid_currency_steward
+            p_row["currency_fph"] = currency_fph
+            p_rows.append(p_row)
 
 
 
 
+    # TEST STUFF
+    print()
+    print(pmap_t)
+    print()
+    print("="*80)
+    for ahid_hrns in pmap_t.keys():
+        print(ahid_hrns)
+        for currency_hrns in pmap_t[ahid_hrns].keys():
+            print(" "*4 + currency_hrns)
+            for ap in pmap_t[ahid_hrns][currency_hrns].keys():
+                if ap:
+                    print(" "*8 + "{0: <30}".format(ap) + " :: ", end="")
+                    print(pmap_t[ahid_hrns][currency_hrns][ap])
+    print("="*80)
+    print()
+
+
+    for p_row in p_rows:
+        print(p_row)
+
+
+
+
+
+
+    return render_template(
+        "home_ahc.html",
+        title = "Home",
+        page = page,
+        group = group,
+        hub_mode = hub_mode,
+        version = get_version(),
+        development_mode = development_mode,
+        logged_in = logged_in,
+        primary_identity_type = "login identity",
+        primary_identity_fph = primary_identity_fph,
+        primary_identity_hrns = primary_identity_hrns,
+        working_identity_fph = working_identity_fph,
+        working_identity_hrns = working_identity_hrns,
+        working_identity_type = working_identity_type,
+        p_rows = p_rows,
+        pmap_t = pmap_t
+    )
 
 
 ## NB: This will be assigned a new endpoint to allow "/home" to be used for a
@@ -1086,15 +1247,6 @@ def home():
             stewards_list, \
             m = get_currency_specific_properties(account_currency_fph)
 
-
-#            print(
-#                fph_to_hrns(account_fph) + " (" \
-#                + fph_to_hrns(account_owner_fph) + ") [" \
-#                + currency_hrns + "] :: " \
-#                + integer_to_money_format(account_balance)
-#            )
-
-
             # Assemble a dictonary of *account* properties:
             a = {}
             a["fph"] = account_fph
@@ -1115,6 +1267,12 @@ def home():
             a["currency_fph"] = currency_fph
             a["currency_hrns"] = currency_hrns
             accounts.append(a)
+
+            # The following dictionary is used in template only if
+            # HUB_MODE = "om_trad")
+
+
+
 
             # The following dictionary is used in template only if
             # HUB_MODE = "slate_simple")
@@ -2074,9 +2232,19 @@ def account(payer_account_fph, payee_account_fph, owner_fph = None):
 
 # ==============================================================================
 #
-@app.route("/pay_to_ahid", methods = ["GET", "POST"])
+@app.route("/pay_to_ahid/<payer_ahid_fph>", methods = ["GET", "POST"])
 @login_required
-def pay_ahid():
+def pay_ahid(payer_ahid_fph):
+
+    payer_ahid_fph, \
+    payer_ahid_hrns, \
+    etype, \
+    m = identify_entity(payer_ahid_fph)
+
+    if payer_ahid_fph == "":
+        flash("Invalid payer account-holder")
+        return redirect("/home_ahc")
+
 
     # Hub operational mode (read from environment variable HUB_MODE)
     hub_mode = get_hub_mode()
@@ -2111,7 +2279,7 @@ def pay_ahid():
             return redirect("/pay_to_ahid")
         if etype != "ahid":
             flash("The payee specified is not an account-holder")
-            return redirect("/pay_to_ahid")           
+            return redirect("/pay_to_ahid")
 
         currency_fph, \
         currency_hrns, \
@@ -2121,7 +2289,7 @@ def pay_ahid():
         # MAKE PAYMENT HERE
 
 
-        return redirect("/home")
+        return redirect("/home_ahc")
 
     return render_template(
         "pay_to_ahid.html",
@@ -2137,7 +2305,8 @@ def pay_ahid():
         primary_identity_hrns = primary_identity_hrns,
         working_identity_fph = working_identity_fph,
         working_identity_hrns = working_identity_hrns,
-        working_identity_type = working_identity_type
+        working_identity_type = working_identity_type,
+        payer_ahid_hrns = payer_ahid_hrns
     )
 
 

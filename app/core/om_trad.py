@@ -73,16 +73,24 @@ def retrieve_pmap(owner_identifier):
         result = cursor.fetchone()
         # If no pmap exists yet, it is created:
         if result is None:
-            cursor.execute(
-                "UPDATE primids SET pmap = ? WHERE entity_fph = ?",
-                (owner_fph, pickle.dumps({}))
-            )
-            conn.commit()
+#            cursor.execute(
+#                "UPDATE primids SET pmap = ? WHERE entity_fph = ?",
+#                (owner_fph, pickle.dumps({}))
+#            )
+#            conn.commit()
             cursor.close()
-            return {}, ""
+            return None, ""
+#            return {}, ""
         else:
             pmap = pickle.loads(result[0])
             cursor.close()
+
+#        print()
+#        print("Retrieved test pmap:")
+#        print(pmap)
+#        print()
+
+
         return pmap, ""     # dictionary of  ahid_hrns:currency_hrns
                             # pairs for display in table.
 
@@ -104,6 +112,7 @@ def create_new_pairing(
     etype, \
     m = identify_entity(currency_hrns)
     if (etype != "currency"):
+        #print(currency_hrns + " is not a currency")
         return "", currency_fph + " is not a currency"
 
     owner_fph, \
@@ -119,6 +128,11 @@ def create_new_pairing(
     do_not_overwrite_original_ahid_hrns, \
     etype, \
     m = identify_entity(ahid_hrns)
+
+    #print(">>> " + ahid_hrns + ":" + currency_hrns)
+
+
+
 
     if ahid_fph == "": # does not exist
 
@@ -151,13 +165,14 @@ def create_new_pairing(
         )
 
     # At this point, whether or not it has been necessary to create it, we now
-    # have both the HRNS and the FPH of the *ahid*. It can now be
-    # paired with the specified *currency* to index a new *account*.
+    # have both the HRNS and the FPH of the *ahid*. It can now be paired with
+    # the specified *currency* to index a new *account*.
 
     # The *account* created for this *account-holder"|*currency* pairing will
-    # not usually be seen by its owner, but it still needs an HRNS. To insure
-    # that it is both unique and easily related to the two components of the
-    # pairing. Therefore its name is constructed from the two:
+    # not usually be seen by its owner, but it still needs an HRNS - both in
+    # order to be able to assign it an FPH and to insure that it is both unique
+    # and easily related to the two components of the pairing. Therefore its
+    # name is constructed from the two paired HRNS:
     #
     ah_id = "^".join(ahid_hrns.split("."))
     c_id = "^".join(currency_hrns.split("."))
@@ -181,12 +196,15 @@ def create_new_pairing(
     #
     # If a *pairing* entity does not exist already it is created.
     #
-    # The pairings dictionary is retrieved. If none exists, an empty
+    # The pairings dictionary is retrieved:
     pmap, m = retrieve_pmap(owner_identifier)
 
-    print(pmap)
+    if pmap is None:
+        pmap = {}
 
-    pmap[ahid_hrns] = {}
+    if not (ahid_hrns in pmap):
+        pmap[ahid_hrns] = {}
+
     pmap[ahid_hrns][currency_hrns] = account_fph
 
     for ahid_hrns in pmap.keys():
@@ -226,6 +244,20 @@ def get_ahid_primid(ahid_hrns):
         return ""
     else:
         return result[1] # owner primid FPH
+
+#=============================================================================
+
+def list_primid_ahids(primid_fph):
+
+
+
+
+
+    return ahids_list
+
+
+
+
 
 #=============================================================================
 

@@ -51,10 +51,22 @@
 
   {% else %}<!-- logged_in -->
 
-    {% if page == "home" %}
-      <div class="mba">home</div>
+    {% if hub_mode == "om_trad" %}
+
+      {% if page == "home_ahc" %}
+        <div class="mba">home</div>
+      {% else %}
+        <div class="mb"><a class="mb" href="/home_ahc">home</a></div>
+      {% endif %}
+
     {% else %}
-      <div class="mb"><a class="mb" href="/home">home</a></div>
+
+      {% if page == "home" %}
+        <div class="mba">home</div>
+      {% else %}
+        <div class="mb"><a class="mb" href="/home">home</a></div>
+      {% endif %}
+
     {% endif %}
 
     <!-- The *secids* are listed only of SLATE is not running in slate_minimal
