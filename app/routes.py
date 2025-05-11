@@ -459,7 +459,6 @@ def login():
 
     # Hub operational mode (read from environment variable HUB_MODE)
     hub_mode = get_hub_mode()
-    #version = get_version()()
 
     form = LoginForm()
     if form.validate_on_submit():
@@ -538,10 +537,18 @@ def login():
         session["login_identity"] = identity_fph    # Initial values upon login
         session["working_identity"] = identity_fph  #
 
-        session["previous_page"] = "home"           # (This one subsequently
-                                                    # serves as shift register).
+        if hub_mode == "om_trad":
 
-        return redirect(url_for("home"))
+            session["previous_page"] = "home_ahc"   # (This one subsequently
+                                                    # serves as shift register).
+            return redirect(url_for("home_ahc"))
+
+        else:
+
+            session["previous_page"] = "home"       # (This one subsequently
+                                                    # serves as shift register).
+            return redirect(url_for("home"))
+
 
     return render_template(
         "login.html",
