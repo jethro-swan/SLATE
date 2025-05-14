@@ -8,7 +8,7 @@ For <em>account-holder</em>: <b>{{ ahid_hrns }}</b><br />
 in <em>currency</em>: <b>{{ currency_hrns }}</b><br /><br />
 
 <table>
-  <tr valign="bottom">
+  <tr valign="bottom" align="center">
     <td class="h">
       <b>date</b>
     </td>
@@ -16,7 +16,8 @@ in <em>currency</em>: <b>{{ currency_hrns }}</b><br /><br />
       <b>time</b>
     </td>
     <td class="h">
-      <b><span class="received">from</span>|<span class="paid">to</span>
+      <b>
+      <span class="from">from</span>&nbsp;|&nbsp;<span class="to">to</span>
       </b>
     </td>
     <td class="h">
@@ -38,16 +39,18 @@ in <em>currency</em>: <b>{{ currency_hrns }}</b><br /><br />
       {{ row.time }}
     </td>
     {% if row.type == "receipt" %}
-    <td align="right" class="received">
-    {% else %}
-    <td align="right" class="paid">
-    {% endif %}
-      {{ row.other_ahid_hrns }}
+    <td align="right" class="from">
+      {{ row.other_ahid_hrns }}&nbsp;>
     </td>
-    {% if row.type == "receipt" %}
-    <td align="right" class="received">
     {% else %}
-    <td align="right" class="paid">
+    <td align="right" class="to">
+      >&nbsp;{{ row.other_ahid_hrns }}
+    </td>
+    {% endif %}
+    {% if row.type == "receipt" %}
+    <td align="right" class="from">
+    {% else %}
+    <td align="right" class="to">
     {% endif %}
       {{ row.amount }}
     </td>

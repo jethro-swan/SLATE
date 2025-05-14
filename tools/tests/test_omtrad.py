@@ -1,4 +1,4 @@
-#!/home/john/NESTS/SLATE/venv/bin/python3
+#!/home/slate/SLATE/venv/bin/python3
 
 import sqlite3
 import pickle
@@ -7,16 +7,36 @@ import pickle
 
 from app.core.fph_hrns_maps import fph_to_hrns, hrns_to_fph
 
-from app.core.slate_core import new_namespace, new_currency
+from app.core.slate_core import new_namespace, new_currency, new_primid
 from app.core.slate_core import split_hrns
 
 from app.core.om_trad import *
 
 
+#primid_fph, m = hrns_to_fph("bb.cc")
+
+parent_fph, m = hrns_to_fph("cc")
+
+primid_fph, \
+primid_hrns, \
+access_token, \
+m = new_primid(
+        "bb",
+        parent_fph,
+        "JW",
+        "john@lrc.org.uk",
+        "",
+        "zxcvbnm",
+        "123456"
+    )
 primid_fph, m = hrns_to_fph("bb.cc")
 
 nslist = ["uk.cc", "mon.uk.cc", "chep.mon.uk.cc"]
 clist = ["kwh.cc", "hrs.cc", "kwh.uk.cc", "hrs.mon.uk.cc", "h.chep.mon.uk.cc"]
+
+
+
+
 
 for ns in nslist:
     nsname, ns_parent_ns_hrns = split_hrns(ns)

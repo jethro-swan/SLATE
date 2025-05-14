@@ -2503,14 +2503,15 @@ def journal(ahid_fph, currency_fph):
                    payment_id,
                    payer_fph,
                    payee_fph,
+                   currency_fph,
                    amount,
                    payer_balance,
                    payee_balance,
                    annotation
             FROM payments
-            WHERE payer_fph = ? OR payee_fph = ?
+            WHERE (payer_fph = ? OR payee_fph = ?) and (currency_fph = ?)
             """,
-            (ahid_fph, ahid_fph)
+            (ahid_fph, ahid_fph, currency_fph)
         )
         all_payments = cursor.fetchall()
         cursor.close()
@@ -2524,16 +2525,23 @@ def journal(ahid_fph, currency_fph):
         timestamp = p[0]
         dt = timestamp.split(" ")
         p_date = dt[0]
-        p_time = dt[1]
+        p_time_ = dt[1].split(":")
+        p_time_.pop()
+        print(p_time_)
+        p_time = ":".join(p_time_)
+        print(p_time)
+
+
         payment_id = str(p[1]).zfill(8)
         payer_fph = p[2]
         payee_fph = p[3]
-        amount = integer_to_money_format(p[4])
-        payer_balance_negative = (p[5] < 0)
-        payer_balance = integer_to_money_format(p[5])
-        payee_balance_negative = (p[6] < 0)
-        payee_balance = integer_to_money_format(p[6])
-        annotation = p[7]
+        currency_fph = p[4]
+        amount = integer_to_money_format(p[5])
+        payer_balance_negative = (p[6] < 0)
+        payer_balance = integer_to_money_format(p[6])
+        payee_balance_negative = (p[7] < 0)
+        payee_balance = integer_to_money_format(p[7])
+        annotation = p[8]
         # The results are now put into a list of dictionaries to be fed to the
         # template:
         journal_row = {}
@@ -2558,7 +2566,7 @@ def journal(ahid_fph, currency_fph):
             journal_row["other_ahid_hrns"] = ""
             journal_row["balneg"] = ""
             journal_row["balance"] = ""
-        journal_row["annotation"] = p[7]
+        journal_row["annotation"] = annotation
         journal_rows.append(journal_row)
 
     return render_template(

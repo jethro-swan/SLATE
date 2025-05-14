@@ -344,10 +344,10 @@ p.shout {
   color: #800000;
 }
 
-.paid {
+.to {
   color: #0000a0;
 }
-.received {
+.from {
   color: #008000;
 }
 
