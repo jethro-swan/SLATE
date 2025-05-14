@@ -2,16 +2,23 @@
 
 {% block content %}
 
+Make a payment<br />
+in <em>currency</em> <b>{{ currency_hrns }}</b><br />
+from <em>account-holder</em> <b>{{ payer_ahid_hrns }}</b><br />
+to:
+
   <form action="" method="post" novalidate>
   {{ form.hidden_tag() }}
   <p>
     {{ form.payee_ahid.label }}<br />
     {{ form.payee_ahid(size=20) }}
   </p>
+  <!--
   <p>
     {{ form.currency_id.label }}<br />
     {{ form.currency_id(size=20) }}
   </p>
+  -->
   <p>
     {{ form.amount.label }}<br />
     <!--

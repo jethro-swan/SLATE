@@ -146,6 +146,7 @@ for entity in entities_list:
     if entity_type_1 == "account":
         currency_fph, \
         owner_fph, \
+        ahid_fph, \
         balance, \
         volume, \
         m = get_account_specific_properties(entity[0])

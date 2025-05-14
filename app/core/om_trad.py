@@ -26,21 +26,26 @@ import random
 import os
 import pickle
 
-
-
 from app.core.regexp_list import re_hrns, re_fph
 from app.core.slate_core import hrns_to_fph, fph_to_hrns
 from app.core.slate_core import add_entity_common_properties
 from app.core.slate_core import new_account
+from app.core.slate_core import account_status
 from app.core.slate_core import new_namespace
 from app.core.slate_core import new_primid
 from app.core.slate_core import new_currency
 from app.core.slate_core import identify_entity
 from app.core.slate_core import split_hrns
+from app.core.slate_core import get_currency_specific_properties
 
 from app.core.common import ledger_timestamp
 
+from app.core.messaging import send_message
+
+from app.core.regexp_list import re_pvalue
+
 from app.core.constants import ENTITIES_DB
+from app.core.constants import PAYMENTS_DB
 
 #=============================================================================
 
@@ -71,6 +76,7 @@ def retrieve_pmap(owner_identifier):
             (owner_fph,)
         )
         result = cursor.fetchone()
+        cursor.close()
         # If no pmap exists yet, it is created:
         if result is None:
 #            cursor.execute(
@@ -78,12 +84,14 @@ def retrieve_pmap(owner_identifier):
 #                (owner_fph, pickle.dumps({}))
 #            )
 #            conn.commit()
-            cursor.close()
+            #cursor.close()
             return None, ""
 #            return {}, ""
+        elif isinstance(result, tuple) and (result[0] is None):
+            return None, ""
         else:
             pmap = pickle.loads(result[0])
-            cursor.close()
+            #cursor.close()
 
 #        print()
 #        print("Retrieved test pmap:")
@@ -222,11 +230,27 @@ def create_new_pairing(
         conn.commit()
         cursor.close()
 
+#    print()
+#    print("pairing created between " + ahid_hrns + " and " + currency_hrns)
+#    print("for " + owner_identifier)
+#    print("mapping to account " + account_fph)
+#    print()
+
     return account_fph
 
 #=============================================================================
 
+
+
+
+#=============================================================================
+
 def get_ahid_primid(ahid_hrns):
+
+    ahid_fph, \
+    do_not_overwrite_original_ahid_hrns, \
+    etype, \
+    m = identify_entity(ahid_hrns)
 
     with sqlite3.connect(ENTITIES_DB) as conn:
         cursor = conn.cursor()
@@ -236,13 +260,15 @@ def get_ahid_primid(ahid_hrns):
             FROM entities_common
             WHERE entity_fph = ?
             """,
-            (entity_fph,)
+            (ahid_fph,)
         )
         result = cursor.fetchone()
         cursor.close()
-    if (result is None) or (not result[2]) or (result[0] != "ahid"):
+    if (result is None) or (result[0] != "ahid") or (not result[2]):
         return ""
     else:
+#        print("result[1] = ", end="")
+#        print(result[1])
         return result[1] # owner primid FPH
 
 #=============================================================================
@@ -261,10 +287,7 @@ def list_primid_ahids(primid_fph):
 
 #=============================================================================
 
-def retrieve_pairing_account_fph(
-        ahid_hrns,    # HRNS
-        currency_identifier     # HRNS or FPH
-    ):
+def retrieve_pairing_account_fph(ahid_hrns, currency_identifier):
 
     if not re_hrns.match(ahid_hrns):
         return "", "", ahid_hrns + " is not an account-holder"
@@ -277,24 +300,31 @@ def retrieve_pairing_account_fph(
         return "", "", currency_fph + " is not a currency"
 
     primid_fph = get_ahid_primid(ahid_hrns)
-    if ahid_hrns:
-        pmap = get_ahid_pmap(primid_fph)
+    if primid_fph:
+        #pmap = get_ahid_pmap(primid_fph)
+        pmap, m = retrieve_pmap(primid_fph)
     else:
         return "", "", "Unable to retrieve pmap for ahid " + ahid_hrns
 
-    if ah_currency_map[ahid_hrns] is None:
+#    print()
+#    print("pmap = ", end="")
+#    print(pmap)
+#    print()
+#    print("pmap.keys() = ", end="")
+#    print(pmap.keys())
+#    print()
+    if not (ahid_hrns in pmap.keys()):
         return "", "", ahid_hrns + " is not an account-holder"
 
-    if ah_currency_map[ahid_hrns][currency_hrns] is None:
-        return "", ahid_hrns \
-                   + " does not have use of currency " + currency_hrns
-    else:
-        account_fph = ah_currency_map[ahid_hrns][currency_hrns]
+    if not (currency_hrns in pmap[ahid_hrns].keys()):
+        return "", "", ahid_hrns + " does not use currency " + currency_hrns
+
+    account_fph = pmap[ahid_hrns][currency_hrns]
 
     entity_fph, \
     entity_hrns, \
     etype, \
-    m = identify_entity(account_hrns)
+    m = identify_entity(account_fph)
     if m:
         return "", "", m
     elif etype != "account":
@@ -339,6 +369,7 @@ def ah_payment(
     payer_account_active, \
     payer_account_currency_fph, \
     payer_account_owner_fph, \
+    payer_account_ahid_fph, \
     payer_account_balance, \
     payer_volume, \
     m = account_status(payer_account_fph)
@@ -351,6 +382,7 @@ def ah_payment(
     payee_account_active, \
     payee_account_currency_fph, \
     payee_account_owner_fph, \
+    payee_account_ahid_fph, \
     payee_account_balance, \
     payee_volume, \
     m = account_status(payee_account_fph)
@@ -405,6 +437,11 @@ def ah_payment(
 
     #--------------------------------------------------------------------------
     # Then the payment is recorded in the journal:
+
+    payer_ahid_fph, m = hrns_to_fph(payer_ahid_hrns)
+    payee_ahid_fph, m = hrns_to_fph(payee_ahid_hrns)
+
+
 
     payment_timestamp = ledger_timestamp()
 

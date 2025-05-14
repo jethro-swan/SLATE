@@ -1,0 +1,72 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<h3>Transaction journal</h3>
+
+For <em>account-holder</em>: <b>{{ ahid_hrns }}</b><br />
+in <em>currency</em>: <b>{{ currency_hrns }}</b><br /><br />
+
+<table>
+  <tr valign="bottom">
+    <td class="h">
+      <b>date</b>
+    </td>
+    <td class="h">
+      <b>time</b>
+    </td>
+    <td class="h">
+      <b><span class="received">from</span>|<span class="paid">to</span>
+      </b>
+    </td>
+    <td class="h">
+      <b>amount</b>
+    </td>
+    <td class="h">
+      <b>balance</b>
+    </td>
+    <td class="h">
+      <b>annotation</b>
+    </td>
+  </tr>
+  {% for row in journal_rows %}
+  <tr>
+    <td align="left">
+      {{ row.date }}
+    </td>
+    <td align="left">
+      {{ row.time }}
+    </td>
+    {% if row.type == "receipt" %}
+    <td align="right" class="received">
+    {% else %}
+    <td align="right" class="paid">
+    {% endif %}
+      {{ row.other_ahid_hrns }}
+    </td>
+    {% if row.type == "receipt" %}
+    <td align="right" class="received">
+    {% else %}
+    <td align="right" class="paid">
+    {% endif %}
+      {{ row.amount }}
+    </td>
+   {% if row.balneg %}
+    <td align="right" class="balneg">
+    {% else %}
+    <td align="right" class="balpos">
+    {% endif %}
+      {{ row.balance }}
+    </td>
+    <td align="left">
+      {{ row.annotation }}
+    </td>
+  </tr>
+  {% endfor %}
+</table>
+
+
+
+
+
+{% endblock %}

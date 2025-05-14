@@ -156,10 +156,10 @@
   {% if logged_in %}
     {% if current_user.is_authenticated %}
       {% if hub_mode == "om_trad" %}
-        <b>Login identity</b> =
-        <b>{{ primary_identity_hrns }}</b> |
+        Login identity =
+        {{ primary_identity_hrns }} |
         <a href="/create_ahid/{{ working_identity_fph }}">
-          <b>join currency</b>
+          join currency
         </a>
         <hr class="dashed" />
       {% elif hub_mode == "slate_minimal" %}

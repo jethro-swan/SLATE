@@ -253,7 +253,15 @@ if payee_identifier: # The action required is a payment
     #
     if entity_type == "account":
         # In this case, the currency can be identified from the account:
-        exists, active, currency_fph, owner_fph, m = account_status(account_fph)
+        exists, \
+        active, \
+        currency_fph, \
+        owner_fph, \
+        ahid_fph, \
+        balance, \
+        volume, \
+        m = account_status(account_fph)
+               
         if not exists:
             sys.stderr.write(
                 "The account " + payee_identifier + " does not exist."

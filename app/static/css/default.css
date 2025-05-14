@@ -344,6 +344,15 @@ p.shout {
   color: #800000;
 }
 
+.paid {
+  color: #0000a0;
+}
+.received {
+  color: #008000;
+}
+
+
+
 
 input[type="checkbox" i] {
     background-color: #008000;

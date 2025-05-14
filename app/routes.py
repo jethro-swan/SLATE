@@ -3,6 +3,7 @@ import json
 from pathlib import Path
 import sys
 import pickle
+import sqlite3
 
 import bcrypt
 from itsdangerous import URLSafeTimedSerializer
@@ -13,6 +14,7 @@ from datetime import datetime, date
 ## SLATE components: -----------------------------------------------------------
 
 from app.core.constants import NSS
+from app.core.constants import PAYMENTS_DB
 #from app.core.constants import SLATE_EXPORT, SLATE_IMPORT
 
 from app.core.fph_hrns_maps import hrns_to_fph, fph_to_hrns
@@ -58,6 +60,7 @@ from app.core.slate_session import session_retrieve_payment_options
 from app.core.slate_session import remove_slate_session_data
 
 from app.core.regexp_list import re_fph, re_hrns, re_email
+from app.core.regexp_list import re_pvalue
 
 from app.core.slate_login import get_auth_data, register_authenticated_login
 
@@ -957,7 +960,7 @@ def home_ahc():
     if "previous_page" in session: # already active
         previous_page = session["previous_page"]
     else: # initializing
-        previous_page = "home"
+        previous_page = "home_ahc"
     session["previous_page"] = page
 
     group = "home" # Used to control top menu behaviour.
@@ -981,25 +984,26 @@ def home_ahc():
 
     pmap_t, m = retrieve_pmap(primary_identity_fph)
 
-    print()
-    print(pmap_t)
-    print()
+#    print()
+#    print(pmap_t)
+#    print()
 
     p_rows = []
 
     for ahid_hrns in pmap_t.keys():
-        print(ahid_hrns)
+#        print(ahid_hrns)
         for currency_hrns in pmap_t[ahid_hrns].keys():
 
-            print(" "*4 + currency_hrns)
+#            print(" "*4 + currency_hrns)
 
             account_fph = pmap_t[ahid_hrns][currency_hrns]
-            print(" "*8 + account_fph)
+#            print(" "*8 + account_fph)
 
             account_exists, \
             account_active, \
             account_currency_fph, \
             account_owner_fph, \
+            account_ahid_fph, \
             account_balance, \
             account_volume, \
             m = account_status(account_fph)
@@ -1014,30 +1018,6 @@ def home_ahc():
             default_account_name, \
             stewards_list, \
             m = get_currency_specific_properties(account_currency_fph)
-
-            # Assemble a dictonary of *account* properties:
-            a = {}
-            a["fph"] = account_fph
-            #a["hrns"] = fph_to_hrns(account_fph)
-            a["owner_fph"] = account_owner_fph
-            a["owner_hrns"] = fph_to_hrns(account_owner_fph)
-            a["balance"] = integer_to_money_format(account_balance)
-            a["isneg"] = (account_balance < 0)
-            a["prefix"] = prefix
-            a["suffix"] = suffix
-            a["volume"] = integer_to_money_format(account_volume)
-            #primid_currency_steward = (currency_fph in stewardships_list)
-            if currency_fph in stewardships_list:
-                primid_currency_steward = True
-            else:
-                primid_currency_steward = False
-            a["steward"] = primid_currency_steward
-            a["currency_fph"] = currency_fph
-            a["currency_hrns"] = currency_hrns
-
-            pmap_t[ahid_hrns][currency_hrns] = a    # This replaces account_fph
-                                                    # with a dictionary listing
-                                                    # its current properties.
 
             p_row = {}
             p_row["currency_hrns"] = currency_hrns
@@ -1055,32 +1035,66 @@ def home_ahc():
                 p_row["primid_currency_steward"] = True
             else:
                 p_row["primid_currency_steward"] = False
-            p_row["primid_currency_steward"] = primid_currency_steward
             p_row["currency_fph"] = currency_fph
             p_rows.append(p_row)
 
 
+    # Sorting by *currency* and *ahid* (quick and dirty method)
+
+    currencies_list = []
+    for row in p_rows:
+        currency = row["currency_hrns"]
+        if not(currency in currencies_list):
+            currencies_list.append(currency)
+    currencies_list.sort()
+#    print(currencies_list)
+
+    ahid_lists_dict = {}
+    for currency in currencies_list:
+        ahid_lists_dict[currency] = []
+        for row in p_rows:
+            ahid = row["ahid_hrns"]
+            if not(ahid in ahid_lists_dict[currency]):
+                ahid_lists_dict[currency].append(ahid)
+        ahid_lists_dict[currency].sort()
+#    print(ahid_lists_dict)
+
+    p_rows2 = []
+    for currency in currencies_list:
+        for ahid in ahid_lists_dict[currency]:
+#            print(currency + " : " + ahid)
+            for row in p_rows:
+                if (row["currency_hrns"] == currency) and \
+                   (row["ahid_hrns"] == ahid):
+                    p_rows2.append(row)
+
+#    for row in p_rows2:
+#        print(row)
 
 
-    # TEST STUFF
-    print()
-    print(pmap_t)
-    print()
-    print("="*80)
-    for ahid_hrns in pmap_t.keys():
-        print(ahid_hrns)
-        for currency_hrns in pmap_t[ahid_hrns].keys():
-            print(" "*4 + currency_hrns)
-            for ap in pmap_t[ahid_hrns][currency_hrns].keys():
-                if ap:
-                    print(" "*8 + "{0: <30}".format(ap) + " :: ", end="")
-                    print(pmap_t[ahid_hrns][currency_hrns][ap])
-    print("="*80)
-    print()
 
 
-    for p_row in p_rows:
-        print(p_row)
+
+
+#    # TEST STUFF
+#    print()
+#    print(pmap_t)
+#    print()
+#    print("="*80)
+#    for ahid_hrns in pmap_t.keys():
+#        print(ahid_hrns)
+#        for currency_hrns in pmap_t[ahid_hrns].keys():
+#            print(" "*4 + currency_hrns)
+#            for ap in pmap_t[ahid_hrns][currency_hrns].keys():
+#                if ap:
+#                    print(" "*8 + "{0: <30}".format(ap) + " :: ", end="")
+#                    print(pmap_t[ahid_hrns][currency_hrns][ap])
+#    print("="*80)
+#    print()
+#
+#
+#    for p_row in p_rows:
+#        print(p_row)
 
 
 
@@ -1102,7 +1116,7 @@ def home_ahc():
         working_identity_fph = working_identity_fph,
         working_identity_hrns = working_identity_hrns,
         working_identity_type = working_identity_type,
-        p_rows = p_rows,
+        p_rows = p_rows2,
         pmap_t = pmap_t
     )
 
@@ -1122,8 +1136,10 @@ def home():
     page = "home"
     if "previous_page" in session: # already active
         previous_page = session["previous_page"]
-    else: # initializing
-#        session["previous_page"] = "home" ### probably not needed
+    elif hub_mode == "om_trad":
+        previous_page = "home_ahc"
+        return redirect("/home_ahc")
+    else:
         previous_page = "home"
     session["previous_page"] = page
 
@@ -1241,6 +1257,7 @@ def home():
             # Fetch account details:
             account_currency_fph, \
             account_owner_fph, \
+            account_ahid_fph, \
             account_balance, \
             account_volume, \
             m = get_account_specific_properties(account_fph)
@@ -1437,6 +1454,7 @@ def list_accounts():
             # Fetch account details:
             account_currency_fph, \
             account_owner_fph, \
+            account_ahid_fph, \
             account_balance, \
             account_volume, \
             m = get_account_specific_properties(account_fph)
@@ -1824,6 +1842,7 @@ def currency_options():
             # fetch *account* details:
             c_fph, \
             a_owner_fph, \
+            a_ahid_fph, \
             a_balance, \
             a_volume, \
             m = get_account_specific_properties(a_fph)
@@ -2117,6 +2136,7 @@ def account(payer_account_fph, payee_account_fph, owner_fph = None):
 
     payer_currency_fph, \
     payer_owner_fph, \
+    payer_ahid_fph, \
     payer_balance, \
     volume, \
     m = get_account_specific_properties(payer_account_fph)
@@ -2164,6 +2184,7 @@ def account(payer_account_fph, payee_account_fph, owner_fph = None):
 
         payee_currency_fph, \
         payee_owner_fph, \
+        payee_ahid_fph, \
         payee_balance, \
         volume, \
         m = get_account_specific_properties(payee_account_fph)
@@ -2189,12 +2210,14 @@ def account(payer_account_fph, payee_account_fph, owner_fph = None):
 
         payer_currency_fph, \
         payer_owner_fph, \
+        payer_ahid_fph, \
         payer_balance, \
         volume, \
         m = get_account_specific_properties(payer_account_fph)
 
         payee_currency_fph, \
         payee_owner_fph, \
+        payee_ahid_fph, \
         payee_balance, \
         volume, \
         m = get_account_specific_properties(payee_account_fph)
@@ -2239,9 +2262,10 @@ def account(payer_account_fph, payee_account_fph, owner_fph = None):
 
 # ==============================================================================
 #
-@app.route("/pay_to_ahid/<payer_ahid_fph>", methods = ["GET", "POST"])
+@app.route("/pay_to_ahid/<payer_ahid_fph>/<payment_currency_fph>",
+           methods = ["GET", "POST"])
 @login_required
-def pay_ahid(payer_ahid_fph):
+def pay_ahid(payer_ahid_fph, payment_currency_fph):
 
     payer_ahid_fph, \
     payer_ahid_hrns, \
@@ -2252,6 +2276,10 @@ def pay_ahid(payer_ahid_fph):
         flash("Invalid payer account-holder")
         return redirect("/home_ahc")
 
+    currency_fph, \
+    currency_hrns, \
+    etype, \
+    m = identify_entity(payment_currency_fph)
 
     # Hub operational mode (read from environment variable HUB_MODE)
     hub_mode = get_hub_mode()
@@ -2280,23 +2308,56 @@ def pay_ahid(payer_ahid_fph):
         m = identify_entity(form.payee_ahid.data) # HRNS or FPH
         if m:
             flash(m)
-            return redirect("/pay_to_ahid")
+            return redirect(
+                       "/pay_to_ahid/" + payer_ahid_fph + "/" + currency_fph
+                   )
         if payee_ahid_fph == "":
             flash("The specified account-holder does not exist")
-            return redirect("/pay_to_ahid")
+            return redirect(
+                       "/pay_to_ahid/" + payer_ahid_fph + "/" + currency_fph
+                   )
         if etype != "ahid":
             flash("The payee specified is not an account-holder")
-            return redirect("/pay_to_ahid")
+            return redirect(
+                       "/pay_to_ahid/" + payer_ahid_fph + "/" + currency_fph
+                   )
 
-        currency_fph, \
-        currency_hrns, \
-        etype, \
-        m = identify_entity(form.currency_id.data)
+#        currency_fph, \
+#        currency_hrns, \
+#        etype, \
+#        m = identify_entity(form.currency_id.data)
+
+        #amount = form.amount.data
+
+
+        amount = int(round(float(form.amount.data)*100))
+
+
+
+#        print("amount = ", end="")
+#        print(amount)
+#        if not re_pvalue.match(amount):
+#            flash("The payment amount submitted is invalid")
+#            return redirect(
+#                       "/pay_to_ahid/" + payer_ahid_fph + "/" + currency_fph
+#                   )
+
+        annotation = form.annotation.data
+
 
         # MAKE PAYMENT HERE
+        m = ah_payment(
+                payer_ahid_hrns,
+                payee_ahid_hrns,
+                currency_hrns,
+                amount,
+                annotation
+            )
 
-
-        return redirect("/home_ahc")
+        if hub_mode == "om_trad":
+            return redirect("/home_ahc")
+        else:
+            return redirect("/home")
 
     return render_template(
         "pay_to_ahid.html",
@@ -2313,7 +2374,8 @@ def pay_ahid(payer_ahid_fph):
         working_identity_fph = working_identity_fph,
         working_identity_hrns = working_identity_hrns,
         working_identity_type = working_identity_type,
-        payer_ahid_hrns = payer_ahid_hrns
+        payer_ahid_hrns = payer_ahid_hrns,
+        currency_hrns = currency_hrns
     )
 
 
@@ -2386,6 +2448,138 @@ def pay_account():
     )
 
 
+#
+# ==============================================================================
+#
+@app.route("/journal/<ahid_fph>/<currency_fph>", methods = ["GET", "POST"])
+@login_required
+def journal(ahid_fph, currency_fph):
+
+    ahid_fph, \
+    ahid_hrns, \
+    etype, \
+    m = identify_entity(ahid_fph)
+    if ahid_fph == "":
+        flash("Invalid account-holder")
+        return redirect("/home_ahc")
+
+    currency_fph, \
+    currency_hrns, \
+    etype, \
+    m = identify_entity(currency_fph)
+    if currency_fph == "":
+        flash("Invalid currency")
+        return redirect("/home_ahc")
+
+    # Hub operational mode (read from environment variable HUB_MODE)
+    hub_mode = get_hub_mode()
+
+    page = "journal"
+    group = "home" # Used to control top menu behaviour.
+    logged_in = current_user.is_authenticated
+
+    previous_page = session["previous_page"] # Ensure correct page sequence
+    session["previous_page"] = page
+
+    primary_identity_fph, \
+    primary_identity_hrns, \
+    primary_identity_type, \
+    m = identify_entity(current_user.get_id())
+
+    working_identity_fph = primary_identity_fph
+    working_identity_hrns = primary_identity_hrns
+    working_identity_type = primary_identity_type
+
+    account_fph, \
+    primid_fph, \
+    m = retrieve_pairing_account_fph(ahid_hrns, currency_fph)
+
+    with sqlite3.connect(PAYMENTS_DB) as conn:
+        cursor = conn.cursor()
+        # Read transactions for specified currency:
+        cursor.execute(
+            """
+            SELECT timestamp,
+                   payment_id,
+                   payer_fph,
+                   payee_fph,
+                   amount,
+                   payer_balance,
+                   payee_balance,
+                   annotation
+            FROM payments
+            WHERE payer_fph = ? OR payee_fph = ?
+            """,
+            (ahid_fph, ahid_fph)
+        )
+        all_payments = cursor.fetchall()
+        cursor.close()
+    if all_payments is None:
+        flash("There are no journal entries to display")
+        return redirect("/home_ahc")
+
+    journal_rows = []
+    for payment in all_payments:
+        p = list(payment)
+        timestamp = p[0]
+        dt = timestamp.split(" ")
+        p_date = dt[0]
+        p_time = dt[1]
+        payment_id = str(p[1]).zfill(8)
+        payer_fph = p[2]
+        payee_fph = p[3]
+        amount = integer_to_money_format(p[4])
+        payer_balance_negative = (p[5] < 0)
+        payer_balance = integer_to_money_format(p[5])
+        payee_balance_negative = (p[6] < 0)
+        payee_balance = integer_to_money_format(p[6])
+        annotation = p[7]
+        # The results are now put into a list of dictionaries to be fed to the
+        # template:
+        journal_row = {}
+        journal_row["date"] = p_date
+        journal_row["time"] = p_time
+        journal_row["xid"] = payment_id
+        if payer_fph == ahid_fph: # payment
+            journal_row["type"] = "payment"
+            journal_row["amount"] = amount
+            journal_row["other_ahid_hrns"] = fph_to_hrns(payee_fph)
+            journal_row["balneg"] = payer_balance_negative
+            journal_row["balance"] = payer_balance
+        elif payee_fph == ahid_fph: # receipt
+            journal_row["type"] = "receipt"
+            journal_row["amount"] = amount
+            journal_row["other_ahid_hrns"] = fph_to_hrns(payer_fph)
+            journal_row["balneg"] = payee_balance_negative
+            journal_row["balance"] = payee_balance
+        else: # this should never happen
+            journal_row["type"] = ""
+            journal_row["amount"] = ""
+            journal_row["other_ahid_hrns"] = ""
+            journal_row["balneg"] = ""
+            journal_row["balance"] = ""
+        journal_row["annotation"] = p[7]
+        journal_rows.append(journal_row)
+
+    return render_template(
+        "transaction_journal_ahc.html",
+        title = "Display transaction journal",
+        page = page,
+        group = group,
+        logged_in = logged_in,
+        hub_mode = hub_mode,
+        version = get_version(),
+        primary_identity_type = "login identity",
+        primary_identity_fph = primary_identity_fph,
+        primary_identity_hrns = primary_identity_hrns,
+        working_identity_fph = working_identity_fph,
+        working_identity_hrns = working_identity_hrns,
+        working_identity_type = working_identity_type,
+        ahid_hrns = ahid_hrns,
+        currency_hrns = currency_hrns,
+        journal_rows = journal_rows
+    )
+
 #=============================================================================
 #TEST STUFF
 
@@ -2437,6 +2631,7 @@ def pay_from_account_to_agent(payer_account_fph = None):
     #payment_currency_fph = get_account_currency(payer_account_fph)
     payment_currency_fph, \
     payer_account_owner_fph, \
+    payer_account_ahid_fph, \
     payer_account_balance, \
     volume, \
     m = get_account_specific_properties(payer_account_fph)
@@ -2723,12 +2918,14 @@ def pay_agent_direct(payer_currency_fph, payer_identity_fph):
 
         payer_currency_fph, \
         payer_owner_fph, \
+        payer_ahid_fph, \
         payer_balance, \
         payer_volume, \
         m = get_account_specific_properties(payer_account_fph)
 
         payee_currency_fph, \
         payee_owner_fph, \
+        payee_ahid_fph, \
         payee_balance, \
         payee_volume, \
         m = get_account_specific_properties(payee_account_fph)
@@ -3281,12 +3478,14 @@ def make_payment_between_selected_accounts(
 
         payer_currency_fph, \
         payer_owner_fph, \
+        payer_ahid_fph, \
         payer_balance, \
         payer_volume, \
         m = get_account_specific_properties(payer_account_fph)
 
         payee_currency_fph, \
         payee_owner_fph, \
+        payee_ahid_fph, \
         payee_balance, \
         payee_volume, \
         m = get_account_specific_properties(payee_account_fph)
@@ -3489,6 +3688,7 @@ def select_payer_account_(payee_account_fph):
 
     payee_account_currency_fph, \
     payee_account_owner_fph, \
+    payee_account_ahid_fph, \
     payee_account_balance, \
     payee_account_volume, \
     m = get_account_specific_properties(payee_account_fph)
@@ -3501,6 +3701,7 @@ def select_payer_account_(payee_account_fph):
 
         account_currency_fph, \
         account_owner_fph, \
+        account_ahid_fph, \
         account_balance, \
         account_volume, \
         m = get_account_specific_properties(account_fph)
@@ -3603,6 +3804,7 @@ def account_details(account_fph):
 
     currency_fph, \
     owner_fph, \
+    ahid_fph, \
     account_balance, \
     account_volume, \
     m = get_account_specific_properties(account_fph)
@@ -4086,7 +4288,11 @@ def create_currency():
             + currency_hrns
 #            + currency_hrns + " [" + currency_fph + "]"
         )
-        return redirect("/home")
+
+        if hub_mode == "om_trad":
+            return redirect("/home_ahc")
+        else:
+            return redirect("/home")
 
     return render_template(
         "create_currency.html",
@@ -4191,8 +4397,10 @@ def create_ahid(owner_fph):
                       )
 
 
-
-        return redirect("/home")
+        if hub_mode == "om_trad":
+            return redirect("/home_ahc")
+        else:
+            return redirect("/home")
 
     return render_template(
         "create_ahid_currency_pair.html",
@@ -4934,6 +5142,7 @@ def export_account_csv(account_fph):
 
     currency_fph, \
     owner_fph, \
+    ahid_fph, \
     balance, \
     volume, \
     m = get_account_specific_properties(account_fph)

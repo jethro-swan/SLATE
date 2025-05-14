@@ -377,6 +377,7 @@ def fetch_messages(recipient_identifier):
                 payer_account_active, \
                 payer_account_currency_fph, \
                 payer_account_owner_fph, \
+                payer_account_ahid_fph, \
                 payer_account_balance, \
                 payer_account_volume, \
                 em = account_status(payer_account_fph)
@@ -389,6 +390,7 @@ def fetch_messages(recipient_identifier):
                 payee_account_active, \
                 payee_account_currency_fph, \
                 payee_account_owner_fph, \
+                payee_account_ahid_fph, \
                 payee_account_balance, \
                 payee_account_volume, \
                 em = account_status(payee_account_fph)

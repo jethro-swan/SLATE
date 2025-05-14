@@ -78,6 +78,7 @@ def payment(payer_account_fph, payee_account_fph, amount, annotation):
     payer_account_active, \
     payer_account_currency_fph, \
     payer_account_owner_fph, \
+    payer_account_ahid_fph, \
     payer_account_balance, \
     payer_volume, \
     m = account_status(payer_account_fph)
@@ -90,6 +91,7 @@ def payment(payer_account_fph, payee_account_fph, amount, annotation):
     payee_account_active, \
     payee_account_currency_fph, \
     payee_account_owner_fph, \
+    payee_account_ahid_fph, \
     payee_account_balance, \
     payee_volume, \
     m = account_status(payee_account_fph)

@@ -266,6 +266,7 @@ def create_entities_db():
             CREATE TABLE IF NOT EXISTS accounts (
                 entity_fph TEXT PRIMARY KEY,
                 account_owner_fph TEXT NOT NULL,
+                account_ahid_fph TEXT NOT NULL DEFAULT "",
                 account_currency_fph TEXT NOT NULL,
                 account_balance INTEGER NOT NULL DEFAULT 0,
                 volume INTEGER NOT NULL DEFAULT 0,
@@ -784,7 +785,7 @@ def retrieve_primid_access_details(primid_identifier):
 #
 def account_status(account_fph):
     if not re_fph.match(account_fph):
-        return False, False, "", "", 0, 0, "Invalid FPH: " + account_fph
+        return False, False, "", "", "", 0, 0, "Invalid FPH: " + account_fph
 
     #account_fph = "'" + account_fph + "'"
     # wrapped to enable SQLite to accept it.
@@ -797,21 +798,22 @@ def account_status(account_fph):
     active, \
     m = get_entity_common_properties(account_fph)
     if m:
-        return False, False, "", "", 0, 0, m
+        return False, False, "", "", "", 0, 0, m
     if entity_type != "account":
-        return False, False, "", "", 0, 0, account_fph + " is not an account"
+        return False, False, "", "", "", 0, 0, account_fph + " is not ccount"
 
     currency_fph, \
     owner_fph, \
+    ahid_fph, \
     balance, \
     volume, \
     m = get_account_specific_properties(account_fph)
     if m:
-        return False, False, "", "", 0, 0, m
+        return False, False, "", "", "",0, 0, m
     if volume is None:
         volume = 0
 
-    return True, active, currency_fph, owner_fph, balance, volume, ""
+    return True, active, currency_fph, owner_fph, ahid_fph, balance, volume, ""
 
 #==============================================================================
 
@@ -2051,7 +2053,10 @@ def get_account_specific_properties(account_fph):
 
         cursor.execute(
             """
-            SELECT account_owner_fph, account_currency_fph, account_balance,
+            SELECT account_owner_fph,
+                   account_ahid_fph,
+                   account_currency_fph,
+                   account_balance,
                    volume
             FROM accounts
             WHERE entity_fph = ?
@@ -2063,19 +2068,20 @@ def get_account_specific_properties(account_fph):
 
     if result is not None:
         owner_fph = result[0]
-        currency_fph = result[1]
-        balance = result[2]
-        volume = result[3]
+        ahid_fph = result[1]
+        currency_fph = result[2]
+        balance = result[3]
+        volume = result[4]
     else: # no record for account_fph
         return "", "", 0, 0, "Account not found"
 
     if not re_fph.match(owner_fph):
-        return "", "", 0, 0, "Invalid owner FPH: " + owner_fph
+        return "", "", "", 0, 0, "Invalid owner FPH: " + owner_fph
 
     if not re_fph.match(currency_fph):
-        return "", "", 0, 0, "Invalid currency FPH: " + currency_fph
+        return "", "", "", 0, 0, "Invalid currency FPH: " + currency_fph
 
-    return currency_fph, owner_fph, balance, volume, ""
+    return currency_fph, owner_fph, ahid_fph, balance, volume, ""
 
 #------------------------------------------------------------------------------
 # Add a stewardship to a *primid* and a steward to a *namespace* or *currency*:

@@ -20,6 +20,7 @@ hidden.
     <td class="h"><b>account-holder</b></td>
     <td class="h"><b>balance</b></td>
     <td class="h"><b>volume</b></td>
+    <td class="h"></td>
     <!--
     <td class="h"><b>annotation</b></td>
     -->
@@ -29,15 +30,15 @@ hidden.
     <td align="left">
       {% if p_row.primid_currency_steward %}
       <a href="/currency/{{ p_row.currency_fph }}">
-        <b>{{ p_row.currency_hrns }}</b>
+        {{ p_row.currency_hrns }}
       </a>
       {% else %}
-        <b>{{ p_row.currency_hrns }}</b>
+        {{ p_row.currency_hrns }}
       {% endif %}
     </td>
     <td align="left">
-      <a href="/pay_to_ahid/{{ p_row.ahid_fph }}">
-        <b>{{ p_row.ahid_hrns }}</b>
+      <a href="/pay_to_ahid/{{ p_row.ahid_fph }}/{{ p_row.currency_fph }}">
+        {{ p_row.ahid_hrns }}
       </a>
     </td>
     {% if p_row.isneg %}
@@ -45,10 +46,13 @@ hidden.
     {% else %}
     <td align="right" class="balpos">
     {% endif %}
-      <b>{{ p_row.balance }}</b>
+     {{ p_row.balance }}
     </td>
     <td align="right">
-      <b>{{ p_row.volume }}</b>
+      {{ p_row.volume }}
+    </td>
+    <td>
+      <a href="/journal/{{ p_row.ahid_fph }}/{{ p_row.currency_fph }}">*</a>
     </td>
   </tr>
   {% endfor %}
@@ -57,22 +61,25 @@ hidden.
 <ul>
   <li class="compact">
     <p class="footnote">
-      Click on any entry in the <b>account-holder</b> column to change to make
-      a payment.
+      Click on any entry in the <b>account-holder</b> column to make a payment.
     </p>
   </li>
   <li class="compact">
     <p class="footnote">
-      Any entry in the <b>currency</b> column will appear as link if you are
-      one of its <em>stewards</em>.
+      Click on <b>*</b> in any row to display the transaction history.
+    </p>
+  </li>
+  <li class="compact">
+    <p class="footnote">
+      Click on <b>currency</b> link to manage it.
     </p>
   </li>
 </ul>
 <hr />
 
-<a href="/create_namespace"><b>new namespace</b></a>
+<a href="/create_namespace">new namespace</a>
 |
-<a href="/create_currency"><b>new currency</b></a>
+<a href="/create_currency">new currency</a>
 
 {% endif %}<!-- hub_mode == "om_trad" -->
 
