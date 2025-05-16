@@ -79,6 +79,7 @@ def import_minimal_payment_set_as_csv(
                     payer_name,
                     namespace_fph,
                     owner_fph,
+                    ahid_fph,
                     currency_fph
                 )
                 if m:
@@ -101,6 +102,7 @@ def import_minimal_payment_set_as_csv(
                     payee_name,
                     namespace_fph,
                     owner_fph,
+                    ahid_fph,
                     currency_fph
                 )
                 if m:

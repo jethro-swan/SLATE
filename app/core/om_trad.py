@@ -195,6 +195,7 @@ def create_new_pairing(
             account_name,
             owner_fph,
             owner_fph,
+            ahid_fph,
             currency_fph
         )
 
@@ -606,3 +607,32 @@ def create_import_currency(currency_hrns):
     print(parent_fph)
     c_fph, c_hrns, m = new_currency(name, parent_fph, s_fph, "", "", name)
     return c_fph, c_hrns, m
+
+
+
+
+
+
+
+
+#==============================================================================
+# CSV import
+#
+# This is a little different from the CSV import system used for
+# *account*-to-*account* payments.
+# (1) It works only with the UTF-8 Latin character set
+# (2) It supports the automatic completion of incomplete namespace chains
+# (3) It allows for the import of mixed entity types using a single CSV file
+#
+# The input format is:
+#
+#   | *currency* | payer *ahid* | payee *ahid* | amount | annotation |
+#   | HRNS       | HRNS         | HRNS         |        |            |
+#
+
+
+
+
+
+
+    account_fph = create_new_pairing(primid_fph, ahid_hrns, currency_hrns)

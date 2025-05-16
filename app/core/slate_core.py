@@ -1263,6 +1263,7 @@ def new_account(
         account_name,
         parent_namespace_fph,
         owner_fph,      # (Owner may be a *primid* or a *secid*)
+        ahid_fph,       # *account-holder* for om_trad mode.
         currency_fph
     ):
 
@@ -1337,14 +1338,16 @@ def new_account(
             INSERT INTO accounts (
                 entity_fph,
                 account_owner_fph,
+                account_ahid_fph,
                 account_currency_fph,
                 account_balance
             )
-            VALUES (?, ?, ?, ?)
+            VALUES (?, ?, ?, ?, ?)
             """,
             (
                 account_fph,
                 owner_fph,      # Owner may be either *primid* or *secid"
+                ahid_fph,
                 currency_fph,
                 0
             )
@@ -2073,7 +2076,7 @@ def get_account_specific_properties(account_fph):
         balance = result[3]
         volume = result[4]
     else: # no record for account_fph
-        return "", "", 0, 0, "Account not found"
+        return "", "", "", 0, 0, "Account not found"
 
     if not re_fph.match(owner_fph):
         return "", "", "", 0, 0, "Invalid owner FPH: " + owner_fph

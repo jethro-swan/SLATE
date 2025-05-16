@@ -1,5 +1,5 @@
 body, div, p, h1, h2, h3, a, li {
-  font-family: Lucida Grande,Verdana,Helvetica,Arial,sans-serif;
+  font-family: Verdana,Helvetica,Arial,sans-serif;
 }
 body {
   font-size: 0.8em;
@@ -8,6 +8,10 @@ body {
   /* max-width: 720px; */
   /* max-width: 640px; */
   max-width: 400px;
+}
+
+.small {
+  font-size: 0.75em;
 }
 
 .footnote {
@@ -345,7 +349,7 @@ p.shout {
 }
 
 .to {
-  color: #0000a0;
+  color: #0000c0;
 }
 .from {
   color: #008000;

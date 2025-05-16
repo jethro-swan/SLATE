@@ -3,8 +3,6 @@
 import sqlite3
 import pickle
 
-
-
 from app.core.fph_hrns_maps import fph_to_hrns, hrns_to_fph
 
 from app.core.slate_core import new_namespace, new_currency, new_primid
@@ -21,15 +19,9 @@ primid_fph, \
 primid_hrns, \
 access_token, \
 m = new_primid(
-        "bb",
-        parent_fph,
-        "JW",
-        "john@lrc.org.uk",
-        "",
-        "zxcvbnm",
-        "123456"
+        "bb", parent_fph, "JW", "john@lrc.org.uk", "", "zxcvbnm", "123456"
     )
-primid_fph, m = hrns_to_fph("bb.cc")
+#primid_fph, m = hrns_to_fph("bb.cc")
 
 nslist = ["uk.cc", "mon.uk.cc", "chep.mon.uk.cc"]
 clist = ["kwh.cc", "hrs.cc", "kwh.uk.cc", "hrs.mon.uk.cc", "h.chep.mon.uk.cc"]

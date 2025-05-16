@@ -411,6 +411,7 @@ def register():
                 default_account_name,
                 primid_fph,
                 primid_fph,
+                "", # *ahid_fph* not required here
                 currency_fph
             )
         if m:
@@ -2527,9 +2528,9 @@ def journal(ahid_fph, currency_fph):
         p_date = dt[0]
         p_time_ = dt[1].split(":")
         p_time_.pop()
-        print(p_time_)
+#        print(p_time_)
         p_time = ":".join(p_time_)
-        print(p_time)
+#        print(p_time)
 
 
         payment_id = str(p[1]).zfill(8)
@@ -2567,7 +2568,8 @@ def journal(ahid_fph, currency_fph):
             journal_row["balneg"] = ""
             journal_row["balance"] = ""
         journal_row["annotation"] = annotation
-        journal_rows.append(journal_row)
+#        journal_rows.append(journal_row)
+        journal_rows.insert(0, journal_row)
 
     return render_template(
         "transaction_journal_ahc.html",
@@ -2585,7 +2587,8 @@ def journal(ahid_fph, currency_fph):
         working_identity_type = working_identity_type,
         ahid_hrns = ahid_hrns,
         currency_hrns = currency_hrns,
-        journal_rows = journal_rows
+        journal_rows = journal_rows,
+        account_fph = account_fph
     )
 
 #=============================================================================
@@ -4561,6 +4564,7 @@ def create_account(owner_fph):
         m = new_account(
                 account_name,
                 namespace_fph,
+                "", # *ahid_fph* not required here
                 owner_fph, # the owner of this *account*
                 currency_fph
             )
@@ -4753,6 +4757,7 @@ def create_secid():
             default_account_name,
             secid_fph,
             secid_fph,
+            "", # *ahid_fph* not required here
             default_currency_fph
         )
         flash(
@@ -5110,7 +5115,6 @@ def export_account_csv(account_fph):
     hub_mode = get_hub_mode()
     #version = get_version()()
 
-
     page = "export_account"
     previous_page = session["previous_page"]
     session["previous_page"] = page
@@ -5122,7 +5126,11 @@ def export_account_csv(account_fph):
     primary_identity_type, \
     m = identify_entity(current_user.get_id())
 
-    if "working_identity" in session:
+    if hub_mode == "om_trad":
+        working_identity_fph = primary_identity_fph
+        working_identity_hrns = primary_identity_hrns
+        working_identity_type = primary_identity_type
+    elif "working_identity" in session:
         working_identity_fph, \
         working_identity_hrns, \
         working_identity_type, \
@@ -5157,6 +5165,16 @@ def export_account_csv(account_fph):
     if m:
         flash(m)
         return redirect("/home")
+    ahid_hrns = fph_to_hrns(ahid_fph)
+
+#    print()
+#    print("currency_fph: " + currency_fph)
+#    print("owner_fph: " + owner_fph)
+#    print("ahid_fph: " + ahid_fph)
+#    print("balance: " + str(balance))
+#    print("volume: " + str(volume))
+#    print("account: " + account_fph + " > " + account_hrns)
+#    print("ahid: " + ahid_fph + " > " + ahid_hrns)
 
     owner_fph, \
     owner_hrns, \
@@ -5210,7 +5228,9 @@ def export_account_csv(account_fph):
         currency_hrns = currency_hrns,
         account_fph = account_fph,
         account_hrns = account_hrns,
-        #csv_export_path = csv_export_path
+        #csv_export_path = csv_export_path,
+        ahid_fph = ahid_fph,
+        ahid_hrns = ahid_hrns,
         csv_file = csv_file
     )
 
@@ -5236,7 +5256,11 @@ def export_currency_csv(currency_fph):
     primary_identity_type, \
     m = identify_entity(current_user.get_id())
 
-    if "working_identity" in session:
+    if hub_mode == "om_trad":
+        working_identity_fph = primary_identity_fph
+        working_identity_hrns = primary_identity_hrns
+        working_identity_type = primary_identity_type
+    elif "working_identity" in session:
         working_identity_fph, \
         working_identity_hrns, \
         working_identity_type, \

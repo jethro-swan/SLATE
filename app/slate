@@ -342,7 +342,15 @@ elif entity_type_to_create: # The action required is creation of an entity
 
     if entity_type_to_create == "account":
         currency_hrns = fph_to_hrns(currency_fph)
-        account_fph, account_hrns, m = new_account(agent_fph, currency_fph)
+        account_fph, \
+        account_hrns, \
+        m = new_account(
+                account_name,
+                parent_namespace_fph,
+                owner_fph,      # (Owner may be a *primid* or a *secid*)
+                ahid_fph,       # *account-holder* for om_trad mode.
+                currency_fph
+        )
         if m:
             sys.stderr.write(m)
             sys.exit(1)
