@@ -630,9 +630,103 @@ def create_import_currency(currency_hrns):
 #   | HRNS       | HRNS         | HRNS         |        |            |
 #
 
+def parse_uploaded_pairings_file(fpath, uploader_primid_fph, SC=","):
 
+    # The uploaded file will have been given a randomly generated name and is
+    # identified as fpath. The file will be deleted as soon as it has been
+    # fully processed.
+    #
+    # The separator-characted (SC) may be a comma, colon, semicolon or tab, but
+    # the default is a comma.
+    #
+    # If any *currency* specified does not exist it will be created with the
+    # uploading agent as its initial steward.
+    #
+    # If any *ahid* does not exist, it will be created and assigned to the
+    # uploading agent.
+    #
+    # If any ancestor *namespace* does not exist it will be created with the
+    # uploading agent as its initial steward.
 
+    report = [] # a report of new entities created
 
+    errors = [] # a list of errors returned
 
+    with open(fpath, "r") as csv_f:
+        rows = csv_f.readlines()
 
-    account_fph = create_new_pairing(primid_fph, ahid_hrns, currency_hrns)
+    for row in rows:
+
+        field = row.split(SC)
+        currency_hrns = field[0]
+        payer_ahid_hrns = field[1]
+        payee_ahid_hrns = field[2]
+        amount = int(round(100*field[3]))
+        annotation = field[4]
+
+        currency_fph, \
+        currency_hrns, \
+        etype, \
+        m = identify_entity(currency_hrns)
+        if etype != "currency":
+            errors.append(currency_hrns + " exists but is not a currency")
+            continue
+        if currency_fph == "": # does not exist
+            currency_name, parent_hrns = split_hrns(currency_hrns)
+            parent_namespace_fph = complete_parent_namespace_chain(parent_hrns)
+            report.append("Ancestral chain " + parent_hrns + " completed")
+            currency_fph, \
+            currency_hrns, \
+            m = new_currency(
+                    currency_name,
+                    parent_namespace_fph,
+                    uploader_primid_fph,
+                    "",
+                    "",
+                    currency_name # used for default *account* name
+                )
+            report.append("Currency " + currency_hrns + " created")
+
+        payer_ahid_fph, \
+        payer_ahid_hrns, \
+        etype, \
+        m = identify_entity(payer_ahid_hrns)
+        if etype != "ahid":
+            errors.append(payer_ahid_hrns + " exists but not account-holder")
+            continue
+        if payer_ahid_fph == "": # does not exist
+            ahid_name, parent_hrns = split_hrns(payer_ahid_hrns)
+            parent_namespace_fph = complete_parent_namespace_chain(parent_hrns)
+            report.append("Ancestral chain " + parent_hrns + " completed")
+            payer_account_fph = create_new_pairing(
+                                    primid_fph,
+                                    payer_ahid_hrns,
+                                    currency_hrns
+                                )
+            report.append("Account-holder " + payer_ahid_hrns + " created")
+
+        payee_ahid_fph, \
+        payee_ahid_hrns, \
+        etype, \
+        m = identify_entity(payee_ahid_hrns)
+        if etype != "ahid":
+            errors.append(payee_ahid_hrns + " exists but not account-holder")
+            continue
+        if payer_ahid_fph == "": # does not exist
+            ahid_name, parent_hrns = split_hrns(payer_ahid_hrns)
+            parent_namespace_fph = complete_parent_namespace_chain(parent_hrns)
+            report.append("Ancestral chain " + parent_hrns + " completed")
+            payee_account_fph = create_new_pairing(
+                                    primid_fph,
+                                    payee_ahid_hrns,
+                                    currency_hrns
+                                )
+            report.append("Account-holder " + payee_ahid_hrns + " created")
+
+        m = ah_payment(
+                payer_ahid_hrns,
+                payee_ahid_hrns,
+                currency_hrns,
+                amount,
+                annotation
+            )
