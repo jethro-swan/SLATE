@@ -1,0 +1,123 @@
+#!/home/slate/SLATE/venv/bin/python3
+
+import sys
+import re
+import argparse
+
+from app.core.slate_core import identify_entity, get_entity_type, new_account
+from app.core.slate_core import split_hrns
+
+from app.core.fph_hrns_maps import fph_to_hrns, hrns_to_fph
+
+from app.core.omtrad import import_csv_dataset
+from app.core.omtrad import complete_parent_namespace
+from app.core.omtrad import create_new_pairing
+from app.core.omtrad import ah_payment
+from app.core.omtrad import retrieve_pmap
+
+#==============================================================================
+# Set command line options:
+
+ap = argparse.ArgumentParser(description = "Import a CSV dataset")
+ap.add_argument(
+    "-a", "--login-identity", dest = "login_identity", action = "store",
+    help = "Login identity of the agent uploading this CSV file"
+)
+ap.add_argument(
+    "-s", "--field-separator", help = "CSV field-separator (default is comma)",
+    dest = "field_separator", action = "store",
+    default = "comma"
+)
+args = ap.parse_args()
+
+#-------------------------------------------------------------------------------
+
+errors = []
+report = []
+
+primid_fph, primid_hrns, etype, m = identify_entity(args.login_identity)
+
+print(etype + ": " + primid_fph > " > " + primid_hrns)
+
+field_separator = args.field_separator
+if not(field_separator in ["comma", "colon", "semicolon", "tab"]):
+    field_separator = "comma"
+
+if field_separator == "colon":
+    SC = ":"
+elif field_separator == "semicolon":
+    SC = ";"
+elif field_separator == "tab":
+    SC = "\t"
+else:
+    SC = ","
+
+
+for row in sys.stdin:
+
+    field = row.split(SC)
+    currency_hrns = field[0].strip("\"")
+    payer_ahid_hrns = field[1].strip("\"") # payer *ahid*
+    payee_ahid_hrns = field[2].strip("\"") # payer *ahid*
+    amount = int(100*float(field[3].strip("\"")))
+    annotation = field[4]
+
+    c_fph, c_hrns, etype, m = identify_entity(currency_hrns)
+    if etype and (etype != "currency"):
+        errors.append(currency_hrns + " is " + etype + " not currency")
+        continue
+    if c_fph == "": # does not exist
+        currency_name, parent_hrns = split_hrns(currency_hrns)
+        c_fph, \
+        c_hrns, \
+        m = new_currency(
+                currency_name,
+                complete_parent_namespace(parent_hrns, primid_fph),
+                primid_fph,
+                "",
+                "",
+                currency_name # is used for default *account* name
+            )
+
+#    pmap, m = retrieve_pmap(primid_fph)
+
+    payer_ahid_name, parent_hrns = split_hrns(payer_ahid_hrns)
+    parent_fph = complete_parent_namespace(parent_hrns, primid_fph)
+    payer_account_fph = create_new_pairing(
+                            primid_hrns, \
+                            payer_ahid_hrns, \
+                            currency_hrns
+                         )
+    if payer_account_fph:
+        report.append(payer_ahid_hrns + " created")
+        report.append(fph_to_hrns(payer_account_fph) + " created")
+
+    payee_ahid_name, parent_hrns = split_hrns(payee_ahid_hrns)
+    parent_fph = complete_parent_namespace(parent_hrns, primid_fph)
+    payee_account_fph = create_new_pairing(
+                            primid_fph, \
+                            payee_ahid_hrns, \
+                            currency_hrns
+                        )
+    if payee_account_fph:
+        report.append(payee_ahid_hrns + " created")
+        report.append(fph_to_hrns(payee_account_fph) + " created")
+    else:
+        errors.append(payee_ahid_hrns + " not created")
+
+    m = ah_payment(
+            payer_ahid_hrns,
+            payee_ahid_hrns,
+            currency_hrns,
+            amount,
+            annotation
+        )
+
+print()
+print("report:")
+for line in report:
+    print(report)
+print()
+print("errors:")
+for line in errors:
+    print(line)

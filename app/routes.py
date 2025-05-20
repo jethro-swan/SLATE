@@ -143,6 +143,7 @@ from app.forms import UserMessageForm
 #from app.forms import TQueueForm
 from app.forms import FileUploadForm
 from app.forms import PairingCreateForm
+from app.forms import CSVImportForm
 
 from markupsafe import escape
 
@@ -5335,12 +5336,14 @@ def export_currency_csv(currency_fph):
 @app.route('/upload/<filename>')
 @login_required
 def upload_csv(filename):
-    return send_from_directory(os.path.join(
-        app.config["UPLOAD_PATH"], current_user.get_id()), filename)
+    return send_from_directory(
+               os.path.join(app.config["UPLOAD_PATH"], current_user.get_id()),
+               filename
+           )
 
 
 #### TEST STUFF
-@app.route("/upload", methods = ["GET", "POST"])
+@app.route("/upload", methods = ["POST"])
 @login_required
 def upload(): ### TEST
 
@@ -5395,6 +5398,139 @@ def upload(): ### TEST
         working_identity_hrns = working_identity_hrns,
         working_identity_type = working_identity_type
     )
+
+
+#==============================================================================
+##
+
+@app.route("/import/dataset", methods = ["POST"])
+@login_required
+def import_dataset():
+
+    # Hub operational mode (read from environment variable HUB_MODE)
+    hub_mode = get_hub_mode()
+    if hub_mode != "omtrad":
+        flash("This endpoint is for use only in omtrad mode")
+        return redirect("/home_ahc")
+
+    page = "import_csv"
+    previous_page = session["previous_page"]
+    session["previous_page"] = page
+    group = "home" # Used to control top menu behaviour.
+    logged_in = current_user.is_authenticated
+
+    primary_identity_fph, \
+    primary_identity_hrns, \
+    primary_identity_type, \
+    m = identify_entity(current_user.get_id())
+
+    working_identity_fph = primary_identity_fph
+    session["working_identity"] = working_identity_fph
+    working_identity_hrns = primary_identity_hrns
+    working_identity_type = primary_identity_type
+
+    uploaded_file = request.files['csv_file']
+    if uploaded_file.filename != "":
+        uploaded_file.save(uploaded_file.filename)
+
+        field_separator = ","
+        csv_file = "quoggenzocker"
+        print("CSV file = " + csv_file)
+        print("field_separator = " + field_separator)
+
+    return redirect("/home_ahc")
+
+
+
+    return render_template(
+        "csv_upload.html",
+        title = "Account",
+        form = form,
+        page = page,
+        group = group,
+        hub_mode = hub_mode,
+        version = get_version(),
+        logged_in = logged_in,
+        primary_identity_type = "login identity",
+        primary_identity_fph = primary_identity_fph,
+        primary_identity_hrns = primary_identity_hrns,
+        working_identity_fph = working_identity_fph,
+        working_identity_hrns = working_identity_hrns,
+        working_identity_type = working_identity_type
+    )
+
+
+
+
+
+@app.route("/import/payment_set", methods = ["GET", "POST"])
+@login_required
+def import_payment_set(): ### TEST
+
+    # Hub operational mode (read from environment variable HUB_MODE)
+    hub_mode = get_hub_mode()
+    #version = get_version()()
+
+
+    page = "import_csv_payment_set"
+    previous_page = session["previous_page"]
+    session["previous_page"] = page
+    group = "home" # Used to control top menu behaviour.
+    logged_in = current_user.is_authenticated
+
+    primary_identity_fph, \
+    primary_identity_hrns, \
+    primary_identity_type, \
+    m = identify_entity(current_user.get_id())
+
+    if "working_identity" in session:
+        working_identity_fph, \
+        working_identity_hrns, \
+        working_identity_type, \
+        m = identify_entity(session["working_identity"])
+    else:
+        working_identity_fph = primary_identity_fph
+        session["working_identity"] = working_identity_fph
+        working_identity_hrns = primary_identity_hrns
+        working_identity_type = primary_identity_type
+    working_identity_type = etype_to_adtype(working_identity_type)
+
+    form = CSVImportForm()
+    if form.validate_on_submit():
+        field_separator = form.field_separator.data,
+        csv_file = form.csv_file.data
+
+
+
+
+
+    return render_template(
+        "csv_payment_set_import.html",
+        title = "Import CSV payment set",
+        form = form,
+        page = page,
+        group = group,
+        hub_mode = hub_mode,
+        version = get_version(),
+        logged_in = logged_in,
+        primary_identity_type = "login identity",
+        primary_identity_fph = primary_identity_fph,
+        primary_identity_hrns = primary_identity_hrns,
+        working_identity_fph = working_identity_fph,
+        working_identity_hrns = working_identity_hrns,
+        working_identity_type = working_identity_type
+    )
+
+#==============================================================================
+
+
+
+
+
+
+
+
+
 
 
 

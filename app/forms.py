@@ -122,6 +122,27 @@ class StewardMessageForm(FlaskForm):
 
 #==============================================================================
 
+class CSVImportForm(FlaskForm):
+    field_separator = RadioField(
+                        "field separator character",
+                        choices = [
+                                    ("comma", ","),
+                                    ("colon", ":"),
+                                    ("semicolon", ";"),
+                                    ("tab", "tab")
+                                  ]
+                      )
+    csv_file        = FileField(
+                        "CSV file",
+                        validators = [
+                            #FileRequired(),
+                            FileAllowed(["csv"])
+                        ]
+                      )
+    upload_file     = SubmitField("upload CSV file")
+
+
+
 class FileUploadForm(FlaskForm):
     entity_type     = RadioField(
                         "entity type",

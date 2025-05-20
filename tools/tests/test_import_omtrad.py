@@ -17,7 +17,7 @@ primid_fph, m = hrns_to_fph("bb.cc")
 test_csv_import = True
 if test_csv_import:
 
-    fpath = "/home/john/NESTS/SLATE/csv_examples/import_datset_01.csv"
+    fpath = "/home/slate/SLATE/csv_examples/import_datset_01.csv"
 
     report, errors = import_csv_dataset(fpath, primid_fph, SC=",")
 

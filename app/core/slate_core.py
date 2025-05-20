@@ -351,7 +351,10 @@ def identify_entity(entity_identifier): # HRNS or FPH
             return "", "", "", "Entity " + entity_hrns + " does not exist\n"
     else: # this is not an entity
         return "", "", "", ""
-        #return "", "", "", entity_identifier + " is not an entity\n"
+
+        # NB, if a message is returned here it will cause misdirection in the
+        # "/register" endpoint (and possibly others) so for the time being an
+        # empty string is returned. This can be addressed later if necessary.
 
 
 #==============================================================================
