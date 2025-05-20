@@ -51,7 +51,7 @@
 
   {% else %}<!-- logged_in -->
 
-    {% if hub_mode == "om_trad" %}
+    {% if hub_mode == "omtrad" %}
 
       {% if page == "home_ahc" %}
         <div class="mba">home</div>
@@ -70,9 +70,9 @@
     {% endif %}
 
     <!-- The *secids* are listed only of SLATE is not running in slate_minimal
-         or om_trad mode.
+         or omtrad mode.
     -->
-    {% if  (hub_mode != "slate_minimal") and (hub_mode != "om_trad") %}
+    {% if  (hub_mode != "slate_minimal") and (hub_mode != "omtrad") %}
       {% if page == "identities" %}
         <div class="mba">list identities</div>
       {% else %}
@@ -136,8 +136,8 @@
   &nbsp;&nbsp;v{{ version }}
   {% if hub_mode == "slate_simple" %}
     [simple mode]
-  {% elif hub_mode == "om_trad" %}
-    [om_trad mode]
+  {% elif hub_mode == "omtrad" %}
+    [omtrad mode]
   {% elif hub_mode == "slate_minimal" %}
     [minimal mode]
   {% elif hub_mode == "slate_normal" %}
@@ -155,10 +155,10 @@
 
   {% if logged_in %}
     {% if current_user.is_authenticated %}
-      {% if hub_mode == "om_trad" %}
+      {% if hub_mode == "omtrad" %}
         Login identity =
         {{ primary_identity_hrns }} |
-        <a href="/create_ahid/{{ working_identity_fph }}">
+        <a href="/create_pairing/{{ working_identity_fph }}">
           join currency
         </a>
         <hr class="dashed" />

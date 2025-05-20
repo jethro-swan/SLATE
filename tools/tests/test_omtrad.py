@@ -2,13 +2,14 @@
 
 import sqlite3
 import pickle
+import random
 
 from app.core.fph_hrns_maps import fph_to_hrns, hrns_to_fph
 
 from app.core.slate_core import new_namespace, new_currency, new_primid
 from app.core.slate_core import split_hrns
 
-from app.core.om_trad import *
+from app.core.omtrad import *
 
 
 #primid_fph, m = hrns_to_fph("bb.cc")
@@ -109,8 +110,65 @@ print("Retrieved pmap:")
 print(pmap)
 print()
 
-complete_parent_namespace_chain("zx.cv.l5.cald.mon.uk")
+complete_parent_namespace("zx.cv.l5.cald.mon.uk", primid_fph)
 #currency_fph, currency_hrns, m = create_import_currency("qw.er.ty.ui.pa.uk")
 #print(currency_fph)
 #print(currency_hrns)
 #print(m)
+
+
+
+ahid_hrns_list = ["ah1.bb.cc", "ah2.bb.cc", "ah3.bb.cc", "ah4.bb.cc"]
+currency_hrns_list = ["cc", "hrs.cc", "kwh.cc"]
+
+test_entity_identification = True
+if test_entity_identification:
+    for ahid_hrns in ahid_hrns_list:
+        ahid_fph, \
+        ahid_hrns, \
+        etype, \
+        m = identify_entity(ahid_hrns)
+        if m:
+            print(m)
+        print(etype + ": " + ahid_fph + " > " + ahid_hrns)
+    for currency_hrns in currency_hrns_list:
+        currency_fph, \
+        currency_hrns, \
+        etype, \
+        m = identify_entity(currency_hrns)
+        if m:
+            print(m)
+        print(etype + ": " + currency_fph + " > " + currency_hrns)
+    print()
+
+
+run_payment_test_loop = True
+display_random_selection = False
+test_payments = True
+if run_payment_test_loop:
+    for n in range(100):
+        payer_ahid_hrns = random.choice(ahid_hrns_list)
+        payee_ahid_hrns = random.choice(ahid_hrns_list)
+        currency_hrns = random.choice(currency_hrns_list)
+        amount = random.randint(0, 100000)
+        annotation = "test" + str(n)
+        if display_random_selection:
+            print(
+                currency_hrns + " : " \
+                + payer_ahid_hrns + " > " + payee_ahid_hrns \
+                + " | " + str(amount) \
+                + " | " + annotation
+            )
+
+
+        if test_payments:
+            m = ah_payment(
+                    payer_ahid_hrns,
+                    payee_ahid_hrns,
+                    currency_hrns,
+                    amount,
+                    annotation
+                )
+            if m:
+                print(m)
+    print()

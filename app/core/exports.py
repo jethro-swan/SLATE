@@ -94,7 +94,7 @@ def list_payments_in_currency(currency_identifier):
         payment_row.append(payment_id)          # payment number
         payment_row.append(payer_hrns)          # payer *ahid* HRNS
         payment_row.append(payee_hrns)          # payee  *ahid* HRNS
-        if hub_mode == "om_trad":
+        if hub_mode == "omtrad":
             payment_row.append(currency_hrns)   # currency HRNS
         payment_row.append(amount)              # amount paid
         payment_row.append(payer_balance)       # payer balance
@@ -126,7 +126,7 @@ def list_payments_for_account(account_identifier):
     # Hub operational mode (read from environment variable HUB_MODE)
     hub_mode = get_hub_mode()
 
-    if hub_mode == "om_trad":
+    if hub_mode == "omtrad":
         currency_fph, \
         owner_fph, \
         ahid_fph, \
@@ -180,11 +180,11 @@ def list_payments_for_account(account_identifier):
         annotation = p[8]
         payment_row.append(timestamp)
         payment_row.append(payment_id)
-        if hub_mode == "om_trad":
+        if hub_mode == "omtrad":
             payment_row.append(currency_hrns)
         # If THIS *account* is the payee, put the amount in the recipts
         # column (3) and leave the payments column blank:
-        if hub_mode == "om_trad":
+        if hub_mode == "omtrad":
             if payee_fph == ahid_fph:
                 payment_row.append(amount)          # amount received
                 payment_row.append("")
@@ -256,7 +256,7 @@ def dump_currency_payments_csv(
     csv_export_filepath = os.path.join(app.root_path, "export", csv_filename)
     with open(csv_export_filepath, "w") as csv_f:
         if show_header_row:
-            if hub_mode == "om_trad":
+            if hub_mode == "omtrad":
                 csv_f.write(
                         "date and time" + SC \
                         + "payment number" + SC \
@@ -310,7 +310,7 @@ def dump_account_payments_csv(
 #    if m:
 #       return [], m
 
-    if hub_mode == "om_trad":
+    if hub_mode == "omtrad":
         currency_fph, \
         owner_fph, \
         ahid_fph, \

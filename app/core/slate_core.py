@@ -77,17 +77,18 @@ def create_hubs_db():
 def get_hub_mode():
     hub_mode = os.environ.get("HUB_MODE")
     if hub_mode is None:
-        return "slate_simple"
+        return "omtrad"
     elif hub_mode in [
                         "slate_normal",
                         "slate_simple",
                         "slate_minimal",
-                        "om_trad",
+                        "omtrad",
                         "nests"
                      ]:
+        print(hub_mode)
         return hub_mode
     else:
-        return "slate_simple"
+        return "omtrad"
 
 # Get version number:
 def get_version():
@@ -103,7 +104,8 @@ def split_hrns(identifier_hrns):
         return "", ""
     names = identifier_hrns.split(".")
     name = names.pop(0)
-    parent_namespace_hrns = ".".join(names)
+    parent_namespace_hrns = ".".join(names).strip(".")
+    print(name + " | " + parent_namespace_hrns)
     return name, parent_namespace_hrns
 
 
@@ -307,8 +309,11 @@ def create_entities_db():
 
 def identify_entity(entity_identifier): # HRNS or FPH
 
+    if entity_identifier is None:
+        return "", "", "", entity_identifier + " is NoneType\n"
+
     if not isinstance(entity_identifier, str):
-        return "", "", "", ""
+        return "", "", "", entity_identifier + " is not a string\n"
 
     entity_identifier = entity_identifier.strip()
 
@@ -317,7 +322,6 @@ def identify_entity(entity_identifier): # HRNS or FPH
 
     if re_fph.match(entity_identifier): # this is an FPH
         entity_fph = entity_identifier.strip()
-        #entity_hrns = fph_to_hrns(entity_fph).strip()
         entity_hrns = fph_to_hrns(entity_fph)
         if entity_hrns: # entity exists
             entity_type, m = get_entity_type(entity_fph)
@@ -325,7 +329,7 @@ def identify_entity(entity_identifier): # HRNS or FPH
                 return "", "", "", m
             return entity_fph, entity_hrns, entity_type, ""
         else:
-            return "", "", "", "Entity " + entity_fph + " does not exist.\n"
+            return "", "", "", "Entity " + entity_fph + " does not exist\n"
     elif re_hrns.match(entity_identifier): # this is an HRNS
         entity_hrns = entity_identifier.strip()
         entity_fph, m = hrns_to_fph(entity_identifier)
@@ -337,9 +341,9 @@ def identify_entity(entity_identifier): # HRNS or FPH
                 return "", "", "", m
             return entity_fph, entity_hrns, entity_type, ""
         else:
-            return "", "", "", "Entity " + entity_hrns + " does not exist.\n"
+            return "", "", "", "Entity " + entity_hrns + " does not exist\n"
     else: # this is not an entity
-        return "", "", "", entity_identifier + " is not an entity.\n"
+        return "", "", "", entity_identifier + " is not an entity\n"
 
 
 #==============================================================================
@@ -1263,7 +1267,7 @@ def new_account(
         account_name,
         parent_namespace_fph,
         owner_fph,      # (Owner may be a *primid* or a *secid*)
-        ahid_fph,       # *account-holder* for om_trad mode.
+        ahid_fph,       # *account-holder* for omtrad mode.
         currency_fph
     ):
 

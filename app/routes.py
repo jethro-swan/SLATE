@@ -43,11 +43,11 @@ from app.core.slate_core import authenticate_primid_email
 from app.core.slate_core import get_hub_mode
 from app.core.slate_core import get_version
 
-from app.core.om_trad import retrieve_pmap
-from app.core.om_trad import create_new_pairing
-from app.core.om_trad import get_ahid_primid
-from app.core.om_trad import retrieve_pairing_account_fph
-from app.core.om_trad import ah_payment
+from app.core.omtrad import retrieve_pmap
+from app.core.omtrad import create_new_pairing
+from app.core.omtrad import get_ahid_primid
+from app.core.omtrad import retrieve_pairing_account_fph
+from app.core.omtrad import ah_payment
 
 from app.core.slate_session import create_slate_session_db
 from app.core.slate_session import session_save_currencies_available
@@ -541,7 +541,7 @@ def login():
         session["login_identity"] = identity_fph    # Initial values upon login
         session["working_identity"] = identity_fph  #
 
-        if hub_mode == "om_trad":
+        if hub_mode == "omtrad":
 
             session["previous_page"] = "home_ahc"   # (This one subsequently
                                                     # serves as shift register).
@@ -953,7 +953,7 @@ def home_ahc():
     # Hub operational mode (read from environment variable HUB_MODE)
     hub_mode = get_hub_mode()
 
-    if hub_mode != "om_trad":
+    if hub_mode != "omtrad":
         flash("Operational mode invalid for this endpoint")
         return redirect("/home")
 
@@ -976,7 +976,7 @@ def home_ahc():
     primary_identity_type, \
     m = identify_entity(current_user.get_id())
 
-    # In om_trad mode, the working *identity* is always the *primid*.
+    # In omtrad mode, the working *identity* is always the *primid*.
     working_identity_fph = primary_identity_fph
     working_identity_hrns = primary_identity_hrns
     working_identity_type = primary_identity_type
@@ -1137,7 +1137,7 @@ def home():
     page = "home"
     if "previous_page" in session: # already active
         previous_page = session["previous_page"]
-    elif hub_mode == "om_trad":
+    elif hub_mode == "omtrad":
         previous_page = "home_ahc"
         return redirect("/home_ahc")
     else:
@@ -1294,7 +1294,7 @@ def home():
             accounts.append(a)
 
             # The following dictionary is used in template only if
-            # HUB_MODE = "om_trad")
+            # HUB_MODE = "omtrad")
 
 
 
@@ -2355,7 +2355,7 @@ def pay_ahid(payer_ahid_fph, payment_currency_fph):
                 annotation
             )
 
-        if hub_mode == "om_trad":
+        if hub_mode == "omtrad":
             return redirect("/home_ahc")
         else:
             return redirect("/home")
@@ -4300,7 +4300,7 @@ def create_currency():
 #            + currency_hrns + " [" + currency_fph + "]"
         )
 
-        if hub_mode == "om_trad":
+        if hub_mode == "omtrad":
             return redirect("/home_ahc")
         else:
             return redirect("/home")
@@ -4326,14 +4326,15 @@ def create_currency():
     )
 
 # create an *ahid*-*currency* pairing -----------------------------------------
-@app.route("/create_ahid/<owner_fph>", methods = ["GET", "POST"])
+#@app.route("/create_ahid/<owner_fph>", methods = ["GET", "POST"])
+@app.route("/create_pairing/<owner_fph>", methods = ["GET", "POST"])
 @login_required
-def create_ahid(owner_fph):
+def create_ahid(owner_fph = ""):
 
     # Hub operational mode (read from environment variable HUB_MODE)
     hub_mode = get_hub_mode()
 
-    page = "create_account"
+    page = "create_pairing"
     previous_page = session["previous_page"]
     session["previous_page"] = page
 
@@ -4344,18 +4345,19 @@ def create_ahid(owner_fph):
     paying = True
     logged_in = current_user.is_authenticated
 
-    owner_fph, \
-    owner_hrns, \
-    owner_type, \
-    m = identify_entity(owner_fph)
-    if m:
-        flash(m)
-        return redirect("/home")
-    if owner_fph == "":
-        flash("The owner FPH in the URL cannot be identified")
-        return redirect("/home")
+    if owner_fph:
+        owner_fph, \
+        owner_hrns, \
+        owner_type, \
+        m = identify_entity(owner_fph)
+        if m:
+            flash(m)
+            return redirect("/home")
+        if owner_fph == "":
+            flash("The owner FPH in the URL cannot be identified")
+            return redirect("/home")
 
-    if hub_mode != "om_trad":
+    if hub_mode != "omtrad":
         flash("This endpoint is not valid in the current mode.")
         return redirect("/home")
 
@@ -4364,7 +4366,7 @@ def create_ahid(owner_fph):
     primary_identity_type, \
     m = identify_entity(current_user.get_id())
 
-    # In om_trad mode the *working identity* is always the *primary identity*.
+    # In omtrad mode the *working identity* is always the *primary identity*.
     working_identity_fph = primary_identity_fph
     working_identity_hrns = primary_identity_hrns
     working_identity_type = primary_identity_type
@@ -4400,15 +4402,13 @@ def create_ahid(owner_fph):
         stewards_list, \
         m = get_currency_specific_properties(currency_fph)
 
-
         account_fph = create_new_pairing(
                           working_identity_fph,
                           ahid_hrns,
                           currency_hrns
                       )
 
-
-        if hub_mode == "om_trad":
+        if hub_mode == "omtrad":
             return redirect("/home_ahc")
         else:
             return redirect("/home")
@@ -5126,7 +5126,7 @@ def export_account_csv(account_fph):
     primary_identity_type, \
     m = identify_entity(current_user.get_id())
 
-    if hub_mode == "om_trad":
+    if hub_mode == "omtrad":
         working_identity_fph = primary_identity_fph
         working_identity_hrns = primary_identity_hrns
         working_identity_type = primary_identity_type
@@ -5256,7 +5256,7 @@ def export_currency_csv(currency_fph):
     primary_identity_type, \
     m = identify_entity(current_user.get_id())
 
-    if hub_mode == "om_trad":
+    if hub_mode == "omtrad":
         working_identity_fph = primary_identity_fph
         working_identity_hrns = primary_identity_hrns
         working_identity_type = primary_identity_type
