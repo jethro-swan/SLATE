@@ -85,7 +85,7 @@ def get_hub_mode():
                         "omtrad",
                         "nests"
                      ]:
-        print(hub_mode)
+        #print(hub_mode)
         return hub_mode
     else:
         return "omtrad"
@@ -310,10 +310,17 @@ def create_entities_db():
 def identify_entity(entity_identifier): # HRNS or FPH
 
     if entity_identifier is None:
-        return "", "", "", entity_identifier + " is NoneType\n"
+        entity_identifier = ""
+#        return "", "", "", "entity_identifier" + str(entity_identifier)
 
     if not isinstance(entity_identifier, str):
-        return "", "", "", entity_identifier + " is not a string\n"
+        entity_identifier = ""
+
+#        return "", "", "", str(entity_identifier) + " is not a string\n"
+
+#    if type(entity_identifier) != str:
+#        return "", "", "", entity_identifier + " is not a string\n"
+
 
     entity_identifier = entity_identifier.strip()
 
@@ -343,7 +350,8 @@ def identify_entity(entity_identifier): # HRNS or FPH
         else:
             return "", "", "", "Entity " + entity_hrns + " does not exist\n"
     else: # this is not an entity
-        return "", "", "", entity_identifier + " is not an entity\n"
+        return "", "", "", ""
+        #return "", "", "", entity_identifier + " is not an entity\n"
 
 
 #==============================================================================

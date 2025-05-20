@@ -151,7 +151,7 @@ if run_payment_test_loop:
         payee_ahid_hrns = random.choice(ahid_hrns_list)
         currency_hrns = random.choice(currency_hrns_list)
         amount = random.randint(0, 100000)
-        annotation = "test" + str(n)
+        annotation = "test B" + str(n)
         if display_random_selection:
             print(
                 currency_hrns + " : " \

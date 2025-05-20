@@ -140,7 +140,7 @@ def create_new_pairing(
     # If the *ahid* does not exist already it must be created:
     #
     ahid_fph, ahid_hrns_, etype, m = identify_entity(ahid_hrns)
-    print(">>> " + ahid_hrns + ":" + currency_hrns)
+#    print(">>> " + ahid_hrns + ":" + currency_hrns)
     if ahid_fph == "": # does not exist
         ahid_name, parent_hrns_ = split_hrns(ahid_hrns)
         parent_fph, parent_hrns, etype, m = identify_entity(parent_hrns_)
@@ -192,7 +192,7 @@ def create_new_pairing(
             ahid_fph,
             c_fph
         )
-    print(account_fph + " > " + account_hrns)
+#    print(account_fph + " > " + account_hrns)
 
     # The *ahid* may be paired with any *currency* (once only). These
     # serve as the co-ordinates in a grid identifying the *account* created
@@ -204,11 +204,11 @@ def create_new_pairing(
     pmap, m = retrieve_pmap(owner_fph)
     #pmap, m = retrieve_pmap(owner_identifier)
     #pmap, m = retrieve_pmap(primid_fph)
-    print("pmap (1):")
-    print(pmap)
+#    print("pmap (1):")
+#    print(pmap)
 
     if pmap is None:
-        print("pmap: None")
+#        print("pmap: None")
         pmap = {}
 
     #if not (ahid_hrns in pmap):
@@ -218,14 +218,14 @@ def create_new_pairing(
     if not (currency_hrns in pmap[ahid_hrns].keys()):
         pmap[ahid_hrns][currency_hrns] = account_fph
 
-    print("pmap (2):")
-    print(pmap)
+#    print("pmap (2):")
+#    print(pmap)
 
     #pmap[ahid_hrns][currency_hrns] = account_fph
 
-    print(
-        ahid_hrns + "|" + currency_hrns + " > " + pmap[ahid_hrns][currency_hrns]
-    )
+#    print(
+#        ahid_hrns + "|" + currency_hrns + " > " + pmap[ahid_hrns][currency_hrns]
+#    )
 
     with sqlite3.connect(ENTITIES_DB) as conn:
         cursor = conn.cursor()
@@ -236,16 +236,16 @@ def create_new_pairing(
         conn.commit()
         cursor.close()
 
-    print("pmap (3):")
-    print(pmap)
+#    print("pmap (3):")
+#    print(pmap)
 
-    for ahid_hrns in pmap.keys():
-        print(ahid_hrns)
-        for c_hrns in pmap[ahid_hrns].keys():
-            print(
-                "pmap: " + ahid_hrns + " : " + c_hrns + " > " \
-                + pmap[ahid_hrns][c_hrns]
-            )
+#    for ahid_hrns in pmap.keys():
+#        print(ahid_hrns)
+#        for c_hrns in pmap[ahid_hrns].keys():
+#            print(
+#                "pmap: " + ahid_hrns + " : " + c_hrns + " > " \
+#                + pmap[ahid_hrns][c_hrns]
+#            )
 
     return account_fph
 
@@ -662,13 +662,13 @@ def import_csv_dataset(fpath, primid_identifier, SC=","):
         annotation = field[4]
 
         c_fph, c_hrns, etype, m = identify_entity(currency_hrns)
-        print(currency_hrns + " type is " + etype)
+#        print(currency_hrns + " type is " + etype)
         if etype and (etype != "currency"):
             errors.append(currency_hrns + " is " + etype + " not currency")
             continue
         if c_fph == "": # does not exist
             currency_name, parent_hrns = split_hrns(currency_hrns)
-            print(currency_name + " | " + parent_hrns)
+#            print(currency_name + " | " + parent_hrns)
             #parent_namespace_fph = complete_parent_namespace(parent_hrns)
             #report.append("Ancestral chain " + parent_hrns + " completed")
             c_fph, \
@@ -683,7 +683,7 @@ def import_csv_dataset(fpath, primid_identifier, SC=","):
                 )
 
         pmap, m = retrieve_pmap(primid_fph)
-        print(pmap)
+#        print(pmap)
 
     #return report, errors
 
@@ -703,11 +703,9 @@ def import_csv_dataset(fpath, primid_identifier, SC=","):
         if payer_account_fph:
             report.append(payer_ahid_hrns + " created")
             report.append(fph_to_hrns(payer_account_fph) + " created")
-        else:
-            errors.append(payer_ahid_hrns + " not created")
 
         pmap, m = retrieve_pmap(primid_fph)
-        print(pmap)
+#        print(pmap)
 
     #return report, errors
 
@@ -717,7 +715,7 @@ def import_csv_dataset(fpath, primid_identifier, SC=","):
     #    field = row.split(SC)
     #    ahid_hrns = field[2].strip("\"") # payee *ahid*
         payee_ahid_name, parent_hrns = split_hrns(payee_ahid_hrns)
-        print("ahid : " + payee_ahid_name + " | " + parent_hrns)
+#        print("ahid : " + payee_ahid_name + " | " + parent_hrns)
         parent_fph = complete_parent_namespace(parent_hrns, primid_fph)
         payee_account_fph = create_new_pairing(
                                 primid_fph, \
@@ -731,7 +729,7 @@ def import_csv_dataset(fpath, primid_identifier, SC=","):
             errors.append(payee_ahid_hrns + " not created")
 
         pmap, m = retrieve_pmap(primid_fph)
-        print(pmap)
+#        print(pmap)
 
 
     # Create payments:
@@ -743,10 +741,10 @@ def import_csv_dataset(fpath, primid_identifier, SC=","):
     #    amount = int(100*float(field[3].strip("\"")))
     #    annotation = field[4]
 
-        print(
-            currency_hrns + " : " + payer_ahid_hrns + " > " + payee_ahid_hrns \
-            + " | " + str(amount) + " | " + annotation
-        )
+#        print(
+#            currency_hrns + " : " + payer_ahid_hrns + " > " + payee_ahid_hrns \
+#            + " | " + str(amount) + " | " + annotation
+#        )
 
         m = ah_payment(
                 payer_ahid_hrns,

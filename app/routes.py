@@ -2850,7 +2850,7 @@ def pay_agent_direct(payer_currency_fph, payer_identity_fph):
     form = PayeeCurrencyAmountPaymentForm()
     if form.validate_on_submit():
 
-        print("form validated")
+        #print("form validated")
 
         payee_identity_fph, \
         payee_identity_hrns, \
@@ -2864,7 +2864,7 @@ def pay_agent_direct(payer_currency_fph, payer_identity_fph):
             return redirect("/pay/agent")
         session["payee_identity_fph"] = payee_identity_fph
 
-        print("payee = " + payee_identity_hrns)
+        #print("payee = " + payee_identity_hrns)
 
         # First we need to find the payer *accounts* in the specified
         # *currency*:
@@ -2897,10 +2897,10 @@ def pay_agent_direct(payer_currency_fph, payer_identity_fph):
             flash("The payee has no accounts in the specified currency")
             return redirect("/pay/agent")
 
-        if len(payer_options) == 1:
-            print("The payer has one account in this currency")
-        if len(payee_options) == 1:
-            print("The payee has one account in this currency")
+#        if len(payer_options) == 1:
+#            print("The payer has one account in this currency")
+#        if len(payee_options) == 1:
+#            print("The payee has one account in this currency")
 
 
 
@@ -2925,7 +2925,7 @@ def pay_agent_direct(payer_currency_fph, payer_identity_fph):
             #print(m)
             return redirect("/home")
 
-        print("Payment made")
+#        print("Payment made")
 
         payer_currency_fph, \
         payer_owner_fph, \
