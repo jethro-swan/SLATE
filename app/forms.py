@@ -453,7 +453,7 @@ class NamespaceCreateForm(FlaskForm):
 #------------------------------------------------------------------------------
 
 class SecidCreateForm(FlaskForm):
-    secid_name  = StringField(
+    secid_name      = StringField(
                         "alias name",
                         validators=[DataRequired("required")]
                       )

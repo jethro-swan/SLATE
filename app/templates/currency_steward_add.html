@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<h3>Add a steward to a currency</h3>
+
+<p>
+  <b>currency</b> = <b>{{ currency_hrns }}</b>
+</p>
+
+<form action="" method="post" novalidate>
+{{ form.hidden_tag() }}
+<p>
+  {{ form.new_steward.label }}<br />
+  {{ form.new_steward(size=12) }}
+  {{ form.add_steward() }}
+</p>
+</form>
+
+{% endblock %}

@@ -42,6 +42,7 @@ from app.core.slate_core import hrns_to_name_and_namespace
 from app.core.slate_core import authenticate_primid_email
 from app.core.slate_core import get_hub_mode
 from app.core.slate_core import get_version
+from app.core.slate_core import add_stewardship, remove_steward
 
 from app.core.omtrad import retrieve_pmap
 from app.core.omtrad import create_new_pairing
@@ -4136,6 +4137,8 @@ def currency(currency_fph):
 
     form = StewardAddForm()
 
+
+
     return render_template(
         "currency.html",
         title = "Currency",
@@ -4158,10 +4161,134 @@ def currency(currency_fph):
     )
 
 
+#
+@app.route("/currency/steward/add/<currency_fph>", methods = ["GET", "POST"])
+@login_required
+def currency_steward_add(currency_fph):
 
+    # Hub operational mode (read from environment variable HUB_MODE)
+    hub_mode = get_hub_mode()
 
+    page = "currency_steward_add"
+    previous_page = session["previous_page"]
+    session["previous_page"] = page
 
+    group = "home" # Used to control top menu behaviour.
 
+    logged_in = current_user.is_authenticated
+
+    primary_identity_fph, \
+    primary_identity_hrns, \
+    primary_identity_type, \
+    m = identify_entity(current_user.get_id())
+
+    if "working_identity" in session:
+        working_identity_fph, \
+        working_identity_hrns, \
+        working_identity_type, \
+        m = identify_entity(session["working_identity"])
+    else:
+        working_identity_fph = primary_identity_fph
+        session["working_identity"] = working_identity_fph
+        working_identity_hrns = primary_identity_hrns
+        working_identity_type = etype_to_adtype(working_identity_type)
+
+    currency_fph, \
+    currency_hrns, \
+    prefix, \
+    suffix, \
+    default_account_name, \
+    stewards_list, \
+    m = get_currency_specific_properties(currency_fph)
+
+    form = StewardAddForm()
+    if form.validate_on_submit():
+        new_steward_fph, \
+        new_steward_hrns, \
+        etype, \
+        m = identify_entity(form.new_steward.data)
+        if new_steward_fph:
+            m = add_stewardship(currency_fph, new_steward_fph)
+        else:
+            flash(form.new_steward.data + " is not a registered identity")
+
+        if hub_mode == "omtrad":
+            return redirect("/home_ahc")
+        else:
+            return redirect("/home")
+
+    return render_template(
+        "currency_steward_add.html",
+        title = "Add currency steward",
+        page = page,
+        group = group,
+        hub_mode = hub_mode,
+        version = get_version(),
+        form = form,
+        currency_fph = currency_fph,
+        currency_hrns = currency_hrns,
+        primary_identity_type = "login identity",
+        primary_identity_fph = primary_identity_fph,
+        primary_identity_hrns = primary_identity_hrns,
+        working_identity_fph = working_identity_fph,
+        working_identity_hrns = working_identity_hrns,
+        working_identity_type = working_identity_type,
+        stewards_list = stewards_list,
+        logged_in = logged_in
+    )
+
+#
+@app.route("/currency/steward/remove/<currency_fph>/<steward_fph>",
+#           methods = ["GET", "POST"]
+           methods = ["GET"]
+          )
+@login_required
+def currency_steward_remove(currency_fph, steward_fph):
+
+    # Hub operational mode (read from environment variable HUB_MODE)
+    hub_mode = get_hub_mode()
+
+    page = "currency_steward_add"
+    previous_page = session["previous_page"]
+    session["previous_page"] = page
+
+    group = "home" # Used to control top menu behaviour.
+
+    logged_in = current_user.is_authenticated
+
+    primary_identity_fph, \
+    primary_identity_hrns, \
+    primary_identity_type, \
+    m = identify_entity(current_user.get_id())
+
+    if "working_identity" in session:
+        working_identity_fph, \
+        working_identity_hrns, \
+        working_identity_type, \
+        m = identify_entity(session["working_identity"])
+    else:
+        working_identity_fph = primary_identity_fph
+        session["working_identity"] = working_identity_fph
+        working_identity_hrns = primary_identity_hrns
+        working_identity_type = etype_to_adtype(working_identity_type)
+
+    currency_fph, \
+    currency_hrns, \
+    prefix, \
+    suffix, \
+    default_account_name, \
+    stewards_list, \
+    m = get_currency_specific_properties(currency_fph)
+
+    #stewards_fph_list, m = list_stewards(currency_fph)
+    #    primary_identity_fph)
+    if primary_identity_fph in stewards_list:
+        m = remove_steward(currency_fph, primary_identity_fph, steward_fph)
+
+    if hub_mode == "omtrad":
+        return redirect("/home_ahc")
+    else:
+        return redirect("/home")
 
 # MANAGEMENT ==================================================================
 

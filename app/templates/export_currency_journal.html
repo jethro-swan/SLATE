@@ -6,15 +6,21 @@
 
 <p>
   You can now
-  <b><a href="/export/{{ csv_file }}">download the journal</a></b>
-  <br />
-  for the currency <b>{{ currency_hrns }}</b> (of which you are are one of the
+  <b><a href="/export/{{ csv_file }}">download the journal</a></b> for the
+  currency <b>{{ currency_hrns }}</b> (of which you are are one of the
   <em>stewards</em>)
 
 </p>
 <br />
 <hr />
 <br />
-<p>(You can <b><a href="/home">return home</a></b> now)</p>
+<p>(You can
+{% if hub_mode == "omtrad" %}
+<a href="/home_ahc">return home</a>
+{% else %}
+<a href="/home">return home</a>
+{% endif %}
+now)</p>
+
 
 {% endblock %}

@@ -116,12 +116,21 @@ complete_parent_namespace("zx.cv.l5.cald.mon.uk", primid_fph)
 #print(currency_hrns)
 #print(m)
 
+test_entity_identification = True
+test_entity_identification = False
 
+#run_payment_test_loop = False
+run_payment_test_loop = True
+
+#display_random_selection = False
+display_random_selection = True
+
+#test_payments = False
+test_payments = True
 
 ahid_hrns_list = ["ah1.bb.cc", "ah2.bb.cc", "ah3.bb.cc", "ah4.bb.cc"]
 currency_hrns_list = ["cc", "hrs.cc", "kwh.cc"]
 
-test_entity_identification = True
 if test_entity_identification:
     for ahid_hrns in ahid_hrns_list:
         ahid_fph, \
@@ -142,9 +151,6 @@ if test_entity_identification:
     print()
 
 
-run_payment_test_loop = True
-display_random_selection = False
-test_payments = True
 if run_payment_test_loop:
     for n in range(100):
         payer_ahid_hrns = random.choice(ahid_hrns_list)
@@ -152,23 +158,23 @@ if run_payment_test_loop:
         currency_hrns = random.choice(currency_hrns_list)
         amount = random.randint(0, 100000)
         annotation = "test B" + str(n)
-        if display_random_selection:
-            print(
-                currency_hrns + " : " \
-                + payer_ahid_hrns + " > " + payee_ahid_hrns \
-                + " | " + str(amount) \
-                + " | " + annotation
-            )
-
-
-        if test_payments:
-            m = ah_payment(
-                    payer_ahid_hrns,
-                    payee_ahid_hrns,
-                    currency_hrns,
-                    amount,
-                    annotation
+        if payer_ahid_hrns != payee_ahid_hrns:
+            if display_random_selection:
+                print(
+                    currency_hrns + " : " \
+                    + payer_ahid_hrns + " > " + payee_ahid_hrns \
+                    + " | " + str(amount) \
+                    + " | " + annotation
                 )
-            if m:
-                print(m)
+
+            if test_payments:
+                m = ah_payment(
+                        payer_ahid_hrns,
+                        payee_ahid_hrns,
+                        currency_hrns,
+                        amount,
+                        annotation
+                    )
+                if m:
+                    print(m)
     print()

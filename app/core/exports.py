@@ -258,23 +258,23 @@ def dump_currency_payments_csv(
         if show_header_row:
             if hub_mode == "omtrad":
                 csv_f.write(
-                        "date and time" + SC \
-                        + "payment number" + SC \
-                        + "payer" + SC \
-                        + "payee" + SC \
-                        + "currency" + SC \
-                        + "amount" + SC \
-                        + "annotation\n"
-                      )
+                    "date and time" + SC \
+                    + "payment number" + SC \
+                    + "payer" + SC \
+                    + "payee" + SC \
+                    + "currency" + SC \
+                    + "amount" + SC \
+                    + "annotation\n"
+                )
             else:
                 csv_f.write(
-                        "date and time" + SC \
-                        + "payment number" + SC \
-                        + "payer HRNS" + SC \
-                        + "payee HRNS" + SC \
-                        + "amount" + SC \
-                        + "annotation\n"
-                      )
+                    "date and time" + SC \
+                    + "payment number" + SC \
+                    + "payer HRNS" + SC \
+                    + "payee HRNS" + SC \
+                    + "amount" + SC \
+                    + "annotation\n"
+                )
         for row in payment_rows:
             csv_f.write(SC.join(row))
             csv_f.write("\n")

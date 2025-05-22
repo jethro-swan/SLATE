@@ -1,4 +1,4 @@
-l#!/home/slate/SLATE/venv/bin/python3
+#!/home/slate/SLATE/venv/bin/python3
 
 import sqlite3
 import os

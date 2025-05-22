@@ -660,6 +660,30 @@ def add_account_to_currency(account_fph, currency_fph):
     return
 
 
+def list_currency_accounts(currency_id):
+    currency_fph, currency_hrns, etype, m = identify_entity(currency_id)
+    with sqlite3.connect(ENTITIES_DB) as conn:
+        cursor = conn.cursor()
+        cursor.execute(
+            "SELECT account_fph FROM currency_accounts WHERE currency_fph = ?",
+            (currency_fph,)
+        )
+        results = cursor.fetchall()
+        cursor.close()
+        print(results)
+    if results is not None:
+        accounts = []
+        for result in results:
+            accounts.append(result[0])
+        return accounts
+    else:
+        return []
+
+
+
+
+
+
 #==============================================================================
 ## Update the *primid* contact details:
 
@@ -1386,6 +1410,8 @@ def new_account(
         conn.commit()
 
         cursor.close()
+
+        add_account_to_currency(account_fph, currency_fph)
 
     if m:
         return "", "", m
@@ -2296,9 +2322,92 @@ def remove_stewards(entity_fph, *primids_fph):
     return ""
 
 # Remove single stewardship from primid:
-def remove_stewardship(primid_fph, entity_fph):
+def remove_stewardship(primids_fph, entity_fph):
     e = remove_stewards(entity_fph, primids_fph)
     return e
+
+
+
+
+def remove_steward(entity_id, removing_steward_id, removed_steward_id):
+
+    entity_fph, \
+    entity_hrns, \
+    etype, \
+    m = identify_entity(entity_id)
+    if m:
+        return m
+    if entity_fph == "":
+        return "Entity does not exist"
+    if etype == "namespace":
+        table = "namespaces"
+    elif etype == "currency":
+        table = "currencies"
+    else:
+        return "Entity is not a stewarded type"
+
+    removing_steward_fph, \
+    removing_steward_hrns, \
+    etype, \
+    m = identify_entity(removing_steward_id)
+    if m:
+        return m
+    if removing_steward_fph == "":
+        return "Removing steward does not exist"
+
+    removed_steward_fph, \
+    removed_steward_hrns, \
+    etype, \
+    m = identify_entity(removed_steward_id)
+    if m:
+        return m
+    if removed_steward_fph == "":
+        return "Steward to be removed does not exist"
+
+    with sqlite3.connect(ENTITIES_DB) as conn:
+        cursor = conn.cursor()
+        # First get the list of stewards for this entity:
+        cursor.execute(
+            "SELECT stewards_fph_list FROM " + table + " WHERE entity_fph = ?",
+            (entity_fph,)
+        )
+        result = cursor.fetchone()
+        stewards_fph_list = pickle.loads(result[0])
+        if not (removing_steward_fph in stewards_fph_list):
+            cursor.close()
+            return removing_steward_hrns + " is not steward of " + entity_hrns
+        elif not (removed_steward_fph in stewards_fph_list):
+            cursor.close()
+            return removed_steward_hrns + " is not steward of " + entity_hrns
+        # The steward can now be removed:
+        if removed_steward_fph in stewards_fph_list:
+            stewards_fph_list.remove(removed_steward_fph)
+        stewards_fph_blob = pickle.dumps(stewards_fph_list)
+        cursor.execute(
+            "UPDATE " + table + " SET stewards_fph_list = ? " \
+            + "WHERE entity_fph = ?",
+            (stewards_fph_blob, entity_fph)
+        )
+        # The entity can now be removed from the removed steward's list of
+        # stewardships:
+        cursor.execute(
+            "SELECT stewardships_fph_list FROM primids WHERE entity_fph = ?",
+            (removed_steward_fph,)
+        )
+        result = cursor.fetchone()
+        stewardships_fph_list = pickle.loads(result[0])
+        if entity_fph in stewardships_fph_list:
+            stewardships_fph_list.remove(entity_fph)
+        stewardships_fph_blob = pickle.dumps(stewardships_fph_list)
+        cursor.execute(
+            "UPDATE primids SET stewardships_fph_list = ? " \
+            + "WHERE entity_fph = ?",
+            (stewardships_fph_blob, removed_steward_fph)
+        )
+        conn.commit()
+        cursor.close()
+
+    return ""
 
 #------------------------------------------------------------------------------
 # List stewards of a namespace or currency:

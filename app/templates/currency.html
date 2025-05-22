@@ -2,137 +2,39 @@
 
 {% block content %}
 
-<h2>manage currency</h2>
+<h3>manage currency</h3>
 
 <p>
   This page is visible only to <em>stewards</em> of <b>currency</b>
   {{ currency_hrns }}.
 </p>
-<p>
-  Here a <em>stewards</em> can:
-  <ul>
-    <li class="compact2">
-      Export (as CSV) a current version of the journal listing all payments
-      made in this <b>currency</b> (see <b>note 1</b>).
-    </li>
-    <li class="compact2">
-      Import (as CSV) a set of payments between <b>accounts</b> in this
-      <b>currency</b> (see <b>note 2</b>).
-    </li>
-    <li class="compact2">
-      Add another <em>steward</em> (see <b>note 3</b>).
-    </li>
-    <li class="compact2">
-      Remove an existing <em>steward</em> (see <b>note 4</b>).
-    </li>
-  </ul>
-</p>
-<hr />
-<p>
-  <b>
-    <a href="/currency/export/{{ currency_fph }}">
-      export currency journal
-    </a>
-  </b>
-  (CSV) for
-  <b>{{ currency_hrns }}</b><br />
-  <span class="footnote">(see <b>note 1</b>)</span>
-</p>
-<!--
-This passes control to a new endpoint which generates an updated journal for
-this currency and displays a download link to the CSV file.
--->
-<hr />
-<p>
-  <b>
-    <a href="/import/currency/csv/{{ currency_fph }}">
-      import sandbox payment set
-    </a>
-  </b>
-  (CSV) for <b>accounts</b> in <b>currency</b>
-  <b>{{ currency_hrns }}</b><br />
-  <span class="footnote">(see <b>note 2</b>)</span>
-</p>
-<hr />
-The stewards of this <b>currency</b> are:
 <ul>
-<li class="compact2">
-<b>{{ primary_identity_hrns }}</b><!-- cannot remove self as steward -->
-</li>
-{% for steward in current_stewards %}
-<li class="compact2">
-  <b>{{ steward.hrns }}</b>
-  (<a href="/currency/steward/remove/{{ steward.fph }}">remove</a>)
-</li>
-{% endfor %}
-</ul>
-<p>
-  <b>
-    <a href="/currency/steward/add/{{ currency_fph }}">
-      add a steward for this currency
-    </a>
-  </b>
-</p>
-<hr />
-
-<h4>Notes</h4>
-
-<ul>
-  <li class="compact2">
-    <p class="footnote">
-      <b>Note 1</b>: It is not yet entirely obvious how this should be
-      implemented, but the download link must restrict access to the
-      <em>steward</em> downloading the file and should be time-limited.
-    </p>
-  </li>
-  <li class="compact2">
-    <p class="footnote">
-      <b>Note 2</b>: The <b>accounts</b> must have been created already and
-      (obviously) must all be in this <b>currency</b>. Any which are not will
-      be displayed as errors.
-    </p>
-  </li>
-  <li class="compact2">
-    <p class="footnote">
-      <b>Note 3</b>: The policies to be followed remain to be agreed, but a
-      possible approach would be to provide a form to add or recommend a new
-      <em>steward</em> for this <b>currency</b>. This is because all current
-      <em>stewards</em> should probably have an opportunity to veto or
-      otherwise influence any decision to appoint a new <em>steward</em>. The
-      temporary solution implemented here allows only for the immediate
-      unilateral adding of a new <em>steward</em>.<br />
-      <span style="color:red">Policy to be discussed.</span>
-    </p>
-  </li>
-  <li class="compact2">
-    <p class="footnote">
-      <b>Note 4</b>: The policies to be followed remain to be agreed, but a
-      possible approach would be to provide a form to propose removal of an
-      existing <em>steward</em> of this <b>currency</b>. All current
-      <em>stewards</em> should probably have an opportunity to veto or
-      otherwise influence any decision to remove an existing <em>steward</em>,
-      and this includes the <em>steward</em> whose removal is being proposed.
-      It must also be possible for a <em>steward</em> to signal the intention
-      to resign from this role, but at least one <em>steward</em> must always
-      exist if the <b>currency</b> is to remain in use. As a last resort, the
-      sole remaining <em>steward</em> may (in effect) close the <b>currency</b>
-      but in that case the owners of the <a>accounts</a> in this
-      <b>currency</b> must be provided with a way to transfer their
-      <a>account</a> records to another (metrically equivalent) <b>currency</b>
-      (whether or not they already have <a>accounts</a> in that).<br />
-      <span style="color:red"> These are policies to be discussed.</span>
-    </p>
-  </li>
-</ul>
-
-<div class="shoutbox">
-  <p class="shout">
-    NOT YET FULLY IMPLEMENTED
+  <li>
+  <p>
+  <a href="/currency/export/{{ currency_fph }}">export journal</a> (CSV)
+  for <b>{{ currency_hrns }}</b><br />
   </p>
-</div>
-
-
-
-
+  </li>
+  <li>
+    The <em>stewards</em> of this <b>currency</b> are:
+    <ul>
+      <li class="compact2">
+      <b>{{ primary_identity_hrns }}</b><!-- cannot remove self as steward -->
+      </li>
+      {% for steward in current_stewards %}
+      <li class="compact2">
+      <b>{{ steward.hrns }}</b>
+      [
+      <a href="/currency/steward/remove/{{ currency_fph }}/{{ steward.fph }}">
+      remove</a>
+      ]
+      </li>
+      {% endfor %}
+      <li class="compact2">
+      <p><a href="/currency/steward/add/{{ currency_fph }}">add steward</a></p>
+      </li>
+    </ul>
+  </li>
+</ul>
 
 {% endblock %}
