@@ -63,6 +63,7 @@ sudo usermod -a -G slate $USER
 sudo mkdir -p /var/slate/$DATASET
 sudo mkdir -p /var/slate/$DATASET/logs
 sudo mkdir -p /var/slate/$DATASET/{db,maps}/backups
+sudo mkdir -p /var/slate/$DATASET/temp
 sudo chown -R slate:slate /var/slate/$DATASET
 #sudo chmod -R 700 /var/slate/$DATASET
 sudo chmod -R 777 /var/slate/$DATASET

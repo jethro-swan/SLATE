@@ -610,7 +610,6 @@ def import_csv_dataset(fpath, primid_identifier, SC=","):
     with open(fpath, "r") as csv_f:
         rows = csv_f.readlines()
 
-
     for row in rows:
         field = row.split(SC)
         currency_hrns_ = field[0].strip("\"")
