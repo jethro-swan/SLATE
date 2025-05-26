@@ -1,7 +1,7 @@
 #!/home/slate/SLATE/venv/bin/python3
 
-import sqlite3
-import pickle
+#import sqlite3
+#import pickle
 
 from app.core.fph_hrns_maps import fph_to_hrns, hrns_to_fph
 
@@ -19,7 +19,7 @@ if test_csv_import:
 
     fpath = "/home/slate/SLATE/csv_examples/import_datset_01.csv"
 
-    report, errors = import_csv_dataset(fpath, primid_fph, SC=",")
+    report, errors = import_csv_dataset(fpath, primid_fph)
 
     print()
     if report is None:
@@ -41,4 +41,4 @@ if test_csv_import:
 
 
     pmap, m = retrieve_pmap(primid_fph)
-    print(pmap)
+    #print(pmap)

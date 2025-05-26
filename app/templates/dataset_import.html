@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<h3>Import a payments dataset (CSV)</h3>
+
+<form method="POST" action="" enctype="multipart/form-data">
+  {{ form.hidden_tag() }}
+  <p>
+    {{ form.csv_file.label }}<br />
+    {{ form.csv_file() }} 
+    {{ form.upload_file() }}
+  </p>
+</form>
+
+<hr />
+
+<div class="footnote">
+  Here you can import a CSV file to create a set of payments a CSV file, each
+  row of which specifies:
+  <ul>
+    <li>a <b>currency</b> - created if it does not exist already</li>
+    <li>a <em>payer</em> <b>account-holder</b></li>
+    <li>a <em>payee</em> <b>account-holder</b></li>
+    <li>a payment amount</li>
+    <li>an annotation</li>
+  </ul>
+  where
+  <ul>
+    <li>
+      Any of the <em>entities</em> specified (<b>account-holder</b> or
+      <b>currency</b>) will be created within the uploading
+      <em>identity</em>'s <em>private</em> <b>namespace</b> if they do not
+      exist already, as will any new <b>namespaces</b> required to complete the
+      <em>parent</em>.
+    </li>
+    <li>
+      Any new <b>currency</b> or <b>namespaces</b> created will be assigned the
+      uploading <em>identity</em> as its initial <em>steward</em>.
+    </li>
+    <li>
+      Any <b>currency</b>|<b>account-holder</b> <em>pairing</em> (identifying
+      an <b>account</b>) will be created if it does not exist already. (NB, any
+      <b>currency</b> specified may be used if the uploading <b>identity</b> is
+      authorized to do so. It is only the newly-created <b>currencies</b>) that
+      are restricted to that <b>identity</b>'s private <b>namespaces</b>.
+    </li>
+  </ul>
+</div>
+
+
+
+{% endblock %}

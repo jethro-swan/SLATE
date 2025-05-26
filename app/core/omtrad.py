@@ -195,7 +195,7 @@ def create_new_pairing(
 
     #if not (ahid_hrns in pmap):
     if not (ahid_hrns in pmap.keys()):
-        print(ahid_hrns + " not in pmap")
+        #print(ahid_hrns + " not in pmap")
         pmap[ahid_hrns] = {}
     if not (currency_hrns in pmap[ahid_hrns].keys()):
         pmap[ahid_hrns][currency_hrns] = account_fph
@@ -580,7 +580,8 @@ def create_import_currency(currency_hrns, steward_fph):
 #   | HRNS       | HRNS         | HRNS         |        |            |
 #
 
-def import_csv_dataset(fpath, primid_identifier, SC=","):
+def import_csv_dataset(fpath, primid_identifier):
+#def import_csv_dataset(fpath, primid_identifier, SC=","):
 
     # The uploaded file will have been given a randomly generated name and is
     # identified as fpath. The file will be deleted as soon as it has been
@@ -605,18 +606,45 @@ def import_csv_dataset(fpath, primid_identifier, SC=","):
     primid_fph, primid_hrns, etype, m = identify_entity(primid_identifier)
 
     report = ["New entities created:"] # a report of new entities created
-    errors = ["Errors:"] # a list of errors returned
+    errors = [] # a list of errors returned
 
     with open(fpath, "r") as csv_f:
         rows = csv_f.readlines()
 
+    # Identify separator character from first row of the CSV file:
+    #tries_left = 4
+    tries = 0
+    for c in [",", ":", ";", "\t"]:
+        tries += 1
+        if tries == 4:
+            errors.append("No valid separator character found")
+        row0 = rows[0].strip()
+        field = row0.split(c)
+        if len(field) == 5:
+            if not re_hrns.match(field[0]):
+                continue
+            if not re_hrns.match(field[1]):
+                 continue
+            if not re_hrns.match(field[2]):
+                continue
+            if not field[3].isnumeric():
+                continue
+            else:
+                break
+    SC = c
+
+    row_count = 0
     for row in rows:
+        row_count += 1
         field = row.split(SC)
+        if len(field) != 5:
+            errors.append("Row " + str(row_count) + ": Wrong number of field")
+            return report, errors
         currency_hrns_ = field[0].strip("\"")
         payer_ahid_hrns = field[1].strip("\"") # payer *ahid*
         payee_ahid_hrns = field[2].strip("\"") # payer *ahid*
         amount = int(100*float(field[3].strip("\"")))
-        annotation = field[4]
+        annotation = field[4].strip()
 
         if currency_hrns_[0] == "@": # absolute identifier path
             currency_hrns_ = currency_hrns_.lstrip("@")

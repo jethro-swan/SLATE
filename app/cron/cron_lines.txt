@@ -1,0 +1,2 @@
+# Run the SLATE CSV import script every minute
+* * * * * /home/slate/SLATE/app/cron/qimport.py

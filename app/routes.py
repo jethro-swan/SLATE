@@ -15,6 +15,9 @@ from datetime import datetime, date
 
 from app.core.constants import NSS
 from app.core.constants import PAYMENTS_DB
+from app.core.constants import SLATE_TEMP
+from app.core.constants import IMPORT_QUEUE
+
 #from app.core.constants import SLATE_EXPORT, SLATE_IMPORT
 
 from app.core.fph_hrns_maps import hrns_to_fph, fph_to_hrns
@@ -43,12 +46,15 @@ from app.core.slate_core import authenticate_primid_email
 from app.core.slate_core import get_hub_mode
 from app.core.slate_core import get_version
 from app.core.slate_core import add_stewardship, remove_steward
+from app.core.slate_core import random_filename
 
 from app.core.omtrad import retrieve_pmap
 from app.core.omtrad import create_new_pairing
 from app.core.omtrad import get_ahid_primid
 from app.core.omtrad import retrieve_pairing_account_fph
 from app.core.omtrad import ah_payment
+from app.core.omtrad import import_csv_dataset
+from app.core.omtrad import is_ancestor
 
 from app.core.slate_session import create_slate_session_db
 from app.core.slate_session import session_save_currencies_available
@@ -716,11 +722,6 @@ def login_reset(user_id, token):
 
     # Hub operational mode (read from environment variable HUB_MODE)
     hub_mode = get_hub_mode()
-    #version = get_version()()
-
-    #version = get_version()()
-
-
 
     primary_identity_fph, \
     primary_identity_hrns, \
@@ -948,7 +949,7 @@ def new_home():
 
 
 #
-@app.route("/home_ahc", methods = ["GET", "POST"])
+@app.route("/home_ahc", methods=["GET", "POST"])
 @login_required
 def home_ahc():
 
@@ -986,10 +987,6 @@ def home_ahc():
     stewardships_list, m = list_stewardships(primary_identity_fph)
 
     pmap_t, m = retrieve_pmap(primary_identity_fph)
-
-#    print()
-#    print(pmap_t)
-#    print()
 
     p_rows = []
 
@@ -1134,7 +1131,8 @@ def home():
 
     # Hub operational mode (read from environment variable HUB_MODE)
     hub_mode = get_hub_mode()
-    #version = get_version()()
+    if hub_mode == "omtrad":
+        return redirect("/home_ahc")
 
     page = "home"
     if "previous_page" in session: # already active
@@ -4457,10 +4455,13 @@ def create_currency():
 #@app.route("/create_ahid/<owner_fph>", methods = ["GET", "POST"])
 @app.route("/create_pairing/<owner_fph>", methods = ["GET", "POST"])
 @login_required
-def create_ahid(owner_fph = ""):
+def create_pairing(owner_fph = ""):
 
     # Hub operational mode (read from environment variable HUB_MODE)
     hub_mode = get_hub_mode()
+    if hub_mode != "omtrad":
+        flash("Invalid opertional mode for this endpoint")
+        return redirect("/home")
 
     page = "create_pairing"
     previous_page = session["previous_page"]
@@ -4489,15 +4490,15 @@ def create_ahid(owner_fph = ""):
         flash("This endpoint is not valid in the current mode.")
         return redirect("/home")
 
-    primary_identity_fph, \
-    primary_identity_hrns, \
-    primary_identity_type, \
+    primid_fph, \
+    primid_hrns, \
+    primid_type, \
     m = identify_entity(current_user.get_id())
 
     # In omtrad mode the *working identity* is always the *primary identity*.
-    working_identity_fph = primary_identity_fph
-    working_identity_hrns = primary_identity_hrns
-    working_identity_type = primary_identity_type
+    working_identity_fph = primid_fph
+    working_identity_hrns = primid_hrns
+    working_identity_type = primid_type
 
     form = PairingCreateForm()
 
@@ -4506,7 +4507,12 @@ def create_ahid(owner_fph = ""):
         ahid_hrns = form.ahid_hrns.data
         if not re_hrns.match(ahid_hrns):
             flash(ahid_hrns + " is not a valid identifier string")
-            return redirect("/create_ahid/" + owner_fph)
+            return redirect("/create_pairing/" + owner_fph)
+            #return redirect("/create_ahid/" + owner_fph)
+        if not is_ancestor(ahid_hrns, owner_hrns):
+            flash(ahid_hrns + " is not in private namespace of " + owner_hrns)
+            return redirect("/create_pairing/" + owner_fph)
+            #return redirect("/create_ahid/" + owner_fph)
 
         currency_id = form.currency_id.data
 
@@ -4520,7 +4526,8 @@ def create_ahid(owner_fph = ""):
         if etype !=  "currency":
             flash(currency_id + " is not a currency")
             #return redirect("/home")
-            return redirect("/create_ahid/" + owner_fph)
+            return redirect("/create_pairing/" + owner_fph)
+            #return redirect("/create_ahid/" + owner_fph)
 
         currency_fph, \
         currency_hrns, \
@@ -4551,8 +4558,8 @@ def create_ahid(owner_fph = ""):
         version = get_version(),
         form = form,
         primary_identity_type = "login identity",
-        primary_identity_fph = primary_identity_fph,
-        primary_identity_hrns = primary_identity_hrns,
+        primary_identity_fph = primid_fph,
+        primary_identity_hrns = primid_hrns,
         working_identity_fph = working_identity_fph,
         working_identity_hrns = working_identity_hrns,
         working_identity_type = working_identity_type,
@@ -4569,8 +4576,6 @@ def create_account(owner_fph):
 
     # Hub operational mode (read from environment variable HUB_MODE)
     hub_mode = get_hub_mode()
-    #version = get_version()()
-
 
     page = "create_account"
     previous_page = session["previous_page"]
@@ -5081,48 +5086,6 @@ def list_namespaces():
         available_namespaces = available_namespaces
     )
 
-# CSV import: sandbox payments set ============================================
-#
-# The screen is use to import a set of payments for sandbox purposes (as CSV),
-# each row having the format:
-#   payer_account:payee_account:amount:annotation
-# The form used to import the CSV file provides fields for
-# - the *namespace* in which any new *accounts* will all be created
-# - the *currency* of these accounts
-# Any *accounts* not already registered are created on the fly in the
-# *namespace* specified.
-# All *accounts* listed in the file belong to the agent importing it.
-
-@app.route("/import/payments_set")
-@login_required
-def import_payments_set():
-
-    # Hub operational mode (read from environment variable HUB_MODE)
-    hub_mode = get_hub_mode()
-    #version = get_version()()
-
-
-    page = "sandbox_payment_set_import"
-    previous_page = session["previous_page"]
-    session["previous_page"] = page
-
-    group = "home" # Used to control top menu behaviour.
-
-    namespace_steward = True
-    currency_steward = True
-    paying = False
-    logged_in = current_user.is_authenticated
-
-    import_minimal_payment_set_as_csv(
-        owner_identifier,
-        currency_identifier,
-        namespace_identifier,
-        csv_file_path
-    )
-
-    return
-
-
 # add steward to entitity =====================================================
 @app.route("/steward/add/<entity_fph>", methods = ["GET", "POST"])
 @login_required
@@ -5458,121 +5421,76 @@ def export_currency_csv(currency_fph):
 
 
 #==============================================================================
-##
-
-@app.route('/upload/<filename>')
-@login_required
-def upload_csv(filename):
-    return send_from_directory(
-               os.path.join(app.config["UPLOAD_PATH"], current_user.get_id()),
-               filename
-           )
-
-
-#### TEST STUFF
-@app.route("/upload", methods = ["POST"])
-@login_required
-def upload(): ### TEST
-
-    # Hub operational mode (read from environment variable HUB_MODE)
-    hub_mode = get_hub_mode()
-    #version = get_version()()
+# CSV import: sandbox payments set ============================================
+#
+# The screen is use to import a set of payments for sandbox purposes (as CSV),
+# each row having the format:
+#   payer_account:payee_account:amount:annotation
+# The form used to import the CSV file provides fields for
+# - the *namespace* in which any new *accounts* will all be created
+# - the *currency* of these accounts
+# Any *accounts* not already registered are created on the fly in the
+# *namespace* specified.
+# All *accounts* listed in the file belong to the agent importing it.
 
 
-    page = "upload_csv"
-    previous_page = session["previous_page"]
-    session["previous_page"] = page
-    group = "home" # Used to control top menu behaviour.
-    logged_in = current_user.is_authenticated
-
-    primary_identity_fph, \
-    primary_identity_hrns, \
-    primary_identity_type, \
-    m = identify_entity(current_user.get_id())
-
-    if "working_identity" in session:
-        working_identity_fph, \
-        working_identity_hrns, \
-        working_identity_type, \
-        m = identify_entity(session["working_identity"])
+@app.route('/upload', methods=['POST'])
+def upload():
+    file = request.files['file']
+    if file:
+        filename = random_filename()
+        file.save(SLATE_TEMP + "/" + filename)
+        flash("CSV dataset imported")
+        return redirect("/import/dataset/" + filename)
     else:
-        working_identity_fph = primary_identity_fph
-        session["working_identity"] = working_identity_fph
-        working_identity_hrns = primary_identity_hrns
-        working_identity_type = primary_identity_type
-    working_identity_type = etype_to_adtype(working_identity_type)
-
-    form = FileUploadForm()
-    if form.validate_on_submit():
-        entity_type = form.entity_type.data,
-        csv_file = form.csv_file.data
+        flash("CSV dataset could not be imported")
+        return redirect("/import/dataset")
 
 
 
-    return render_template(
-        "csv_upload.html",
-        title = "Account",
-        form = form,
-        page = page,
-        group = group,
-        hub_mode = hub_mode,
-        version = get_version(),
-        logged_in = logged_in,
-        primary_identity_type = "login identity",
-        primary_identity_fph = primary_identity_fph,
-        primary_identity_hrns = primary_identity_hrns,
-        working_identity_fph = working_identity_fph,
-        working_identity_hrns = working_identity_hrns,
-        working_identity_type = working_identity_type
-    )
-
-
-#==============================================================================
-##
-
-@app.route("/import/dataset", methods = ["POST"])
-@login_required
-def import_dataset():
-
+#@app.route(
+#    "/importing/<file>", defaults={"file": None}, methods=["GET", "POST"]
+#)
+@app.route(
+    "/importing/<file>", methods=["GET", "POST"]
+)
+def importing(file):
     # Hub operational mode (read from environment variable HUB_MODE)
     hub_mode = get_hub_mode()
     if hub_mode != "omtrad":
-        flash("This endpoint is for use only in omtrad mode")
+        flash("You are working in the wrong mode to use this import function")
         return redirect("/home_ahc")
-
-    page = "import_csv"
+    page = "dataset_import"
     previous_page = session["previous_page"]
     session["previous_page"] = page
     group = "home" # Used to control top menu behaviour.
-    logged_in = current_user.is_authenticated
-
     primary_identity_fph, \
     primary_identity_hrns, \
     primary_identity_type, \
     m = identify_entity(current_user.get_id())
-
     working_identity_fph = primary_identity_fph
-    session["working_identity"] = working_identity_fph
     working_identity_hrns = primary_identity_hrns
-    working_identity_type = primary_identity_type
-
-    uploaded_file = request.files['csv_file']
-    if uploaded_file.filename != "":
-        uploaded_file.save(uploaded_file.filename)
-
-        field_separator = ","
-        csv_file = "quoggenzocker"
-        print("CSV file = " + csv_file)
-        print("field_separator = " + field_separator)
-
-    return redirect("/home_ahc")
-
-
-
+    session["working_identity"] = working_identity_fph
+    logged_in = current_user.is_authenticated
+    print(file)
+    if file:
+        print("\nGroucho")
+        tfpath = SLATE_TEMP + "/" + file
+        if os.path.exists(tfpath):
+            print("Chico")
+            flash("Please wait while the CSV file is being processed ...")
+            report, errors = import_csv_dataset(tfpath, primary_identity_fph)
+            if len(errors) > 0:
+                for line in errors:
+                    flash(line)
+            os.unlink(tfpath)
+            flash("Processing completed")
+        return redirect("/home_ahc")
+    else:
+        return redirect("/home_ahc")
     return render_template(
-        "csv_upload.html",
-        title = "Account",
-        form = form,
+        "dataset_importing.html",
+        title = "Processing import of CSV payment set",
         page = page,
         group = group,
         hub_mode = hub_mode,
@@ -5582,59 +5500,49 @@ def import_dataset():
         primary_identity_fph = primary_identity_fph,
         primary_identity_hrns = primary_identity_hrns,
         working_identity_fph = working_identity_fph,
-        working_identity_hrns = working_identity_hrns,
-        working_identity_type = working_identity_type
+        working_identity_hrns = working_identity_hrns
     )
 
-
-
-
-
-@app.route("/import/payment_set", methods = ["GET", "POST"])
+#@app.route("/import/dataset/<filename>", methods = ["GET", "POST"])
+@app.route("/import/dataset", methods = ["GET", "POST"])
 @login_required
-def import_payment_set(): ### TEST
-
+def import_payment_set():
     # Hub operational mode (read from environment variable HUB_MODE)
     hub_mode = get_hub_mode()
-    #version = get_version()()
-
-
-    page = "import_csv_payment_set"
+    if hub_mode != "omtrad":
+        flash("You are working in the wrong mode to use this import function")
+        return redirect("/home_ahc")
+    page = "dataset_import"
     previous_page = session["previous_page"]
     session["previous_page"] = page
     group = "home" # Used to control top menu behaviour.
-    logged_in = current_user.is_authenticated
-
     primary_identity_fph, \
     primary_identity_hrns, \
     primary_identity_type, \
     m = identify_entity(current_user.get_id())
+    working_identity_fph = primary_identity_fph
+    working_identity_hrns = primary_identity_hrns
+    session["working_identity"] = working_identity_fph
+    logged_in = current_user.is_authenticated
 
-    if "working_identity" in session:
-        working_identity_fph, \
-        working_identity_hrns, \
-        working_identity_type, \
-        m = identify_entity(session["working_identity"])
-    else:
-        working_identity_fph = primary_identity_fph
-        session["working_identity"] = working_identity_fph
-        working_identity_hrns = primary_identity_hrns
-        working_identity_type = primary_identity_type
-    working_identity_type = etype_to_adtype(working_identity_type)
-
-    form = CSVImportForm()
-    if form.validate_on_submit():
-        field_separator = form.field_separator.data,
-        csv_file = form.csv_file.data
-
-
-
-
+    if request.method == 'POST':
+        if "csv_file" in request.files:
+            file = request.files["csv_file"]
+            filename = random_filename()
+            tfpath = SLATE_TEMP + "/" + filename
+            file.save(tfpath)
+            with open(IMPORT_QUEUE, "a") as iqf:
+                iqf.write(primary_identity_fph + ":" + filename + "\n")
+            flash("The CSV file has been added to the import queue.")
+            return redirect("/home_ahc")
+        else:
+            flash("No file uploaded")
+            return redirect("/dataset/import")
 
     return render_template(
-        "csv_payment_set_import.html",
+        "dataset_import.html",
         title = "Import CSV payment set",
-        form = form,
+        form = CSVImportForm(),
         page = page,
         group = group,
         hub_mode = hub_mode,
@@ -5644,9 +5552,9 @@ def import_payment_set(): ### TEST
         primary_identity_fph = primary_identity_fph,
         primary_identity_hrns = primary_identity_hrns,
         working_identity_fph = working_identity_fph,
-        working_identity_hrns = working_identity_hrns,
-        working_identity_type = working_identity_type
+        working_identity_hrns = working_identity_hrns
     )
+
 
 #==============================================================================
 

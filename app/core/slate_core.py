@@ -13,6 +13,7 @@ from app.core.constants import VERSION
 
 from app.core.common import filename_timestamp as timestamp
 from app.core.common import nshash
+from app.core.common import unixtime_str
 
 from app.core.fph_hrns_maps import hrns_to_fph, fph_to_hrns, create_maps
 from app.core.fph_hrns_maps import delete_fph_from_map
@@ -105,7 +106,7 @@ def split_hrns(identifier_hrns):
     names = identifier_hrns.split(".")
     name = names.pop(0)
     parent_namespace_hrns = ".".join(names).strip(".")
-    print(name + " | " + parent_namespace_hrns)
+    #print(name + " | " + parent_namespace_hrns)
     return name, parent_namespace_hrns
 
 
@@ -660,8 +661,12 @@ def add_account_to_currency(account_fph, currency_fph):
     return
 
 
+
 def list_currency_accounts(currency_id):
-    currency_fph, currency_hrns, etype, m = identify_entity(currency_id)
+    currency_fph, \
+    currency_hrns, \
+    etype, \
+    m = identify_entity(currency_id)
     with sqlite3.connect(ENTITIES_DB) as conn:
         cursor = conn.cursor()
         cursor.execute(
@@ -670,7 +675,7 @@ def list_currency_accounts(currency_id):
         )
         results = cursor.fetchall()
         cursor.close()
-        print(results)
+        #print(results)
     if results is not None:
         accounts = []
         for result in results:
@@ -2683,3 +2688,9 @@ def hrns_to_name_and_namespace(hrns):
     if not namespace_fph:
         return "", "", "", hrns + " does not include a valid parent namespace"
     return name, namespace_fph, namespace_hrns
+
+
+
+
+def random_filename():
+    return nshash(unixtime_str())
