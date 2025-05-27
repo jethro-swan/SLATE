@@ -7,7 +7,8 @@ body {
   background: #f0f4f0;
   /* max-width: 720px; */
   /* max-width: 640px; */
-  max-width: 400px;
+  /* max-width: 400px; */
+  padding: 5px;
 }
 
 .small {
@@ -292,6 +293,8 @@ td.msg-box {
 table {
   border: 1px solid #c0c0c0;
   border-spacing: 0;
+  /* margin: 5px; */
+  /* width: 100%; */
 }
 td {
   font-size: 1.0em; background: #ffffff;
