@@ -17,11 +17,12 @@ documentation/*
 notes/*
 
 
+tools/regenerate_bb.py
+
 
 # Random debris ...
 
 # Also exclude any obsolete versions:
-_3.8_venv
 
 app/templates/probably_not_needed
 app/core/obsolete
@@ -41,7 +42,6 @@ whereused.txt
 coredefs.sh
 end_points.txt
 deflist*
-seed_primid_details.txt
 tools/islands31
 others
 obsolete
