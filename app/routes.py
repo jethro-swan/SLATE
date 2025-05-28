@@ -103,7 +103,7 @@ from app.core.display import etype_to_adtype
 
 from app.core.csv_import import import_minimal_payment_set_as_csv
 
-from app.site_configuration import site_config
+#from app.site_configuration import site_config
 
 #from app import bcrypt # added 2024-11-10
 

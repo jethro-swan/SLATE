@@ -69,7 +69,7 @@ sudo mkdir -p /var/slate/$DATASET/flags
 sudo mkdir -p /var/slate/$DATASET/img
 sudo chown -R slate:slate /var/slate/$DATASET
 #sudo chmod -R 700 /var/slate/$DATASET
-sudo chmod -R 777 /var/slate/$DATASET
+sudo chmod -R 775 /var/slate/$DATASET
 
 ##sudo mkdir -p /srv/slate/$DATASET/{export,import}
 ##sudo mkdir -p /srv/slate/$DATASET/export/qr_codes
