@@ -15,8 +15,7 @@ from datetime import datetime, date
 
 from app.core.constants import NSS
 from app.core.constants import PAYMENTS_DB
-from app.core.constants import SLATE_TEMP
-from app.core.constants import IMPORT_QUEUE
+from app.core.constants import SLATE_TEMP, IMPORT_QUEUE, IMPORTING
 
 #from app.core.constants import SLATE_EXPORT, SLATE_IMPORT
 
@@ -946,12 +945,68 @@ def new_home():
 #            stewardships = stewardships
         )
 
+@app.route("/hold")
+@login_required
+def hold():
+
+    # Hub operational mode (read from environment variable HUB_MODE)
+    hub_mode = get_hub_mode()
+    if hub_mode != "omtrad":
+        flash("Operational mode invalid for this endpoint")
+        return redirect("/home")
+
+    page = "hold"
+    if "previous_page" in session: # already active
+        previous_page = session["previous_page"]
+    else: # initializing
+        previous_page = "home_ahc"
+    session["previous_page"] = page
+
+    group = "home" # Used to control top menu behaviour.
+
+    namespace_steward = False
+    currency_steward = False
+    paying = False
+    logged_in = current_user.is_authenticated
+
+    primary_identity_fph, \
+    primary_identity_hrns, \
+    primary_identity_type, \
+    m = identify_entity(current_user.get_id())
+
+    # In omtrad mode, the working *identity* is always the *primid*.
+    working_identity_fph = primary_identity_fph
+    working_identity_hrns = primary_identity_hrns
+    working_identity_type = primary_identity_type
+
+    return render_template(
+        "hold.html",
+        title = "Hold",
+        page = page,
+        group = group,
+        hub_mode = hub_mode,
+        version = get_version(),
+        logged_in = logged_in,
+        primary_identity_type = "login identity",
+        primary_identity_fph = primary_identity_fph,
+        primary_identity_hrns = primary_identity_hrns,
+        working_identity_fph = working_identity_fph,
+        working_identity_hrns = working_identity_hrns,
+        working_identity_type = working_identity_type,
+    )
 
 
-#
+
+
 @app.route("/home_ahc", methods=["GET", "POST"])
 @login_required
 def home_ahc():
+
+    # If a dataset import if in progress, do not allow any FPH>HRNS or
+    # HRNS>FPH mapping operations to be initiated by a browser refresh.
+    # Instead, display a holding page.
+    if os.path.exists(IMPORTING):
+        return redirect("/hold")
 
     # Hub operational mode (read from environment variable HUB_MODE)
     hub_mode = get_hub_mode()

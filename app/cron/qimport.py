@@ -2,20 +2,29 @@
 #
 # This file is run as a cron task
 
-import os
+import os, sys
 from pathlib import Path
 
 from app.core.slate_core import split_hrns
 from app.core.omtrad import import_csv_dataset
 from app.core.common import ledger_timestamp
-from app.core.constants import IMPORT_QUEUE, SLATE_TEMP
+from app.core.constants import IMPORT_QUEUE, IMPORTING, SLATE_TEMP
 
-import_flag = SLATE_TEMP + "/" + "importing"
+from app.core.common import unixtime_str
+
 # If another import operation is in progress, exits.
-if os.path.exists(import_flag):
-    sys.exit(0)
+
+if not os.path.exists(IMPORT_QUEUE):
+    sys.exit()
+if os.path.exists(IMPORTING):
+    if not os.path.exists(IMPORT_QUEUE):
+        os.unlink(IMPORTING)
+        sys.exit()
+    if os.path.getsize(IMPORT_QUEUE) == 0:
+        os.unlink(IMPORTING)
+        sys.exit()
 # Otherwise, block any other import operation for the time being.
-Path(import_flag).touch()
+Path(IMPORTING).touch()
 
 with open(IMPORT_QUEUE, "r") as iqf:
     niq = iqf.readline() # read one line
@@ -43,4 +52,4 @@ if niq:
         for line in errors:
             import_log.write(line + "\n")
 
-os.unlink(import_flag)
+os.unlink(IMPORTING)

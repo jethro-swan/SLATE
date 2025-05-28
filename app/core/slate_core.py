@@ -98,16 +98,13 @@ def get_version():
     return version
 
 #==============================================================================
-## Separate the entity's *name* from the identifier of its parent *namespace*:
-#
-def split_hrns(identifier_hrns):
-    if not re_hrns.match(identifier_hrns):
-        return "", ""
-    names = identifier_hrns.split(".")
-    name = names.pop(0)
-    parent_namespace_hrns = ".".join(names).strip(".")
-    #print(name + " | " + parent_namespace_hrns)
-    return name, parent_namespace_hrns
+# Global data, flags, etc.
+
+
+
+
+
+
 
 
 
@@ -2690,7 +2687,29 @@ def hrns_to_name_and_namespace(hrns):
     return name, namespace_fph, namespace_hrns
 
 
+#==============================================================================
+## Separate the entity's *name* from the identifier of its parent *namespace*:
+#
+def split_hrns(identifier_hrns):
+    if not re_hrns.match(identifier_hrns):
+        return "", ""
+    names = identifier_hrns.split(".")
+    name = names.pop(0)
+    parent_namespace_hrns = ".".join(names).strip(".")
+    #print(name + " | " + parent_namespace_hrns)
+    return name, parent_namespace_hrns
+
+
+#==============================================================================
 
 
 def random_filename():
     return nshash(unixtime_str())
+
+
+
+#==============================================================================
+
+
+
+#==============================================================================

@@ -614,35 +614,24 @@ def import_csv_dataset(fpath, primid_identifier):
     # Identify separator character from first row of the CSV file:
     #tries_left = 4
     tries = 0
+    row0 = rows[0].strip()
     for c in [",", ":", ";", "\t"]:
-        tries += 1
-        if tries == 4:
-            errors.append("No valid separator character found")
-        row0 = rows[0].strip()
         field = row0.split(c)
         if len(field) == 5:
-            if not re_hrns.match(field[0]):
-                continue
-            if not re_hrns.match(field[1]):
-                 continue
-            if not re_hrns.match(field[2]):
-                continue
-            if not field[3].isnumeric():
-                continue
-            else:
-                break
-    SC = c
+            SC = c
+            break
+    #print("SC = " + c)
 
     row_count = 0
     for row in rows:
         row_count += 1
         field = row.split(SC)
         if len(field) != 5:
-            errors.append("Row " + str(row_count) + ": Wrong number of field")
+            errors.append("Row " + str(row_count) + ": Wrong number of fields")
             return report, errors
         currency_hrns_ = field[0].strip("\"")
-        payer_ahid_hrns = field[1].strip("\"") # payer *ahid*
-        payee_ahid_hrns = field[2].strip("\"") # payer *ahid*
+        payer_ahid_hrns = field[1].strip("\"") + "." + primid_hrns
+        payee_ahid_hrns = field[2].strip("\"") + "." + primid_hrns
         amount = int(100*float(field[3].strip("\"")))
         annotation = field[4].strip()
 

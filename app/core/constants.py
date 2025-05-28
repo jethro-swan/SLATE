@@ -9,9 +9,11 @@ SLATE_DATA_ROOT     = "/var/slate/active/data/"
 SLATE_DATA          = "/var/slate/active"
 SLATE_TEMP          = "/var/slate/active/temp"
 IMPORT_QUEUE        = "/var/slate/active/temp/import_queue"
+IMPORTING           = "/var/slate/active/temp/importing"
 #SLATE_EXPORT        = "/srv/slate/export/"
 #SLATE_IMPORT        = "/srv/slate/import/"
 #SLATE_QR_CODES      = "/srv/slate/export/qr_codes/"
+GRAPHS              = "/home/slate/SLATE/app/static/graphs/"
 
 #SLATE_FLAGS         = SLATE_DATA + "flags/"     # The trailing / is important
 #SLATE_TREES         = SLATE_DATA + "roots/"     # in this group.

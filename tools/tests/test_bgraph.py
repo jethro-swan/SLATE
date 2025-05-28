@@ -4,9 +4,10 @@ from app.core.slate_core import list_currency_accounts
 from app.core.slate_core import get_account_currency
 from app.core.slate_core import get_account_specific_properties
 from app.core.slate_core import identify_entity
+from app.core.constants import GRAPHS
 
 
-test_currency = "hrs.cc.bb.cc"
+test_currency = "cc"
 
 account_fph_list = list_currency_accounts(test_currency)
 
@@ -14,47 +15,51 @@ account_fph_list = list_currency_accounts(test_currency)
 #accounts = []
 balances = []
 sum = 0
-
+a = []
+x_ = 1
+b_max = b_min = 0
 for account_fph in account_fph_list:
-
     currency_fph, \
     owner_fph, \
     ahid_fph, \
     balance, \
     volume, \
     m = get_account_specific_properties(account_fph)
-
     balances.append(balance)
-
-    #print(balance)
-
+    if balance < b_min:
+        b_min = balance
+    if balance > b_max:
+        b_max = balance
+    a.append(str(x_))
+    x_ += 1
 balances.sort()
 
 for balance in balances:
     print(balance)
 
+print(a)
+
 # importing the modules
-from bokeh.plotting import figure, output_file, show
+from bokeh.plotting import figure, show
 
-# file to save the model
-output_file("/var/www/gfg.html")
+p = figure(
+        x_range = a,
+        height = 600,
+        toolbar_location = None,
+        tools = ""
+    )
 
-# instantiating the figure object
-graph = figure(title = "Bokeh Vertical Bar Graph")
+p.vbar(
+    x = a,
+    top = balances,
+    width = 0.9
+)
 
-# x-coordinates to be plotted
-x = [1, 2, 3, 4, 5]
+#p.y_range.start = b_min
+#p.y_range.end = b_max
+p.x_range.range_padding = 0.0
+#p.xgrid.grid_line_color = None
+#p.legend.location = "top_center"
+#p.legend.orientation = "horizontal"
 
-# x-coordinates of the top edges
-top = [1, 2, 3, 4, 5]
-
-# width / thickness of the bars
-width = 0.5
-
-# plotting the graph
-graph.vbar(x,
-           top = top,
-           width = width)
-
-# displaying the model
-show(graph)
+show(p)
