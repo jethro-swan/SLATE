@@ -222,6 +222,9 @@ def create_new_pairing(
 #=============================================================================
 
 def get_ahid_primid(ahid_hrns):
+    # (1) Each *ahid* belongs to one *primid*
+    # (2) Each *primid* may have any number of *ahid*
+    # (3) A *primid* may belong to itself as an *ahid*
     ahid_fph, wom, etype, m = identify_entity(ahid_hrns)
     with sqlite3.connect(ENTITIES_DB) as conn:
         cursor = conn.cursor()
@@ -243,8 +246,9 @@ def get_ahid_primid(ahid_hrns):
         return ""
     if (result[0] != "ahid") and (result[1] != ahid_fph):
         return ""
-    else:
-        return result[1] # owner primid FPH
+#    else:
+#        return result[1] # owner *primid* FPH
+    return result[1] # owner *primid* FPH
 
 #=============================================================================
 

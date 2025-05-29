@@ -54,6 +54,7 @@ from app.core.omtrad import retrieve_pairing_account_fph
 from app.core.omtrad import ah_payment
 from app.core.omtrad import import_csv_dataset
 from app.core.omtrad import is_ancestor, is_in_private_namespace
+from app.core.omtrad import get_ahid_primid
 
 from app.core.slate_session import create_slate_session_db
 from app.core.slate_session import session_save_currencies_available
@@ -2372,7 +2373,8 @@ def pay_ahid(payer_ahid_fph, payment_currency_fph):
             return redirect(
                        "/pay_to_ahid/" + payer_ahid_fph + "/" + currency_fph
                    )
-        if etype != "ahid":
+        if not get_ahid_primid(payee_ahid_hrns):
+        #if etype != "ahid":
             flash("The payee specified is not an account-holder")
             return redirect(
                        "/pay_to_ahid/" + payer_ahid_fph + "/" + currency_fph
