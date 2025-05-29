@@ -40,7 +40,17 @@ for balance in balances:
 print(a)
 
 # importing the modules
+from bokeh.models import ColumnDataSource
+from bokeh.palettes import Bright6
 from bokeh.plotting import figure, show
+
+source = ColumnDataSource(
+            data = dict(
+                       a = a,
+                       balance = balances,
+                       color = Bright6
+                   )
+         )
 
 p = figure(
         x_range = a,
@@ -52,6 +62,7 @@ p = figure(
 p.vbar(
     x = a,
     top = balances,
+    line_color = "#ffffff",
     width = 0.9
 )
 

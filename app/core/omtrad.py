@@ -70,6 +70,9 @@ def is_ancestor(entity_hrns, ancestor_id):
 # ... used here primarily to determine whether the parent *namespace* for new
 # entities is the private *namespace* of the importing *primid".
 
+def is_in_private_namespace(entity_hrns, pn_id):
+    pn_fph, pn_hrns, etype, m = identify_entity(pn_id)
+    return is_ancestor(entity_hrns, pn_hrns) or (entity_hrns == pn_hrns)
 
 
 
@@ -232,7 +235,13 @@ def get_ahid_primid(ahid_hrns):
         )
         result = cursor.fetchone()
         cursor.close()
-    if (result is None) or (result[0] != "ahid") or (not result[2]):
+#    if (result is None) or (result[0] != "ahid") or (not result[2]):
+# 2025-05-29
+#    if result[1] == ahid_fph:
+#        return result[1] # *primid* serving as an *ahid*
+    if (result is None) or (not result[2]):
+        return ""
+    if (result[0] != "ahid") and (result[1] != ahid_fph):
         return ""
     else:
         return result[1] # owner primid FPH

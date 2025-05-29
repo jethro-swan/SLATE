@@ -49,11 +49,11 @@ from app.core.slate_core import random_filename
 
 from app.core.omtrad import retrieve_pmap
 from app.core.omtrad import create_new_pairing
-from app.core.omtrad import get_ahid_primid
+#from app.core.omtrad import get_ahid_primid
 from app.core.omtrad import retrieve_pairing_account_fph
 from app.core.omtrad import ah_payment
 from app.core.omtrad import import_csv_dataset
-from app.core.omtrad import is_ancestor
+from app.core.omtrad import is_ancestor, is_in_private_namespace
 
 from app.core.slate_session import create_slate_session_db
 from app.core.slate_session import session_save_currencies_available
@@ -3019,11 +3019,6 @@ def pay_agent_direct(payer_currency_fph, payer_identity_fph):
 
         return redirect("/home")
 
-
-
-
-
-
     return render_template(
         "pay_agent_direct.html",
         title = "Make a payment to an agent",
@@ -4564,7 +4559,8 @@ def create_pairing(owner_fph = ""):
             flash(ahid_hrns + " is not a valid identifier string")
             return redirect("/create_pairing/" + owner_fph)
             #return redirect("/create_ahid/" + owner_fph)
-        if not is_ancestor(ahid_hrns, owner_hrns):
+        if not is_in_private_namespace(ahid_hrns, owner_hrns):
+        #if not is_ancestor(ahid_hrns, owner_hrns):
             flash(ahid_hrns + " is not in private namespace of " + owner_hrns)
             return redirect("/create_pairing/" + owner_fph)
             #return redirect("/create_ahid/" + owner_fph)

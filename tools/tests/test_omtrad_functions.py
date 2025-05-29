@@ -27,3 +27,19 @@ if is_ancestor("bris.uk", "uk.cc"):
     print("yes")
 else:
     print("no")
+
+
+if is_in_private_namespace("aa.bb.cc", "bb.cc"):
+    print("yes")
+else:
+    print("no")
+
+if is_in_private_namespace("bb.cc", "bb.cc"):
+    print("yes")
+else:
+    print("no")
+
+if is_in_private_namespace("dd.cc", "bb.cc"):
+    print("yes")
+else:
+    print("no")
