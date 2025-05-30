@@ -16,7 +16,8 @@
       {{ form.namespace_id(size=20, placeholder="parent namespace") }}
     </div>
   </div>
-  <div style="float:left; margin:2px;">
+  {% if hub_mode != "omtrad" %}
+  <div style="float:left; margin:2px; clear:both;">
     <div>
       {{ form.prefix_symbol.label }}<br />
       {{ form.prefix_symbol(size=1) }} (any UTF-8 character)
@@ -25,13 +26,13 @@
       {{ form.suffix_symbol.label }}<br />
       {{ form.suffix_symbol(size=1) }} (any UTF-8 character)
     </div>
-  <div style="float:left; margin:2px;">
+  <div style="float:left; margin:2px; clear:both;">
     <div>
       {{ form.default_account_name.label }}<br />
       {{ form.default_account_name(size=10, placeholder="default name") }}
     </div>
   </div>
-  <div style="float:left; margin:2px;">
+  <div style="float:left; margin:2px; clear:both;">
     <div>
       <p>
         {{ form.acct_same_name }} {{ form.acct_same_name.label }}
@@ -42,9 +43,12 @@
       <p>
         {{ form.acct_immdt_crtn }} {{ form.acct_immdt_crtn.label }}
       </p>
-      <p>
-        {{ form.create_currency() }}
-      </p>
+    </div>
+  </div>
+  {% endif %}
+  <div style="float:left; margin:2px; clear:both;">
+    <div>
+      <p>{{ form.create_currency() }}</p>
     </div>
   </div>
 

@@ -1218,8 +1218,9 @@ def new_currency(
     if not re_slatename.match(currency_name):
         return "", "", currency_name + " is not a valid name"
 
-    if not re_slatename.match(default_account_name):
-        return "", "", default_account_name + " is not a valid name"
+    if default_account_name:
+        if not re_slatename.match(default_account_name):
+            return "", "", default_account_name + " is not a valid name"
 
     currency_hrns = currency_name + "." + parent_namespace_hrns
 

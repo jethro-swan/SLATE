@@ -357,10 +357,12 @@ class CurrencyCreateForm(FlaskForm):
 #                        validators=[DataRequired("required")]
 #                      )
     prefix_symbol   = StringField(
-                        "currency prefix symbol"
+                        "currency prefix symbol",
+                        default=""
                       )
     suffix_symbol   = StringField(
-                        "currency suffix symbol"
+                        "currency suffix symbol",
+                        default=""
                       )
     # Account creation policies:
     acct_same_name  = BooleanField(
@@ -372,7 +374,8 @@ class CurrencyCreateForm(FlaskForm):
                         default="checked"
                       )
     default_account_name = StringField(
-                             "Default name for accounts in this currency."
+                             "Default name for accounts in this currency.",
+                             default=""
                            )
     acct_immdt_crtn = BooleanField(
                         "Allow immediate creation of an account.",
