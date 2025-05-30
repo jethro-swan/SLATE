@@ -199,7 +199,6 @@ def create_entities_db():
         )
         # Create secids table:
         #
-        #
         cursor.execute(
             """
             CREATE TABLE IF NOT EXISTS secids (

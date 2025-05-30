@@ -223,8 +223,6 @@ def register():
 
     # Hub operational mode (read from environment variable HUB_MODE)
     hub_mode = get_hub_mode()
-    #version = get_version()()
-
 
     #--------------------------------------------------------------------------
     # The following seven variables determine which of the registration form's
@@ -394,10 +392,7 @@ def register():
             log_event("error", "primid creation", m)
             flash(m)
             return redirect("/register")
-
-        # An initial *account* will now be created (in the new *primid*'s
-        # private *namespace*) using the default name associated with the
-        # specified *currency*.
+        flash(primid_hrns + " has been registered")
 
         currency_fph, \
         currency_hrns, \
@@ -413,23 +408,32 @@ def register():
             flash("The currency specified does not exist.")
             return redirect("/register")
 
-        account_fph, \
-        account_hrns, \
-        m = new_account(
-                default_account_name,
-                primid_fph,
-                primid_fph,
-                "", # *ahid_fph* not required here
-                currency_fph
-            )
-        if m:
-            log_event("error", "account creation", m)
-            flash("The account cannot be created. See error log.")
-            return redirect("/register")
+        # If in omtrad mode, an initial *currency*|*ahid* pairing is created
+        # using the new *login identity* (*primid*) as the *ahid*:
+        if hub_mode == "omtrad":
+            a_fph = create_new_pairing(primid_fph, primid_hrns, currency_hrns)
+            return redirect("/")
 
-        flash(primid_hrns + " has been registered")
-        flash(account_hrns + " has been created in currency " + currency_hrns)
-        return redirect("/")
+
+        # Otherwise, an initial *account* is created (in the new *primid*'s
+        # private *namespace*) using the default name associated with the
+        # specified *currency*.
+        else:
+            account_fph, \
+            account_hrns, \
+            m = new_account(
+                    default_account_name,
+                    primid_fph,
+                    primid_fph,
+                    "", # *ahid_fph* not required here
+                    currency_fph
+                )
+            if m:
+                log_event("error", "account creation", m)
+                flash("The account cannot be created. See error log.")
+                return redirect("/register")
+            flash(account_hrns + " created in currency " + currency_hrns)
+            return redirect("/")
 
     # If control has reached this point then the new *primid* has been created.
     # Its SSH CLI access token has been recorded already and will be visible to
