@@ -19,9 +19,7 @@ hidden.
     <td class="h"><b>currency</b></td>
     <td class="h"><b>account-holder</b></td>
     <td class="h"><b>balance</b></td>
-    <!--
     <td class="h"><b>volume</b></td>
-    -->
     <td class="h"></td>
     <!--
     <td class="h"><b>annotation</b></td>
@@ -29,8 +27,7 @@ hidden.
   </tr>
   {% for p_row in p_rows %}<!-- list of dictionaries -->
   <tr>
-    {% if not p_row.blank_currency_cell %}
-    <td align="left" rowspan="{{ p_row.currency_count }}">
+    <td align="left">
       {% if p_row.primid_currency_steward %}
       <a href="/currency/{{ p_row.currency_fph }}">
         {{ p_row.currency_hrns }}
@@ -39,7 +36,6 @@ hidden.
         {{ p_row.currency_hrns }}
       {% endif %}
     </td>
-    {% endif %}
     <td align="left">
       <a href="/pay_to_ahid/{{ p_row.ahid_fph }}/{{ p_row.currency_fph }}">
         {{ p_row.ahid_hrns }}
@@ -52,11 +48,9 @@ hidden.
     {% endif %}
      {{ p_row.balance }}
     </td>
-    <!--
     <td align="right">
       {{ p_row.volume }}
     </td>
-    -->
     <td>
       <a href="/journal/{{ p_row.ahid_fph }}/{{ p_row.currency_fph }}">*</a>
     </td>

@@ -1044,20 +1044,111 @@ def home_ahc():
     working_identity_hrns = primary_identity_hrns
     working_identity_type = primary_identity_type
 
+
+
+
     stewardships_list, m = list_stewardships(primary_identity_fph)
 
     pmap_t, m = retrieve_pmap(primary_identity_fph)
 
+
+
+
+    # List all *ahid*:
+    identity_list = []
+    for ahid_hrns in pmap_t.keys():
+        identity_list.append(ahid_hrns)
+
+    total_number_of_messages = 0
+    total_number_of_indelible_messages = 0
+    # List identities for which messages are available:
+    message_recipients_list = [] # (list of dictionaries for template)
+    for identity_fph in identity_list:
+        number_of_messages, \
+        number_of_indelible_messages = messages_available(identity_fph)
+
+#        print("number_of_messages = " + str(number_of_messages))
+#        print(
+#            "number_of_indelible_messages = " \
+#            + str(number_of_indelible_messages)
+#        )
+        total_number_of_messages += number_of_messages
+        total_number_of_indelible_messages += number_of_indelible_messages
+
+    if total_number_of_messages > 0:
+        number_of_messages = str(total_number_of_messages)
+    else:
+        number_of_messages = ""
+    if total_number_of_indelible_messages > 0:
+        number_of_indelible_messages = str(total_number_of_indelible_messages)
+    else:
+        number_of_indelible_messages = ""
+
+#    number_of_wid_messages, d = messages_available(working_identity_fph)
+#    number_of_messages = number_of_wid_messages + number_of_primid_messages
+#    if number_of_messages > 0:
+#        number_of_messages = str(number_of_messages)
+#    else:
+#        number_of_messages = ""
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
     p_rows = []
 
+    # First count the number of occurrences of each *currency*:
+    currency_count = {}
     for ahid_hrns in pmap_t.keys():
-#        print(ahid_hrns)
+        for currency_hrns in pmap_t[ahid_hrns].keys():
+            if currency_hrns in currency_count.keys():
+                currency_count[currency_hrns] += 1
+            else:
+                currency_count[currency_hrns] = 1
+    currency_displayed_already = {}
+    for currency_hrns in currency_count.keys():
+        currency_displayed_already[currency_hrns] = False
+
+    for ahid_hrns in pmap_t.keys():
         for currency_hrns in pmap_t[ahid_hrns].keys():
 
-#            print(" "*4 + currency_hrns)
-
             account_fph = pmap_t[ahid_hrns][currency_hrns]
-#            print(" "*8 + account_fph)
 
             account_exists, \
             account_active, \
@@ -1090,7 +1181,7 @@ def home_ahc():
             p_row["isneg"] = (account_balance < 0)
             p_row["prefix"] = prefix
             p_row["suffix"] = suffix
-            p_row["volume"] = integer_to_money_format(account_volume)
+            #p_row["volume"] = integer_to_money_format(account_volume)
             if currency_fph in stewardships_list:
                 p_row["primid_currency_steward"] = True
             else:
@@ -1098,17 +1189,13 @@ def home_ahc():
             p_row["currency_fph"] = currency_fph
             p_rows.append(p_row)
 
-
     # Sorting by *currency* and *ahid* (quick and dirty method)
-
     currencies_list = []
     for row in p_rows:
         currency = row["currency_hrns"]
         if not(currency in currencies_list):
             currencies_list.append(currency)
     currencies_list.sort()
-#    print(currencies_list)
-
     ahid_lists_dict = {}
     for currency in currencies_list:
         ahid_lists_dict[currency] = []
@@ -1117,49 +1204,19 @@ def home_ahc():
             if not(ahid in ahid_lists_dict[currency]):
                 ahid_lists_dict[currency].append(ahid)
         ahid_lists_dict[currency].sort()
-#    print(ahid_lists_dict)
-
     p_rows2 = []
     for currency in currencies_list:
         for ahid in ahid_lists_dict[currency]:
-#            print(currency + " : " + ahid)
             for row in p_rows:
                 if (row["currency_hrns"] == currency) and \
                    (row["ahid_hrns"] == ahid):
+                    if currency_displayed_already[currency]:
+                        row["blank_currency_cell"] = True
+                    else:
+                        row["blank_currency_cell"] = False
+                        row["currency_count"] = currency_count[currency]
+                        currency_displayed_already[currency] = True
                     p_rows2.append(row)
-
-#    for row in p_rows2:
-#        print(row)
-
-
-
-
-
-
-#    # TEST STUFF
-#    print()
-#    print(pmap_t)
-#    print()
-#    print("="*80)
-#    for ahid_hrns in pmap_t.keys():
-#        print(ahid_hrns)
-#        for currency_hrns in pmap_t[ahid_hrns].keys():
-#            print(" "*4 + currency_hrns)
-#            for ap in pmap_t[ahid_hrns][currency_hrns].keys():
-#                if ap:
-#                    print(" "*8 + "{0: <30}".format(ap) + " :: ", end="")
-#                    print(pmap_t[ahid_hrns][currency_hrns][ap])
-#    print("="*80)
-#    print()
-#
-#
-#    for p_row in p_rows:
-#        print(p_row)
-
-
-
-
-
 
     return render_template(
         "home_ahc.html",
@@ -2356,7 +2413,6 @@ def pay_ahid(payer_ahid_fph, payment_currency_fph):
     primary_identity_hrns, \
     primary_identity_type, \
     m = identify_entity(current_user.get_id())
-
     working_identity_fph = primary_identity_fph
     working_identity_hrns = primary_identity_hrns
     working_identity_type = primary_identity_type
@@ -2384,30 +2440,9 @@ def pay_ahid(payer_ahid_fph, payment_currency_fph):
                        "/pay_to_ahid/" + payer_ahid_fph + "/" + currency_fph
                    )
 
-#        currency_fph, \
-#        currency_hrns, \
-#        etype, \
-#        m = identify_entity(form.currency_id.data)
-
-        #amount = form.amount.data
-
-
         amount = int(round(float(form.amount.data)*100))
-
-
-
-#        print("amount = ", end="")
-#        print(amount)
-#        if not re_pvalue.match(amount):
-#            flash("The payment amount submitted is invalid")
-#            return redirect(
-#                       "/pay_to_ahid/" + payer_ahid_fph + "/" + currency_fph
-#                   )
-
         annotation = form.annotation.data
 
-
-        # MAKE PAYMENT HERE
         m = ah_payment(
                 payer_ahid_hrns,
                 payee_ahid_hrns,
@@ -2415,6 +2450,9 @@ def pay_ahid(payer_ahid_fph, payment_currency_fph):
                 amount,
                 annotation
             )
+        if m:
+            print(m)
+
 
         if hub_mode == "omtrad":
             return redirect("/home_ahc")
@@ -2556,6 +2594,15 @@ def journal(ahid_fph, currency_fph):
     primid_fph, \
     m = retrieve_pairing_account_fph(ahid_hrns, currency_fph)
 
+    account_exists, \
+    account_active, \
+    account_currency_fph, \
+    account_owner_fph, \
+    account_ahid_fph, \
+    account_balance, \
+    account_volume, \
+    m = account_status(account_fph)
+
     with sqlite3.connect(PAYMENTS_DB) as conn:
         cursor = conn.cursor()
         # Read transactions for specified currency:
@@ -2589,10 +2636,7 @@ def journal(ahid_fph, currency_fph):
         p_date = dt[0]
         p_time_ = dt[1].split(":")
         p_time_.pop()
-#        print(p_time_)
         p_time = ":".join(p_time_)
-#        print(p_time)
-
 
         payment_id = str(p[1]).zfill(8)
         payer_fph = p[2]
@@ -2649,7 +2693,8 @@ def journal(ahid_fph, currency_fph):
         ahid_hrns = ahid_hrns,
         currency_hrns = currency_hrns,
         journal_rows = journal_rows,
-        account_fph = account_fph
+        account_fph = account_fph,
+        account_volume = integer_to_money_format(account_volume)
     )
 
 #=============================================================================

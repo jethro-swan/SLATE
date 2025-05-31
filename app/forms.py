@@ -288,10 +288,11 @@ class SpecifyPayeeAccountHolderForm(FlaskForm):
                           validators=[DataRequired("required")]
                       )
     currency_id     = StringField("currency identifier")
-    amount          = DecimalField(
-                        "amount",
-                        validators=[DataRequired("required")]
-                      )
+    amount          = DecimalField("amount")
+#    amount          = DecimalField(
+#                        "amount",
+#                        validators=[DataRequired("required")]
+#                      )
     annotation      = TextAreaField("annotation")
     submit          = SubmitField("pay")
 

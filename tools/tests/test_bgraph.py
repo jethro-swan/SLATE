@@ -4,6 +4,7 @@ from app.core.slate_core import list_currency_accounts
 from app.core.slate_core import get_account_currency
 from app.core.slate_core import get_account_specific_properties
 from app.core.slate_core import identify_entity
+from app.core.slate_core import random_filename
 from app.core.constants import GRAPHS
 
 
@@ -43,6 +44,12 @@ print(a)
 from bokeh.models import ColumnDataSource
 from bokeh.palettes import Bright6
 from bokeh.plotting import figure, show
+from bokeh.plotting import figure
+from bokeh.io import export_png
+
+plotname = random_filename() + ".png"
+imgpath = GRAPHS + plotname
+print(imgpath)
 
 source = ColumnDataSource(
             data = dict(
@@ -54,10 +61,14 @@ source = ColumnDataSource(
 
 p = figure(
         x_range = a,
+        width = 600,
         height = 600,
         toolbar_location = None,
         tools = ""
     )
+
+p.xaxis.visible = False
+p.yaxis.visible = False
 
 p.vbar(
     x = a,
@@ -74,3 +85,4 @@ p.x_range.range_padding = 0.0
 #p.legend.orientation = "horizontal"
 
 show(p)
+export_png(p, filename = imgpath)

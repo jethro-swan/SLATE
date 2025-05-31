@@ -131,7 +131,6 @@ def create_new_pairing(
     # If the *ahid* does not exist already it must be created:
     #
     ahid_fph, ahid_hrns_, etype, m = identify_entity(ahid_hrns)
-#    print(">>> " + ahid_hrns + ":" + currency_hrns)
     if ahid_fph == "": # does not exist
         ahid_name, parent_hrns_ = split_hrns(ahid_hrns)
         parent_fph, parent_hrns, etype, m = identify_entity(parent_hrns_)
@@ -378,7 +377,6 @@ def ah_payment(
     payer_account_balance -= amount
     payee_account_balance += amount
 
-    # Added 2025-03-18
     volume_increase = abs(amount)
     payer_volume += volume_increase
     payee_volume += volume_increase
@@ -418,8 +416,6 @@ def ah_payment(
 
     payer_ahid_fph, m = hrns_to_fph(payer_ahid_hrns)
     payee_ahid_fph, m = hrns_to_fph(payee_ahid_hrns)
-
-
 
     payment_timestamp = ledger_timestamp()
 
