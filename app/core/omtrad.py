@@ -27,6 +27,7 @@ import os
 import pickle
 
 from app.core.regexp_list import re_hrns, re_fph
+
 from app.core.slate_core import hrns_to_fph, fph_to_hrns
 from app.core.slate_core import add_entity_common_properties
 from app.core.slate_core import new_account
@@ -37,6 +38,7 @@ from app.core.slate_core import new_currency
 from app.core.slate_core import identify_entity
 from app.core.slate_core import split_hrns
 from app.core.slate_core import get_currency_specific_properties
+from app.core.slate_core import get_ahid_primid
 
 from app.core.common import ledger_timestamp
 
@@ -204,9 +206,25 @@ def create_new_pairing(
 
     with sqlite3.connect(ENTITIES_DB) as conn:
         cursor = conn.cursor()
+        # Update the pmap:
         cursor.execute(
             "UPDATE primids SET pmap = ? WHERE entity_fph = ?",
             (pickle.dumps(pmap), owner_fph)
+        )
+        # Update the *ahid*s list:
+        cursor.execute(
+            "SELECT ahids_fph_list FROM primids WHERE entity_fph = ?",
+            (owner_fph,)
+        )
+        result = cursor.fetchone()
+        if (result is None) or (result[0] is None):
+            ahids_fph_list = []
+        else:
+            ahids_fph_list = pickle.loads(result[0])
+        ahids_fph_list.append(ahid_fph)
+        cursor.execute(
+            "UPDATE primids SET ahids_fph_list = ? WHERE entity_fph = ?",
+            (pickle.dumps(ahids_fph_list), owner_fph)
         )
         conn.commit()
         cursor.close()
@@ -217,37 +235,6 @@ def create_new_pairing(
 
 
 
-
-#=============================================================================
-
-def get_ahid_primid(ahid_hrns):
-    # (1) Each *ahid* belongs to one *primid*
-    # (2) Each *primid* may have any number of *ahid*
-    # (3) A *primid* may belong to itself as an *ahid*
-    ahid_fph, wom, etype, m = identify_entity(ahid_hrns)
-    with sqlite3.connect(ENTITIES_DB) as conn:
-        cursor = conn.cursor()
-        cursor.execute(
-            """
-            SELECT entity_type, owner_fph, active
-            FROM entities_common
-            WHERE entity_fph = ?
-            """,
-            (ahid_fph,)
-        )
-        result = cursor.fetchone()
-        cursor.close()
-#    if (result is None) or (result[0] != "ahid") or (not result[2]):
-# 2025-05-29
-#    if result[1] == ahid_fph:
-#        return result[1] # *primid* serving as an *ahid*
-    if (result is None) or (not result[2]):
-        return ""
-    if (result[0] != "ahid") and (result[1] != ahid_fph):
-        return ""
-#    else:
-#        return result[1] # owner *primid* FPH
-    return result[1] # owner *primid* FPH
 
 #=============================================================================
 
@@ -474,8 +461,8 @@ def ah_payment(
             "",                         # stewardship_id (n/a)
             0,                          # longevity (indefinite)
             "",                         # expiry_datetime (no expiry)
-            "",                 # payer_account_fph unused in this mode
-            "",                 # payee_account_fph unused in this mode
+            "",          # string
+            "",          # string
             payee_ahid_fph,             # string
             payee_ahid_fph,             # string
             currency_fph,               # string

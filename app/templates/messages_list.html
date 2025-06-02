@@ -8,7 +8,11 @@
 -->
 <h3>Messages received</h3>
 <p>
-  Your following <b>identities</b> have received messages:
+  Your following
+  {% if hub_mode == "omtrad" %}
+  <b>account-holder</b>
+  {% endif %}
+  <b>identities</b> have received messages:
 </p>
 <ul>
 {% for recipient in message_recipients_list %}
@@ -18,6 +22,7 @@
   <li class="messages_available">
   {% endif %}
     <a href="/message/show/{{ recipient.fph }}">{{ recipient.hrns }}</a>
+    ({{ recipient.message_count }})
     {% if recipient.primid %}
     (login/primary identity)
     {% endif %}

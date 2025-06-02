@@ -1904,10 +1904,39 @@ def list_secids(primid_fph):
         else:
             secids_fph_list = pickle.loads(result[0])
 
-#        for secid_fph in secids_fph_list :
-#            print(secid_fph + " > " + fph_to_hrns(secid_fph))
-
         return secids_fph_list
+
+
+#==============================================================================
+#
+
+def list_ahids(primid_fph):
+
+    with sqlite3.connect(ENTITIES_DB) as conn:
+        cursor = conn.cursor()
+        # Retrieve the list of *ahids* for this *primid*:
+        cursor.execute(
+            """
+            SELECT ahids_fph_list
+            FROM primids
+            WHERE entity_fph = ?
+            """,
+            (primid_fph,)
+        )
+        result = cursor.fetchone()
+        if result is None:
+            ahids_fph_list = []
+        elif result[0] is not None:
+            ahids_fph_list = pickle.loads(result[0])
+            return ahids_fph_list
+        else:
+            return []
+
+
+
+
+
+
 
 #==============================================================================
 #
@@ -2592,6 +2621,38 @@ def get_primid(secid_identifier):
             return primid_fph, ""
     return "", "No primid was found for " + secid_identifier
 
+#==============================================================================
+
+def get_ahid_primid(ahid_hrns):
+    # (1) Each *ahid* belongs to one *primid*
+    # (2) Each *primid* may have any number of *ahid*
+    # (3) A *primid* may belong to itself as an *ahid*
+    ahid_fph, wom, etype, m = identify_entity(ahid_hrns)
+    with sqlite3.connect(ENTITIES_DB) as conn:
+        cursor = conn.cursor()
+        cursor.execute(
+            """
+            SELECT entity_type, owner_fph, active
+            FROM entities_common
+            WHERE entity_fph = ?
+            """,
+            (ahid_fph,)
+        )
+        result = cursor.fetchone()
+        cursor.close()
+#    if (result is None) or (result[0] != "ahid") or (not result[2]):
+# 2025-05-29
+#    if result[1] == ahid_fph:
+#        return result[1] # *primid* serving as an *ahid*
+    if (result is None) or (not result[2]):
+        return ""
+    if (result[0] != "ahid") and (result[1] != ahid_fph):
+        return ""
+#    else:
+#        return result[1] # owner *primid* FPH
+    return result[1] # owner *primid* FPH
+
+
 
 
 #==============================================================================
@@ -2707,8 +2768,6 @@ def random_filename():
     return nshash(unixtime_str())
 
 
-
-#==============================================================================
 
 
 

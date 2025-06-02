@@ -96,6 +96,7 @@ from app.core.messaging import send_message
 from app.core.messaging import fetch_messages
 from app.core.messaging import messages_available
 from app.core.messaging import delete_message
+from app.core.messaging import message_count
 
 from app.core.mail_temp import temp_mail_send
 
@@ -500,7 +501,7 @@ def login():
                 flash("Invalid identity entered")
                 return redirect(url_for("login"))
             if etype == "secid": # authentication requires primary *identity*
-                primary_identity_fph, m = get_primid(identity_fph)
+                primid_fph, m = get_primid(identity_fph)
                 if m:
                     flash(m)
                     log_event(
@@ -509,8 +510,8 @@ def login():
                     )
                     return redirect(url_for("login"))
             if etype == "primid":
-                primary_identity_fph = identity_fph
-            if primary_identity_fph:
+                primid_fph = identity_fph
+            if primid_fph:
                 # If control reaches this point and the FPH exists, we have a
                 # valid *primid* for the HRNS or FPH entered.
                 primid_has_been_identified_from_identity = True
@@ -523,13 +524,13 @@ def login():
         password_hash, \
         stored_pin, \
         access_token_hash, \
-        m = get_auth_data(primary_identity_fph)
+        m = get_auth_data(primid_fph)
         if m:
             flash(m)
             return redirect(url_for("login"))
 
         # Retrieve the user object:
-        user = User(primary_identity_fph)
+        user = User(primid_fph)
 
         password = form.password.data
         password2 = form.password.data.strip()
@@ -546,7 +547,7 @@ def login():
             return redirect(url_for("login"))
 
         # Register the authenticated login:
-        register_authenticated_login(primary_identity_fph)
+        register_authenticated_login(primid_fph)
 
         login_user(user, remember = form.remember_me.data)
 
@@ -727,9 +728,9 @@ def login_reset(user_id, token):
     # Hub operational mode (read from environment variable HUB_MODE)
     hub_mode = get_hub_mode()
 
-    primary_identity_fph, \
-    primary_identity_hrns, \
-    primary_identity_type, \
+    primid_fph, \
+    primid_hrns, \
+    primid_type, \
     m = identify_entity(user_id) # from URL slug
 
     password_hash, \
@@ -757,7 +758,7 @@ def login_reset(user_id, token):
 #    print(reset_token_data)
 
 #    if reset_token_data["agent_primid_fph"] !=  identity_fph:
-    if reset_token_data !=  primary_identity_fph:
+    if reset_token_data !=  primid_fph:
         flash("Login reset token error")
         return redirect("/login")
 
@@ -771,7 +772,7 @@ def login_reset(user_id, token):
             return redirect("/login")
 
         m = update_primid_access_details(
-                primary_identity_fph,
+                primid_fph,
                 form.password.data,
                 form.pin.data
             )
@@ -786,7 +787,7 @@ def login_reset(user_id, token):
     return render_template(
         "login_reset.html",
         title = "User login reset",
-        primary_identity_hrns = primary_identity_hrns,
+        primid_hrns = primid_hrns,
         form = form,
         hub_mode = hub_mode,
         version = get_version()
@@ -885,9 +886,9 @@ def new_home():
     paying = False
     logged_in = current_user.is_authenticated
 
-    primary_identity_fph, \
-    primary_identity_hrns, \
-    primary_identity_type, \
+    primid_fph, \
+    primid_hrns, \
+    primid_type, \
     m = identify_entity(current_user.get_id())
 
     if "working_identity" in session:
@@ -896,10 +897,10 @@ def new_home():
         working_identity_type, \
         m = identify_entity(session["working_identity"])
     else:
-        working_identity_fph = primary_identity_fph
+        working_identity_fph = primid_fph
         session["working_identity"] = working_identity_fph
-        working_identity_hrns = primary_identity_hrns
-        working_identity_type = primary_identity_type
+        working_identity_hrns = primid_hrns
+        working_identity_type = primid_type
     working_identity_type = etype_to_adtype(working_identity_type)
 
     ## SOME OF THE FOLLOWING WILL NOT BE NEEDED
@@ -909,18 +910,18 @@ def new_home():
     # a list of *accounts* belonging to each. The user will also see a list of
     # entities over which it holds/shares stewardship.
 
-    stewardships_list, m = list_stewardships(primary_identity_fph)
+    stewardships_list, m = list_stewardships(primid_fph)
 
     # Since a user may have *accounts* scattered across an arbitrary number of
     # *namespaces*, it is necessary to maintain a list of these:
 
     # A full list of *identities* is compiled, with the *primid* first:
-    identities_list = list_secids(primary_identity_fph)
-    identities_list.insert(0, primary_identity_fph)
+    identities_list = list_secids(primid_fph)
+    identities_list.insert(0, primid_fph)
 
     identities = [] # list of *identity* dictionaries) to "home.html" template.
 
-    lid_messages = fetch_messages(primary_identity_fph)   # Always display
+    lid_messages = fetch_messages(primid_fph)   # Always display
     wid_messages = fetch_messages(working_identity_fph)
 
 
@@ -934,9 +935,9 @@ def new_home():
             hub_mode = hub_mode,
             version = get_version(),
             logged_in = logged_in,
-            primary_identity_type = "login identity",
-            primary_identity_fph = primary_identity_fph,
-            primary_identity_hrns = primary_identity_hrns,
+            primid_type = "login identity",
+            primary_identity_fph = primid_fph,
+            primid_hrns = primid_hrns,
             working_identity_fph = working_identity_fph,
             working_identity_hrns = working_identity_hrns,
             working_identity_type = working_identity_type,
@@ -974,15 +975,15 @@ def hold():
     paying = False
     logged_in = current_user.is_authenticated
 
-    primary_identity_fph, \
-    primary_identity_hrns, \
-    primary_identity_type, \
+    primid_fph, \
+    primid_hrns, \
+    primid_type, \
     m = identify_entity(current_user.get_id())
 
     # In omtrad mode, the working *identity* is always the *primid*.
-    working_identity_fph = primary_identity_fph
-    working_identity_hrns = primary_identity_hrns
-    working_identity_type = primary_identity_type
+    working_identity_fph = primid_fph
+    working_identity_hrns = primid_hrns
+    working_identity_type = primid_type
 
     return render_template(
         "hold.html",
@@ -992,9 +993,9 @@ def hold():
         hub_mode = hub_mode,
         version = get_version(),
         logged_in = logged_in,
-        primary_identity_type = "login identity",
-        primary_identity_fph = primary_identity_fph,
-        primary_identity_hrns = primary_identity_hrns,
+        primid_type = "login identity",
+        primary_identity_fph = primid_fph,
+        primid_hrns = primid_hrns,
         working_identity_fph = working_identity_fph,
         working_identity_hrns = working_identity_hrns,
         working_identity_type = working_identity_type,
@@ -1034,100 +1035,47 @@ def home_ahc():
     paying = False
     logged_in = current_user.is_authenticated
 
-    primary_identity_fph, \
-    primary_identity_hrns, \
-    primary_identity_type, \
+    primid_fph, \
+    primid_hrns, \
+    primid_type, \
     m = identify_entity(current_user.get_id())
 
     # In omtrad mode, the working *identity* is always the *primid*.
-    working_identity_fph = primary_identity_fph
-    working_identity_hrns = primary_identity_hrns
-    working_identity_type = primary_identity_type
+    working_identity_fph = primid_fph
+    working_identity_hrns = primid_hrns
+    working_identity_type = primid_type
 
+    stewardships_list, m = list_stewardships(primid_fph)
 
-
-
-    stewardships_list, m = list_stewardships(primary_identity_fph)
-
-    pmap_t, m = retrieve_pmap(primary_identity_fph)
-
-
-
+    pmap_t, m = retrieve_pmap(primid_fph)
 
     # List all *ahid*:
-    identity_list = []
+    ahid_list = []
     for ahid_hrns in pmap_t.keys():
-        identity_list.append(ahid_hrns)
+        ahid_list.append(ahid_hrns)
 
-    total_number_of_messages = 0
-    total_number_of_indelible_messages = 0
-    # List identities for which messages are available:
-    message_recipients_list = [] # (list of dictionaries for template)
-    for identity_fph in identity_list:
-        number_of_messages, \
-        number_of_indelible_messages = messages_available(identity_fph)
-
-#        print("number_of_messages = " + str(number_of_messages))
-#        print(
-#            "number_of_indelible_messages = " \
-#            + str(number_of_indelible_messages)
-#        )
-        total_number_of_messages += number_of_messages
-        total_number_of_indelible_messages += number_of_indelible_messages
-
-    if total_number_of_messages > 0:
-        number_of_messages = str(total_number_of_messages)
-    else:
-        number_of_messages = ""
-    if total_number_of_indelible_messages > 0:
-        number_of_indelible_messages = str(total_number_of_indelible_messages)
-    else:
-        number_of_indelible_messages = ""
-
-#    number_of_wid_messages, d = messages_available(working_identity_fph)
-#    number_of_messages = number_of_wid_messages + number_of_primid_messages
-#    if number_of_messages > 0:
-#        number_of_messages = str(number_of_messages)
+# Commented out 2025-06-02:
+#    total_number_of_messages = 0
+#    total_number_of_indelible_messages = 0
+#    # List identities for which messages are available:
+#    message_recipients_list = [] # (list of dictionaries for template)
+#    for ahid_hrns in ahid_list:
+#        number_of_messages, \
+#        number_of_indelible_messages = messages_available(ahid_hrns)
+#        total_number_of_messages += number_of_messages
+#        total_number_of_indelible_messages += number_of_indelible_messages
+#
+#    if total_number_of_messages > 0:
+#        number_of_messages = str(total_number_of_messages)
 #    else:
 #        number_of_messages = ""
+#    if total_number_of_indelible_messages > 0:
+#        number_of_indelible_messages = str(total_number_of_indelible_messages)
+#    else:
+#        number_of_indelible_messages = ""
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+    number_of_messages, \
+    number_of_indelible_messages = message_count(primid_fph, hub_mode)
 
 
 
@@ -1227,14 +1175,16 @@ def home_ahc():
         version = get_version(),
         development_mode = development_mode,
         logged_in = logged_in,
-        primary_identity_type = "login identity",
-        primary_identity_fph = primary_identity_fph,
-        primary_identity_hrns = primary_identity_hrns,
+        primid_type = "login identity",
+        primid_fph = primid_fph,
+        primid_hrns = primid_hrns,
         working_identity_fph = working_identity_fph,
         working_identity_hrns = working_identity_hrns,
         working_identity_type = working_identity_type,
         p_rows = p_rows2,
-        pmap_t = pmap_t
+        pmap_t = pmap_t,
+        number_of_messages = number_of_messages,
+        number_of_indelible_messages = number_of_indelible_messages
     )
 
 
@@ -1268,9 +1218,9 @@ def home():
     paying = False
     logged_in = current_user.is_authenticated
 
-    primary_identity_fph, \
-    primary_identity_hrns, \
-    primary_identity_type, \
+    primid_fph, \
+    primid_hrns, \
+    primid_type, \
     m = identify_entity(current_user.get_id())
 
     if "working_identity" in session:
@@ -1279,17 +1229,17 @@ def home():
         working_identity_type, \
         m = identify_entity(session["working_identity"])
     else:
-        working_identity_fph = primary_identity_fph
+        working_identity_fph = primid_fph
         session["working_identity"] = working_identity_fph
-        working_identity_hrns = primary_identity_hrns
-        working_identity_type = primary_identity_type
+        working_identity_hrns = primid_hrns
+        working_identity_type = primid_type
     working_identity_type = etype_to_adtype(working_identity_type)
 
 
     # List all identities:
     identity_list = []
-    identity_list.append(primary_identity_fph)
-    secids_list = list_secids(primary_identity_fph)
+    identity_list.append(primid_fph)
+    secids_list = list_secids(primid_fph)
     for secid_fph in secids_list:
         identity_list.append(secid_fph)
 
@@ -1334,14 +1284,14 @@ def home():
     # a list of *accounts* belonging to each. The user will also see a list of
     # entities over which it holds/shares stewardship.
 
-    stewardships_list, m = list_stewardships(primary_identity_fph)
+    stewardships_list, m = list_stewardships(primid_fph)
 
     # Since a user may have *accounts* scattered across an arbitrary number of
     # *namespaces*, it is necessary to maintain a list of these:
 
     # A full list of *identities* is compiled, with the *primid* first:
-    identities_list = list_secids(primary_identity_fph)
-    identities_list.insert(0, primary_identity_fph)
+    identities_list = list_secids(primid_fph)
+    identities_list.insert(0, primid_fph)
 
     identities = [] # list of *identity* dictionaries) to "home.html" template.
 
@@ -1433,7 +1383,7 @@ def home():
         identities.append(id)
 
     # If this is a *primid*, fetch a list of its *secid*s and stewardships:
-    secid_list = list_secids(primary_identity_fph)
+    secid_list = list_secids(primid_fph)
     secids = []
     for secid_fph in secid_list:
         secid = {}
@@ -1464,9 +1414,9 @@ def home():
         version = get_version(),
         development_mode = development_mode,
         logged_in = logged_in,
-        primary_identity_type = "login identity",
-        primary_identity_fph = primary_identity_fph,
-        primary_identity_hrns = primary_identity_hrns,
+        primid_type = "login identity",
+        primid_fph = primid_fph,
+        primid_hrns = primid_hrns,
         working_identity_fph = working_identity_fph,
         working_identity_hrns = working_identity_hrns,
         working_identity_type = working_identity_type,
@@ -1509,9 +1459,9 @@ def list_accounts():
     paying = False
     logged_in = current_user.is_authenticated
 
-    primary_identity_fph, \
-    primary_identity_hrns, \
-    primary_identity_type, \
+    primid_fph, \
+    primid_hrns, \
+    primid_type, \
     m = identify_entity(current_user.get_id())
 
     if "working_identity" in session:
@@ -1520,10 +1470,10 @@ def list_accounts():
         working_identity_type, \
         m = identify_entity(session["working_identity"])
     else:
-        working_identity_fph = primary_identity_fph
+        working_identity_fph = primid_fph
         session["working_identity"] = working_identity_fph
-        working_identity_hrns = primary_identity_hrns
-        working_identity_type = primary_identity_type
+        working_identity_hrns = primid_hrns
+        working_identity_type = primid_type
     working_identity_type = etype_to_adtype(working_identity_type)
 
     # The user logs in as the *primid*, even if indirectly as one of its
@@ -1531,14 +1481,14 @@ def list_accounts():
     # a list of *accounts* belonging to each. The user will also see a list of
     # entities over which it holds/shares stewardship.
 
-    stewardships_list, m = list_stewardships(primary_identity_fph)
+    stewardships_list, m = list_stewardships(primid_fph)
 
     # Since a user may have *accounts* scattered across an arbitrary number of
     # *namespaces*, it is necessary to maintain a list of these:
 
     # A full list of *identities* is compiled, with the *primid* first:
-    identities_list = list_secids(primary_identity_fph)
-    identities_list.insert(0, primary_identity_fph)
+    identities_list = list_secids(primid_fph)
+    identities_list.insert(0, primid_fph)
 
     identities = [] # list of *identity* dictionaries) to "home.html" template.
 
@@ -1611,7 +1561,7 @@ def list_accounts():
         identities.append(id)
 
     # If this is a *primid*, fetch a list of its *secid*s and stewardships:
-    secid_list = list_secids(primary_identity_fph)
+    secid_list = list_secids(primid_fph)
     secids = []
     for secid_fph in secid_list:
         secid = {}
@@ -1642,9 +1592,9 @@ def list_accounts():
         version = get_version(),
         development_mode = development_mode,
         logged_in = logged_in,
-        primary_identity_type = "login identity",
-        primary_identity_fph = primary_identity_fph,
-        primary_identity_hrns = primary_identity_hrns,
+        primid_type = "login identity",
+        primary_identity_fph = primid_fph,
+        primid_hrns = primid_hrns,
         working_identity_fph = working_identity_fph,
         working_identity_hrns = working_identity_hrns,
         working_identity_type = working_identity_type,
@@ -1702,9 +1652,9 @@ def payment_options():
 
     logged_in = current_user.is_authenticated
 
-    primary_identity_fph, \
-    primary_identity_hrns, \
-    primary_identity_type, \
+    primid_fph, \
+    primid_hrns, \
+    primid_type, \
     m = identify_entity(current_user.get_id())
 
     if "working_identity" in session:
@@ -1713,10 +1663,10 @@ def payment_options():
         working_identity_type, \
         m = identify_entity(session["working_identity"])
     else:
-        working_identity_fph = primary_identity_fph
+        working_identity_fph = primid_fph
         session["working_identity"] = working_identity_fph
-        working_identity_hrns = primary_identity_hrns
-        working_identity_type = primary_identity_type
+        working_identity_hrns = primid_hrns
+        working_identity_type = primid_type
     working_identity_type = etype_to_adtype(working_identity_type)
 
     # The user logs in as the *primid*, even if indirectly as one of its
@@ -1724,16 +1674,16 @@ def payment_options():
     # a list of *accounts* belonging to each. The user will also see a list of
     # entities over which it holds/shares stewardship.
 
-    stewardships_list, m = list_stewardships(primary_identity_fph)
+    stewardships_list, m = list_stewardships(primid_fph)
 
     # Since a user may have *accounts* scattered across an arbitrary number of
     # *namespaces*, it is necessary to maintain a list of these:
 
     # A full list of *identities* is compiled, with the *primid* first and the
     # *secids* arranged alphabetically:
-    identities_list = list_secids(primary_identity_fph)
+    identities_list = list_secids(primid_fph)
     identities_list.sort()
-    identities_list.insert(0, primary_identity_fph)
+    identities_list.insert(0, primid_fph)
 
     # We now need a list of the *currencies* available to these *identities*
     # along with a list of *accounts* in each.
@@ -1835,9 +1785,9 @@ def payment_options():
         development_mode = development_mode,
         version = get_version(),
         logged_in = logged_in,
-        primary_identity_type = "login identity",
-        primary_identity_fph = primary_identity_fph,
-        primary_identity_hrns = primary_identity_hrns,
+        primid_type = "login identity",
+        primary_identity_fph = primid_fph,
+        primid_hrns = primid_hrns,
         working_identity_fph = working_identity_fph,
         working_identity_hrns = working_identity_hrns,
         working_identity_type = working_identity_type,
@@ -1877,9 +1827,9 @@ def currency_options():
 
     logged_in = current_user.is_authenticated
 
-    primary_identity_fph, \
-    primary_identity_hrns, \
-    primary_identity_type, \
+    primid_fph, \
+    primid_hrns, \
+    primid_type, \
     m = identify_entity(current_user.get_id())
 
     if "working_identity" in session:
@@ -1888,10 +1838,10 @@ def currency_options():
         working_identity_type, \
         m = identify_entity(session["working_identity"])
     else:
-        working_identity_fph = primary_identity_fph
+        working_identity_fph = primid_fph
         session["working_identity"] = working_identity_fph
-        working_identity_hrns = primary_identity_hrns
-        working_identity_type = primary_identity_type
+        working_identity_hrns = primid_hrns
+        working_identity_type = primid_type
     working_identity_type = etype_to_adtype(working_identity_type)
 
     # The user logs in as the *primid*, even if indirectly as one of its
@@ -1899,16 +1849,16 @@ def currency_options():
     # a list of *accounts* belonging to each. The user will also see a list of
     # entities over which it holds/shares stewardship.
 
-    stewardships_list, m = list_stewardships(primary_identity_fph)
+    stewardships_list, m = list_stewardships(primid_fph)
 
     # Since a user may have *accounts* scattered across an arbitrary number of
     # *namespaces*, it is necessary to maintain a list of these:
 
     # A full list of *identities* is compiled, with the *primid* first and the
     # *secids* arranged alphabetically:
-    identities_list = list_secids(primary_identity_fph)
+    identities_list = list_secids(primid_fph)
     identities_list.sort()
-    identities_list.insert(0, primary_identity_fph)
+    identities_list.insert(0, primid_fph)
 
     # We now need a list of the *currencies* available to these *identities*
     # along with a list of *accounts* in each.
@@ -2057,9 +2007,9 @@ def currency_options():
         logged_in = logged_in,
         hub_mode = hub_mode,
         version = get_version(),
-        primary_identity_type = "login identity",
-        primary_identity_fph = primary_identity_fph,
-        primary_identity_hrns = primary_identity_hrns,
+        primid_type = "login identity",
+        primary_identity_fph = primid_fph,
+        primid_hrns = primid_hrns,
         working_identity_fph = working_identity_fph,
         working_identity_hrns = working_identity_hrns,
         working_identity_type = working_identity_type,
@@ -2110,9 +2060,9 @@ def account_options(currency_fph):
 
     logged_in = current_user.is_authenticated # for menu display control
 
-    primary_identity_fph, \
-    primary_identity_hrns, \
-    primary_identity_type, \
+    primid_fph, \
+    primid_hrns, \
+    primid_type, \
     m = identify_entity(current_user.get_id())
 
     if "working_identity" in session:
@@ -2121,10 +2071,10 @@ def account_options(currency_fph):
         working_identity_type, \
         m = identify_entity(session["working_identity"])
     else:
-        working_identity_fph = primary_identity_fph
+        working_identity_fph = primid_fph
         session["working_identity"] = working_identity_fph
-        working_identity_hrns = primary_identity_hrns
-        working_identity_type = primary_identity_type
+        working_identity_hrns = primid_hrns
+        working_identity_type = primid_type
     working_identity_type = etype_to_adtype(working_identity_type)
 
     return render_template(
@@ -2136,9 +2086,9 @@ def account_options(currency_fph):
         logged_in = logged_in,
         hub_mode = hub_mode,
         version = get_version(),
-        primary_identity_type = "login identity",
-        primary_identity_fph = primary_identity_fph,
-        primary_identity_hrns = primary_identity_hrns,
+        primid_type = "login identity",
+        primary_identity_fph = primid_fph,
+        primid_hrns = primid_hrns,
         working_identity_fph = working_identity_fph,
         working_identity_hrns = working_identity_hrns,
         working_identity_type = working_identity_type,
@@ -2198,13 +2148,13 @@ def account(payer_account_fph, payee_account_fph, owner_fph = None):
     session["previous_page"] = page
 
     # The *primid* (or its alias *secid*) logged in currently:
-    primary_identity_fph, \
-    primary_identity_hrns, \
-    primary_identity_type, \
+    primid_fph, \
+    primid_hrns, \
+    primid_type, \
     m = identify_entity(current_user.get_id())
 
     # (This uses the identify_entity( ) function:)
-    #primary_identity_type = fph_to_display_type(primary_identity_fph)
+    #primid_type = fph_to_display_type(primid_fph)
 
     if "working_identity" in session:
         working_identity_fph, \
@@ -2212,9 +2162,9 @@ def account(payer_account_fph, payee_account_fph, owner_fph = None):
         working_identity_type, \
         m = identify_entity(session["working_identity"])
     else:
-        working_identity_fph = primary_identity_fph
+        working_identity_fph = primid_fph
         session["working_identity"] = working_identity_fph
-        working_identity_hrns = primary_identity_hrns
+        working_identity_hrns = primid_hrns
         working_identity_type = etype_to_adtype(working_identity_type)
 
    # If a payer *account* has been specified (by FPH) in the URL slug
@@ -2356,9 +2306,9 @@ def account(payer_account_fph, payee_account_fph, owner_fph = None):
         group = group,
         hub_mode = hub_mode,
         version = get_version(),
-        primary_identity_type = "login identity",
-        primary_identity_fph = primary_identity_fph,
-        primary_identity_hrns = primary_identity_hrns,
+        primid_type = "login identity",
+        primary_identity_fph = primid_fph,
+        primid_hrns = primid_hrns,
         working_identity_fph = working_identity_fph,
         working_identity_hrns = working_identity_hrns,
         working_identity_type = working_identity_type,
@@ -2409,13 +2359,13 @@ def pay_ahid(payer_ahid_fph, payment_currency_fph):
     previous_page = session["previous_page"] # Ensure correct page sequence
     session["previous_page"] = page
 
-    primary_identity_fph, \
-    primary_identity_hrns, \
-    primary_identity_type, \
+    primid_fph, \
+    primid_hrns, \
+    primid_type, \
     m = identify_entity(current_user.get_id())
-    working_identity_fph = primary_identity_fph
-    working_identity_hrns = primary_identity_hrns
-    working_identity_type = primary_identity_type
+    working_identity_fph = primid_fph
+    working_identity_hrns = primid_hrns
+    working_identity_type = primid_type
 
     form = SpecifyPayeeAccountHolderForm()
     if form.validate_on_submit():
@@ -2468,9 +2418,9 @@ def pay_ahid(payer_ahid_fph, payment_currency_fph):
         logged_in = logged_in,
         hub_mode = hub_mode,
         version = get_version(),
-        primary_identity_type = "login identity",
-        primary_identity_fph = primary_identity_fph,
-        primary_identity_hrns = primary_identity_hrns,
+        primid_type = "login identity",
+        primary_identity_fph = primid_fph,
+        primid_hrns = primid_hrns,
         working_identity_fph = working_identity_fph,
         working_identity_hrns = working_identity_hrns,
         working_identity_type = working_identity_type,
@@ -2499,9 +2449,9 @@ def pay_account():
     previous_page = session["previous_page"] # Ensure correct page sequence
     session["previous_page"] = page
 
-    primary_identity_fph, \
-    primary_identity_hrns, \
-    primary_identity_type, \
+    primid_fph, \
+    primid_hrns, \
+    primid_type, \
     m = identify_entity(current_user.get_id())
 
     if "working_identity" in session:
@@ -2510,10 +2460,10 @@ def pay_account():
         working_identity_type, \
         m = identify_entity(session["working_identity"])
     else:
-        working_identity_fph = primary_identity_fph
+        working_identity_fph = primid_fph
         session["working_identity"] = working_identity_fph
-        working_identity_hrns = primary_identity_hrns
-        working_identity_type = primary_identity_type
+        working_identity_hrns = primid_hrns
+        working_identity_type = primid_type
     working_identity_type = etype_to_adtype(working_identity_type)
 
     form = SpecifyPayeeAccountForm()
@@ -2539,9 +2489,9 @@ def pay_account():
         logged_in = logged_in,
         hub_mode = hub_mode,
         version = get_version(),
-        primary_identity_type = "login identity",
-        primary_identity_fph = primary_identity_fph,
-        primary_identity_hrns = primary_identity_hrns,
+        primid_type = "login identity",
+        primary_identity_fph = primid_fph,
+        primid_hrns = primid_hrns,
         working_identity_fph = working_identity_fph,
         working_identity_hrns = working_identity_hrns,
         working_identity_type = working_identity_type
@@ -2581,14 +2531,14 @@ def journal(ahid_fph, currency_fph):
     previous_page = session["previous_page"] # Ensure correct page sequence
     session["previous_page"] = page
 
-    primary_identity_fph, \
-    primary_identity_hrns, \
-    primary_identity_type, \
+    primid_fph, \
+    primid_hrns, \
+    primid_type, \
     m = identify_entity(current_user.get_id())
 
-    working_identity_fph = primary_identity_fph
-    working_identity_hrns = primary_identity_hrns
-    working_identity_type = primary_identity_type
+    working_identity_fph = primid_fph
+    working_identity_hrns = primid_hrns
+    working_identity_type = primid_type
 
     account_fph, \
     primid_fph, \
@@ -2684,9 +2634,9 @@ def journal(ahid_fph, currency_fph):
         logged_in = logged_in,
         hub_mode = hub_mode,
         version = get_version(),
-        primary_identity_type = "login identity",
-        primary_identity_fph = primary_identity_fph,
-        primary_identity_hrns = primary_identity_hrns,
+        primid_type = "login identity",
+        primary_identity_fph = primid_fph,
+        primid_hrns = primid_hrns,
         working_identity_fph = working_identity_fph,
         working_identity_hrns = working_identity_hrns,
         working_identity_type = working_identity_type,
@@ -2776,9 +2726,9 @@ def pay_from_account_to_agent(payer_account_fph = None):
         flash("Incorrect page succession")
         return redirect("/home")
 
-    primary_identity_fph, \
-    primary_identity_hrns, \
-    primary_identity_type, \
+    primid_fph, \
+    primid_hrns, \
+    primid_type, \
     m = identify_entity(current_user.get_id())
 
     if "working_identity" in session:
@@ -2787,10 +2737,10 @@ def pay_from_account_to_agent(payer_account_fph = None):
         working_identity_type, \
         m = identify_entity(session["working_identity"])
     else:
-        working_identity_fph = primary_identity_fph
+        working_identity_fph = primid_fph
         session["working_identity"] = working_identity_fph
-        working_identity_hrns = primary_identity_hrns
-        working_identity_type = primary_identity_type
+        working_identity_hrns = primid_hrns
+        working_identity_type = primid_type
     working_identity_type = etype_to_adtype(working_identity_type)
 
     # (1) Clear any existing data from the session dictionary:
@@ -2862,9 +2812,9 @@ def pay_from_account_to_agent(payer_account_fph = None):
         logged_in = logged_in,
         hub_mode = hub_mode,
         version = get_version(),
-        primary_identity_type = "login identity",
-        primary_identity_fph = primary_identity_fph,
-        primary_identity_hrns = primary_identity_hrns,
+        primid_type = "login identity",
+        primary_identity_fph = primid_fph,
+        primid_hrns = primid_hrns,
         working_identity_fph = working_identity_fph,
         working_identity_hrns = working_identity_hrns,
         working_identity_type = working_identity_type,
@@ -2899,9 +2849,9 @@ def pay_agent_direct(payer_currency_fph, payer_identity_fph):
     previous_page = session["previous_page"] # Ensure correct page sequence
     session["previous_page"] = page
 
-    primary_identity_fph, \
-    primary_identity_hrns, \
-    primary_identity_type, \
+    primid_fph, \
+    primid_hrns, \
+    primid_type, \
     m = identify_entity(current_user.get_id())
 
     if "working_identity" in session:
@@ -2910,10 +2860,10 @@ def pay_agent_direct(payer_currency_fph, payer_identity_fph):
         working_identity_type, \
         m = identify_entity(session["working_identity"])
     else:
-        working_identity_fph = primary_identity_fph
+        working_identity_fph = primid_fph
         session["working_identity"] = working_identity_fph
-        working_identity_hrns = primary_identity_hrns
-        working_identity_type = primary_identity_type
+        working_identity_hrns = primid_hrns
+        working_identity_type = primid_type
     working_identity_type = etype_to_adtype(working_identity_type)
 
     # Every process of payment to *identity*+*currency* begins here, so it is
@@ -3079,9 +3029,9 @@ def pay_agent_direct(payer_currency_fph, payer_identity_fph):
         logged_in = logged_in,
         hub_mode = hub_mode,
         version = get_version(),
-        primary_identity_type = "login identity",
-        primary_identity_fph = primary_identity_fph,
-        primary_identity_hrns = primary_identity_hrns,
+        primid_type = "login identity",
+        primary_identity_fph = primid_fph,
+        primid_hrns = primid_hrns,
         working_identity_fph = working_identity_fph,
         working_identity_hrns = working_identity_hrns,
         working_identity_type = working_identity_type,
@@ -3139,9 +3089,9 @@ def pay_agent():
     previous_page = session["previous_page"] # Ensure correct page sequence
     session["previous_page"] = page
 
-    primary_identity_fph, \
-    primary_identity_hrns, \
-    primary_identity_type, \
+    primid_fph, \
+    primid_hrns, \
+    primid_type, \
     m = identify_entity(current_user.get_id())
 
     if "working_identity" in session:
@@ -3150,10 +3100,10 @@ def pay_agent():
         working_identity_type, \
         m = identify_entity(session["working_identity"])
     else:
-        working_identity_fph = primary_identity_fph
+        working_identity_fph = primid_fph
         session["working_identity"] = working_identity_fph
-        working_identity_hrns = primary_identity_hrns
-        working_identity_type = primary_identity_type
+        working_identity_hrns = primid_hrns
+        working_identity_type = primid_type
     working_identity_type = etype_to_adtype(working_identity_type)
 
     # Every process of payment to *identity*+*currency* begins here, so it is
@@ -3253,9 +3203,9 @@ def pay_agent():
         logged_in = logged_in,
         hub_mode = hub_mode,
         version = get_version(),
-        primary_identity_type = "login identity",
-        primary_identity_fph = primary_identity_fph,
-        primary_identity_hrns = primary_identity_hrns,
+        primid_type = "login identity",
+        primary_identity_fph = primid_fph,
+        primid_hrns = primid_hrns,
         working_identity_fph = working_identity_fph,
         working_identity_hrns = working_identity_hrns,
         working_identity_type = working_identity_type
@@ -3279,9 +3229,9 @@ def select_payer_account():
     previous_page = session["previous_page"] # Ensure correct page sequence
     session["previous_page"] = page
 
-    primary_identity_fph, \
-    primary_identity_hrns, \
-    primary_identity_type, \
+    primid_fph, \
+    primid_hrns, \
+    primid_type, \
     m = identify_entity(current_user.get_id())
 
     if "working_identity" in session:
@@ -3290,9 +3240,9 @@ def select_payer_account():
         working_identity_type, \
         m = identify_entity(session["working_identity"])
     else:
-        working_identity_fph = primary_identity_fph
+        working_identity_fph = primid_fph
         session["working_identity"] = working_identity_fph
-        working_identity_hrns = primary_identity_hrns
+        working_identity_hrns = primid_hrns
     working_identity_type = etype_to_adtype(working_identity_type)
 
     # The original *identity*+*currency* data are retrieved for use in the
@@ -3348,9 +3298,9 @@ def select_payer_account():
         logged_in = logged_in,
         hub_mode = hub_mode,
         version = get_version(),
-        primary_identity_type = "login identity",
-        primary_identity_fph = primary_identity_fph,
-        primary_identity_hrns = primary_identity_hrns,
+        primid_type = "login identity",
+        primary_identity_fph = primid_fph,
+        primid_hrns = primid_hrns,
         working_identity_fph = working_identity_fph,
         working_identity_hrns = working_identity_hrns,
         working_identity_type = working_identity_type,
@@ -3392,9 +3342,9 @@ def select_payee_account(payer_account_fph = None):
     previous_page = session["previous_page"] # Ensure correct page sequence
     session["previous_page"] = page
 
-    primary_identity_fph, \
-    primary_identity_hrns, \
-    primary_identity_type, \
+    primid_fph, \
+    primid_hrns, \
+    primid_type, \
     m = identify_entity(current_user.get_id())
 
     if "working_identity" in session:
@@ -3403,9 +3353,9 @@ def select_payee_account(payer_account_fph = None):
         working_identity_type, \
         m = identify_entity(session["working_identity"])
     else:
-        working_identity_fph = primary_identity_fph
+        working_identity_fph = primid_fph
         session["working_identity"] = working_identity_fph
-        working_identity_hrns = primary_identity_hrns
+        working_identity_hrns = primid_hrns
     working_identity_type = etype_to_adtype(working_identity_type)
 
     # The original *identity*+*currency* data are retrieved for use in the
@@ -3464,9 +3414,9 @@ def select_payee_account(payer_account_fph = None):
         logged_in = logged_in,
         hub_mode = hub_mode,
         version = get_version(),
-        primary_identity_type = "login identity",
-        primary_identity_fph = primary_identity_fph,
-        primary_identity_hrns = primary_identity_hrns,
+        primid_type = "login identity",
+        primary_identity_fph = primid_fph,
+        primid_hrns = primid_hrns,
         working_identity_fph = working_identity_fph,
         working_identity_hrns = working_identity_hrns,
         working_identity_type = working_identity_type,
@@ -3558,9 +3508,9 @@ def make_payment_between_selected_accounts(
     previous_page = session["previous_page"] # Ensure correct page sequence
     session["previous_page"] = page
 
-    primary_identity_fph, \
-    primary_identity_hrns, \
-    primary_identity_type, \
+    primid_fph, \
+    primid_hrns, \
+    primid_type, \
     m = identify_entity(current_user.get_id())
 
     if "working_identity" in session:
@@ -3569,9 +3519,9 @@ def make_payment_between_selected_accounts(
         working_identity_type, \
         m = identify_entity(session["working_identity"])
     else:
-        working_identity_fph = primary_identity_fph
+        working_identity_fph = primid_fph
         session["working_identity"] = working_identity_fph
-        working_identity_hrns = primary_identity_hrns
+        working_identity_hrns = primid_hrns
     working_identity_type = etype_to_adtype(working_identity_type)
 
     form = PaymentAccountPairForm()
@@ -3633,9 +3583,9 @@ def make_payment_between_selected_accounts(
         group = group,
         hub_mode = hub_mode,
         version = get_version(),
-        primary_identity_type = "login identity",
-        primary_identity_fph = primary_identity_fph,
-        primary_identity_hrns = primary_identity_hrns,
+        primid_type = "login identity",
+        primary_identity_fph = primid_fph,
+        primid_hrns = primid_hrns,
         working_identity_fph = working_identity_fph,
         working_identity_hrns = working_identity_hrns,
         working_identity_type = working_identity_type,
@@ -3698,9 +3648,9 @@ def select_account_combination_in_currency(payee_identity_fph, currency_fph):
     previous_page = session["previous_page"] # Ensure correct page sequence
     session["previous_page"] = page
 
-    primary_identity_fph, \
-    primary_identity_hrns, \
-    primary_identity_type, \
+    primid_fph, \
+    primid_hrns, \
+    primid_type, \
     m = identify_entity(current_user.get_id())
 
     if "working_identity" in session:
@@ -3709,9 +3659,9 @@ def select_account_combination_in_currency(payee_identity_fph, currency_fph):
         working_identity_type, \
         m = identify_entity(session["working_identity"])
     else:
-        working_identity_fph = primary_identity_fph
+        working_identity_fph = primid_fph
         session["working_identity"] = working_identity_fph
-        working_identity_hrns = primary_identity_hrns
+        working_identity_hrns = primid_hrns
         working_identity_type = etype_to_adtype(working_identity_type)
 
     # In contrast to the case of paying to a known *account*, here the payee
@@ -3720,7 +3670,7 @@ def select_account_combination_in_currency(payee_identity_fph, currency_fph):
     # Both the payer and the payee may each have several accounts in this
     # *currenccy*, so one of the available combinations must be selected.
 
-    all_payer_accounts, m = list_agent_accounts(primary_identity_fph)
+    all_payer_accounts, m = list_agent_accounts(primid_fph)
     all_payee_accounts, m = list_agent_accounts(payee_fph)
 
     # NB, the following is a temporary solution pending cleanup and merger:
@@ -3765,9 +3715,9 @@ def select_payer_account_(payee_account_fph):
 
     logged_in = current_user.is_authenticated
 
-    primary_identity_fph, \
-    primary_identity_hrns, \
-    primary_identity_type, \
+    primid_fph, \
+    primid_hrns, \
+    primid_type, \
     m = identify_entity(current_user.get_id())
 
     if "working_identity" in session:
@@ -3776,9 +3726,9 @@ def select_payer_account_(payee_account_fph):
         working_identity_type, \
         m = identify_entity(session["working_identity"])
     else:
-        working_identity_fph = primary_identity_fph
+        working_identity_fph = primid_fph
         session["working_identity"] = working_identity_fph
-        working_identity_hrns = primary_identity_hrns
+        working_identity_hrns = primid_hrns
         working_identity_type = etype_to_adtype(working_identity_type)
 
     # In contrast to the case of paying from an *account* (and therefore a
@@ -3854,9 +3804,9 @@ def select_payer_account_(payee_account_fph):
         number_of_payer_accounts = number_of_payer_accounts,
         payer_has_accounts_available = payer_has_accounts_available,
         payer_usable_accounts = payer_usable_accounts,
-        primary_identity_type = "login identity",
-        primary_identity_fph = primary_identity_fph,
-        primary_identity_hrns = primary_identity_hrns,
+        primid_type = "login identity",
+        primary_identity_fph = primid_fph,
+        primid_hrns = primid_hrns,
         working_identity_fph = working_identity_fph,
         working_identity_hrns = working_identity_hrns,
         working_identity_type = working_identity_type
@@ -3883,9 +3833,9 @@ def account_details(account_fph):
 
     logged_in = current_user.is_authenticated
 
-    primary_identity_fph, \
-    primary_identity_hrns, \
-    primary_identity_type, \
+    primid_fph, \
+    primid_hrns, \
+    primid_type, \
     m = identify_entity(current_user.get_id())
 
     if "working_identity" in session:
@@ -3894,9 +3844,9 @@ def account_details(account_fph):
         working_identity_type, \
         m = identify_entity(session["working_identity"])
     else:
-        working_identity_fph = primary_identity_fph
+        working_identity_fph = primid_fph
         session["working_identity"] = working_identity_fph
-        working_identity_hrns = primary_identity_hrns
+        working_identity_hrns = primid_hrns
         working_identity_type = etype_to_adtype(working_identity_type)
 
     # If an *account* has been specified (by FPH) in the URL slug
@@ -3948,9 +3898,9 @@ def account_details(account_fph):
         group = group,
         hub_mode = hub_mode,
         version = get_version(),
-        primary_identity_type = "login identity",
-        primary_identity_fph = primary_identity_fph,
-        primary_identity_hrns = primary_identity_hrns,
+        primid_type = "login identity",
+        primary_identity_fph = primid_fph,
+        primid_hrns = primid_hrns,
         working_identity_fph = working_identity_fph,
         working_identity_hrns = working_identity_hrns,
         working_identity_type = working_identity_type,
@@ -3989,9 +3939,9 @@ def stewardships(identity_fph):
     paying = False
     logged_in = current_user.is_authenticated
 
-    primary_identity_fph, \
-    primary_identity_hrns, \
-    primary_identity_type, \
+    primid_fph, \
+    primid_hrns, \
+    primid_type, \
     m = identify_entity(current_user.get_id())
 
     if "working_identity" in session:
@@ -4000,12 +3950,12 @@ def stewardships(identity_fph):
         working_identity_type, \
         m = identify_entity(session["working_identity"])
     else:
-        working_identity_fph = primary_identity_fph
+        working_identity_fph = primid_fph
         session["working_identity"] = working_identity_fph
-        working_identity_hrns = primary_identity_hrns
+        working_identity_hrns = primid_hrns
         working_identity_type = etype_to_adtype(working_identity_type)
 
-    stewardships, m = list_stewardships(primary_identity_fph)
+    stewardships, m = list_stewardships(primid_fph)
     if m:
         splash(m)
 
@@ -4016,9 +3966,9 @@ def stewardships(identity_fph):
         group = group,
         hub_mode = hub_mode,
         version = get_version(),
-        primary_identity_type = "login identity",
-        primary_identity_fph = primary_identity_fph,
-        primary_identity_hrns = primary_identity_hrns,
+        primid_type = "login identity",
+        primary_identity_fph = primid_fph,
+        primid_hrns = primid_hrns,
         working_identity_fph = working_identity_fph,
         working_identity_hrns = working_identity_hrns,
         working_identity_type = working_identity_type,
@@ -4062,9 +4012,9 @@ def secids(identity_fph):
     paying = False
     logged_in = current_user.is_authenticated
 
-    primary_identity_fph, \
-    primary_identity_hrns, \
-    primary_identity_type, \
+    primid_fph, \
+    primid_hrns, \
+    primid_type, \
     m = identify_entity(current_user.get_id())
 
     if "working_identity" in session:
@@ -4073,12 +4023,12 @@ def secids(identity_fph):
         working_identity_type, \
         m = identify_entity(session["working_identity"])
     else:
-        working_identity_fph = primary_identity_fph
+        working_identity_fph = primid_fph
         session["working_identity"] = working_identity_fph
-        working_identity_hrns = primary_identity_hrns
+        working_identity_hrns = primid_hrns
         working_identity_type = etype_to_adtype(working_identity_type)
 
-    secids = list_secids(primary_identity_fph)
+    secids = list_secids(primid_fph)
 
 #    for secid_fph in secids:
 #        print(secid_fph + " > " + fph_to_hrns(secid_fph))
@@ -4090,9 +4040,9 @@ def secids(identity_fph):
         group = group,
         hub_mode = hub_mode,
         version = get_version(),
-        primary_identity_type = "login identity",
-        primary_identity_fph = primary_identity_fph,
-        primary_identity_hrns = primary_identity_hrns,
+        primid_type = "login identity",
+        primary_identity_fph = primid_fph,
+        primid_hrns = primid_hrns,
         working_identity_fph = working_identity_fph,
         working_identity_hrns = working_identity_hrns,
         working_identity_type = working_identity_type,
@@ -4128,9 +4078,9 @@ def manage_secid(secid_fph):
     paying = False
     logged_in = current_user.is_authenticated
 
-    primary_identity_fph, \
-    primary_identity_hrns, \
-    primary_identity_type, \
+    primid_fph, \
+    primid_hrns, \
+    primid_type, \
     m = identify_entity(current_user.get_id())
 
     if "working_identity" in session:
@@ -4139,12 +4089,12 @@ def manage_secid(secid_fph):
         working_identity_type, \
         m = identify_entity(session["working_identity"])
     else:
-        working_identity_fph = primary_identity_fph
+        working_identity_fph = primid_fph
         session["working_identity"] = working_identity_fph
-        working_identity_hrns = primary_identity_hrns
+        working_identity_hrns = primid_hrns
         working_identity_type = etype_to_adtype(working_identity_type)
 
-    secids = list_secids(primary_identity_fph)
+    secids = list_secids(primid_fph)
 
 #    for secid_fph in secids:
 #        print(secid_fph + " > " + fph_to_hrns(secid_fph))
@@ -4156,9 +4106,9 @@ def manage_secid(secid_fph):
         group = group,
         hub_mode = hub_mode,
         version = get_version(),
-        primary_identity_type = "login identity",
-        primary_identity_fph = primary_identity_fph,
-        primary_identity_hrns = primary_identity_hrns,
+        primid_type = "login identity",
+        primary_identity_fph = primid_fph,
+        primid_hrns = primid_hrns,
         working_identity_fph = working_identity_fph,
         working_identity_hrns = working_identity_hrns,
         working_identity_type = working_identity_type,
@@ -4193,9 +4143,9 @@ def currency(currency_fph):
 
     logged_in = current_user.is_authenticated
 
-    primary_identity_fph, \
-    primary_identity_hrns, \
-    primary_identity_type, \
+    primid_fph, \
+    primid_hrns, \
+    primid_type, \
     m = identify_entity(current_user.get_id())
 
     if "working_identity" in session:
@@ -4204,9 +4154,9 @@ def currency(currency_fph):
         working_identity_type, \
         m = identify_entity(session["working_identity"])
     else:
-        working_identity_fph = primary_identity_fph
+        working_identity_fph = primid_fph
         session["working_identity"] = working_identity_fph
-        working_identity_hrns = primary_identity_hrns
+        working_identity_hrns = primid_hrns
         working_identity_type = etype_to_adtype(working_identity_type)
 
     currency_fph, \
@@ -4228,7 +4178,7 @@ def currency(currency_fph):
     # of the *agent* logged in here:
     current_stewards = []
     for steward_fph in stewards_list:
-        if steward_fph != primary_identity_fph:
+        if steward_fph != primid_fph:
             s = {}
             s["fph"] = steward_fph
             s["hrns"] = fph_to_hrns(steward_fph)
@@ -4248,9 +4198,9 @@ def currency(currency_fph):
         form = form,
         currency_fph = currency_fph,
         currency_hrns = currency_hrns,
-        primary_identity_type = "login identity",
-        primary_identity_fph = primary_identity_fph,
-        primary_identity_hrns = primary_identity_hrns,
+        primid_type = "login identity",
+        primary_identity_fph = primid_fph,
+        primid_hrns = primid_hrns,
         working_identity_fph = working_identity_fph,
         working_identity_hrns = working_identity_hrns,
         working_identity_type = working_identity_type,
@@ -4276,9 +4226,9 @@ def currency_steward_add(currency_fph):
 
     logged_in = current_user.is_authenticated
 
-    primary_identity_fph, \
-    primary_identity_hrns, \
-    primary_identity_type, \
+    primid_fph, \
+    primid_hrns, \
+    primid_type, \
     m = identify_entity(current_user.get_id())
 
     if "working_identity" in session:
@@ -4287,9 +4237,9 @@ def currency_steward_add(currency_fph):
         working_identity_type, \
         m = identify_entity(session["working_identity"])
     else:
-        working_identity_fph = primary_identity_fph
+        working_identity_fph = primid_fph
         session["working_identity"] = working_identity_fph
-        working_identity_hrns = primary_identity_hrns
+        working_identity_hrns = primid_hrns
         working_identity_type = etype_to_adtype(working_identity_type)
 
     currency_fph, \
@@ -4326,9 +4276,9 @@ def currency_steward_add(currency_fph):
         form = form,
         currency_fph = currency_fph,
         currency_hrns = currency_hrns,
-        primary_identity_type = "login identity",
-        primary_identity_fph = primary_identity_fph,
-        primary_identity_hrns = primary_identity_hrns,
+        primid_type = "login identity",
+        primary_identity_fph = primid_fph,
+        primid_hrns = primid_hrns,
         working_identity_fph = working_identity_fph,
         working_identity_hrns = working_identity_hrns,
         working_identity_type = working_identity_type,
@@ -4355,9 +4305,9 @@ def currency_steward_remove(currency_fph, steward_fph):
 
     logged_in = current_user.is_authenticated
 
-    primary_identity_fph, \
-    primary_identity_hrns, \
-    primary_identity_type, \
+    primid_fph, \
+    primid_hrns, \
+    primid_type, \
     m = identify_entity(current_user.get_id())
 
     if "working_identity" in session:
@@ -4366,9 +4316,9 @@ def currency_steward_remove(currency_fph, steward_fph):
         working_identity_type, \
         m = identify_entity(session["working_identity"])
     else:
-        working_identity_fph = primary_identity_fph
+        working_identity_fph = primid_fph
         session["working_identity"] = working_identity_fph
-        working_identity_hrns = primary_identity_hrns
+        working_identity_hrns = primid_hrns
         working_identity_type = etype_to_adtype(working_identity_type)
 
     currency_fph, \
@@ -4380,9 +4330,9 @@ def currency_steward_remove(currency_fph, steward_fph):
     m = get_currency_specific_properties(currency_fph)
 
     #stewards_fph_list, m = list_stewards(currency_fph)
-    #    primary_identity_fph)
-    if primary_identity_fph in stewards_list:
-        m = remove_steward(currency_fph, primary_identity_fph, steward_fph)
+    #    primid_fph)
+    if primid_fph in stewards_list:
+        m = remove_steward(currency_fph, primid_fph, steward_fph)
 
     if hub_mode == "omtrad":
         return redirect("/home_ahc")
@@ -4415,9 +4365,9 @@ def manage():
     paying = False
     logged_in = current_user.is_authenticated
 
-    primary_identity_fph, \
-    primary_identity_hrns, \
-    primary_identity_type, \
+    primid_fph, \
+    primid_hrns, \
+    primid_type, \
     m = identify_entity(current_user.get_id())
 
     if "working_identity" in session:
@@ -4426,9 +4376,9 @@ def manage():
         working_identity_type, \
         m = identify_entity(session["working_identity"])
     else:
-        working_identity_fph = primary_identity_fph
+        working_identity_fph = primid_fph
         session["working_identity"] = working_identity_fph
-        working_identity_hrns = primary_identity_hrns
+        working_identity_hrns = primid_hrns
         working_identity_type = etype_to_adtype(working_identity_type)
 
     return render_template(
@@ -4439,9 +4389,9 @@ def manage():
         group = group,
         hub_mode = hub_mode,
         version = get_version(),
-        primary_identity_type = "login identity",
-        primary_identity_fph = primary_identity_fph,
-        primary_identity_hrns = primary_identity_hrns,
+        primid_type = "login identity",
+        primary_identity_fph = primid_fph,
+        primid_hrns = primid_hrns,
         working_identity_fph = working_identity_fph,
         working_identity_hrns = working_identity_hrns,
         working_identity_type = working_identity_type,
@@ -4475,9 +4425,9 @@ def create_currency():
     paying = True
     logged_in = current_user.is_authenticated
 
-    primary_identity_fph, \
-    primary_identity_hrns, \
-    primary_identity_type, \
+    primid_fph, \
+    primid_hrns, \
+    primid_type, \
     m = identify_entity(current_user.get_id())
 
     if "working_identity" in session:
@@ -4486,9 +4436,9 @@ def create_currency():
         working_identity_type, \
         m = identify_entity(session["working_identity"])
     else:
-        working_identity_fph = primary_identity_fph
+        working_identity_fph = primid_fph
         session["working_identity"] = working_identity_fph
-        working_identity_hrns = primary_identity_hrns
+        working_identity_hrns = primid_hrns
         working_identity_type = etype_to_adtype(working_identity_type)
 
     form = CurrencyCreateForm()
@@ -4516,7 +4466,7 @@ def create_currency():
         m = new_currency(
                 currency_name,
                 namespace_fph,
-                primary_identity_fph,
+                primid_fph,
                 form.prefix_symbol.data,
                 form.suffix_symbol.data,
                 form.default_account_name.data
@@ -4541,9 +4491,9 @@ def create_currency():
         hub_mode = hub_mode,
         version = get_version(),
         form = form,
-        primary_identity_type = "login identity",
-        primary_identity_fph = primary_identity_fph,
-        primary_identity_hrns = primary_identity_hrns,
+        primid_type = "login identity",
+        primary_identity_fph = primid_fph,
+        primid_hrns = primid_hrns,
         working_identity_fph = working_identity_fph,
         working_identity_hrns = working_identity_hrns,
         working_identity_type = working_identity_type,
@@ -4659,9 +4609,9 @@ def create_pairing(owner_fph = ""):
         hub_mode = hub_mode,
         version = get_version(),
         form = form,
-        primary_identity_type = "login identity",
+        primid_type = "login identity",
         primary_identity_fph = primid_fph,
-        primary_identity_hrns = primid_hrns,
+        primid_hrns = primid_hrns,
         working_identity_fph = working_identity_fph,
         working_identity_hrns = working_identity_hrns,
         working_identity_type = working_identity_type,
@@ -4701,9 +4651,9 @@ def create_account(owner_fph):
         flash("The owner FPH in the URL cannot be identified")
         return redirect("/home")
 
-    primary_identity_fph, \
-    primary_identity_hrns, \
-    primary_identity_type, \
+    primid_fph, \
+    primid_hrns, \
+    primid_type, \
     m = identify_entity(current_user.get_id())
 
     if "working_identity" in session:
@@ -4712,9 +4662,9 @@ def create_account(owner_fph):
         working_identity_type, \
         m = identify_entity(session["working_identity"])
     else:
-        working_identity_fph = primary_identity_fph
+        working_identity_fph = primid_fph
         session["working_identity"] = working_identity_fph
-        working_identity_hrns = primary_identity_hrns
+        working_identity_hrns = primid_hrns
         working_identity_type = etype_to_adtype(working_identity_type)
 
     if hub_mode == "slate_minimal":
@@ -4742,8 +4692,8 @@ def create_account(owner_fph):
         # If mode = "slate_minimal", the *identity* is always a *primid* and
         # can have no more than one *account* in any *currency*:
         #
-#        accounts_fph_list, m = list_primid_accounts(primary_identity_fph)
-        accounts_fph_list, m = list_agent_accounts(primary_identity_fph)
+#        accounts_fph_list, m = list_primid_accounts(primid_fph)
+        accounts_fph_list, m = list_agent_accounts(primid_fph)
 #        for account_fph in accounts_fph_list:
 #            account_currency_fph = get_account_currency(account_fph)
 #            if account_currency_fph == currency_fph:
@@ -4773,9 +4723,9 @@ def create_account(owner_fph):
         else:
             # 2025-03-13:
             # Temporary fudge for automatic account naming:
-            #n = primary_identity_hrns.split(".")
+            #n = primid_hrns.split(".")
 
-            #account_name = primary_identity_hrns + "." + currency_hrns
+            #account_name = primid_hrns + "." + currency_hrns
             #namespace_fph = hrns_to_fph("cc")
             # Since this account name is hidden, it can be safely constructed
             # from a concatentation of *primid* and *currency* HRNS and placed
@@ -4790,7 +4740,7 @@ def create_account(owner_fph):
             m = get_currency_specific_properties(currency_fph)
 
             account_name = default_account_name
-            namespace_fph = primary_identity_fph
+            namespace_fph = primid_fph
 
 
 
@@ -4826,9 +4776,9 @@ def create_account(owner_fph):
         hub_mode = hub_mode,
         version = get_version(),
         form = form,
-        primary_identity_type = "login identity",
-        primary_identity_fph = primary_identity_fph,
-        primary_identity_hrns = primary_identity_hrns,
+        primid_type = "login identity",
+        primary_identity_fph = primid_fph,
+        primid_hrns = primid_hrns,
         working_identity_fph = working_identity_fph,
         working_identity_hrns = working_identity_hrns,
         working_identity_type = working_identity_type,
@@ -4854,9 +4804,9 @@ def list_identiies():
 
     logged_in = current_user.is_authenticated
 
-    primary_identity_fph, \
-    primary_identity_hrns, \
-    primary_identity_type, \
+    primid_fph, \
+    primid_hrns, \
+    primid_type, \
     m = identify_entity(current_user.get_id())
 
     if "working_identity" in session:
@@ -4865,17 +4815,17 @@ def list_identiies():
         working_identity_type, \
         m = identify_entity(session["working_identity"])
     else:
-        working_identity_fph = primary_identity_fph
+        working_identity_fph = primid_fph
         session["working_identity"] = working_identity_fph
-        working_identity_hrns = primary_identity_hrns
+        working_identity_hrns = primid_hrns
         working_identity_type = "login identity"
     working_identity_type = etype_to_adtype(working_identity_type)
 
-    secids_fph_list = list_secids(primary_identity_fph)
+    secids_fph_list = list_secids(primid_fph)
     identities = []
     s = {}
-    s["fph"] = primary_identity_fph
-    s["hrns"] = primary_identity_hrns
+    s["fph"] = primid_fph
+    s["hrns"] = primid_hrns
     identities.append(s)
     for secid_fph in secids_fph_list:
         s = {}
@@ -4891,9 +4841,9 @@ def list_identiies():
         group = group,
         hub_mode = hub_mode,
         version = get_version(),
-        primary_identity_type = "login identity",
-        primary_identity_fph = primary_identity_fph,
-        primary_identity_hrns = primary_identity_hrns,
+        primid_type = "login identity",
+        primary_identity_fph = primid_fph,
+        primid_hrns = primid_hrns,
         working_identity_fph = working_identity_fph,
         working_identity_hrns = working_identity_hrns,
         working_identity_type = working_identity_type,
@@ -4918,9 +4868,9 @@ def create_secid():
 
     logged_in = current_user.is_authenticated
 
-    primary_identity_fph, \
-    primary_identity_hrns, \
-    primary_identity_type, \
+    primid_fph, \
+    primid_hrns, \
+    primid_type, \
     m = identify_entity(current_user.get_id())
 
     if "working_identity" in session:
@@ -4929,9 +4879,9 @@ def create_secid():
         working_identity_type, \
         m = identify_entity(session["working_identity"])
     else:
-        working_identity_fph = primary_identity_fph
+        working_identity_fph = primid_fph
         session["working_identity"] = working_identity_fph
-        working_identity_hrns = primary_identity_hrns
+        working_identity_hrns = primid_hrns
         working_identity_type = etype_to_adtype(working_identity_type)
 
     form = SecidCreateForm()
@@ -4961,7 +4911,7 @@ def create_secid():
         m = new_secid(
                 secid_name,
                 parent_namespace_fph,
-                primary_identity_fph # the *primd* of this *secid*
+                primid_fph # the *primd* of this *secid*
             )
         flash(
             "A new alias has been created, identified as \n" \
@@ -5016,9 +4966,9 @@ def create_secid():
         hub_mode = hub_mode,
         version = get_version(),
         form = form,
-        primary_identity_type = "login identity",
-        primary_identity_fph = primary_identity_fph,
-        primary_identity_hrns = primary_identity_hrns,
+        primid_type = "login identity",
+        primary_identity_fph = primid_fph,
+        primid_hrns = primid_hrns,
         working_identity_fph = working_identity_fph,
         working_identity_hrns = working_identity_hrns,
         working_identity_type = working_identity_type
@@ -5045,9 +4995,9 @@ def create_namespace():
     paying = True
     logged_in = current_user.is_authenticated
 
-    primary_identity_fph, \
-    primary_identity_hrns, \
-    primary_identity_type, \
+    primid_fph, \
+    primid_hrns, \
+    primid_type, \
     m = identify_entity(current_user.get_id())
 
     if "working_identity" in session:
@@ -5056,9 +5006,9 @@ def create_namespace():
         working_identity_type, \
         m = identify_entity(session["working_identity"])
     else:
-        working_identity_fph = primary_identity_fph
+        working_identity_fph = primid_fph
         session["working_identity"] = working_identity_fph
-        working_identity_hrns = primary_identity_hrns
+        working_identity_hrns = primid_hrns
         working_identity_type = etype_to_adtype(working_identity_type)
 
     form = NamespaceCreateForm()
@@ -5102,7 +5052,7 @@ def create_namespace():
                 namespace_name,
                 parent_namespace_fph,
                 default_currency_fph,
-                primary_identity_fph
+                primid_fph
             )
         flash(
             "A new namespace has been created, identified as \n" \
@@ -5120,9 +5070,9 @@ def create_namespace():
         hub_mode = hub_mode,
         version = get_version(),
         form = form,
-        primary_identity_type = "login identity",
-        primary_identity_fph = primary_identity_fph,
-        primary_identity_hrns = primary_identity_hrns,
+        primid_type = "login identity",
+        primary_identity_fph = primid_fph,
+        primid_hrns = primid_hrns,
         working_identity_fph = working_identity_fph,
         working_identity_hrns = working_identity_hrns,
         working_identity_type = working_identity_type
@@ -5148,9 +5098,9 @@ def list_namespaces():
     currency_steward = False
     logged_in = current_user.is_authenticated
 
-    primary_identity_fph, \
-    primary_identity_hrns, \
-    primary_identity_type, \
+    primid_fph, \
+    primid_hrns, \
+    primid_type, \
     m = identify_entity(current_user.get_id())
 
     if "working_identity" in session:
@@ -5159,9 +5109,9 @@ def list_namespaces():
         working_identity_type, \
         m = identify_entity(session["working_identity"])
     else:
-        working_identity_fph = primary_identity_fph
+        working_identity_fph = primid_fph
         session["working_identity"] = working_identity_fph
-        working_identity_hrns = primary_identity_hrns
+        working_identity_hrns = primid_hrns
         working_identity_type = etype_to_adtype(working_identity_type)
 
     active_namespaces, m = list_all_namespaces()
@@ -5182,9 +5132,9 @@ def list_namespaces():
         group = group,
         hub_mode = hub_mode,
         version = get_version(),
-        primary_identity_type = "login identity",
-        primary_identity_fph = primary_identity_fph,
-        primary_identity_hrns = primary_identity_hrns,
+        primid_type = "login identity",
+        primary_identity_fph = primid_fph,
+        primid_hrns = primid_hrns,
         available_namespaces = available_namespaces
     )
 
@@ -5204,9 +5154,9 @@ def add_steward():
     group = "home" # Used to control top menu behaviour.
     logged_in = current_user.is_authenticated
 
-    primary_identity_fph, \
-    primary_identity_hrns, \
-    primary_identity_type, \
+    primid_fph, \
+    primid_hrns, \
+    primid_type, \
     m = identify_entity(current_user.get_id())
 
     if "working_identity" in session:
@@ -5215,10 +5165,10 @@ def add_steward():
         working_identity_type, \
         m = identify_entity(session["working_identity"])
     else:
-        working_identity_fph = primary_identity_fph
+        working_identity_fph = primid_fph
         session["working_identity"] = working_identity_fph
-        working_identity_hrns = primary_identity_hrns
-        working_identity_type = primary_identity_type
+        working_identity_hrns = primid_hrns
+        working_identity_type = primid_type
     working_identity_type = etype_to_adtype(working_identity_type)
 
     # The entity (*namespace* or *currency* to which this new steward is to be
@@ -5262,7 +5212,7 @@ def add_steward():
             flash(m)
             return redirect("/currency/" + currency_fph)
         if etype == "primid":
-            stewards_list.append(primary_identity_fph)
+            stewards_list.append(primid_fph)
             with sqlite3.connect(ENTITIES_DB) as conn:
                 cursor = conn.cursor()
                 if etype == "namespace":
@@ -5314,25 +5264,25 @@ def export_account_csv(account_fph):
     group = "home" # Used to control top menu behaviour.
     logged_in = current_user.is_authenticated
 
-    primary_identity_fph, \
-    primary_identity_hrns, \
-    primary_identity_type, \
+    primid_fph, \
+    primid_hrns, \
+    primid_type, \
     m = identify_entity(current_user.get_id())
 
     if hub_mode == "omtrad":
-        working_identity_fph = primary_identity_fph
-        working_identity_hrns = primary_identity_hrns
-        working_identity_type = primary_identity_type
+        working_identity_fph = primid_fph
+        working_identity_hrns = primid_hrns
+        working_identity_type = primid_type
     elif "working_identity" in session:
         working_identity_fph, \
         working_identity_hrns, \
         working_identity_type, \
         m = identify_entity(session["working_identity"])
     else:
-        working_identity_fph = primary_identity_fph
+        working_identity_fph = primid_fph
         session["working_identity"] = working_identity_fph
-        working_identity_hrns = primary_identity_hrns
-        working_identity_type = primary_identity_type
+        working_identity_hrns = primid_hrns
+        working_identity_type = primid_type
     working_identity_type = etype_to_adtype(working_identity_type)
 
     account_fph, \
@@ -5379,10 +5329,10 @@ def export_account_csv(account_fph):
     if etype == "secid":
         owner_primid_fph, m = get_primid(owner_fph)
     else:
-        owner_primid_fph =  primary_identity_fph
+        owner_primid_fph =  primid_fph
     # This may appear a little convoluted, but simplifying it is not an urgent
     # priority.
-    if owner_primid_fph != primary_identity_fph:
+    if owner_primid_fph != primid_fph:
         flash("None of your identities owns this account")
         return redirect("/home")
 
@@ -5411,9 +5361,9 @@ def export_account_csv(account_fph):
         group = group,
         hub_mode = hub_mode,
         version = get_version(),
-        primary_identity_type = "login identity",
-        primary_identity_fph = primary_identity_fph,
-        primary_identity_hrns = primary_identity_hrns,
+        primid_type = "login identity",
+        primary_identity_fph = primid_fph,
+        primid_hrns = primid_hrns,
         working_identity_fph = working_identity_fph,
         working_identity_hrns = working_identity_hrns,
         working_identity_type = working_identity_type,
@@ -5444,25 +5394,25 @@ def export_currency_csv(currency_fph):
     group = "home" # Used to control top menu behaviour.
     logged_in = current_user.is_authenticated
 
-    primary_identity_fph, \
-    primary_identity_hrns, \
-    primary_identity_type, \
+    primid_fph, \
+    primid_hrns, \
+    primid_type, \
     m = identify_entity(current_user.get_id())
 
     if hub_mode == "omtrad":
-        working_identity_fph = primary_identity_fph
-        working_identity_hrns = primary_identity_hrns
-        working_identity_type = primary_identity_type
+        working_identity_fph = primid_fph
+        working_identity_hrns = primid_hrns
+        working_identity_type = primid_type
     elif "working_identity" in session:
         working_identity_fph, \
         working_identity_hrns, \
         working_identity_type, \
         m = identify_entity(session["working_identity"])
     else:
-        working_identity_fph = primary_identity_fph
+        working_identity_fph = primid_fph
         session["working_identity"] = working_identity_fph
-        working_identity_hrns = primary_identity_hrns
-        working_identity_type = primary_identity_type
+        working_identity_hrns = primid_hrns
+        working_identity_type = primid_type
     working_identity_type = etype_to_adtype(working_identity_type)
 
     currency_fph, \
@@ -5490,7 +5440,7 @@ def export_currency_csv(currency_fph):
         flash(m)
         return redirect("/home")
 
-    if not (primary_identity_fph in stewards_list):
+    if not (primid_fph in stewards_list):
         flash("You are not a steward of this currency")
         return redirect("/home")
 
@@ -5508,9 +5458,9 @@ def export_currency_csv(currency_fph):
         group = group,
         hub_mode = hub_mode,
         version = get_version(),
-        primary_identity_type = "login identity",
-        primary_identity_fph = primary_identity_fph,
-        primary_identity_hrns = primary_identity_hrns,
+        primid_type = "login identity",
+        primary_identity_fph = primid_fph,
+        primid_hrns = primid_hrns,
         working_identity_fph = working_identity_fph,
         working_identity_hrns = working_identity_hrns,
         working_identity_type = working_identity_type,
@@ -5566,22 +5516,20 @@ def importing(file):
     previous_page = session["previous_page"]
     session["previous_page"] = page
     group = "home" # Used to control top menu behaviour.
-    primary_identity_fph, \
-    primary_identity_hrns, \
-    primary_identity_type, \
+    primid_fph, \
+    primid_hrns, \
+    primid_type, \
     m = identify_entity(current_user.get_id())
-    working_identity_fph = primary_identity_fph
-    working_identity_hrns = primary_identity_hrns
+    working_identity_fph = primid_fph
+    working_identity_hrns = primid_hrns
     session["working_identity"] = working_identity_fph
     logged_in = current_user.is_authenticated
-    print(file)
+#    print(file)
     if file:
-        print("\nGroucho")
         tfpath = SLATE_TEMP + "/" + file
         if os.path.exists(tfpath):
-            print("Chico")
             flash("Please wait while the CSV file is being processed ...")
-            report, errors = import_csv_dataset(tfpath, primary_identity_fph)
+            report, errors = import_csv_dataset(tfpath, primid_fph)
             if len(errors) > 0:
                 for line in errors:
                     flash(line)
@@ -5598,9 +5546,9 @@ def importing(file):
         hub_mode = hub_mode,
         version = get_version(),
         logged_in = logged_in,
-        primary_identity_type = "login identity",
-        primary_identity_fph = primary_identity_fph,
-        primary_identity_hrns = primary_identity_hrns,
+        primid_type = "login identity",
+        primary_identity_fph = primid_fph,
+        primid_hrns = primid_hrns,
         working_identity_fph = working_identity_fph,
         working_identity_hrns = working_identity_hrns
     )
@@ -5618,12 +5566,12 @@ def import_payment_set():
     previous_page = session["previous_page"]
     session["previous_page"] = page
     group = "home" # Used to control top menu behaviour.
-    primary_identity_fph, \
-    primary_identity_hrns, \
-    primary_identity_type, \
+    primid_fph, \
+    primid_hrns, \
+    primid_type, \
     m = identify_entity(current_user.get_id())
-    working_identity_fph = primary_identity_fph
-    working_identity_hrns = primary_identity_hrns
+    working_identity_fph = primid_fph
+    working_identity_hrns = primid_hrns
     session["working_identity"] = working_identity_fph
     logged_in = current_user.is_authenticated
 
@@ -5634,7 +5582,7 @@ def import_payment_set():
             tfpath = SLATE_TEMP + "/" + filename
             file.save(tfpath)
             with open(IMPORT_QUEUE, "a") as iqf:
-                iqf.write(primary_identity_fph + ":" + filename + "\n")
+                iqf.write(primid_fph + ":" + filename + "\n")
             flash("The CSV file has been added to the import queue.")
             return redirect("/home_ahc")
         else:
@@ -5650,9 +5598,9 @@ def import_payment_set():
         hub_mode = hub_mode,
         version = get_version(),
         logged_in = logged_in,
-        primary_identity_type = "login identity",
-        primary_identity_fph = primary_identity_fph,
-        primary_identity_hrns = primary_identity_hrns,
+        primid_type = "login identity",
+        primary_identity_fph = primid_fph,
+        primid_hrns = primid_hrns,
         working_identity_fph = working_identity_fph,
         working_identity_hrns = working_identity_hrns
     )
@@ -5790,8 +5738,6 @@ def messages():
 
     # Hub operational mode (read from environment variable HUB_MODE)
     hub_mode = get_hub_mode()
-    #version = get_version()()
-
 
     page = "messages"
     if "previous_page" in session: # already active
@@ -5802,18 +5748,14 @@ def messages():
 
     group = "home" # Used to control top menu behaviour.
 
-    hub_mode = get_hub_mode()
-    #version = get_version()()
- ### New variable added
-
     namespace_steward = False
     currency_steward = False
     paying = False
     logged_in = current_user.is_authenticated
 
-    primary_identity_fph, \
-    primary_identity_hrns, \
-    primary_identity_type, \
+    primid_fph, \
+    primid_hrns, \
+    primid_type, \
     m = identify_entity(current_user.get_id())
 
     if "working_identity" in session:
@@ -5822,54 +5764,70 @@ def messages():
         working_identity_type, \
         m = identify_entity(session["working_identity"])
     else:
-        working_identity_fph = primary_identity_fph
+        working_identity_fph = primid_fph
         session["working_identity"] = working_identity_fph
-        working_identity_hrns = primary_identity_hrns
-        working_identity_type = primary_identity_type
+        working_identity_hrns = primid_hrns
+        working_identity_type = primid_type
     working_identity_type = etype_to_adtype(working_identity_type)
-
-    # List all identities:
-    identity_list = []
-    identity_list.append(primary_identity_fph)
-    secids_list = list_secids(primary_identity_fph)
-    for secid_fph in secids_list:
-        identity_list.append(secid_fph)
-
-#    print("Indentities listed:")
-#    for identity_fph in identity_list:
-#        print("\t" + fph_to_hrns(identity_fph))
 
     total_number_of_messages = 0
     total_number_of_indelible_messages = 0
-    # List identities for which messages are available:
     message_recipients_list = [] # (list of dictionaries for template)
-    for identity_fph in identity_list:
-        number_of_messages, \
-        number_of_indelible_messages = messages_available(identity_fph)
 
-#        print("number_of_messages = " + str(number_of_messages))
-#        print(
-#            "number_of_indelible_messages = " \
-#            + str(number_of_indelible_messages)
-#        )
-        total_number_of_messages += number_of_messages
-        total_number_of_indelible_messages += number_of_indelible_messages
+    if hub_mode == "omtrad":
 
-        if number_of_messages > 0:
-            m = {}
-            m["fph"] = identity_fph
-            m["hrns"] = fph_to_hrns(identity_fph)
-            if identity_fph == primary_identity_fph: # extend later
-                m["primid"] = True
-            else:
-                m["primid"] = False
-            if number_of_indelible_messages > 0:
-                m["some_indelible"] = True
-            else:
-                m["some_indelible"] = False
+        pmap_t, m = retrieve_pmap(primid_fph)
 
-#            print(m)
-            message_recipients_list.append(m)
+        # List all *ahid*:
+        ahid_list = []
+        for ahid_hrns in pmap_t.keys():
+            ahid_list.append(ahid_hrns)
+            number_of_messages, \
+            number_of_indelible_messages = messages_available(ahid_hrns)
+#            number_of_messages, \
+#            number_of_indelible_messages = message_count(primid_hrns)
+            total_number_of_messages += number_of_messages
+            total_number_of_indelible_messages += number_of_indelible_messages
+            if number_of_messages > 0:
+                m = {}
+                m["hrns"] = ahid_hrns
+                m["fph"], e = hrns_to_fph(ahid_hrns)
+                m["message_count"] = str(number_of_messages)
+                if number_of_indelible_messages > 0:
+                    m["some_indelible"] = True
+                else:
+                    m["some_indelible"] = False
+                message_recipients_list.append(m)
+
+#        print(ahid_list)
+#        print(message_recipients_list)
+
+
+    else: # List all *identities*:
+        identity_list = []
+        identity_list.append(primid_fph)
+        secids_list = list_secids(primid_fph)
+        for secid_fph in secids_list:
+            identity_list.append(secid_fph)
+
+        for identity_fph in identity_list:
+            number_of_messages, \
+            number_of_indelible_messages = messages_available(identity_fph)
+            total_number_of_messages += number_of_messages
+            total_number_of_indelible_messages += number_of_indelible_messages
+            if number_of_messages > 0:
+                m = {}
+                m["fph"] = identity_fph
+                m["hrns"] = fph_to_hrns(identity_fph)
+                if identity_fph == primid_fph: # extend later
+                    m["primid"] = True
+                else:
+                    m["primid"] = False
+                if number_of_indelible_messages > 0:
+                    m["some_indelible"] = True
+                else:
+                    m["some_indelible"] = False
+                message_recipients_list.append(m)
 
     if total_number_of_messages > 0:
         number_of_messages = str(total_number_of_messages)
@@ -5888,9 +5846,9 @@ def messages():
         hub_mode = hub_mode,
         version = get_version(),
         logged_in = logged_in,
-        primary_identity_type = "login identity",
-        primary_identity_fph = primary_identity_fph,
-        primary_identity_hrns = primary_identity_hrns,
+        primid_type = "login identity",
+        primary_identity_fph = primid_fph,
+        primid_hrns = primid_hrns,
         working_identity_fph = working_identity_fph,
         working_identity_hrns = working_identity_hrns,
         working_identity_type = working_identity_type,
@@ -5928,9 +5886,9 @@ def message_send():
     paying = False
     logged_in = current_user.is_authenticated
 
-    primary_identity_fph, \
-    primary_identity_hrns, \
-    primary_identity_type, \
+    primid_fph, \
+    primid_hrns, \
+    primid_type, \
     m = identify_entity(current_user.get_id())
 
     if "working_identity" in session:
@@ -5939,10 +5897,10 @@ def message_send():
         working_identity_type, \
         m = identify_entity(session["working_identity"])
     else:
-        working_identity_fph = primary_identity_fph
+        working_identity_fph = primid_fph
         session["working_identity"] = working_identity_fph
-        working_identity_hrns = primary_identity_hrns
-        working_identity_type = primary_identity_type
+        working_identity_hrns = primid_hrns
+        working_identity_type = primid_type
     working_identity_type = etype_to_adtype(working_identity_type)
 
     form = UserMessageForm()
@@ -5974,37 +5932,22 @@ def message_send():
 
         now = datetime.now()
         message_timestamp = now.strftime("%Y-%m-%d_%H:%M:%S")
-#        print("message_timestamp = ", end="")
-#        print(message_timestamp)
-#        print("now = ", end="")
-#        print(now)
-#        today = date.now()
-#        print("today = ", end="")
-#        print(today)
 
-#        date_time = now.strftime("%Y-%m-%d_%H:%M:%S")
         date_today = now.strftime("%Y%m%d")
 
         category = form.category.data
-#        print("category = ", end="")
-#        print(category)
 
         subject = form.subject.data
 
-        #expiry_datetime = form.expiry_date.data + "_00:00:00"
-        #expiry_datetime = form.expiry_datetime.data
         expiry_date = form.expiry_date.data
-#        print("expiry_date = ", end="")
-#        print(expiry_date)
+
         expiry_date_ = expiry_date.strftime("%Y%m%d")
-#        print("expiry_date_ = ", end="")
-#        print(expiry_date_)
+
         expiry_datetime = expiry_date.strftime("%Y-%m-%d_%H:%M:%S")
 
 
 
 
-        #if expiry_datetime < now:
         if expiry_date_ < date_today:
             flash("The expiry date cannot be in the past.")
 
@@ -6053,9 +5996,9 @@ def message_send():
         hub_mode = hub_mode,
         version = get_version(),
         logged_in = logged_in,
-        primary_identity_type = "login identity",
-        primary_identity_fph = primary_identity_fph,
-        primary_identity_hrns = primary_identity_hrns,
+        primid_type = "login identity",
+        primary_identity_fph = primid_fph,
+        primid_hrns = primid_hrns,
         working_identity_fph = working_identity_fph,
         working_identity_hrns = working_identity_hrns,
         working_identity_type = working_identity_type,
@@ -6074,8 +6017,6 @@ def messages_show(recipient_fph):
 
     # Hub operational mode (read from environment variable HUB_MODE)
     hub_mode = get_hub_mode()
-    #version = get_version()()
-
 
     page = "show_messages"
     if "previous_page" in session: # already active
@@ -6086,18 +6027,14 @@ def messages_show(recipient_fph):
 
     group = "home" # Used to control top menu behaviour.
 
-    hub_mode = get_hub_mode()
-    #version = get_version()()
- ### New variable added
-
     namespace_steward = False
     currency_steward = False
     paying = False
     logged_in = current_user.is_authenticated
 
-    primary_identity_fph, \
-    primary_identity_hrns, \
-    primary_identity_type, \
+    primid_fph, \
+    primid_hrns, \
+    primid_type, \
     m = identify_entity(current_user.get_id())
 
     if "working_identity" in session:
@@ -6106,45 +6043,47 @@ def messages_show(recipient_fph):
         working_identity_type, \
         m = identify_entity(session["working_identity"])
     else:
-        working_identity_fph = primary_identity_fph
+        working_identity_fph = primid_fph
         session["working_identity"] = working_identity_fph
-        working_identity_hrns = primary_identity_hrns
-        working_identity_type = primary_identity_type
+        working_identity_hrns = primid_hrns
+        working_identity_type = primid_type
     working_identity_type = etype_to_adtype(working_identity_type)
 
+    number_of_messages, \
+    number_of_indelible_messages = message_count(primid_fph, hub_mode)
 
     # NB, this bit has been duplicated from "/home" so should be moved into a
     # function in app/core/messaging.py
     #
     # List all identities:
-    identity_list = []
-    identity_list.append(primary_identity_fph)
-    secids_list = list_secids(primary_identity_fph)
-    for secid_fph in secids_list:
-        identity_list.append(secid_fph)
-    total_number_of_messages = 0
-    total_number_of_indelible_messages = 0
-    # List identities for which messages are available:
-    message_recipients_list = [] # (list of dictionaries for template)
-    for identity_fph in identity_list:
-        number_of_messages, \
-        number_of_indelible_messages = messages_available(identity_fph)
-        total_number_of_messages += number_of_messages
-        total_number_of_indelible_messages += number_of_indelible_messages
-    if total_number_of_messages > 0:
-        number_of_messages = str(total_number_of_messages)
-    else:
-        number_of_messages = ""
-    if total_number_of_indelible_messages > 0:
-        number_of_indelible_messages = str(total_number_of_indelible_messages)
-    else:
-        number_of_indelible_messages = ""
+#    identity_list = []
+#    identity_list.append(primid_fph)
+#    secids_list = list_secids(primid_fph)
+#    for secid_fph in secids_list:
+#        identity_list.append(secid_fph)
+#    total_number_of_messages = 0
+#    total_number_of_indelible_messages = 0
+#    # List identities for which messages are available:
+#    message_recipients_list = [] # (list of dictionaries for template)
+#    for identity_fph in identity_list:
+#        number_of_messages, \
+#        number_of_indelible_messages = messages_available(identity_fph)
+#        total_number_of_messages += number_of_messages
+#        total_number_of_indelible_messages += number_of_indelible_messages
+#    if total_number_of_messages > 0:
+#        number_of_messages = str(total_number_of_messages)
+#    else:
+#        number_of_messages = ""
+#    if total_number_of_indelible_messages > 0:
+#        number_of_indelible_messages = str(total_number_of_indelible_messages)
+#    else:
+#        number_of_indelible_messages = ""
 
     recipient_fph, \
     recipient_hrns, \
     etype, \
     m = identify_entity(recipient_fph)
-    if not (etype in ["primid", "secid"]):
+    if not (etype in ["primid", "secid", "ahid"]):
         flash("Recipient is not an agent")
         return redirect("/home")
 
@@ -6159,9 +6098,9 @@ def messages_show(recipient_fph):
         hub_mode = hub_mode,
         version = get_version(),
         logged_in = logged_in,
-        primary_identity_type = "login identity",
-        primary_identity_fph = primary_identity_fph,
-        primary_identity_hrns = primary_identity_hrns,
+        primid_type = "login identity",
+        primary_identity_fph = primid_fph,
+        primid_hrns = primid_hrns,
         working_identity_fph = working_identity_fph,
         working_identity_hrns = working_identity_hrns,
         working_identity_type = working_identity_type,

@@ -45,30 +45,42 @@
     <td class="msg">{{ m.prefix_string }} {{ m.subject }}</td>
   </tr>
   {% if m.category == "payment" %}
+  {% if m.payer_identity_hrns %}
   <tr>
     <td class="msg">Payer identity:</td>
     <td class="msg">{{ m.payer_identity_hrns }}</td>
   </tr>
+  {% endif %}
+  {% if m.payer_account_hrns %}
   <tr>
     <td class="msg">Payer account:</td>
     <td class="msg">{{ m.payer_account_hrns }}</td>
   </tr>
+  {% endif %}
+  {% if m.payee_identity_hrns %}
   <tr>
     <td class="msg">Payee identity:</td>
     <td class="msg">{{ m.payee_identity_hrns }}</td>
   </tr>
+  {% endif %}
+  {% if m.payee_account_hrns %}
   <tr>
     <td class="msg">Payee account:</td>
     <td class="msg">{{ m.payee_account_hrns }}</td>
   </tr>
+  {% endif %}
+  {% if m.amount %}
   <tr>
     <td class="msg">Amount:</td>
     <td class="msg">{{ m.amount }}</td>
   </tr>
+  {% endif %}
+  {% if m.currency_hrns %}
   <tr>
     <td class="msg">Currency:</td>
     <td class="msg">{{ m.currency_hrns }}</td>
   </tr>
+  {% endif %}
   <tr>
     <td class="msg">Annotation:</td>
     <td class="msg">{{ m.message_body }}</td>
