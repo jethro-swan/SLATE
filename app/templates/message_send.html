@@ -4,10 +4,12 @@
 
 <h3>Send a message</h3>
 
+{% if hub_mode != "omtrad" %}
 <p class="footnote">
   You can use this form to send a message from the current working
   <b>identity</b> to any other known <b>identity</b>.
 </p>
+{% endif %}
 <p class="footnote">
   You can also broadcast a message to all users of a specified <b>currency</b>
   (if enabled by its <em>stewards</em>, and if the "broadcast" box is ticked).
@@ -18,9 +20,19 @@
 <form action="" method="post" autocomplete="off" novalidate>
 {{ form.hidden_tag() }}
 <table class="msg">
+  {% if hub_mode == "omtrad" %}
+  <tr valign="top">
+    <td class="msg">{{ form.sender.label }}</td>
+    <td class="msg">{{ form.sender(size=15,
+                       placeholder="sender (ahid)")
+                    }}</td>
+  </tr>
+  {% endif %}
   <tr valign="top">
     <td class="msg">{{ form.recipient.label }}</td>
-    <td class="msg">{{ form.recipient(size=15, placeholder="recipient") }}</td>
+    <td class="msg">{{ form.recipient(size=15,
+                       placeholder="recipient (any identity type)")
+                    }}</td>
   </tr>
   <tr valign="top">
     <td class="msg">{{ form.broadcast.label }}</td>

@@ -5865,8 +5865,6 @@ def message_send():
 
     # Hub operational mode (read from environment variable HUB_MODE)
     hub_mode = get_hub_mode()
-    #version = get_version()()
-
 
     page = "send_message"
     if "previous_page" in session: # already active
@@ -5876,10 +5874,6 @@ def message_send():
     session["previous_page"] = page
 
     group = "home" # Used to control top menu behaviour.
-
-    hub_mode = get_hub_mode()
-    #version = get_version()()
- ### New variable added
 
     namespace_steward = False
     currency_steward = False
@@ -5903,8 +5897,33 @@ def message_send():
         working_identity_type = primid_type
     working_identity_type = etype_to_adtype(working_identity_type)
 
+    number_of_messages, \
+    number_of_indelible_messages = message_count(primid_fph, hub_mode)
+
+
+
+
     form = UserMessageForm()
     if form.validate_on_submit():
+
+        if hub_mode == "omtrad":
+            # This section is used only if sent as an *ahid*.
+            sender_fph, \
+            sender_hrns, \
+            sender_type, \
+            m = identify_entity(form.sender.data)
+#            print(sender_type)
+            if sender_type not in ["ahid", "primid"]:
+                flash("The specified sender is not an ahid")
+                return redirect("/message/send")
+            if not sender_fph:
+                flash("The specified sender does not exist")
+                return redirect("/message/send")
+            if get_ahid_primid(sender_fph) != primid_fph:
+                flash(sender_hrns + " is not one of your ahid")
+                return redirect("/message/send")
+        else:
+            sender_fph = working_identity_fph
 
         recipient_fph, \
         recipient_hrns, \
@@ -5917,7 +5936,7 @@ def message_send():
             flash("Recipient cannot be identified")
             return redirect("/home")
 
-        if not (recipient_type in ["primid", "secid", "currency"]):
+        if not (recipient_type in ["ahid", "primid", "secid", "currency"]):
             flash("Invalid recipient type")
             return redirect("/home")
 
@@ -5967,17 +5986,20 @@ def message_send():
 
         em = send_message(
                 message_timestamp,
-                working_identity_fph,   # FPH or HRNS
-                recipient_fph,          # FPH or HRNS
-                category,               # string
-                "",                     # string
+                sender_fph,
+                recipient_fph,
+                category,
+                "",                     # subject_prefix
                 subject,                # string
-                "",
+                "",                     # stewardship_id
                 longevity,              # integer: lifespan (seconds)
                 expiry_datetime,        # string: YYYY-MM-DD_hh:mm:ss
-                "",                     # string
-                "",                     # string
-                "",                     # integer
+                "",                     # payer_account_fph
+                "",                     # payee_account_fph
+                "",                     # payer_ahid_fph
+                "",                     # payee_ahid_fph
+                "",                     # currency_fph
+                "",                     # amount
                 message_body,           # string
                 False                   # boolean
             )
@@ -6002,7 +6024,9 @@ def message_send():
         working_identity_fph = working_identity_fph,
         working_identity_hrns = working_identity_hrns,
         working_identity_type = working_identity_type,
-        form = form
+        form = form,
+        number_of_messages = number_of_messages,
+        number_of_indelible_messages = number_of_indelible_messages
     )
 
 

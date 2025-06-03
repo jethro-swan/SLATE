@@ -37,6 +37,8 @@ class UserMessageForm(FlaskForm):
     # If broadcast box is not checked. then any attempt to send to an entity
     # other than an *identity* will be rejected.
 
+    sender          = StringField("Sender")
+
     recipient       = StringField(
                           "Recipient",
                           validators=[DataRequired("required")]

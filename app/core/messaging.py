@@ -166,35 +166,35 @@ def send_message(
         indelible = False       # boolean
     ):
 
-    print()
-    print(message_timestamp)
-    print("from: " + fph_to_hrns(sender_identifier))
-    print("to: " + fph_to_hrns(recipient_identifier))
-    print("category: " + category)
-    if subject_prefix:
-        print(subject_prefix)
-    print(subject)
-    if stewardship_id:
-        print(stewardship_id)
-    if longevity:
-        print(longevity)
-    if expiry_datetime:
-        print(expiry_datetime)
-    if payer_account_fph:
-        print(fph_to_hrns(payer_account_fph))
-    if payee_account_fph:
-        print(fph_to_hrns(payee_account_fph))
-    if payer_ahid_fph:
-        print(fph_to_hrns(payer_ahid_fph))
-    if payee_ahid_fph:
-        print(fph_to_hrns(payee_ahid_fph))
-    if currency_fph:
-        print(fph_to_hrns(currency_fph))
-    if amount:
-        print(amount)
-    print(message_body)
-    print(indelible)
-    print()
+#    print()
+#    print(message_timestamp)
+#    print("from: " + fph_to_hrns(sender_identifier))
+#    print("to: " + fph_to_hrns(recipient_identifier))
+#    print("category: " + category)
+#    if subject_prefix:
+#        print(subject_prefix)
+#    print(subject)
+#    if stewardship_id:
+#        print(stewardship_id)
+#    if longevity:
+#        print(longevity)
+#    if expiry_datetime:
+#        print(expiry_datetime)
+#    if payer_account_fph:
+#        print(fph_to_hrns(payer_account_fph))
+#    if payee_account_fph:
+#        print(fph_to_hrns(payee_account_fph))
+#    if payer_ahid_fph:
+#        print(fph_to_hrns(payer_ahid_fph))
+#    if payee_ahid_fph:
+#        print(fph_to_hrns(payee_ahid_fph))
+#    if currency_fph:
+#        print(fph_to_hrns(currency_fph))
+#    if amount:
+#        print(amount)
+#    print(message_body)
+#    print(indelible)
+#    print()
 
 
     sender_fph, \
@@ -331,10 +331,13 @@ def send_message(
 #
 
 def fetch_messages(recipient_identifier):
+
     recipient_fph, \
     recipient_hrns, \
     recipient_type, \
     em = identify_entity(recipient_identifier)
+
+#    print(recipient_hrns)
 
     with sqlite3.connect(MESSAGES_DB) as conn:
         cursor = conn.cursor()
@@ -371,6 +374,9 @@ def fetch_messages(recipient_identifier):
         deletions_due = []
         messages = [] # list of dictionaries
         for message in message_list:
+
+#            print(message)
+
             message_id = message[0]
             timestamp = message[1]
             expiry_timestamp = message[2]
@@ -450,8 +456,9 @@ def fetch_messages(recipient_identifier):
 #                m["payee_identity_hrns"] = fph_to_hrns(payer_account_owner_fph)
                 if currency_fph:
                     m["currency_hrns"] = fph_to_hrns(currency_fph)
-                else:
-                    continue    # omit this message from list returned (should
+#                    print("Groucho")
+#                else:
+#                    continue    # omit this message from list returned (should
                                 # never happen)
 
                 if isinstance(amount, int):
@@ -463,6 +470,8 @@ def fetch_messages(recipient_identifier):
 
                 m["message_body"] = message_body # string
                 messages.append(m)
+
+                #print(m)
 
             elif expiry_timestamp: # delete only if expiry_timestamp is set
                 cursor.execute(
