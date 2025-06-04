@@ -7,7 +7,11 @@
      all cases, above those for the current working *identity*.
 -->
 {% if any_messages %}
-<h3>Messages for {{ recipient_hrns }}</h3>
+<p>
+  <b>Messages for {{ recipient_hrns }}</b>
+  (<a href="/messages/clear/{{ recipient_fph }}">delete all</a>)
+</p>
+
 <table class="msg">
 {% for m in message_list %}
   <!--

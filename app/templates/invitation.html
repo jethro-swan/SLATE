@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<h2>create an invitation QR code</h2>
+
+<form action="" method="post" novalidate>
+  {{ form.hidden_tag() }}
+  <div>
+    <div style="float:left; margin:2px;">
+      {{ form.currency_id.label }}<br />
+      {{ form.currency_id(size=10, placeholder="") }} .
+    </div>
+    <div style="float:left; margin:2px;">
+      {{ form.namespace_id.label }}<br />
+      {{ form.namespace_id(size=20, placeholder="") }}
+    </div>
+  </div>
+  <div class="clear-both">
+  <p>
+    {{ form.create_invitation() }}
+  </p>
+  </div>
+</form>
+
+<hr />
+
+
+{% endblock %}

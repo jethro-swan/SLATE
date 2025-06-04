@@ -740,8 +740,41 @@ class RegistrationForm(FlaskForm):
 #    ssh_pubkey          = StringField(
 #                            "SSH public key"
 #                          )
-    #recaptcha       = RecaptchaField("recaptcha", validators=[DataRequired("required")])
+#recaptcha = RecaptchaField("recaptcha", validators=[DataRequired("required")])
     submit              = SubmitField("register")
+
+
+#==============================================================================
+# QR code invitation:
+
+class InvitationQRForm(FlaskForm):
+
+    namespace_id        = StringField(
+                              "parent namespace for username",
+                              render_kw={"placeholder": "initial community"}
+                          )
+    currency_id         = StringField(
+                              "currency for new user's initial account",
+                              render_kw={"placeholder": "initial currency"},
+                          )
+    create_invitation   = SubmitField("generate invitation QR code")
+
+
+#==============================================================================
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 #------------------------------------------------------------------------------
 # administration --------------------------------------------------------------

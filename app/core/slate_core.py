@@ -9,7 +9,7 @@ from app.core.constants import ENTITIES_DB, PAYMENTS_DB, DB_DIR, DB_BKP_DIR
 from app.core.constants import HUBS_DB
 from app.core.constants import FPH_TO_HRNS_MAP, HRNS_C_FPH_MAP
 from app.core.constants import SUBSTRATE_FPH
-from app.core.constants import VERSION
+from app.core.constants import VERSION, CONFIG
 
 from app.core.common import filename_timestamp as timestamp
 from app.core.common import nshash
@@ -96,6 +96,24 @@ def get_version():
     with open(VERSION, "r") as v_file:
         version = v_file.read()
     return version
+
+
+#==============================================================================
+# Return site configuration item by key string:
+
+def get_config(key):
+    with open(CONFIG, "r") as cfg:
+        c = cfg.readlines()
+    config = {}
+    for row in c:
+        r = c.split("\t")
+        config[t[0]] = r[1]
+    if not key in config.keys():
+        return ""
+    return config[key]
+
+
+
 
 #==============================================================================
 # Global data, flags, etc.

@@ -634,10 +634,18 @@ def delete_message(message_id):
 
 # Delete all messages except those maeked indelible
 #
-def delete_all_messages(identity):
+def delete_all_messages(recipient_fph):
 
+    with sqlite3.connect(MESSAGES_DB) as conn:
+        cursor = conn.cursor()
+        cursor.execute(
+            "DELETE FROM messages WHERE recipient_identity_fph = ?",
+            (recipient_fph,)
+        )
+        conn.commit()
+        cursor.close()
 
-    return number_of_messages_deleted
+    return
 
 # Delete all selected messages except those maeked indelible
 #

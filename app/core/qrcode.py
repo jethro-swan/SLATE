@@ -6,7 +6,7 @@ import pyqrcode
 import os
 import datetime
 
-from core.constants import SLATE_QR_CODES
+from app.core.constants import SLATE_QR_CODES
 
 # QR code applications:
 #
@@ -133,40 +133,40 @@ def random_name():
 def qr_code_png(url, qr_png_name):
     # A QR code PNG is generated for the URL provided:
     # The PNG is saved in the common QR code directory:
-    png_path = SLATE_QR_CODES + \
-             + qr_png_name \
+#    png_path = SLATE_QR_CODES + \
+    png_name = qr_png_name \
              + datetime.datetime.now().strftime("%Y%m%d%H%M%S%f") \
              + ".png"
     qr_url = pyqrcode.create(url)
     qr_url.png(png_path, scale = 8)
-    return png_path # for display
+    return png_name # for display
 
 
 
 
 
 def qrencode_invitation(
-        hub,
+#        get_config("hub_url"),
         currency_fph,
         namespace_fph,
         inviter_fph,
         expiry # Unix time
     ):
     # URL of the website for which we are making QR code
-    s = "https://" + hub \
+    s = get_config("hub_url") \
       + "&c=" + currency_fph \
       + "&s=" + namespace_fph \
       + "&f=" + inviter_fph \
       + "&e=" + expiry # Unix time
-    qr_png_name = currency_fph + '_' + inviter_fph + '_'
+#    qr_png_name = currency_fph + '_' + inviter_fph + '_'
+    qr_png_name = random_name()
     return qr_code_png(s, qr_png_name)
     #qr_png_path = qr_code_png(s, qr_png_name)
     #return qr_png_path
 
 #def qrencode_payment(hub, currency_fph, payer_fph, payee_fph, amount, transid):
 def qrencode_payment(hub, payer_fph, payee_fph, amount):
-    s = "https://" + hub \      # URL of hub
-#      + "&c=" + currency_fph \
+    s = get_config("hub_url") \
       + "&f=" + payer_fph \
       + "&t=" + payee_fph \
       + "&a=" + amount

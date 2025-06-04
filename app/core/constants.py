@@ -15,13 +15,14 @@ IMPORTING           = "/var/slate/active/temp/importing"
 #SLATE_QR_CODES      = "/srv/slate/export/qr_codes/"
 GRAPHS              = "/home/slate/SLATE/app/static/graphs/"
 
+
 #SLATE_FLAGS         = SLATE_DATA + "flags/"     # The trailing / is important
 #SLATE_TREES         = SLATE_DATA + "roots/"     # in this group.
 #SLATE_FIXED         = SLATE_DATA + "fixed/"     #
 SLATE_MAPS          = SLATE_DATA + "/maps/"      #
 #SLATE_EXPORT        = SLATE_DATA + "export/"    # CSV exports
-SLATE_WWW_OUT       = SLATE_DATA + "/www/"       # CSV exports
-#SLATE_QR_CODES      = SLATE_DATA + "qr_codes/"  # QR codes generated
+#SLATE_WWW_OUT       = SLATE_DATA + "/www/"       # CSV exports
+SLATE_QR_CODES      = "/home/slate/SLATE/app/static/qr_codes/"  # QR codes generated
                                                 # (both cleared out regularly)
 # fixed values (symlinked files)
 #ENABLED             = SLATE_FIXED + "enabled"   # f: = True
@@ -68,3 +69,4 @@ SUBSTRATE_FPH       = nshash("")
 
 # Temporary kludge:
 VERSION             = "/home/slate/SLATE/version"
+CONFIG              = "/home/slate/SLATE/hub_config"

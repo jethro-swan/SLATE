@@ -33,7 +33,7 @@ from app.core.slate_core import new_account
 from app.core.slate_core import account_status
 from app.core.slate_core import list_stewardships, list_stewards
 from app.core.slate_core import retrieve_primid_access_details
-from app.core.slate_core import list_agent_accounts, list_secids
+from app.core.slate_core import list_agent_accounts, list_secids, list_ahids
 from app.core.slate_core import get_namespace_specific_properties
 from app.core.slate_core import get_currency_specific_properties
 from app.core.slate_core import get_account_specific_properties
@@ -46,6 +46,9 @@ from app.core.slate_core import get_hub_mode
 from app.core.slate_core import get_version
 from app.core.slate_core import add_stewardship, remove_steward
 from app.core.slate_core import random_filename
+from app.core.slate_core import get_config
+
+from app.core.qrcode import qrencode_invitation
 
 from app.core.omtrad import retrieve_pmap
 from app.core.omtrad import create_new_pairing
@@ -95,7 +98,7 @@ from app.core.messaging import create_messages_db
 from app.core.messaging import send_message
 from app.core.messaging import fetch_messages
 from app.core.messaging import messages_available
-from app.core.messaging import delete_message
+from app.core.messaging import delete_message, delete_all_messages
 from app.core.messaging import message_count
 
 from app.core.mail_temp import temp_mail_send
@@ -152,6 +155,7 @@ from app.forms import UserMessageForm
 from app.forms import FileUploadForm
 from app.forms import PairingCreateForm
 from app.forms import CSVImportForm
+from app.forms import InvitationQRForm
 
 from markupsafe import escape
 
@@ -689,7 +693,7 @@ def login_recover():
                      + "link, you can ignore this message.\n\n"
 
         temp_mail_send(
-            "server@lrc.org.uk",
+            get_config("hub_email"),
             agent_email,
             "Reset your password and PIN",
             message_body
@@ -6129,6 +6133,7 @@ def messages_show(recipient_fph):
         working_identity_hrns = working_identity_hrns,
         working_identity_type = working_identity_type,
         recipient_hrns = recipient_hrns,
+        recipient_fph = recipient_fph,
         any_messages = any_messages,
         message_list = message_list,
         number_of_indelible_messages = number_of_indelible_messages,
@@ -6156,16 +6161,21 @@ def message_delete(recipient_fph, message_id):
     if recipient_fph == "":
         flash("ERROR: recipient is unregistered")
         return redirect("/home")
-
     if (recipient_type == "primid") and (recipient_fph != primid_fph):
         flash("ERROR: recipient is incorrect primid")
         return redirect("/home")
-
-    if (recipient_type == "secid"):
+    elif (recipient_type == "secid"):
         secids_list = list_secids(primid_fph)
         if not (recipient_fph in secids_list):
             flash("ERROR: recipient secid does not belong to current primid")
             return redirect("/home")
+    elif (recipient_type == "ahid"):
+        ahids_list = list_ahids(primid_fph)
+        if not (recipient_fph in ahids_list):
+            flash("ERROR: recipient ahid does not belong to current primid")
+            return redirect("/home")
+
+
 
     if not isinstance(message_id, str):
         flash("ERROR: invalid message ID in URL")
@@ -6183,12 +6193,150 @@ def message_delete(recipient_fph, message_id):
     return redirect("/message/show/" + recipient_fph)
 
 
+#
+# Delete a all messages for user:
+#
+@app.route("/messages/clear/<recipient_fph>", methods = ["GET", "POST"])
+@login_required
+def messages_clear(recipient_fph):
+
+    primid_fph, \
+    primid_hrns, \
+    primid_type, \
+    m = identify_entity(current_user.get_id())
+
+    recipient_fph, \
+    recipient_hrns, \
+    recipient_type, \
+    m = identify_entity(recipient_fph)
+
+    if recipient_fph == "":
+        flash("ERROR: recipient is unregistered")
+        return redirect("/home")
+
+    if (recipient_type == "primid") and (recipient_fph != primid_fph):
+        flash("ERROR: recipient is incorrect primid")
+        return redirect("/home")
+    elif (recipient_type == "secid"):
+        secids_list = list_secids(primid_fph)
+        if not (recipient_fph in secids_list):
+            flash("ERROR: recipient secid does not belong to current primid")
+            return redirect("/home")
+    elif (recipient_type == "ahid"):
+        ahids_list = list_ahids(primid_fph)
+        if not (recipient_fph in ahids_list):
+            flash("ERROR: recipient ahid does not belong to current primid")
+            return redirect("/home")
+
+#    if not isinstance(message_id, str):
+#        flash("ERROR: invalid message ID in URL")
+#        return redirect("/home")
+
+    if "previous_page" in session: # already active
+        previous_page = session["previous_page"]
+    else: # initializing
+        previous_page = "home"
+
+#    em = delete_message(message_id)
+    delete_all_messages(recipient_fph)
+
+    return redirect("/message/show/" + recipient_fph)
+
+
+
+
+
+
+
+
+
+
+#==============================================================================
+#
+
+@app.route("/invitation/generate", methods = ["GET", "POST"])
+@login_required
+def invitation_generate():
+
+    # Hub operational mode (read from environment variable HUB_MODE)
+    hub_mode = get_hub_mode()
+
+    page = "create_currency"
+    previous_page = session["previous_page"]
+    session["previous_page"] = page
+
+    group = "home" # Used to control top menu behaviour.
+
+    logged_in = current_user.is_authenticated
+
+    primid_fph, \
+    primid_hrns, \
+    primid_type, \
+    m = identify_entity(current_user.get_id())
+
+    if (hub_mode != "omtrad") and ("working_identity" in session):
+        working_identity_fph, \
+        working_identity_hrns, \
+        working_identity_type, \
+        m = identify_entity(session["working_identity"])
+    else:
+        working_identity_fph = primid_fph
+        session["working_identity"] = working_identity_fph
+        working_identity_hrns = primid_hrns
+        working_identity_type = etype_to_adtype(working_identity_type)
+
+    config = get_config()
+    hub_url = config["site_url"]
+
+    form = UserMessageForm()
+    if form.validate_on_submit():
+
+        form = InvitationQRForm()
+
+        namespace_fph, \
+        namespace_hrns, \
+        etype, \
+        m = identify_entity(form.namespace_id.data)
+
+        currency_fph, \
+        currency_hrns, \
+        etype, \
+        m = identify_entity(form.currency_id.data)
+
+        qrcodepath = qrencode_invitation(
+#                         get_config("hub_url"),
+                         currency_fph,
+                         namespace_fph,
+                         inviter_fph,
+                         expiry # Unix time
+                     )
+
+
+
+    return render_template(
+        "invitation.html",
+        title = "QR code invitation",
+        page = page,
+        group = group,
+        hub_mode = hub_mode,
+        version = get_version(),
+        logged_in = logged_in,
+        primid_type = "login identity",
+        primary_identity_fph = primid_fph,
+        primid_hrns = primid_hrns,
+        working_identity_fph = working_identity_fph,
+        working_identity_hrns = working_identity_hrns,
+        working_identity_type = working_identity_type,
+        form = form
+    )
+
 
 
 
 
 
 # help ========================================================================
+#
 @app.route("/help")
 def help():
 
