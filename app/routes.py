@@ -4555,8 +4555,10 @@ def create_pairing(owner_fph = ""):
     working_identity_hrns = primid_hrns
     working_identity_type = primid_type
 
-    form = PairingCreateForm()
+    number_of_messages, \
+    number_of_indelible_messages = message_count(primid_fph, hub_mode)
 
+    form = PairingCreateForm()
     if form.validate_on_submit():
 
         ahid_hrns = form.ahid_hrns.data
@@ -4620,7 +4622,9 @@ def create_pairing(owner_fph = ""):
         working_identity_hrns = working_identity_hrns,
         working_identity_type = working_identity_type,
         development_mode = development_mode,
-        namespace_steward = namespace_steward
+        namespace_steward = namespace_steward,
+        number_of_messages = number_of_messages,
+        number_of_indelible_messages = number_of_indelible_messages
     )
 
 
