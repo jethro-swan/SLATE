@@ -102,30 +102,16 @@ crossorigin="anonymous"></script>
     {% if number_of_indelible_messages %}
       <div class="mbp">
         <a class="mbp" href="/message/list">messages</a>
-        {% if number_of_messages %}
-          ({{ number_of_messages }} |
-          <b>{{ number_of_indelible_messages }}</b>)
-        {% else %}
-          (0 | {{ number_of_indelible_messages }})
-        {% endif %}
+        <b>{{ number_of_indelible_messages }}</b>)
       </div>
     {% elif number_of_messages %}
       <div class="mbn">
         <a class="mbn" href="/message/list">messages</a>
-        {% if number_of_messages %}
         ({{ number_of_messages }})
-        {% else %}
-        (0)
-        {% endif %}
       </div>
     {% elif page == "show_messages" %}
       <div class="mba">
-        <a class="mba" href="/message/list">messages</a>
-        {% if number_of_messages %}
-          ({{ number_of_messages }})
-        {% else %}
-          (0)
-        {% endif %}
+        <a class="mba" href="/message/list">messages</a> (0)
       </div>
     {% else %}
       <div class="mb">

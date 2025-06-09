@@ -17,7 +17,8 @@
     </div>
   </div>
   {% if hub_mode != "omtrad" %}
-  <div style="float:left; margin:2px; clear:both;">
+  <div class="clear-both"></div>
+  <div style="float:left; margin:2px;">
     <div>
       {{ form.prefix_symbol.label }}<br />
       {{ form.prefix_symbol(size=1) }} (any UTF-8 character)
@@ -32,7 +33,8 @@
       {{ form.default_account_name(size=10, placeholder="default name") }}
     </div>
   </div>
-  <div style="float:left; margin:2px; clear:both;">
+  <div class="clear-both"></div>
+  <div style="float:left; margin:2px;">
     <div>
       <p>
         {{ form.acct_same_name }} {{ form.acct_same_name.label }}
@@ -46,7 +48,8 @@
     </div>
   </div>
   {% endif %}
-  <div style="float:left; margin:2px; clear:both;">
+  <div class="clear-both"></div>
+  <div style="float:left; margin:2px;">
     <div>
       <p>{{ form.create_currency() }}</p>
     </div>

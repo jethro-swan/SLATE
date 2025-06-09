@@ -4412,16 +4412,11 @@ def create_currency():
 
     # Hub operational mode (read from environment variable HUB_MODE)
     hub_mode = get_hub_mode()
-    #version = get_version()()
-
 
     page = "create_currency"
-    previous_page = session["previous_page"]    # Add these two lines to all
-    session["previous_page"] = page             # endpoint handlers. Some (but
-                                                # but by no means all) screens
-                                                # should be able to follow only
-                                                # from a limited set of previous
-                                                # screens.
+    previous_page = session["previous_page"]
+    session["previous_page"] = page
+
     group = "home" # Used to control top menu behaviour.
 
     namespace_steward = False
@@ -4444,6 +4439,9 @@ def create_currency():
         session["working_identity"] = working_identity_fph
         working_identity_hrns = primid_hrns
         working_identity_type = etype_to_adtype(working_identity_type)
+
+    number_of_messages, \
+    number_of_indelible_messages = message_count(primid_fph, hub_mode)
 
     form = CurrencyCreateForm()
     if form.validate_on_submit():
@@ -4503,7 +4501,9 @@ def create_currency():
         working_identity_type = working_identity_type,
         development_mode = development_mode,
         namespace_steward = namespace_steward,
-        currency_steward = currency_steward
+        currency_steward = currency_steward,
+        number_of_messages = number_of_messages,
+        number_of_indelible_messages = number_of_indelible_messages
     )
 
 # create an *ahid*-*currency* pairing -----------------------------------------
@@ -4862,8 +4862,6 @@ def create_secid():
 
     # Hub operational mode (read from environment variable HUB_MODE)
     hub_mode = get_hub_mode()
-    #version = get_version()()
-
 
     group = "home" # Used to control top menu behaviour.
     page = "create_secid"
@@ -4887,6 +4885,9 @@ def create_secid():
         session["working_identity"] = working_identity_fph
         working_identity_hrns = primid_hrns
         working_identity_type = etype_to_adtype(working_identity_type)
+
+    number_of_messages, \
+    number_of_indelible_messages = message_count(primid_fph, hub_mode)
 
     form = SecidCreateForm()
     if form.validate_on_submit():
@@ -4975,7 +4976,10 @@ def create_secid():
         primid_hrns = primid_hrns,
         working_identity_fph = working_identity_fph,
         working_identity_hrns = working_identity_hrns,
-        working_identity_type = working_identity_type
+        working_identity_type = working_identity_type,
+        number_of_messages = number_of_messages,
+        number_of_indelible_messages = number_of_indelible_messages
+
     )
 
 # create a new namespace ------------------------------------------------------
@@ -5014,6 +5018,9 @@ def create_namespace():
         session["working_identity"] = working_identity_fph
         working_identity_hrns = primid_hrns
         working_identity_type = etype_to_adtype(working_identity_type)
+
+    number_of_messages, \
+    number_of_indelible_messages = message_count(primid_fph, hub_mode)
 
     form = NamespaceCreateForm()
     if form.validate_on_submit():
@@ -5079,7 +5086,9 @@ def create_namespace():
         primid_hrns = primid_hrns,
         working_identity_fph = working_identity_fph,
         working_identity_hrns = working_identity_hrns,
-        working_identity_type = working_identity_type
+        working_identity_type = working_identity_type,
+        number_of_messages = number_of_messages,
+        number_of_indelible_messages = number_of_indelible_messages
     )
 
 # list the existing namespaces ------------------------------------------------
