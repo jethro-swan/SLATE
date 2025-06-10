@@ -5592,6 +5592,9 @@ def import_payment_set():
     session["working_identity"] = working_identity_fph
     logged_in = current_user.is_authenticated
 
+    number_of_messages, \
+    number_of_indelible_messages = message_count(primid_fph, hub_mode)
+
     if request.method == 'POST':
         if "csv_file" in request.files:
             file = request.files["csv_file"]
@@ -5619,7 +5622,9 @@ def import_payment_set():
         primary_identity_fph = primid_fph,
         primid_hrns = primid_hrns,
         working_identity_fph = working_identity_fph,
-        working_identity_hrns = working_identity_hrns
+        working_identity_hrns = working_identity_hrns,
+        number_of_messages = number_of_messages,
+        number_of_indelible_messages = number_of_indelible_messages
     )
 
 

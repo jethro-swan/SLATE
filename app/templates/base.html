@@ -92,9 +92,7 @@ crossorigin="anonymous"></script>
     {% if page == "identities" %}
       <div class="mba">list identities</div>
     {% else %}
-      <div class="mb">
-        <a class="mb" href="/identity/list">identities</a>
-      </div>
+      <div class="mb"><a class="mb" href="/identity/list">identities</a></div>
     {% endif %}
   {% endif %}
 
@@ -120,18 +118,14 @@ crossorigin="anonymous"></script>
     {% endif %}
   {% endif %}
 
-  <div class="mb">
-    <a class="mb" href="/logout">logout</a>
-  </div>
+  <div class="mb"><a class="mb" href="/logout">logout</a></div>
 
 {% endif %}<!-- logged_in -->
 
 {% if page == "help" %}
   <div class="mba">help</div>
 {% else %}
-  <div class="mb">
-    <a class="mb" href="/help">help</a>
-  </div>
+  <div class="mb"><a class="mb" href="/help">help</a></div>
 {% endif %}
 
   <!-- Test/development stuff -->
@@ -152,28 +146,34 @@ crossorigin="anonymous"></script>
 
 <!-- end menu row 1 ------------------------------------------------------- -->
 
-<br class="clear-both" />
-<hr class="dashed" />
+<div class="clear-both"></div>
 
 {% if logged_in %}
   {% if current_user.is_authenticated %}
     {% if hub_mode == "omtrad" %}
-      Login identity =
-      {{ primary_identity_hrns }} |
-      <a href="/create_pairing/{{ working_identity_fph }}">
-        join currency
-      </a>
+      <div>
+        <a href="/create_namespace">new namespace</a> |
+        <a href="/create_currency">new currency</a> |
+        <a href="/import/dataset">import dataset</a>
+      </div>
+      <div>
+        Login identity =
+        {{ primid_hrns }} |
+        <a href="/create_pairing/{{ working_identity_fph }}">
+          join currency
+        </a>
+      </div>
       <hr class="dashed" />
     {% elif hub_mode == "slate_minimal" %}
       <b>Login identity</b> =
-      <b>{{ primary_identity_hrns }}</b> |
+      <b>{{ primid_hrns }}</b> |
       <a href="/create_account/{{ working_identity_fph }}">
         <b>join currency</b>
       </a>
       <hr class="dashed" />
     {% else %}
       <b>Login identity</b> =
-      <b>{{ primary_identity_hrns }}</b> ({{ primary_identity_type }}) |
+      <b>{{ primid_hrns }}</b> ({{ primid_type }}) |
       <b><a href="/create_secid">add alias</a></b>
       <hr class="dashed" />
       Working <b>identity</b> =
@@ -186,12 +186,15 @@ crossorigin="anonymous"></script>
     {% endif %}
   {% endif %}
 {% else %}
-  <!-- if there are no menu items to display (logged out), display the
-  entry page banner instead. -->
-  <img src="{{ url_for('static', filename='img/openmoney_32x20.png') }}"
-  align="left" valign="bottom" hspace="5">
-  <span class="entry-page-banner">SLATE LoCuS</span>
-{% endif %}<!-- logged_in -->
+  <div class="clear-both"><br /></div>
+  <div>
+    <!-- if there are no menu items to display (logged out), display the
+    entry page banner instead. -->
+    <img src="{{ url_for('static', filename='img/openmoney_32x20.png') }}"
+    align="left" valign="bottom" hspace="5">
+    <span class="entry-page-banner">SLATE LoCuS</span>
+  </div>
+ {% endif %}<!-- logged_in -->
 
 <div class="clear-both"><!-- menu row 2 -->
 
@@ -268,7 +271,7 @@ crossorigin="anonymous"></script>
 
 <!-- end menu row 2 ------------------------------------------------------- -->
 
-<br class="clear-both" />
+<div class="clear-both" /></div>
 
 <hr />
 
