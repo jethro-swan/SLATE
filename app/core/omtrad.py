@@ -440,7 +440,7 @@ def ah_payment(
     payer_ahid_hrns = fph_to_hrns(payer_ahid_fph)
     payee_ahid_hrns = fph_to_hrns(payee_ahid_fph)
 
-    subject_line = "Payment received from " + payer_ahid_hrns
+    subject_line = payer_ahid_hrns
 
     message_body = annotation
     ## TO DO:

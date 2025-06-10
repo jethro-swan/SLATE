@@ -2630,6 +2630,9 @@ def journal(ahid_fph, currency_fph):
 #        journal_rows.append(journal_row)
         journal_rows.insert(0, journal_row)
 
+    number_of_messages, \
+    number_of_indelible_messages = message_count(primid_fph, hub_mode)
+
     return render_template(
         "transaction_journal_ahc.html",
         title = "Display transaction journal",
@@ -2648,7 +2651,9 @@ def journal(ahid_fph, currency_fph):
         currency_hrns = currency_hrns,
         journal_rows = journal_rows,
         account_fph = account_fph,
-        account_volume = integer_to_money_format(account_volume)
+        account_volume = integer_to_money_format(account_volume),
+        number_of_messages = number_of_messages,
+        number_of_indelible_messages = number_of_indelible_messages
     )
 
 #=============================================================================

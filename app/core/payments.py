@@ -187,7 +187,7 @@ def payment(payer_account_fph, payee_account_fph, amount, annotation):
     payer_account_owner_hrns = fph_to_hrns(payer_account_owner_fph)
     payee_account_owner_hrns = fph_to_hrns(payee_account_owner_fph)
 
-    subject_line = "Payment received from " + payer_account_owner_hrns
+    subject_line = payer_account_owner_hrns
 
     message_body = annotation
     ## TO DO:
