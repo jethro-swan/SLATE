@@ -39,3 +39,5 @@ pip install wonderwords
 pip install Faker
 
 pip install arrow
+pip install pypng
+pip install pyqrcode

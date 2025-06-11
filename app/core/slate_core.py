@@ -101,16 +101,15 @@ def get_version():
 #==============================================================================
 # Return site configuration item by key string:
 
-def get_config(key):
+def get_config():
     with open(CONFIG, "r") as cfg:
         c = cfg.readlines()
     config = {}
     for row in c:
-        r = c.split("\t")
-        config[t[0]] = r[1]
-    if not key in config.keys():
-        return ""
-    return config[key]
+        print(row)
+        r = row.split()
+        config[r[0]] = r[1]
+    return config
 
 
 
@@ -1537,7 +1536,6 @@ def get_default_currency(entity_identifier):
     entity_hrns, \
     entity_type, \
     m = identify_entity(entity_identifier)
-
 
     # 2025-04-08: *currency* added ti list
     if not (entity_type in ["namespace", "primid", "secid", "currency"]):

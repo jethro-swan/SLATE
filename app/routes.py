@@ -121,6 +121,7 @@ from app.core.csv_import import import_minimal_payment_set_as_csv
 from flask import render_template, render_template_string
 from flask import flash, redirect, url_for
 from flask import session, g, request
+#from flask import Flask, session, g, request
 #from flask_mailman import Mail, EmailMessage
 #from flask_mailman import EmailMessage
 from flask_login import LoginManager, current_user, login_user, logout_user
@@ -241,31 +242,45 @@ def register():
     ssh_public_key_allowed = False
     #--------------------------------------------------------------------------
 
-    url_currency_identifier = request.args.get("c_fph")
+    url_currency_identifier = request.args.get("c")
+    initial_namespace_identifier = request.args.get("s")
+    print(url_currency_identifier)
+    print(initial_namespace_identifier)
+
+#    url_currency_identifier = request.args.get("c_fph")
+#    initial_currency_fph, \
+#    initial_currency_hrns, \
+#    etype, \
+#    m = identify_entity(url_currency_identifier)
+#    if m:
+#        flash(m)
+#        return redirect("/register")
     initial_currency_fph, \
     initial_currency_hrns, \
     etype, \
-    m = identify_entity(url_currency_identifier)
-    if m:
-        flash(m)
-        return redirect("/register")
+    m = identify_entity(request.args.get("c"))
     if not (initial_currency_fph and (etype == "currency")):
         initial_currency_fph = ""
         initial_currency_hrns = ""
 
 #    print("currency: " + initial_currency_fph + " > " + initial_currency_hrns)
 
-    initial_namespace_identifier = request.args.get("s_fph")
+#    initial_namespace_identifier = request.args.get("s_fph")
     initial_namespace_fph, \
     initial_namespace_hrns, \
     etype, \
-    m = identify_entity(initial_namespace_identifier)
+    m = identify_entity(request.args.get("s"))
     #if m:
     #    flash(m)
     #    return redirect("/register")
-    if not (initial_namespace_fph and (etype == "namespace")):
+    #if not (initial_namespace_fph and (etype == "namespace")):
+    if not initial_namespace_fph:
         initial_namespace_fph = ""
         initial_namespace_hrns = ""
+
+    print(initial_currency_hrns)
+    print(initial_namespace_hrns)
+
 
     form = RegistrationForm()
 
@@ -692,8 +707,9 @@ def login_recover():
                      + "\nIf you have not requested a login recovery " \
                      + "link, you can ignore this message.\n\n"
 
+        config = get_config()
         temp_mail_send(
-            get_config("hub_email"),
+            config["hub_email"],
             agent_email,
             "Reset your password and PIN",
             message_body
@@ -6335,7 +6351,6 @@ def invitation_generate():
         m = identify_entity(form.currency_id.data)
 
         qrcodepath = qrencode_invitation(
-#                         get_config("hub_url"),
                          currency_fph,
                          namespace_fph,
                          inviter_fph,

@@ -22,7 +22,7 @@ GRAPHS              = "/home/slate/SLATE/app/static/graphs/"
 SLATE_MAPS          = SLATE_DATA + "/maps/"      #
 #SLATE_EXPORT        = SLATE_DATA + "export/"    # CSV exports
 #SLATE_WWW_OUT       = SLATE_DATA + "/www/"       # CSV exports
-QR_CODES            = "/home/slate/SLATE/app/static/qr_codes/"  # QR codes generated
+QR_CODES            = "/home/slate/SLATE/app/static/qr/" # QR codes generated
                                                 # (both cleared out regularly)
 # fixed values (symlinked files)
 #ENABLED             = SLATE_FIXED + "enabled"   # f: = True

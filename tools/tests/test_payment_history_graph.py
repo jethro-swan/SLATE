@@ -1,6 +1,5 @@
 #!/home/slate/SLATE/venv/bin/python3
 
-
 import sqlite3
 
 from app.core.slate_core import list_currency_accounts

@@ -1,10 +1,12 @@
-#!/usr/bin/env python3
-
 import pyqrcode
-#import xxhash
-#from xxhash import xxh32
 import os
 import datetime
+
+from app.core.slate_core import random_filename
+from app.core.slate_core import identify_entity
+from app.core.slate_core import get_config
+
+from app.core.common import unixtime_int
 
 from app.core.constants import QR_CODES
 
@@ -112,57 +114,44 @@ from app.core.constants import QR_CODES
 #                   amount (transaction number)
 #               providing
 #                   button (click/touch) to confirm transaction
-#
-# For later use with NESTS Flask interface:
-#
 
-
-
-# For later use with NESTS Flask interface:
-
-
-def random_name():
-    # A random name is generated for the QR code:
-    timestamp_format = "%Y%m%d%H%M%S%f"   # YYYYMMDDhhmmss...... (20 digits)
-    timestamp20 = datetime.datetime.now().strftime(timestamp_format)
-    ##random32 = xxh32(str(random.randrange(0, 9999999999)).strip()).hexdigest()
-    # Return a 52-character string comprising the date and time of generation
-    # terminated by a random string:
-    return timestamp20 + random32
 
 def qr_code_png(url, qr_png_name):
     # A QR code PNG is generated for the URL provided:
     # The PNG is saved in the common QR code directory:
-#    png_path = QR_CODES + \
-    png_name = qr_png_name \
-             + datetime.datetime.now().strftime("%Y%m%d%H%M%S%f") \
-             + ".png"
+    png_path = QR_CODES + random_filename() + ".png"
     qr_url = pyqrcode.create(url)
     qr_url.png(png_path, scale = 8)
-    return png_name # for display
+    return png_path # for display/deletion
 
 
-
-
-
-def qrencode_invitation(
-#        get_config("hub_url"),
-        currency_fph,
-        namespace_fph,
-        inviter_fph,
-        expiry # Unix time
-    ):
+def qrencode_invitation(currency_id, namespace_id, inviter_id):
+    currency_fph, currency_hrns, etype, m = identify_entity(currency_id)
+    namespace_fph, namespace_hrns, etype, m = identify_entity(namespace_id)
+    inviter_fph, inviter_hrns, etype, m = identify_entity(inviter_id)
+    #time_now = unixtime_int() # nanosecond precision
+    config = get_config()
+    if "qr_lifespan" in config.keys():
+        qr_lifespan = int(config["qr_lifespan"]) # seconds
+    else:
+        qr_lifespan = 60
+    if "hub_url" in config.keys():
+        hub_url = config["hub_url"]
+    else:
+        return ""
+    qr_expiry_time = str(unixtime_int() + qr_lifespan*1000000000)
+    deathtime = str(qr_expiry_time) # for use in filename
     # URL of the website for which we are making QR code
-    s = get_config("hub_url") \
-      + "&c=" + currency_fph \
+    s = hub_url + "/register" \
+      + "?c=" + currency_fph \
       + "&s=" + namespace_fph \
       + "&f=" + inviter_fph \
-      + "&e=" + expiry # Unix time
-#    qr_png_name = currency_fph + '_' + inviter_fph + '_'
-    qr_png_name = random_name()
-    return qr_code_png(s, qr_png_name)
-    #qr_png_path = qr_code_png(s, qr_png_name)
-    #return qr_png_path
+      + "&e=" + qr_expiry_time # after which the QR code becomes invalid
+    qr_png_path = QR_CODES + random_filename() + "_" + deathtime + ".png"
+    qr_url = pyqrcode.create(s)
+    qr_url.png(qr_png_path, scale = 8)
+    return qr_png_path
+
 
 #def qrencode_payment(hub, currency_fph, payer_fph, payee_fph, amount, transid):
 def qrencode_payment(hub, payer_fph, payee_fph, amount):

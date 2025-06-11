@@ -1,2 +1,3 @@
 hub_url https://locus01.lrc.org.uk
+qr_lifespan 60
 hub_email server@lrc.org.uk
