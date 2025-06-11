@@ -10,30 +10,32 @@
 </p>
 <ul>
   <li>
-  <p>
-  <a href="/currency/export/{{ currency_fph }}">export journal</a> (CSV)
-  for <b>{{ currency_hrns }}</b><br />
-  </p>
+    <p>
+    <a href="/currency/export/{{ currency_fph }}">export journal</a> (CSV)
+    for <b>{{ currency_hrns }}</b><br />
+    </p>
   </li>
   <li>
     The <em>stewards</em> of this <b>currency</b> are:
     <ul>
       <li class="compact2">
-      <b>{{ primary_identity_hrns }}</b><!-- cannot remove self as steward -->
+        <b>{{ primid_hrns }}</b><!-- cannot remove self as steward -->
       </li>
       {% for steward in current_stewards %}
+      {% if steward %}
       <li class="compact2">
-      <b>{{ steward.hrns }}</b>
-      [
-      <a href="/currency/steward/remove/{{ currency_fph }}/{{ steward.fph }}">
-      remove</a>
-      ]
+        <b>{{ steward.hrns }}</b>
+        [
+        <a href="/currency/steward/remove/{{ currency_fph }}/{{ steward.fph }}">
+        remove</a>
+        ]
       </li>
+      {% endif %}
       {% endfor %}
-      <li class="compact2">
-      <p><a href="/currency/steward/add/{{ currency_fph }}">add steward</a></p>
-      </li>
     </ul>
+  </li>
+  <li>
+    <p><a href="/currency/steward/add/{{ currency_fph }}">add steward</a></p>
   </li>
 </ul>
 

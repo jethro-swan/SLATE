@@ -136,7 +136,7 @@ This is the original SLATE interface, listing *accounts* as well as
     </a>
   </b>
   ({{ identity.type }})
-  {% if identity.fph == primary_identity_fph %}
+  {% if identity.fph == primid_fph %}
   | <b><a href="/list_stewardships">stewardships</a></b>
   | <a href="/create_secid"><b>new alias</b></a>
   {% endif %}
@@ -206,7 +206,7 @@ use in NESTS.
     </a>
   </b>
   ({{ identity.type }})
-  {% if identity.fph == primary_identity_fph %}
+  {% if identity.fph == primid_fph %}
   [ <b><a href="/list_stewardships">list stewardships</a></b> ]
   {% endif %}
 </div>

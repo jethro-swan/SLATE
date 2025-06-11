@@ -102,7 +102,7 @@ def list_payments_in_currency(currency_identifier):
         payment_row.append(annotation)          # annotation
         payments_list.append(payment_row)
 
-        print(payment_row)
+#        print(payment_row)
 
     return payments_list, ""
 
@@ -248,7 +248,7 @@ def dump_currency_payments_csv(
 
     payment_rows, m = list_payments_in_currency(currency_identifier)
     if m:
-        print("m = " + m)
+#        print("m = " + m)
         return "", m
 
     csv_filename = "currency_" + fph_to_hrns(currency_fph) + "_journal_" \

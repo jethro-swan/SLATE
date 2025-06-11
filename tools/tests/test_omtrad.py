@@ -16,13 +16,13 @@ from app.core.omtrad import *
 
 parent_fph, m = hrns_to_fph("cc")
 
-primid_fph, \
-primid_hrns, \
-access_token, \
-m = new_primid(
-        "bb", parent_fph, "JW", "john@lrc.org.uk", "", "zxcvbnm", "123456"
-    )
-#primid_fph, m = hrns_to_fph("bb.cc")
+#primid_fph, \
+#primid_hrns, \
+#access_token, \
+#m = new_primid(
+#        "bb", parent_fph, "JW", "john@lrc.org.uk", "", "zxcvbnm", "123456"
+#    )
+primid_fph, m = hrns_to_fph("bb.cc")
 
 nslist = ["uk.cc", "mon.uk.cc", "chep.mon.uk.cc"]
 clist = ["kwh.cc", "hrs.cc", "kwh.uk.cc", "hrs.mon.uk.cc", "h.chep.mon.uk.cc"]
@@ -106,9 +106,9 @@ for ahid_hrns in ["ah1.bb.cc", "ah2.bb.cc", "ah3.bb.cc", "ah4.bb.cc"]:
 
 pmap, m = retrieve_pmap("bb.cc")
 
-print("Retrieved pmap:")
-print(pmap)
-print()
+#print("Retrieved pmap:")
+#print(pmap)
+#print()
 
 complete_parent_namespace("zx.cv.l5.cald.mon.uk", primid_fph)
 #currency_fph, currency_hrns, m = create_import_currency("qw.er.ty.ui.pa.uk")

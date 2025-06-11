@@ -6,7 +6,7 @@ import pyqrcode
 import os
 import datetime
 
-from app.core.constants import SLATE_QR_CODES
+from app.core.constants import QR_CODES
 
 # QR code applications:
 #
@@ -133,7 +133,7 @@ def random_name():
 def qr_code_png(url, qr_png_name):
     # A QR code PNG is generated for the URL provided:
     # The PNG is saved in the common QR code directory:
-#    png_path = SLATE_QR_CODES + \
+#    png_path = QR_CODES + \
     png_name = qr_png_name \
              + datetime.datetime.now().strftime("%Y%m%d%H%M%S%f") \
              + ".png"

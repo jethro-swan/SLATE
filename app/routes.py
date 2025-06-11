@@ -940,7 +940,7 @@ def new_home():
             version = get_version(),
             logged_in = logged_in,
             primid_type = "login identity",
-            primary_identity_fph = primid_fph,
+            primid_fph = primid_fph,
             primid_hrns = primid_hrns,
             working_identity_fph = working_identity_fph,
             working_identity_hrns = working_identity_hrns,
@@ -998,7 +998,7 @@ def hold():
         version = get_version(),
         logged_in = logged_in,
         primid_type = "login identity",
-        primary_identity_fph = primid_fph,
+        primid_fph = primid_fph,
         primid_hrns = primid_hrns,
         working_identity_fph = working_identity_fph,
         working_identity_hrns = working_identity_hrns,
@@ -1597,7 +1597,7 @@ def list_accounts():
         development_mode = development_mode,
         logged_in = logged_in,
         primid_type = "login identity",
-        primary_identity_fph = primid_fph,
+        primid_fph = primid_fph,
         primid_hrns = primid_hrns,
         working_identity_fph = working_identity_fph,
         working_identity_hrns = working_identity_hrns,
@@ -1790,7 +1790,7 @@ def payment_options():
         version = get_version(),
         logged_in = logged_in,
         primid_type = "login identity",
-        primary_identity_fph = primid_fph,
+        primid_fph = primid_fph,
         primid_hrns = primid_hrns,
         working_identity_fph = working_identity_fph,
         working_identity_hrns = working_identity_hrns,
@@ -2012,7 +2012,7 @@ def currency_options():
         hub_mode = hub_mode,
         version = get_version(),
         primid_type = "login identity",
-        primary_identity_fph = primid_fph,
+        primid_fph = primid_fph,
         primid_hrns = primid_hrns,
         working_identity_fph = working_identity_fph,
         working_identity_hrns = working_identity_hrns,
@@ -2091,7 +2091,7 @@ def account_options(currency_fph):
         hub_mode = hub_mode,
         version = get_version(),
         primid_type = "login identity",
-        primary_identity_fph = primid_fph,
+        primid_fph = primid_fph,
         primid_hrns = primid_hrns,
         working_identity_fph = working_identity_fph,
         working_identity_hrns = working_identity_hrns,
@@ -2311,7 +2311,7 @@ def account(payer_account_fph, payee_account_fph, owner_fph = None):
         hub_mode = hub_mode,
         version = get_version(),
         primid_type = "login identity",
-        primary_identity_fph = primid_fph,
+        primid_fph = primid_fph,
         primid_hrns = primid_hrns,
         working_identity_fph = working_identity_fph,
         working_identity_hrns = working_identity_hrns,
@@ -2423,7 +2423,7 @@ def pay_ahid(payer_ahid_fph, payment_currency_fph):
         hub_mode = hub_mode,
         version = get_version(),
         primid_type = "login identity",
-        primary_identity_fph = primid_fph,
+        primid_fph = primid_fph,
         primid_hrns = primid_hrns,
         working_identity_fph = working_identity_fph,
         working_identity_hrns = working_identity_hrns,
@@ -2494,7 +2494,7 @@ def pay_account():
         hub_mode = hub_mode,
         version = get_version(),
         primid_type = "login identity",
-        primary_identity_fph = primid_fph,
+        primid_fph = primid_fph,
         primid_hrns = primid_hrns,
         working_identity_fph = working_identity_fph,
         working_identity_hrns = working_identity_hrns,
@@ -2642,7 +2642,7 @@ def journal(ahid_fph, currency_fph):
         hub_mode = hub_mode,
         version = get_version(),
         primid_type = "login identity",
-        primary_identity_fph = primid_fph,
+        primid_fph = primid_fph,
         primid_hrns = primid_hrns,
         working_identity_fph = working_identity_fph,
         working_identity_hrns = working_identity_hrns,
@@ -2822,7 +2822,7 @@ def pay_from_account_to_agent(payer_account_fph = None):
         hub_mode = hub_mode,
         version = get_version(),
         primid_type = "login identity",
-        primary_identity_fph = primid_fph,
+        primid_fph = primid_fph,
         primid_hrns = primid_hrns,
         working_identity_fph = working_identity_fph,
         working_identity_hrns = working_identity_hrns,
@@ -3039,7 +3039,7 @@ def pay_agent_direct(payer_currency_fph, payer_identity_fph):
         hub_mode = hub_mode,
         version = get_version(),
         primid_type = "login identity",
-        primary_identity_fph = primid_fph,
+        primid_fph = primid_fph,
         primid_hrns = primid_hrns,
         working_identity_fph = working_identity_fph,
         working_identity_hrns = working_identity_hrns,
@@ -3213,7 +3213,7 @@ def pay_agent():
         hub_mode = hub_mode,
         version = get_version(),
         primid_type = "login identity",
-        primary_identity_fph = primid_fph,
+        primid_fph = primid_fph,
         primid_hrns = primid_hrns,
         working_identity_fph = working_identity_fph,
         working_identity_hrns = working_identity_hrns,
@@ -3308,7 +3308,7 @@ def select_payer_account():
         hub_mode = hub_mode,
         version = get_version(),
         primid_type = "login identity",
-        primary_identity_fph = primid_fph,
+        primid_fph = primid_fph,
         primid_hrns = primid_hrns,
         working_identity_fph = working_identity_fph,
         working_identity_hrns = working_identity_hrns,
@@ -3424,7 +3424,7 @@ def select_payee_account(payer_account_fph = None):
         hub_mode = hub_mode,
         version = get_version(),
         primid_type = "login identity",
-        primary_identity_fph = primid_fph,
+        primid_fph = primid_fph,
         primid_hrns = primid_hrns,
         working_identity_fph = working_identity_fph,
         working_identity_hrns = working_identity_hrns,
@@ -3593,7 +3593,7 @@ def make_payment_between_selected_accounts(
         hub_mode = hub_mode,
         version = get_version(),
         primid_type = "login identity",
-        primary_identity_fph = primid_fph,
+        primid_fph = primid_fph,
         primid_hrns = primid_hrns,
         working_identity_fph = working_identity_fph,
         working_identity_hrns = working_identity_hrns,
@@ -3814,7 +3814,7 @@ def select_payer_account_(payee_account_fph):
         payer_has_accounts_available = payer_has_accounts_available,
         payer_usable_accounts = payer_usable_accounts,
         primid_type = "login identity",
-        primary_identity_fph = primid_fph,
+        primid_fph = primid_fph,
         primid_hrns = primid_hrns,
         working_identity_fph = working_identity_fph,
         working_identity_hrns = working_identity_hrns,
@@ -3908,7 +3908,7 @@ def account_details(account_fph):
         hub_mode = hub_mode,
         version = get_version(),
         primid_type = "login identity",
-        primary_identity_fph = primid_fph,
+        primid_fph = primid_fph,
         primid_hrns = primid_hrns,
         working_identity_fph = working_identity_fph,
         working_identity_hrns = working_identity_hrns,
@@ -3976,7 +3976,7 @@ def stewardships(identity_fph):
         hub_mode = hub_mode,
         version = get_version(),
         primid_type = "login identity",
-        primary_identity_fph = primid_fph,
+        primid_fph = primid_fph,
         primid_hrns = primid_hrns,
         working_identity_fph = working_identity_fph,
         working_identity_hrns = working_identity_hrns,
@@ -4050,7 +4050,7 @@ def secids(identity_fph):
         hub_mode = hub_mode,
         version = get_version(),
         primid_type = "login identity",
-        primary_identity_fph = primid_fph,
+        primid_fph = primid_fph,
         primid_hrns = primid_hrns,
         working_identity_fph = working_identity_fph,
         working_identity_hrns = working_identity_hrns,
@@ -4116,7 +4116,7 @@ def manage_secid(secid_fph):
         hub_mode = hub_mode,
         version = get_version(),
         primid_type = "login identity",
-        primary_identity_fph = primid_fph,
+        primid_fph = primid_fph,
         primid_hrns = primid_hrns,
         working_identity_fph = working_identity_fph,
         working_identity_hrns = working_identity_hrns,
@@ -4138,16 +4138,11 @@ def currency(currency_fph):
 
     # Hub operational mode (read from environment variable HUB_MODE)
     hub_mode = get_hub_mode()
-    #version = get_version()()
-
 
     page = "currency"
-    previous_page = session["previous_page"]    # Add these two lines to all
-    session["previous_page"] = page             # endpoint handlers. Some (but
-                                                # but by no means all) screens
-                                                # should be able to follow only
-                                                # from a limited set of previous
-                                                # screens.
+    previous_page = session["previous_page"]
+    session["previous_page"] = page
+
     group = "home" # Used to control top menu behaviour.
 
     logged_in = current_user.is_authenticated
@@ -4193,9 +4188,8 @@ def currency(currency_fph):
             s["hrns"] = fph_to_hrns(steward_fph)
             current_stewards.append(s)
 
-    form = StewardAddForm()
-
-
+    number_of_messages, \
+    number_of_indelible_messages = message_count(primid_fph, hub_mode)
 
     return render_template(
         "currency.html",
@@ -4204,18 +4198,19 @@ def currency(currency_fph):
         group = group,
         hub_mode = hub_mode,
         version = get_version(),
-        form = form,
         currency_fph = currency_fph,
         currency_hrns = currency_hrns,
         primid_type = "login identity",
-        primary_identity_fph = primid_fph,
+        primid_fph = primid_fph,
         primid_hrns = primid_hrns,
         working_identity_fph = working_identity_fph,
         working_identity_hrns = working_identity_hrns,
         working_identity_type = working_identity_type,
         current_stewards = current_stewards,
         development_mode = development_mode,
-        logged_in = logged_in
+        logged_in = logged_in,
+        number_of_messages = number_of_messages,
+        number_of_indelible_messages = number_of_indelible_messages
     )
 
 
@@ -4259,6 +4254,9 @@ def currency_steward_add(currency_fph):
     stewards_list, \
     m = get_currency_specific_properties(currency_fph)
 
+    number_of_messages, \
+    number_of_indelible_messages = message_count(primid_fph, hub_mode)
+
     form = StewardAddForm()
     if form.validate_on_submit():
         new_steward_fph, \
@@ -4286,13 +4284,15 @@ def currency_steward_add(currency_fph):
         currency_fph = currency_fph,
         currency_hrns = currency_hrns,
         primid_type = "login identity",
-        primary_identity_fph = primid_fph,
+        primid_fph = primid_fph,
         primid_hrns = primid_hrns,
         working_identity_fph = working_identity_fph,
         working_identity_hrns = working_identity_hrns,
         working_identity_type = working_identity_type,
         stewards_list = stewards_list,
-        logged_in = logged_in
+        logged_in = logged_in,
+        number_of_messages = number_of_messages,
+        number_of_indelible_messages = number_of_indelible_messages
     )
 
 #
@@ -4399,7 +4399,7 @@ def manage():
         hub_mode = hub_mode,
         version = get_version(),
         primid_type = "login identity",
-        primary_identity_fph = primid_fph,
+        primid_fph = primid_fph,
         primid_hrns = primid_hrns,
         working_identity_fph = working_identity_fph,
         working_identity_hrns = working_identity_hrns,
@@ -4499,7 +4499,7 @@ def create_currency():
         version = get_version(),
         form = form,
         primid_type = "login identity",
-        primary_identity_fph = primid_fph,
+        primid_fph = primid_fph,
         primid_hrns = primid_hrns,
         working_identity_fph = working_identity_fph,
         working_identity_hrns = working_identity_hrns,
@@ -4621,7 +4621,7 @@ def create_pairing(owner_fph = ""):
         version = get_version(),
         form = form,
         primid_type = "login identity",
-        primary_identity_fph = primid_fph,
+        primid_fph = primid_fph,
         primid_hrns = primid_hrns,
         working_identity_fph = working_identity_fph,
         working_identity_hrns = working_identity_hrns,
@@ -4790,7 +4790,7 @@ def create_account(owner_fph):
         version = get_version(),
         form = form,
         primid_type = "login identity",
-        primary_identity_fph = primid_fph,
+        primid_fph = primid_fph,
         primid_hrns = primid_hrns,
         working_identity_fph = working_identity_fph,
         working_identity_hrns = working_identity_hrns,
@@ -4855,7 +4855,7 @@ def list_identiies():
         hub_mode = hub_mode,
         version = get_version(),
         primid_type = "login identity",
-        primary_identity_fph = primid_fph,
+        primid_fph = primid_fph,
         primid_hrns = primid_hrns,
         working_identity_fph = working_identity_fph,
         working_identity_hrns = working_identity_hrns,
@@ -4981,7 +4981,7 @@ def create_secid():
         version = get_version(),
         form = form,
         primid_type = "login identity",
-        primary_identity_fph = primid_fph,
+        primid_fph = primid_fph,
         primid_hrns = primid_hrns,
         working_identity_fph = working_identity_fph,
         working_identity_hrns = working_identity_hrns,
@@ -5091,7 +5091,7 @@ def create_namespace():
         version = get_version(),
         form = form,
         primid_type = "login identity",
-        primary_identity_fph = primid_fph,
+        primid_fph = primid_fph,
         primid_hrns = primid_hrns,
         working_identity_fph = working_identity_fph,
         working_identity_hrns = working_identity_hrns,
@@ -5155,7 +5155,7 @@ def list_namespaces():
         hub_mode = hub_mode,
         version = get_version(),
         primid_type = "login identity",
-        primary_identity_fph = primid_fph,
+        primid_fph = primid_fph,
         primid_hrns = primid_hrns,
         available_namespaces = available_namespaces
     )
@@ -5375,6 +5375,9 @@ def export_account_csv(account_fph):
         flash(m)
         return redirect("/home")
 
+    number_of_messages, \
+    number_of_indelible_messages = message_count(primid_fph, hub_mode)
+
     return render_template(
         "export_account_journal.html",
         title = "export_account_journal",
@@ -5384,7 +5387,7 @@ def export_account_csv(account_fph):
         hub_mode = hub_mode,
         version = get_version(),
         primid_type = "login identity",
-        primary_identity_fph = primid_fph,
+        primid_fph = primid_fph,
         primid_hrns = primid_hrns,
         working_identity_fph = working_identity_fph,
         working_identity_hrns = working_identity_hrns,
@@ -5396,7 +5399,9 @@ def export_account_csv(account_fph):
         #csv_export_path = csv_export_path,
         ahid_fph = ahid_fph,
         ahid_hrns = ahid_hrns,
-        csv_file = csv_file
+        csv_file = csv_file,
+        number_of_messages = number_of_messages,
+        number_of_indelible_messages = number_of_indelible_messages
     )
 
 #------------------------------------------------------------------------------
@@ -5407,8 +5412,6 @@ def export_currency_csv(currency_fph):
 
     # Hub operational mode (read from environment variable HUB_MODE)
     hub_mode = get_hub_mode()
-    #version = get_version()()
-
 
     page = "export_currency"
     previous_page = session["previous_page"]
@@ -5472,6 +5475,9 @@ def export_currency_csv(currency_fph):
         flash(m)
         return redirect("/home")
 
+    number_of_messages, \
+    number_of_indelible_messages = message_count(primid_fph, hub_mode)
+
     return render_template(
         "export_currency_journal.html",
         title = "export_currency_journal",
@@ -5481,7 +5487,7 @@ def export_currency_csv(currency_fph):
         hub_mode = hub_mode,
         version = get_version(),
         primid_type = "login identity",
-        primary_identity_fph = primid_fph,
+        primid_fph = primid_fph,
         primid_hrns = primid_hrns,
         working_identity_fph = working_identity_fph,
         working_identity_hrns = working_identity_hrns,
@@ -5489,7 +5495,9 @@ def export_currency_csv(currency_fph):
         currency_fph = currency_fph,
         currency_hrns = currency_hrns,
         #csv_export_path = csv_export_path
-        csv_file = csv_file
+        csv_file = csv_file,
+        number_of_messages = number_of_messages,
+        number_of_indelible_messages = number_of_indelible_messages
     )
 
 
@@ -5569,7 +5577,7 @@ def importing(file):
         version = get_version(),
         logged_in = logged_in,
         primid_type = "login identity",
-        primary_identity_fph = primid_fph,
+        primid_fph = primid_fph,
         primid_hrns = primid_hrns,
         working_identity_fph = working_identity_fph,
         working_identity_hrns = working_identity_hrns
@@ -5624,7 +5632,7 @@ def import_payment_set():
         version = get_version(),
         logged_in = logged_in,
         primid_type = "login identity",
-        primary_identity_fph = primid_fph,
+        primid_fph = primid_fph,
         primid_hrns = primid_hrns,
         working_identity_fph = working_identity_fph,
         working_identity_hrns = working_identity_hrns,
@@ -5874,7 +5882,7 @@ def messages():
         version = get_version(),
         logged_in = logged_in,
         primid_type = "login identity",
-        primary_identity_fph = primid_fph,
+        primid_fph = primid_fph,
         primid_hrns = primid_hrns,
         working_identity_fph = working_identity_fph,
         working_identity_hrns = working_identity_hrns,
@@ -6046,7 +6054,7 @@ def message_send():
         version = get_version(),
         logged_in = logged_in,
         primid_type = "login identity",
-        primary_identity_fph = primid_fph,
+        primid_fph = primid_fph,
         primid_hrns = primid_hrns,
         working_identity_fph = working_identity_fph,
         working_identity_hrns = working_identity_hrns,
@@ -6150,7 +6158,7 @@ def messages_show(recipient_fph):
         version = get_version(),
         logged_in = logged_in,
         primid_type = "login identity",
-        primary_identity_fph = primid_fph,
+        primid_fph = primid_fph,
         primid_hrns = primid_hrns,
         working_identity_fph = working_identity_fph,
         working_identity_hrns = working_identity_hrns,
@@ -6345,7 +6353,7 @@ def invitation_generate():
         version = get_version(),
         logged_in = logged_in,
         primid_type = "login identity",
-        primary_identity_fph = primid_fph,
+        primid_fph = primid_fph,
         primid_hrns = primid_hrns,
         working_identity_fph = working_identity_fph,
         working_identity_hrns = working_identity_hrns,
