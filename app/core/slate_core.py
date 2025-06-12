@@ -106,7 +106,7 @@ def get_config():
         c = cfg.readlines()
     config = {}
     for row in c:
-        print(row)
+#        print(row)
         r = row.split()
         config[r[0]] = r[1]
     return config
@@ -2613,13 +2613,16 @@ def list_active_namespaces(ancestor_namespace_identifier = ""): # FPH or HRNS
 #==============================================================================
 # Get the *primid* to which a *secid* belongs:
 
-def get_primid(secid_identifier):
-    secid_fph, \
-    secid_hrns, \
+def get_primid(id_identifier): # *secid* or *ahid*
+    id_fph, \
+    id_hrns, \
     etype, \
-    m = identify_entity(secid_identifier)
+    m = identify_entity(id_identifier)
     if m:
         return "", m
+    if etype == "ahid":
+        return get_ahid_primid(id_fph)   
+
     with sqlite3.connect(ENTITIES_DB) as conn:
         cursor = conn.cursor()
         cursor.execute(
@@ -2628,7 +2631,7 @@ def get_primid(secid_identifier):
             FROM secids
             WHERE entity_fph = ?
             """,
-            (secid_fph,)
+            (id_fph,)
         )
         result = cursor.fetchone()
     if result is not None:

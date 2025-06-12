@@ -16,6 +16,7 @@ from datetime import datetime, date
 from app.core.constants import NSS
 from app.core.constants import PAYMENTS_DB
 from app.core.constants import SLATE_TEMP, IMPORT_QUEUE, IMPORTING
+from app.core.constants import QR_CODES
 
 #from app.core.constants import SLATE_EXPORT, SLATE_IMPORT
 
@@ -71,6 +72,7 @@ from app.core.slate_session import remove_slate_session_data
 
 from app.core.regexp_list import re_fph, re_hrns, re_email
 from app.core.regexp_list import re_pvalue
+from app.core.regexp_list import re_qrfilename
 
 from app.core.slate_login import get_auth_data, register_authenticated_login
 
@@ -204,7 +206,6 @@ development_mode = False
 # registration ----------------------------------------------------------------
 @app.route("/register", methods = ["GET", "POST"])
 def register():
-    #page = "register"
     # In a typical situation where the new user is invited (via QR-coded link)
     # to register, it is likely that both the currency and a geographically
     # appropriate user namespace will be specified. However, that will not
@@ -223,6 +224,10 @@ def register():
     currency_steward = False
     paying = False
     logged_in = current_user.is_authenticated
+
+    if logged_in:
+        flash("You cannot register while logged in")
+        return redirect("/home")
 
     # This one may not be needed:
     mode = "logged_out"
@@ -244,17 +249,7 @@ def register():
 
     url_currency_identifier = request.args.get("c")
     initial_namespace_identifier = request.args.get("s")
-    print(url_currency_identifier)
-    print(initial_namespace_identifier)
 
-#    url_currency_identifier = request.args.get("c_fph")
-#    initial_currency_fph, \
-#    initial_currency_hrns, \
-#    etype, \
-#    m = identify_entity(url_currency_identifier)
-#    if m:
-#        flash(m)
-#        return redirect("/register")
     initial_currency_fph, \
     initial_currency_hrns, \
     etype, \
@@ -263,24 +258,13 @@ def register():
         initial_currency_fph = ""
         initial_currency_hrns = ""
 
-#    print("currency: " + initial_currency_fph + " > " + initial_currency_hrns)
-
-#    initial_namespace_identifier = request.args.get("s_fph")
     initial_namespace_fph, \
     initial_namespace_hrns, \
     etype, \
     m = identify_entity(request.args.get("s"))
-    #if m:
-    #    flash(m)
-    #    return redirect("/register")
-    #if not (initial_namespace_fph and (etype == "namespace")):
     if not initial_namespace_fph:
         initial_namespace_fph = ""
         initial_namespace_hrns = ""
-
-    print(initial_currency_hrns)
-    print(initial_namespace_hrns)
-
 
     form = RegistrationForm()
 
@@ -295,16 +279,15 @@ def register():
 
         username = form.username.data
 
-        if hub_mode == "slate_minimal":
-            namespace_identifier, m = hrns_to_fph("cc")
-        else:
+        if initial_namespace_fph == "":
             namespace_identifier = form.namespace.data.strip().lstrip(".")
-
-        if hub_mode == "slate_minimal":
-            currency_identifier, m = hrns_to_fph("cc")
-##            currency_identifier, m = hrns_to_fph("hrs.cc")
         else:
+            namespace_identifier = initial_namespace_fph
+
+        if initial_currency_fph == "":
             currency_identifier = form.currency.data.strip()
+        else:
+            currency_identifier = initial_currency_fph
 
         if form.realname.data is not None:
             real_name = form.realname.data
@@ -324,11 +307,6 @@ def register():
         # either the URL or the form. If the *currency* FPH was specified in
         # the URL, the *currency* HRNS field will not have been displayed.
 
-#        if hub_mode == "slate_minimal":
-#            currency_identifier, m = hrns_to_fph("hrs.cc")
-#        else:
-#            currency_identifier = form.currency.data.strip()  # (from the form)
-        # The identify_entity( ) function determines whether either is valid.
         currency_fph, \
         currency_hrns, \
         etype, \
@@ -349,12 +327,6 @@ def register():
         # FPH was specified in the URL, the *currency* HRNS field will not have
         # been displayed.
 
-#        namespace_identifier = form.namespace.data
-
-#        if hub_mode == "slate_minimal":
-#            namespace_fph, m = hrns_to_fph("cc")
-#        else:
-#            namespace_identifier = form.namespace.data.strip().lstrip(".")
         # The identify_entity( ) function determines whether either is valid.
         namespace_fph, \
         namespace_hrns, \
@@ -368,33 +340,13 @@ def register():
             flash("The namespace specified does not exist")
             return redirect("/register")
 
-# 2025-04-08:   Changed to accommodate use of any entity identifier as a
-#               *namespace* identifier, e.g.
-#               cc  as both seed *namespace* and seed *currency*
         if etype == "account":
             flash(namespace_identifier + ": invalid parent namespace")
             return redirect("/register")
 
-#        if etype != "namespace":
-#            flash(namespace_identifier + " is not a namespace")
-#            return redirect("/register")
-        # If control reaches this point then *namespace* (whether specified
-        # in the form or in the URL) exists.
-
-
-
-
         if form.password_repeat.data != form.password.data:
             flash("The passwords not not match")
             return redirect("/register")
-
-#        print("form.username.data = " + username)
-#        print("namespace_fph      = " + namespace_fph)
-#        print("form.realname.data = " + real_name)
-#        print("form.email_1.data  = " + email1)
-#        print("form.password.data = " + password)
-#        print("form.pin.data      = " + pin)
-
 
         primid_fph, \
         primid_hrns, \
@@ -433,7 +385,6 @@ def register():
         if hub_mode == "omtrad":
             a_fph = create_new_pairing(primid_fph, primid_hrns, currency_hrns)
             return redirect("/")
-
 
         # Otherwise, an initial *account* is created (in the new *primid*'s
         # private *namespace*) using the default name associated with the
@@ -6308,6 +6259,100 @@ def invitation_generate():
     # Hub operational mode (read from environment variable HUB_MODE)
     hub_mode = get_hub_mode()
 
+    page = "create_invitation_qr"
+    previous_page = session["previous_page"]
+    session["previous_page"] = page
+
+    group = "home" # Used to control top menu behaviour.
+
+    logged_in = current_user.is_authenticated
+
+    primid_fph, \
+    primid_hrns, \
+    primid_type, \
+    m = identify_entity(current_user.get_id())
+
+    if (hub_mode != "omtrad") and ("working_identity" in session):
+        working_identity_fph, \
+        working_identity_hrns, \
+        working_identity_type, \
+        m = identify_entity(session["working_identity"])
+    else:
+        working_identity_fph = primid_fph
+        session["working_identity"] = working_identity_fph
+        working_identity_hrns = primid_hrns
+        working_identity_type = etype_to_adtype(working_identity_fph)
+
+    config = get_config()
+    if "hub_url" in config.keys():
+        hub_url = config["hub_url"]
+    else:
+        flash("hub_url is not defined in hub_config")
+        return redirect("/home")
+
+    number_of_messages, \
+    number_of_indelible_messages = message_count(primid_fph, hub_mode)
+
+    form = InvitationQRForm()
+    if form.validate_on_submit():
+
+        namespace_fph, \
+        namespace_hrns, \
+        etype, \
+        m = identify_entity(form.namespace_id.data)
+
+        currency_fph, \
+        currency_hrns, \
+        etype, \
+        m = identify_entity(form.currency_id.data)
+
+        qrcf = qrencode_invitation(currency_fph, namespace_fph, primid_fph)
+
+        return redirect("/invitation/showqr/" + qrcf)
+
+    return render_template(
+        "invitation.html",
+        title = "Create invitation QR code",
+        page = page,
+        group = group,
+        hub_mode = hub_mode,
+        version = get_version(),
+        logged_in = logged_in,
+        primid_type = "login identity",
+        primid_fph = primid_fph,
+        primid_hrns = primid_hrns,
+        working_identity_fph = working_identity_fph,
+        working_identity_hrns = working_identity_hrns,
+        working_identity_type = working_identity_type,
+        form = form,
+        number_of_messages = number_of_messages,
+        number_of_indelible_messages = number_of_indelible_messages
+    )
+
+
+#
+@app.route("/invitation/showqr/<qrfilename>", methods = ["GET", "POST"])
+@login_required
+def invitation_display(qrfilename):
+
+    if (qrfilename is None) or (not re_qrfilename.match(qrfilename)):
+        flash("QR code filename format is invalid")
+        return redirect("/home")
+    else:
+        qrc = qrfilename.split("_")
+#        qrcet = qrc[1].split(".")
+        print()
+        print(qrc[0])
+        if unixtime_int() > int(qrc[0]):      # The QR code has expired so
+            os.unlink(QR_CODES + qrfilename)    # the PNG file is deleted.
+            flash("The QR code has expired")
+            return redirect("/home")
+
+    qr_png_path = QR_CODES + qrfilename
+
+    # Hub operational mode (read from environment variable HUB_MODE)
+    hub_mode = get_hub_mode()
+
     page = "create_currency"
     previous_page = session["previous_page"]
     session["previous_page"] = page
@@ -6330,38 +6375,14 @@ def invitation_generate():
         working_identity_fph = primid_fph
         session["working_identity"] = working_identity_fph
         working_identity_hrns = primid_hrns
-        working_identity_type = etype_to_adtype(working_identity_type)
+        working_identity_type = etype_to_adtype(working_identity_fph)
 
-    config = get_config()
-    hub_url = config["site_url"]
-
-    form = UserMessageForm()
-    if form.validate_on_submit():
-
-        form = InvitationQRForm()
-
-        namespace_fph, \
-        namespace_hrns, \
-        etype, \
-        m = identify_entity(form.namespace_id.data)
-
-        currency_fph, \
-        currency_hrns, \
-        etype, \
-        m = identify_entity(form.currency_id.data)
-
-        qrcodepath = qrencode_invitation(
-                         currency_fph,
-                         namespace_fph,
-                         inviter_fph,
-                         expiry # Unix time
-                     )
-
-
+    number_of_messages, \
+    number_of_indelible_messages = message_count(primid_fph, hub_mode)
 
     return render_template(
-        "invitation.html",
-        title = "QR code invitation",
+        "display_invitation_qr.html",
+        title = "Display invitation QR code",
         page = page,
         group = group,
         hub_mode = hub_mode,
@@ -6373,7 +6394,9 @@ def invitation_generate():
         working_identity_fph = working_identity_fph,
         working_identity_hrns = working_identity_hrns,
         working_identity_type = working_identity_type,
-        form = form
+        number_of_messages = number_of_messages,
+        number_of_indelible_messages = number_of_indelible_messages,
+        qrfilename = qrfilename
     )
 
 

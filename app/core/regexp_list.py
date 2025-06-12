@@ -92,3 +92,5 @@ re_filename =re.compile(r"^[a-zA-Z0-9_]{1,}$")
 
 
 re_datestamp = re.compile(r"^[\d]{4}-[\d]{2}-[\d]{2}_[\d]{2}:[\d]{2}:[\d]{2}$")
+
+re_qrfilename = re.compile(r"^[0-9]{19,}_[0-9a-f]{32}\.png$")

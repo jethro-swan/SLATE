@@ -147,10 +147,11 @@ def qrencode_invitation(currency_id, namespace_id, inviter_id):
       + "&s=" + namespace_fph \
       + "&f=" + inviter_fph \
       + "&e=" + qr_expiry_time # after which the QR code becomes invalid
-    qr_png_path = QR_CODES + random_filename() + "_" + deathtime + ".png"
+    qr_png_filename = deathtime + "_" + random_filename() + ".png"
+    qr_png_path = QR_CODES + qr_png_filename
     qr_url = pyqrcode.create(s)
-    qr_url.png(qr_png_path, scale = 8)
-    return qr_png_path
+    qr_url.png(qr_png_path, scale = 6)
+    return qr_png_filename
 
 
 #def qrencode_payment(hub, currency_fph, payer_fph, payee_fph, amount, transid):

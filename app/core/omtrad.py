@@ -1,5 +1,3 @@
-#!/home/slate/SLATE/venv/bin/python3
-
 # This file contains functions to emulate the "traditional" OM mode pairing a
 # re-useable *ahid* identifier with a *currency* identifier.
 #

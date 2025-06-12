@@ -9,8 +9,7 @@ import calendar
 from app.core.slate_core import identify_entity
 from app.core.slate_core import account_status
 from app.core.slate_core import list_secids, list_ahids
-
-from app.core.slate_core import get_ahid_primid
+from app.core.slate_core import get_ahid_primid, get_primid
 
 from app.core.fph_hrns_maps import hrns_to_fph, fph_to_hrns
 
@@ -469,7 +468,8 @@ def fetch_messages(recipient_identifier):
                 m["subject"] = subject # string
 
                 m["message_body"] = message_body # string
-                messages.append(m)
+                #messages.append(m)
+                messages.insert(0, m)
 
                 #print(m)
 

@@ -750,7 +750,7 @@ class RegistrationForm(FlaskForm):
 class InvitationQRForm(FlaskForm):
 
     namespace_id        = StringField(
-                              "parent namespace for username",
+                              "registration namespace",
                               render_kw={"placeholder": "initial community"}
                           )
     currency_id         = StringField(
