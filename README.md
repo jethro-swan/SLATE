@@ -27,22 +27,38 @@ There are four categories of _entity_:
 
 ### Agent categories
 
-There are four categories of **agent**:
+There are three main categories of **agent**:
   - A general **agent** - the set to which _all_ **agents** belong [^2], each
-    identifiable by a **primary identity** or (optionally) and arbitrary
-    collection of **aliases**.
-  - A _steward_ (of a **namespace** or of a **currency**), assigned this role
-    by an **agent** already that role or by a _global system administrator_.
+    identifiable uniquely by a **primary identity** (**primid**).
+  - An arbitrary collection of **secondary identities** (**secids**, a.k.a.
+    **aliases**).
+  - An arbitrary collection of **account-holder identities** (**ahid**).
+
+There are two additional categories of **agent**:
+  - A _steward_ (of a **namespace** or of a **currency**), is a **primid**
+    assigned this role by an **agent** already holding this role or by a
+    _global system administrator_.
   - A _global system administrator_, assigned this role at setup or by an
     existing _global system administrator_.
+
+Furthermore
+  - A **primid** or **secid** may hold any number of **accounts** in any
+    **currencies** for which its use is authorized.
+  - In contrast to a **primid** or **secid**, an **ahid** may be paired with
+    each **currency** (where authorized by its _stewards_) only once. Such a
+    pairing identifies as **account** the identifier string for which is not
+    generally visible. For the purposes of such pairings, the **primid** to
+    which these **ahid** belong may serve also as an **ahid**.
+  - A **primid** may have any number of **ahid** or **secid**.
+  - Each **ahid** or **secid** has only one **primid**.
 
 ----
 ### Internal representation
 
-For convenience, each _entity_ (**namespace**, **primary identity**, **alias**,
-**currency** or **account**) is identified internally by a unique number
-(its _FPH_) serving as the primary key in an _SQLite_ table. (NB, these numbers
-have now been made fully compatible with the _FPH_ (_Full Path Hash_) used in
+For convenience, each _entity_ (**namespace**, **primaid**, **ahid**, **secid**,
+**currency** or **account**) is identified internally by a unique number (its
+_FPH_) serving as the primary key in an _SQLite_ table. (NB, these numbers have
+now been made fully compatible with the _FPH_ (_Full Path Hash_) used in
 _NESTS_.
 
 These global mappings are:
@@ -50,12 +66,18 @@ These global mappings are:
   - **namespace**: _namespace_fph_ &rarr; _namespace_hrns_
   - **currency**: _currency_hrns_ &rarr; _currency_fph_
   - **currency**: _currency_fph_ &rarr; _currency_hrns_
-  - **primary identity**: _primid_hrns_ &rarr; _primid_fph_
-  - **primary identity**: _primid_fph_ &rarr; _primid_hrns_
-  - **secondary identity**: _secid_hrns_ &rarr; _secid_fph_
-  - **secondary identity**: _secid_fph_ &rarr; _secid_hrns_
+  - **primid**: _primid_hrns_ &rarr; _primid_fph_
+  - **primid**: _primid_fph_ &rarr; _primid_hrns_
+  - **secid**: _secid_hrns_ &rarr; _secid_fph_
+  - **secid**: _secid_fph_ &rarr; _secid_hrns_
+  - **ahid**: _ahid_hrns_ &rarr; _ahid_fph_
+  - **ahid**: _ahid_fph_ &rarr; _ahid_hrns_
   - **account**: _account_hrns_ &rarr; _account_fph_
   - **account**: _account_fph_ &rarr; _account_hrns_
+
+Furthermore, the unique **currency**|**ahid** pairings each map to one
+**account**, the name of which is usually hidden.
+  - _currency_hrns_|_ahid_hrns_ &rarr; _account_hrns_
 
 As in _NESTS_, each entity (**namespace**, **currency**, **agent** or
 **account**) is identified by a human-readable name string (HRNS) placing it
