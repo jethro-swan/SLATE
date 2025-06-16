@@ -210,10 +210,10 @@ def send_message(
     if em:
         return "Recipient unknown"
 
-    if etype == "ahid":
+    if (etype == "ahid") or (etype == "primid"):
         recipient_primid_fph = get_ahid_primid(recipient_identity_fph)
     else:
-       recipient_primid_fph = get_primid(recipient_identity_fph)
+        recipient_primid_fph, m = get_primid(recipient_identity_fph)
 
     if stewardship_id:
         stewardship_fph, \

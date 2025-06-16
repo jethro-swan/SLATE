@@ -313,7 +313,7 @@ def register():
         m = identify_entity(currency_identifier)
         if m:
             log_event("error", "currency", m)
-            flash("Unknown error (logged)")
+            flash("Invalid currency specified")
             return redirect("/register")
         if not currency_fph:
             flash("No valid currency identifier provided")
@@ -334,7 +334,7 @@ def register():
         m = identify_entity(namespace_identifier)
         if m:
             log_event("error", "namespace", m)
-            flash("Unknown error (logged)")
+            flash("Invalid parent namespace specified")
             return redirect("/register")
         if not namespace_fph:
             flash("The namespace specified does not exist")

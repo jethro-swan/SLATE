@@ -2621,7 +2621,7 @@ def get_primid(id_identifier): # *secid* or *ahid*
     if m:
         return "", m
     if etype == "ahid":
-        return get_ahid_primid(id_fph)   
+        return get_ahid_primid(id_fph)
 
     with sqlite3.connect(ENTITIES_DB) as conn:
         cursor = conn.cursor()
@@ -2638,7 +2638,7 @@ def get_primid(id_identifier): # *secid* or *ahid*
         primid_fph = result[0]
         if isinstance(primid_fph, str) and re_fph.match(primid_fph):
             return primid_fph, ""
-    return "", "No primid was found for " + secid_identifier
+    return "", "No primid was found for " + id_identifier
 
 #==============================================================================
 
@@ -2667,8 +2667,11 @@ def get_ahid_primid(ahid_hrns):
         return ""
     if (result[0] != "ahid") and (result[1] != ahid_fph):
         return ""
-#    else:
-#        return result[1] # owner *primid* FPH
+
+#    print(result[0])
+#    print(result[1])
+#    print(result[2])
+
     return result[1] # owner *primid* FPH
 
 
