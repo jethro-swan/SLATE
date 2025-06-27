@@ -1,0 +1,77 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<h3>Transaction journal</h3>
+
+For <em>account-holder</em>: <b>{{ ahid_hrns }}</b><br />
+in <em>currency</em>: <b>{{ currency_hrns }}</b><br /><br />
+(volume so far: {{ account_volume }})<br /><br />
+
+<table>
+  <tr valign="bottom" align="center">
+    <td class="h">
+      <b>date</b>
+    </td>
+    <td class="h">
+      <b>time</b>
+    </td>
+    <td class="h">
+      <b>
+      <span class="from">from</span>&nbsp;|&nbsp;<span class="to">to</span>
+      </b>
+    </td>
+    <td class="h">
+      <b>amount</b>
+    </td>
+    <td class="h">
+      <b>balance</b>
+    </td>
+    <td class="h">
+      <b>annotation</b>
+    </td>
+  </tr>
+  {% for row in journal_rows %}
+  <tr>
+    <td align="left">
+      {{ row.date }}
+    </td>
+    <td align="left">
+      {{ row.time }}
+    </td>
+    {% if row.type == "receipt" %}
+    <td align="right" class="from">
+      {{ row.other_ahid_hrns }}&nbsp;>
+    </td>
+    {% else %}
+    <td align="right" class="to">
+      >&nbsp;{{ row.other_ahid_hrns }}
+    </td>
+    {% endif %}
+    {% if row.type == "receipt" %}
+    <td align="right" class="from">
+    {% else %}
+    <td align="right" class="to">
+    {% endif %}
+      {{ row.amount }}
+    </td>
+   {% if row.balneg %}
+    <td align="right" class="balneg">
+    {% else %}
+    <td align="right" class="balpos">
+    {% endif %}
+      {{ row.balance }}
+    </td>
+    <td align="left">
+      {{ row.annotation }}
+    </td>
+  </tr>
+  {% endfor %}
+</table>
+
+<br />
+<a href="/account/export/{{ account_fph }}">Export as CSV</a>
+<br />
+
+
+{% endblock %}

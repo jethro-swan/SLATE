@@ -134,7 +134,8 @@ def qrencode_invitation(currency_id, namespace_id, inviter_id):
     if "qr_lifespan" in config.keys():
         qr_lifespan = int(config["qr_lifespan"]) # seconds
     else:
-        qr_lifespan = 60
+#        qr_lifespan = 60
+        qr_lifespan = 31536000
     if "hub_url" in config.keys():
         hub_url = config["hub_url"]
     else:

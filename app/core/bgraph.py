@@ -13,6 +13,7 @@ from bokeh.palettes import Bright6
 from bokeh.plotting import figure, show
 from bokeh.plotting import figure
 from bokeh.io import export_png
+from bokeh.io import export_svg
 
 
 def currency_balance_graphs(currency_id):
@@ -43,8 +44,10 @@ def currency_balance_graphs(currency_id):
     balances.sort()
     volumes.sort()
 
-    b_imgpath = GRAPHS + random_filename() + ".png"
-    v_imgpath = GRAPHS + random_filename() + ".png"
+#    b_imgpath = GRAPHS + random_filename() + ".png"
+#    v_imgpath = GRAPHS + random_filename() + ".png"
+    b_imgpath = GRAPHS + random_filename() + ".svg"
+    v_imgpath = GRAPHS + random_filename() + ".svg"
 
     b = figure(
             x_range = a,
@@ -79,7 +82,9 @@ def currency_balance_graphs(currency_id):
     v.vbar(x = a, top = volumes, line_color = "#ffffff", width = 0.9)
     v.x_range.range_padding = 0.0
 
-    export_png(b, filename = b_imgpath)
-    export_png(v, filename = v_imgpath)
+#    export_png(b, filename = b_imgpath)
+#    export_png(v, filename = v_imgpath)
+    export_svg(b, filename = b_imgpath)
+    export_svg(v, filename = v_imgpath)
 
     return b_imgpath, v_imgpath

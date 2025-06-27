@@ -19,13 +19,7 @@ hidden.
     <td class="h"><b>currency</b></td>
     <td class="h"><b>account-holder</b></td>
     <td class="h"><b>balance</b></td>
-    <!--
-    <td class="h"><b>volume</b></td>
-    -->
     <td class="h"></td>
-    <!--
-    <td class="h"><b>annotation</b></td>
-    -->
   </tr>
   {% for p_row in p_rows %}<!-- list of dictionaries -->
   <tr>
@@ -45,6 +39,7 @@ hidden.
         {{ p_row.ahid_hrns }}
       </a>
     </td>
+    <!--
     {% if p_row.isneg %}
     <td align="right" class="balneg">
     {% else %}
@@ -52,11 +47,10 @@ hidden.
     {% endif %}
      {{ p_row.balance }}
     </td>
-    <!--
-    <td align="right">
-      {{ p_row.volume }}
-    </td>
     -->
+    <td align="right">
+      {{ p_row.balance }}
+    </td>
     <td>
       <a href="/journal/{{ p_row.ahid_fph }}/{{ p_row.currency_fph }}">*</a>
     </td>

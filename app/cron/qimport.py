@@ -46,7 +46,10 @@ if niq:
 
     with open(SLATE_TEMP + "/" + "import_log", "a") as import_log:
         #log_line = ledger_timestamp() + ":" + primid_fph + "\n"
-        import_log.write(ledger_timestamp() + ":" + primid_fph + "\n")
+        import_log.write(
+            "="*80 + "\n" + ledger_timestamp() + ":" + primid_fph \
+            + " (" + filename + ")\n"
+        )
         for line in report:
             import_log.write(line + "\n")
         for line in errors:

@@ -10,61 +10,35 @@ in <em>currency</em>: <b>{{ currency_hrns }}</b><br /><br />
 
 <table>
   <tr valign="bottom" align="center">
-    <td class="h">
-      <b>date</b>
-    </td>
-    <td class="h">
-      <b>time</b>
-    </td>
-    <td class="h">
-      <b>
-      <span class="from">from</span>&nbsp;|&nbsp;<span class="to">to</span>
-      </b>
-    </td>
-    <td class="h">
-      <b>amount</b>
-    </td>
-    <td class="h">
-      <b>balance</b>
-    </td>
-    <td class="h">
-      <b>annotation</b>
-    </td>
+    <td class="h"><b>with</b></td>
+    <td class="h"><b>in</b></td>
+    <td class="h"><b>out</b></td>
+    <td class="h"><b>balance</b></td>
+    <td class="h"><b>annotation</b></td>
   </tr>
   {% for row in journal_rows %}
   <tr>
-    <td align="left">
-      {{ row.date }}
-    </td>
-    <td align="left">
-      {{ row.time }}
-    </td>
     {% if row.type == "receipt" %}
-    <td align="right" class="from">
-      {{ row.other_ahid_hrns }}&nbsp;>
+    <td title="{{ row.date }} {{ row.time }}" align="left">
+      {{ row.other_ahid_hrns }}&nbsp;&gt;
     </td>
     {% else %}
-    <td align="right" class="to">
-      >&nbsp;{{ row.other_ahid_hrns }}
+    <td title="{{ row.date }} {{ row.time }}" align="right">
+      &gt;&nbsp;{{ row.other_ahid_hrns }}
     </td>
     {% endif %}
     {% if row.type == "receipt" %}
-    <td align="right" class="from">
+    <td align="right">{{ row.amount }}</td>
     {% else %}
-    <td align="right" class="to">
+    <td></td>
     {% endif %}
-      {{ row.amount }}
-    </td>
-   {% if row.balneg %}
-    <td align="right" class="balneg">
+    {% if row.type != "receipt" %}
+    <td align="right">{{ row.amount }}</td>
     {% else %}
-    <td align="right" class="balpos">
+    <td></td>
     {% endif %}
-      {{ row.balance }}
-    </td>
-    <td align="left">
-      {{ row.annotation }}
-    </td>
+    <td align="right">{{ row.balance }}</td>
+    <td align="left">{{ row.annotation }}</td>
   </tr>
   {% endfor %}
 </table>
@@ -72,6 +46,5 @@ in <em>currency</em>: <b>{{ currency_hrns }}</b><br /><br />
 <br />
 <a href="/account/export/{{ account_fph }}">Export as CSV</a>
 <br />
-
 
 {% endblock %}
