@@ -150,9 +150,7 @@ def create_new_pairing(
             ahid_fph,
             parent_fph,
             "ahid",
-            "",         # n/a
             False,      # not applicable to *pairing*
-            owner_fph,
             True
         )
 

@@ -100,16 +100,10 @@ if script_name == "slate_registration":
     if m:
         sys.stderr.write(m)
         sys.exit(1)
-    entity_type, m = get_entity_type(parent_namespace_fph)
-    if m:
-        sys.stderr.write(m)
-        sys.exit(1)
-    if entity_type != "namespace":
+    if not entity_type_exists(parent_namespace_fph, "namespace"):
         m = fph_to_hrns(parent_namespace_fph) + " is not a namespace."
         sys.stderr.write(m)
         sys.exit(1)
-
-
 
     agent_fph, agent_hrns, access_token, m = new_agent(
                                                  username,

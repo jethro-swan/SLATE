@@ -1,5 +1,5 @@
 # SLATE
-# Last modified: 2024-08-22 00:05 JW
+# Last modified: 2025-06-28 21:25 JW
 
 import os
 from pathlib import Path
@@ -8,6 +8,8 @@ import time
 import sys
 
 from app.core.common import filename_timestamp
+
+from app.core.slate_core import entity_type_exists
 
 # CSV can mean either "comma-separated value" or "character-separated value".
 # Here the latter meaning is use, with a comma used as the default separator.
@@ -50,8 +52,7 @@ def export_account_journal_to_csv(account_fph, sc=","):
     #
     #   account_<account_FPH>_transaction_history_<YYYYMMDDhhmmss>.csv
 
-    entity_type = get_entity_type(account_fph)
-    if (entity_type == "account"):
+    if entity_type_exist(account_fph, "account"):
         currency_fph = get_account_currency(account_fph)
         currency_type = get_currency_type(currency_fph)
         output_filename = "account_"
@@ -94,8 +95,7 @@ def export_currency_journal_to_csv(currency_fph, sc=","):
     #
     #   currency_<currency_FPH>_transaction_history_<YYYYMMDDhhmmss>.csv
 
-    entity_type = get_entity_type(currency_fph)
-    if (entity_type == "account"):
+    if entity_type_exists(currency_fph, "account"):
         currency_fph = get_account_currency(currency_fph)
         currency_type = get_currency_type(currency_fph)
         output_filename = "account_"
@@ -135,7 +135,7 @@ def export_currency_journal_to_csv(currency_fph, sc=","):
 
 def export_accounts_csv(fph): # FPH
     out_file = "currency_" + fph + "_export_" + filename_timestamp() + ".csv"
-    if get_entity_type(currency_fph) != "currency":
+    if not entity_type_exists(currency_fph, "currency"):
         return False, currency_fph + " is not a currency"
     with open(CSV + "/" + out_file, "w") as out_f:
         out_f.write("account FPH;account HRNS;account balance")
@@ -152,7 +152,7 @@ def export_accounts_csv(fph): # FPH
 
 def list_accounts_csv(currency_fph): # FPH
     out_file = "currency_" + fph + "_report_" + filename_timestamp() + ".html"
-    if get_entity_type(currency_fph) != "currency":
+    if not entity_type_exists(currency_fph, "currency"):
         return False, currency_fph + " is not a currency"
     with open(WWW + "/" + out_file, "w") as out_f:
         out_f.write('<!doctype html>\n<html language="en">\n')

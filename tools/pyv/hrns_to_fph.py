@@ -6,7 +6,7 @@ import sys
 #from app.core.slate_core import identify_entity, get_entity_type
 from app.core.common import nshash
 from app.core.fph_hrns_maps import fph_to_hrns, hrns_to_fph
-from app.core.slate_core import get_entity_type
+from app.core.slate_core import get_entity_types
 
 script_name = sys.argv[0].replace(".py", "").replace("./", "")
 script_name = script_name.replace("/usr/local/bin/", "")
@@ -17,7 +17,7 @@ script_name = script_name.replace("/usr/local/bin/", "")
 
 if script_name == "fph_to_hrns":
     fph = sys.argv[1]
-    etype, m = get_entity_type(fph)
+    etypes, m = get_entity_types(fph)
     #print(fph + " >>> " + etype, end="")
 #    print(fph, end="")
     if m:
@@ -33,7 +33,7 @@ elif script_name == "hrns_to_fph":
     if fph_1 != fph_2:
         print("hash mismatch")
     if fph_to_hrns(fph_2) == hrns:
-        etype, m = get_entity_type(fph_2)
+        etypes, m = get_entity_types(fph_2)
         print(fph_2 + " >>> " + etype, end="")
         if m:
             print(" (" + m + ")")

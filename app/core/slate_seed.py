@@ -247,11 +247,8 @@ def create_seed_entities():
     add_entity_common_properties(
         seed_currency_fph,
         seed_currency_parent_fph,
-        #nshash(seed_currency_parent_hrns),
         "currency",
-        seed_currency_fph,
         False,
-        "", # Not applicable
         True
     )
     with sqlite3.connect(ENTITIES_DB) as conn:
@@ -303,10 +300,8 @@ def create_seed_entities():
         seed_account_fph,
         nshash(seed_account_parent_hrns),
         "account",
-        "",
         False,
-        seed_primid_fph,    # NB, in future owner_fph may be stored in the
-        True                # "entities_common" table rather than "accounts"
+        True
     )
     # Then the type-specific properties are added:
     with sqlite3.connect(ENTITIES_DB) as conn:
@@ -340,9 +335,7 @@ def create_seed_entities():
         seed_primid_fph,
         nshash(seed_primid_parent_hrns),
         "primid",
-        seed_currency_fph,
         True,
-        seed_primid_fph,
         True
     )
     # Then the type-specific properties are added:

@@ -26,7 +26,7 @@ from app.core.slate_core import identify_entity, get_currency_name
 from app.core.slate_core import list_primid_accounts, list_secid_accounts
 from app.core.slate_core import list_primid_currencies, list_secid_currencies
 from app.core.slate_core import list_accounts_in_currency
-from app.core.slate_core import get_entity_type
+from app.core.slate_core import get_entity_types
 #from app.core.slate_core import get_auth_data
 from app.core.slate_core import account_status
 from app.core.slate_core import add_stewardship, remove_stewards
@@ -816,13 +816,13 @@ if Yn("List the fake entities' relationships from test lists?"):
 
 def check_get_entity_type_function():
 
-    title_line("Testing get_entity_type(entity_fph) function")
+    title_line("Testing get_entity_types(entity_fph) function")
 
     thin_title_line("namespaces")
     for namespace_fph in l_namespaces:
-        entity_type, m = get_entity_type(namespace_fph)
+        entity_types, m = get_entity_types(namespace_fphs)
         r = "{:<80}".format(namespace_fph + " > " + fph_to_hrns(namespace_fph))
-        if entity_type != "namespace":
+        if not ("namespace" in entity_types):
             r += " misidentified as " + entity_type + " (" + m + ")"
         else:
             r += " correct (" + entity_type + ")"
@@ -830,9 +830,9 @@ def check_get_entity_type_function():
 
     thin_title_line("currencies")
     for currency_fph in l_currencies:
-        entity_type, m = get_entity_type(currency_fph)
+        entity_types, m = get_entity_types(currency_fph)
         r = "{:<80}".format(currency_fph + " > " + fph_to_hrns(currency_fph))
-        if entity_type != "currency":
+        if not ("currency" in entity_types):
             r += " misidentified as " + entity_type + " (" + m + ")"
         else:
             r += " correct (" + entity_type + ")"
@@ -840,9 +840,9 @@ def check_get_entity_type_function():
 
     thin_title_line("primids")
     for primid_fph in l_primids:
-        entity_type, m = get_entity_type(primid_fph)
+        entity_types, m = get_entity_types(primid_fph)
         r = "{:<80}".format(primid_fph + " > " + fph_to_hrns(primid_fph))
-        if entity_type != "primid":
+        if not ("primid" in entity_types):
             r += " misidentified as " + entity_type + " (" + m + ")"
         else:
             r += " correct (" + entity_type + ")"
@@ -850,9 +850,9 @@ def check_get_entity_type_function():
 
     thin_title_line("secids")
     for secid_fph in l_secids:
-        etype, m = get_entity_type(secid_fph)
+        etypes, m = get_entity_types(secid_fph)
         r = "{:<80}".format(secid_fph + " > " + fph_to_hrns(secid_fph))
-        if etype != "secid":
+        if not ("secid" in entity_types):
             r += " misidentified as " + etype + " (" + m + ")"
         else:
             r += " correct (" + etype + ")"
@@ -860,9 +860,9 @@ def check_get_entity_type_function():
 
     thin_title_line("accounts")
     for account_fph in l_accounts:
-        entity_type, m = get_entity_type(account_fph)
+        entity_types, m = get_entity_types(account_fph)
         r = "{:<80}".format(account_fph + " > " + fph_to_hrns(account_fph))
-        if entity_type != "account":
+        if not ("account" in entity_types):
             r += " misidentified as " + entity_type + " (" + m + ")"
         else:
             r += " correct (" + entity_type + ")"
