@@ -10,7 +10,7 @@ from app.core.slate_core import get_entity_types, get_primid
 #from .slate_login import get_auth_data
 
 from app.core.slate_core import fph_to_hrns
-from app.core.slate_core import entity_type_exists
+from app.core.slate_core import entity_type_is_registered
 
 debugging = True
 #max_hrns_depth = 0
@@ -21,10 +21,10 @@ debugging = True
 def register_authenticated_login(agent_fph): # (agent is *primid* or *secid*)
     if not re_fph.match(agent_fph):
         return False, "", agent_fph + " is not an FPH"
-    if entity_type_exists(agent_fph, "secid"):
+    if entity_type_is_registered(agent_fph, "secid"):
         primid_fph = get_primid(agent_fph)
         login_id_fph = agent_fph
-    elif entity_type_exists(agent_fph, "primid"):
+    elif entity_type_is_registered(agent_fph, "primid"):
         primid_fph = agent_fph
         login_id_fph = agent_fph
     else:
@@ -50,10 +50,10 @@ def register_authenticated_login(agent_fph): # (agent is *primid* or *secid*)
 def deregister_authenticated_login(agent_fph):
     if not re_fph.match(agent_fph):
         return False, agent_fph + " is not an FPH"
-    if entity_type_exists(agent_fph, "secid"):
+    if entity_type_is_registered(agent_fph, "secid"):
         primid_fph = get_primid(agent_fph)
         login_id_fph = agent_fph
-    elif entity_type_exists(agent_fph, "primid"):
+    elif entity_type_is_registered(agent_fph, "primid"):
         primid_fph = agent_fph
         login_id_fph = agent_fph
     else:
@@ -74,10 +74,10 @@ def deregister_authenticated_login(agent_fph):
 def check_authenticated_login(agent_fph):
     if not re_fph.match(agent_fph):
         return False, "", "", agent_fph + " is not an FPH"
-    if entity_type_exists(agent_fph, "secid"):
+    if entity_type_is_registered(agent_fph, "secid"):
         primid_fph = get_primid(agent_fph)
         login_id_fph = agent_fph
-    elif entity_type_exists(agent_fph, "primid"):
+    elif entity_type_is_registered(agent_fph, "primid"):
         primid_fph = agent_fph
         login_id_fph = agent_fph
     else:
@@ -101,7 +101,7 @@ def get_auth_data(primid_fph):
     if not re_fph.match(primid_fph):
         return  "", "", "", primid_fph + " is not an FPH"
 
-    if not entity_type_exists(primid_fph, "primid"):
+    if not entity_type_is_registered(primid_fph, "primid"):
         return "", "", "", primid_fph + " is not a primid"
     with sqlite3.connect(ENTITIES_DB) as conn:
         cursor = conn.cursor()

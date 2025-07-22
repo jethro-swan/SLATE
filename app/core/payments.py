@@ -142,6 +142,9 @@ def payment(payer_account_fph, payee_account_fph, amount, annotation):
 
     currency_fph, \
     currency_hrns, \
+    active, \
+    private, \
+    sandbox, \
     prefix, \
     suffix, \
     default_account_name, \

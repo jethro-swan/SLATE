@@ -27,6 +27,8 @@ from app.core.common import unixtime_int
 
 from app.core.slate_core import get_entity_types, get_account_currency
 from app.core.slate_core import identify_entity, get_primid
+from app.core.slate_core import entity_type_is_registered
+from app.core.slate_core import entity_types_are_registered
 from app.core.slate_core import new_primid, new_secid
 from app.core.slate_core import update_primid_access_details
 from app.core.slate_core import new_namespace, new_currency
@@ -51,14 +53,14 @@ from app.core.slate_core import get_config
 
 from app.core.qrcode import qrencode_invitation
 
-from app.core.omtrad import retrieve_pmap
-from app.core.omtrad import create_new_pairing
-#from app.core.omtrad import get_ahid_primid
-from app.core.omtrad import retrieve_pairing_account_fph
-from app.core.omtrad import ah_payment
-from app.core.omtrad import import_csv_dataset
-from app.core.omtrad import is_ancestor, is_in_private_namespace
-from app.core.omtrad import get_ahid_primid
+from app.core.slate_core import retrieve_pmap
+from app.core.slate_core import create_new_pairing
+#from app.core.slate_core import get_ahid_primid
+from app.core.slate_core import retrieve_pairing_account_fph
+from app.core.slate_core import ah_payment
+from app.core.slate_core import import_csv_dataset
+from app.core.slate_core import is_ancestor, is_in_private_namespace
+from app.core.slate_core import get_ahid_primid
 
 from app.core.slate_session import create_slate_session_db
 from app.core.slate_session import session_save_currencies_available
@@ -172,10 +174,7 @@ from markupsafe import escape
 
 # Create the identity type display string:
 def fph_to_display_type(agent_identifier):
-    agent_fph, \
-    agent_hrns, \
-    etypes, \
-    m = identify_entity(agent_identifier)
+    agent_fph, agent_hrns, etypes, m = identify_entity(agent_identifier)
     if "primid" in etypes:
         return "login identity"
     elif "secid" in etypes:
@@ -186,10 +185,7 @@ def fph_to_display_type(agent_identifier):
 # The *primid* need be displayed only if the current active *identity* is a
 # *secid*:
 def fph_to_primid_iff_needed(agent_identifier):
-    agent_fph, \
-    agent_hrns, \
-    etypes, \
-    m = identify_entity(agent_identifier)
+    agent_fph, agent_hrns, etypes, m = identify_entity(agent_identifier)
     if entity_type(agent_fph, "secid"):
         primid_fph = get_primid(agent_fph)
         primid_hrns = fph_to_hrns(primid_fph)
@@ -338,7 +334,6 @@ def register():
         if not namespace_fph:
             flash("The namespace specified does not exist")
             return redirect("/register")
-
         if "account" in etypes:
             flash(namespace_identifier + ": invalid parent namespace")
             return redirect("/register")
@@ -367,6 +362,9 @@ def register():
 
         currency_fph, \
         currency_hrns, \
+        active, \
+        private, \
+        sandbox, \
         prefix, \
         suffix, \
         default_account_name, \
@@ -597,13 +595,13 @@ def login_recover():
 
         agent_fph, \
         agent_hrns, \
-        agent_type, \
+        etypes, \
         m = identify_entity(agent_identifier)
 
-        if agent_type == "secid":
-            agent_primid_fph = get_primid(agent_fph)
-        elif agent_type == "primid":
+        if "primid" in etypes:
             agent_primid_fph = agent_fph
+        elif "secid" in etypes:
+            agent_primid_fph = get_primid(agent_fph)
         else:
             flash(agent_identifier + " is not a registered identity")
             return redirect(url_for("login"))
@@ -786,7 +784,7 @@ def change_working_identity(new_identity_fph):
 
     new_identity_fph, \
     new_identity_hrns, \
-    new_identity_type, \
+    etypes, \
     m = identify_entity(new_identity_fph)
     if m:
         flash(m)
@@ -797,7 +795,7 @@ def change_working_identity(new_identity_fph):
 
     login_identity_fph, \
     login_identity_hrns, \
-    login_identity_type, \
+    etypes, \
     m = identify_entity(current_user.get_id())
 
     if "working_identity" in session:
@@ -808,7 +806,7 @@ def change_working_identity(new_identity_fph):
 
     current_identity_fph, \
     current_identity_hrns, \
-    current_identity_type, \
+    etypes, \
     m = identify_entity(current_working_identity_fph)
 
     if new_identity_fph == current_identity_fph:
@@ -1016,6 +1014,15 @@ def home_ahc():
     etypes, \
     m = identify_entity(current_user.get_id())
 
+#    if "primid" in etypes:
+#        print("primid FPH = " + primid_fph)
+#        print("primid HRNS = " + primid_hrns)
+#    elif primid_fph:
+#        print("Entity types registered for " + primid_hrns + " are:", end="")
+#        print(etypes)
+#    else:
+#        print("No primid is registered")
+
     # In omtrad mode, the working *identity* is always the *primid*.
     working_identity_fph = primid_fph
     working_identity_hrns = primid_hrns
@@ -1053,8 +1060,6 @@ def home_ahc():
     number_of_messages, \
     number_of_indelible_messages = message_count(primid_fph, hub_mode)
 
-
-
     p_rows = []
 
     # First count the number of occurrences of each *currency*:
@@ -1088,6 +1093,9 @@ def home_ahc():
 
             currency_fph, \
             currency_hrns, \
+            active, \
+            private, \
+            sandbox, \
             prefix, \
             suffix, \
             default_account_name, \
@@ -1312,6 +1320,9 @@ def home():
             # Fetch currency details:
             currency_fph, \
             currency_hrns, \
+            active, \
+            private, \
+            sandbox, \
             prefix, \
             suffix, \
             default_account_name, \
@@ -1510,6 +1521,9 @@ def list_accounts():
             # Fetch currency details:
             currency_fph, \
             currency_hrns, \
+            active, \
+            private, \
+            sandbox, \
             prefix, \
             suffix, \
             default_account_name, \
@@ -1719,6 +1733,9 @@ def payment_options():
             # Fetch *currency* details:
             c_fph, \
             c_hrns, \
+            active, \
+            private, \
+            sandbox, \
             c_prefix, \
             c_suffix, \
             c_default_account_name, \
@@ -1901,6 +1918,9 @@ def currency_options():
             # Fetch *currency* details:
             c_fph, \
             c_hrns, \
+            active, \
+            private, \
+            sandbox, \
             c_prefix, \
             c_suffix, \
             c_default_account_name, \
@@ -2198,6 +2218,9 @@ def account(payer_account_fph, payee_account_fph, owner_fph = None):
     #currency_hrns = fph_to_hrns(payer_currency_fph)
     currency_fph, \
     currency_hrns, \
+    active, \
+    private, \
+    sandbox, \
     currency_prefix, \
     currency_suffix, \
     default_account_name, \
@@ -3476,6 +3499,9 @@ def make_payment_between_selected_accounts(
 
     currency_fph, \
     currency_hrns, \
+    active, \
+    private, \
+    sandbox, \
     currency_prefix, \
     currency_suffix, \
     default_account_name, \
@@ -3863,6 +3889,9 @@ def account_details(account_fph):
 
     currency_fph, \
     currency_hrns, \
+    active, \
+    private, \
+    sandbox, \
     currency_prefix, \
     currency_suffix, \
     default_account_name, \
@@ -4148,6 +4177,9 @@ def currency(currency_fph):
 
     currency_fph, \
     currency_hrns, \
+    active, \
+    private, \
+    sandbox, \
     prefix, \
     suffix, \
     default_account_name, \
@@ -4224,6 +4256,9 @@ def currency_steward_add(currency_fph):
 
     currency_fph, \
     currency_hrns, \
+    active, \
+    private, \
+    sandbox, \
     prefix, \
     suffix, \
     default_account_name, \
@@ -4308,6 +4343,9 @@ def currency_steward_remove(currency_fph, steward_fph):
 
     currency_fph, \
     currency_hrns, \
+    active, \
+    private, \
+    sandbox, \
     prefix, \
     suffix, \
     default_account_name, \
@@ -4568,6 +4606,9 @@ def create_pairing(owner_fph = ""):
 
         currency_fph, \
         currency_hrns, \
+        active, \
+        private, \
+        sandbox, \
         prefix, \
         suffix, \
         default_account_name, \
@@ -4720,6 +4761,9 @@ def create_account(owner_fph):
 
             currency_fph, \
             currency_hrns, \
+            active, \
+            private, \
+            sandbox, \
             prefix, \
             suffix, \
             default_account_name, \
@@ -4874,14 +4918,14 @@ def create_secid():
 
     form = SecidCreateForm()
     if form.validate_on_submit():
-        parent_namespace_fph, \
-        parent_namespace_hrns, \
+        parent_ns_fph, \
+        parent_ns_hrns, \
         etypes, \
         m = identify_entity(form.parent_namespace_id.data.strip().lstrip("."))
         if m:
             flash(m)
             return redirect("/create_secid")
-        if not parent_namespace_fph:
+        if not parent_ns_fph:
             flash("Parent namespace does not exist")
             return redirect("/create_secid")
         # The *namespace* may actually be a *primid* or *secid* (serving as the
@@ -4889,7 +4933,7 @@ def create_secid():
 
         secid_name = form.secid_name.data
         # Check whether an entity with the proposed HRNS exists already.
-        proposed_hrns = secid_name + "." + parent_namespace_hrns
+        proposed_hrns = secid_name + "." + parent_ns_hrns
         if hrns_exists_already(proposed_hrns):
             flash(proposed_hrns + " is already registered")
             return redirect("/create_secid")
@@ -4898,7 +4942,7 @@ def create_secid():
         secid_hrns, \
         m = new_secid(
                 secid_name,
-                parent_namespace_fph,
+                parent_ns_fph,
                 primid_fph # the *primd* of this *secid*
             )
         flash(
@@ -4910,7 +4954,7 @@ def create_secid():
         # An *account* is now created for this new *alias* in the default
         # *currency* of the parent *namespace*:
 
-        default_currency_fph = get_default_currency(parent_namespace_fph)
+        default_currency_fph = get_default_currency(parent_ns_fph)
         m = set_default_currency(secid_fph, default_currency_fph)
         if m:
             flash(m)
@@ -4918,6 +4962,9 @@ def create_secid():
 
         currency_fph, \
         currency_hrns, \
+        active, \
+        private, \
+        sandbox, \
         prefix, \
         suffix, \
         default_account_name, \
@@ -4996,6 +5043,12 @@ def create_namespace():
         working_identity_hrns, \
         etypes, \
         m = identify_entity(session["working_identity"])
+        if "primid" in etypes:
+            working_identity_type = "primid"
+        elif "secid" in etypes:
+            working_identity_type = "secid"
+        else:
+            working_identity_type = "primid"
     else:
         working_identity_fph = primid_fph
         session["working_identity"] = working_identity_fph
@@ -5007,18 +5060,18 @@ def create_namespace():
 
     form = NamespaceCreateForm()
     if form.validate_on_submit():
-        parent_namespace_fph, \
-        parent_namespace_hrns, \
+        parent_ns_fph, \
+        parent_ns_hrns, \
         etypes, \
         m = identify_entity(form.parent_namespace_id.data.strip().lstrip("."))
 #        if m:
 #            flash(m)
 #            return redirect("/create_namespace")
-        if not parent_namespace_fph:
+        if not parent_ns_fph:
             flash("Parent namespace does not exist")
             return redirect("/create_namespace")
 
-        inh_default_currency_fph = get_default_currency(parent_namespace_fph)
+        inh_default_currency_fph = get_default_currency(parent_ns_fph)
 #        print(
 #            "inherited default currency = " \
 #            + fph_to_hrns(inh_default_currency_fph)
@@ -5035,7 +5088,7 @@ def create_namespace():
 
         namespace_name = form.namespace_name.data
         # Check whether an entity with the proposed HRNS exists already.
-        proposed_hrns = namespace_name + "." + parent_namespace_hrns
+        proposed_hrns = namespace_name + "." + parent_ns_hrns
         if hrns_exists_already(proposed_hrns):
             flash(proposed_hrns + " is already registered")
             return redirect("/create_namespace")
@@ -5044,7 +5097,7 @@ def create_namespace():
         namespace_hrns,\
         m = new_namespace(
                 namespace_name,
-                parent_namespace_fph,
+                parent_ns_fph,
                 default_currency_fph,
                 primid_fph
             )
@@ -5189,6 +5242,9 @@ def add_steward():
     elif "currency" in etypes:
         currency_fph, \
         currency_hrns, \
+        active, \
+        private, \
+        sandbox, \
         prefix, \
         suffix, \
         default_account_name, \
@@ -5430,6 +5486,9 @@ def export_currency_csv(currency_fph):
 
     currency_fph, \
     currency_hrns, \
+    active, \
+    private, \
+    sandbox, \
     prefix, \
     suffix, \
     default_account_name, \
@@ -5772,6 +5831,12 @@ def messages():
         working_identity_hrns, \
         etypes, \
         m = identify_entity(session["working_identity"])
+        if "primid" in etypes:
+            working_identity_type = "primid"
+        elif "secid" in etypes:
+            working_identity_type = "secid"
+        else:
+            working_identity_type = "primid"
     else:
         working_identity_fph = primid_fph
         session["working_identity"] = working_identity_fph
@@ -5936,7 +6001,7 @@ def message_send():
 
         recipient_fph, \
         recipient_hrns, \
-        recipient_type, \
+        recipient_types, \
         m = identify_entity(form.recipient.data)
         if m:
             flash(m)
@@ -5945,11 +6010,13 @@ def message_send():
             flash("Recipient cannot be identified")
             return redirect("/home")
 
-        if not (recipient_type in ["ahid", "primid", "secid", "currency"]):
+        # THIS MAKES NO SENSE ...
+
+        if set(recipient_type) >= set(["ahid", "primid", "secid", "currency"]):
             flash("Invalid recipient type")
             return redirect("/home")
 
-        if recipient_type == "currency":
+        if "currency" in ecipient_types:
             if form.broadcast.data:
                 #broadcast_to_currency_users(recipient_fph)
                 flash("broadcast_to_currency_users( )  not yet implemented")
@@ -6160,27 +6227,25 @@ def message_delete(recipient_fph, message_id):
 
     recipient_fph, \
     recipient_hrns, \
-    recipient_type, \
+    recipient_types, \
     m = identify_entity(recipient_fph)
 
     if recipient_fph == "":
         flash("ERROR: recipient is unregistered")
         return redirect("/home")
-    if (recipient_type == "primid") and (recipient_fph != primid_fph):
+    if ("primid" in recipient_types) and (recipient_fph != primid_fph):
         flash("ERROR: recipient is incorrect primid")
         return redirect("/home")
-    elif (recipient_type == "secid"):
+    elif ("secid" in recipient_types):
         secids_list = list_secids(primid_fph)
         if not (recipient_fph in secids_list):
             flash("ERROR: recipient secid does not belong to current primid")
             return redirect("/home")
-    elif (recipient_type == "ahid"):
+    elif ("ahid" in recipient_types):
         ahids_list = list_ahids(primid_fph)
         if not (recipient_fph in ahids_list):
             flash("ERROR: recipient ahid does not belong to current primid")
             return redirect("/home")
-
-
 
     if not isinstance(message_id, str):
         flash("ERROR: invalid message ID in URL")
@@ -6212,22 +6277,22 @@ def messages_clear(recipient_fph):
 
     recipient_fph, \
     recipient_hrns, \
-    recipient_type, \
+    recipient_types, \
     m = identify_entity(recipient_fph)
 
     if recipient_fph == "":
         flash("ERROR: recipient is unregistered")
         return redirect("/home")
 
-    if (recipient_type == "primid") and (recipient_fph != primid_fph):
+    if ("primid" in recipient_types) and (recipient_fph != primid_fph):
         flash("ERROR: recipient is incorrect primid")
         return redirect("/home")
-    elif (recipient_type == "secid"):
+    elif ("secid" in recipient_types):
         secids_list = list_secids(primid_fph)
         if not (recipient_fph in secids_list):
             flash("ERROR: recipient secid does not belong to current primid")
             return redirect("/home")
-    elif (recipient_type == "ahid"):
+    elif ("ahid" in recipient_types):
         ahids_list = list_ahids(primid_fph)
         if not (recipient_fph in ahids_list):
             flash("ERROR: recipient ahid does not belong to current primid")

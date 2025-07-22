@@ -8,7 +8,7 @@ from app.core.constants import SUBSTRATE_FPH
 from app.core.common import nshash
 from app.core.regexp_list import *
 from app.core.slate_core import hrns_to_fph, fph_to_hrns
-from app.core.slate_core import add_entity_common_properties
+from app.core.slate_core import register_entity_type
 from app.core.slate_core import new_account
 from app.core.slate_core import new_namespace
 from app.core.slate_core import identify_entity
@@ -213,7 +213,7 @@ def create_seed_entities():
 # 2025-04-08:   The seed *currency* identifier now serves also as the seed
 #               *namespace*'s identifer'
 
-#    add_entity_common_properties(
+#    register_entity_type(
 #        seed_namespace_fph,
 #        substrate_fph,
 #        "namespace",
@@ -244,12 +244,10 @@ def create_seed_entities():
 
     #--------------------------------------------------------------------------
     # Seed *currency*:
-    add_entity_common_properties(
+    register_entity_type(
         seed_currency_fph,
         seed_currency_parent_fph,
-        "currency",
-        False,
-        True
+        "currency"
     )
     with sqlite3.connect(ENTITIES_DB) as conn:
         cursor = conn.cursor()
@@ -296,12 +294,10 @@ def create_seed_entities():
 
     #--------------------------------------------------------------------------
     # Seed *account*:
-    add_entity_common_properties(
+    register_entity_type(
         seed_account_fph,
         nshash(seed_account_parent_hrns),
-        "account",
-        False,
-        True
+        "account"
     )
     # Then the type-specific properties are added:
     with sqlite3.connect(ENTITIES_DB) as conn:
@@ -331,12 +327,10 @@ def create_seed_entities():
 
     #--------------------------------------------------------------------------
     # Seed *primid*:
-    add_entity_common_properties(
+    register_entity_type(
         seed_primid_fph,
         nshash(seed_primid_parent_hrns),
-        "primid",
-        True,
-        True
+        "primid"
     )
     # Then the type-specific properties are added:
     accounts_fph_list = []

@@ -24,6 +24,8 @@ from app.core.unix_functions import fcopy
 
 from app.core.regexp_list import re_datestamp
 
+from app.core.logging import log_event
+
 #==============================================================================
 
 #def display_colour_subject_prefix(subject_prefix):
@@ -493,8 +495,31 @@ def message_count(primid_id, hub_mode):
 
     primid_fph, \
     primid_hrns, \
-    etype, \
+    etypes, \
     m = identify_entity(primid_id)
+    if m:
+        log_event(
+            "error",
+            "primid unidentified",
+            "Entity " + primid_id + " is not registered"
+        )
+        print(m)
+        return 0, 0
+    elif primid_fph == "":
+        log_event(
+            "error",
+            "primid unidentified",
+            "Entity " + primid_id + " is not registered"
+        )
+        return 0, 0
+    elif not ("primid" in etypes):
+        log_event(
+            "error",
+            "primid not registered",
+            "No primid is registered for " + primid_hrns
+        )
+        return 0, 0
+
 
     if hub_mode == "omtrad":
         recipient_list = list_ahids(primid_fph)

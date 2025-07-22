@@ -6,7 +6,7 @@ import os, sys
 from pathlib import Path
 
 from app.core.slate_core import split_hrns
-from app.core.omtrad import import_csv_dataset
+from app.core.slate_core import import_csv_dataset
 from app.core.common import ledger_timestamp
 from app.core.constants import IMPORT_QUEUE, IMPORTING, SLATE_TEMP
 

@@ -11,6 +11,7 @@ from app.core.regexp_list import *
 from app.core.slate_core import identify_entity
 from app.core.payments import payment
 from app.core.slate_core import new_account, new_currency, new_namespace
+from app.core.slate_core import entity_type_is_registered
 
 #==============================================================================
 # This script is hard-linked to
@@ -100,7 +101,7 @@ if script_name == "slate_registration":
     if m:
         sys.stderr.write(m)
         sys.exit(1)
-    if not entity_type_exists(parent_namespace_fph, "namespace"):
+    if not entity_type_is_registered(parent_namespace_fph, "namespace"):
         m = fph_to_hrns(parent_namespace_fph) + " is not a namespace."
         sys.stderr.write(m)
         sys.exit(1)

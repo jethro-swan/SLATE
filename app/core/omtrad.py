@@ -27,7 +27,7 @@ import pickle
 from app.core.regexp_list import re_hrns, re_fph
 
 from app.core.slate_core import hrns_to_fph, fph_to_hrns
-from app.core.slate_core import add_entity_common_properties
+from app.core.slate_core import register_entity_type
 from app.core.slate_core import new_account
 from app.core.slate_core import account_status
 from app.core.slate_core import new_namespace
@@ -82,10 +82,15 @@ def retrieve_pmap(owner_identifier):
 
     owner_fph, \
     owner_hrns, \
-    owner_type, \
+    etypes, \
     m = identify_entity(owner_identifier)
-    if (owner_type != "primid"):
+    if not owner_fph:
+        print(owner_fph + " is not registered")
+        return {}, owner_identifier + " is not registered"
+    if not ("primid" in etypes):
+        print(owner_identifier + " is not a primid")
         return {}, owner_identifier + " is not a primid"
+    print("pmap owner: " + owner_fph + " > " + owner_hrns)
 
     with sqlite3.connect(ENTITIES_DB) as conn:
         cursor = conn.cursor()
@@ -95,15 +100,17 @@ def retrieve_pmap(owner_identifier):
         )
         result = cursor.fetchone()
         cursor.close()
-        # If no pmap exists yet, it is created:
-        if result is None:
-            return None, ""
-        elif isinstance(result, tuple) and (result[0] is None):
-            return None, ""
-        else:
-            pmap = pickle.loads(result[0])
-            #cursor.close()
-
+    # If no pmap exists yet, it is created:
+    if result is None:
+        print("No pmap for " + owner_hrns + " (a)")
+        return {}, ""
+    elif isinstance(result, tuple) and (result[0] is None):
+        print("No pmap for " + owner_hrns + " (b)")
+        return {}, ""
+    else:
+        pmap = pickle.loads(result[0])
+        print("pmap for " + owner_hrns + " :")
+        print(pmap)
         return pmap, ""     # dictionary of  ahid_hrns:currency_hrns
                             # pairs for display in table.
 
@@ -119,24 +126,24 @@ def create_new_pairing(
     # create a new *account-holder*. Only if both exist will a new *account*
     # or *account-holder* be created.
 
-    c_fph, c_hrns, etype, m = identify_entity(currency_hrns)
-    if (etype != "currency"):
+    c_fph, c_hrns, cetypes, m = identify_entity(currency_hrns)
+    if not ("currency" in cetypes):
         #print(currency_hrns + " is not a currency")
         return "", currency_hrns + " is not a currency"
 
-    owner_fph, owner_hrns, etype, m = identify_entity(owner_identifier)
-    if (etype != "primid"):
+    owner_fph, owner_hrns, petypes, m = identify_entity(owner_identifier)
+    if not ("primid" in petypes):
         return "", owner_identifier + " is not a primid"
 
     # If the *ahid* does not exist already it must be created:
     #
-    ahid_fph, ahid_hrns_, etype, m = identify_entity(ahid_hrns)
+    ahid_fph, ahid_hrns_, etypes, m = identify_entity(ahid_hrns)
     if ahid_fph == "": # does not exist
         ahid_name, parent_hrns_ = split_hrns(ahid_hrns)
-        parent_fph, parent_hrns, etype, m = identify_entity(parent_hrns_)
+        parent_fph, parent_hrns, etypes, m = identify_entity(parent_hrns_)
 
         #if not re_hrns.match(parent_hrns):
-        #    return "", "Invalid parent namespace: " + parent_namespace_hrns
+        #    return "", "Invalid parent namespace: " + parent_ns_fph
 
         # The *ahid* is added to the HRNS>FPH and FPH>HRNS maps:
         #
@@ -146,12 +153,10 @@ def create_new_pairing(
         # (Unlike other entity types, *ahid* has no table for
         # specific properties.)
         #
-        add_entity_common_properties(
+        register_entity_type(
             ahid_fph,
             parent_fph,
-            "ahid",
-            False,      # not applicable to *pairing*
-            True
+            "ahid"
         )
 
     # At this point, whether or not it has been necessary to create it, we now
@@ -255,14 +260,21 @@ def retrieve_pairing_account_fph(ahid_hrns, currency_identifier):
 
     currency_fph, \
     currency_hrns, \
-    etype, \
+    etypes, \
     m = identify_entity(currency_identifier)
-    if (etype != "currency"):
+    if not currency_fph:
+        print(currency_identifier + " is unidentifiable")
+        return "", "", currency_identifier + " is unidentifiable"
+    if not ("currency" in etypes):
+        print("etypes = ", end="")
+        print(etypes)
         return "", "", currency_fph + " is not a currency"
+
 
     primid_fph = get_ahid_primid(ahid_hrns)
     if primid_fph:
         #pmap = get_ahid_pmap(primid_fph)
+        print("primid = " + primid_fph)
         pmap, m = retrieve_pmap(primid_fph)
     else:
         return "", "", "Unable to retrieve pmap for ahid " + ahid_hrns
@@ -288,10 +300,6 @@ def retrieve_pairing_account_fph(ahid_hrns, currency_identifier):
         return "", "", "Error: entity is not account" # should be impossible
 
     return account_fph, primid_fph, ""
-
-
-#=============================================================================
-
 
 #==============================================================================
 # To make a payment using
@@ -393,6 +401,10 @@ def ah_payment(
     default_account_name, \
     stewards_list, \
     m = get_currency_specific_properties(currency_hrns)
+
+    if m:
+        print("Groucho")
+        print(m)
 
     #--------------------------------------------------------------------------
     # Then the payment is recorded in the journal:
