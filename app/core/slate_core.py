@@ -152,92 +152,84 @@ def create_entities_db():
     # created as children/descendants of such a root may have stewards if the
     # owner chooses to invite them.
 
-
     with sqlite3.connect(ENTITIES_DB) as conn:
         cursor = conn.cursor()
         # 2025-06-28
         # - Added table to identify types associated with a registered FPH
         #
         cursor.execute(
-            """
-    	    CREATE TABLE IF NOT EXISTS entities_registered (
-                entity_fph TEXT PRIMARY KEY,
-                parent_ns_fph TEXT,
-                namespace INTEGER NOT NULL DEFAULT 0,
-                currency INTEGER NOT NULL DEFAULT 0,
-                account INTEGER NOT NULL DEFAULT 0,
-                primid INTEGER NOT NULL DEFAULT 0,
-                secid INTEGER NOT NULL DEFAULT 0,
-                ahid INTEGER NOT NULL DEFAULT 0
-            );
-            """
+            "CREATE TABLE IF NOT EXISTS entities_registered (" \
+                + "entity_fph TEXT PRIMARY KEY, " \
+                + "parent_ns_fph TEXT, " \
+                + "namespace INTEGER NOT NULL DEFAULT 0, " \
+                + "currency INTEGER NOT NULL DEFAULT 0, " \
+                + "account INTEGER NOT NULL DEFAULT 0, " \
+                + "primid INTEGER NOT NULL DEFAULT 0, " \
+                + "secid INTEGER NOT NULL DEFAULT 0, " \
+                + "ahid INTEGER NOT NULL DEFAULT 0" \
+            + ");"
         )
-        # A table is created for the entities' common properties:
-        #
-        # 2025-06-28
-        #   entity_type field removed because it is no longer unique for FPH
-        #   parent_ns_fph field moved to entities_registered table
-#        cursor.execute(
-#            """
-#    	    CREATE TABLE IF NOT EXISTS entities_common (
-#                entity_fph TEXT PRIMARY KEY,
-#                active INTEGER NOT NULL DEFAULT 1,
-#                default_currency_fph TEXT DEFAULT '',
-#                private INTEGER NOT NULL DEFAULT 0,
-#                owner_fph TEXT DEFAULT ''
-#            );
-#            """
-#        )
         # Create namespaces table:
         cursor.execute(
-            """
-            CREATE TABLE IF NOT EXISTS namespaces (
-                entity_fph TEXT PRIMARY KEY,
-                active INTEGER NOT NULL DEFAULT 1,
-                stewards_fph_list BLOB,
-                sandbox INTEGER NOT NULL DEFAULT 0,
-                default_currency_fph TEXT DEFAULT '',
-                private INTEGER NOT NULL DEFAULT 0,
-                owner_fph TEXT DEFAULT ''
-            );
-            """
+            "CREATE TABLE IF NOT EXISTS namespaces (" \
+                + "entity_fph TEXT PRIMARY KEY, " \
+                + "active INTEGER NOT NULL DEFAULT 1, " \
+                + "stewards_fph_list BLOB, " \
+                + "sandbox INTEGER NOT NULL DEFAULT 0, " \
+                + "default_currency_fph TEXT DEFAULT '', " \
+                + "private INTEGER NOT NULL DEFAULT 0, " \
+                + "owner_fph TEXT DEFAULT ''" \
+            + ");"
         )
 
         # NB, since a *primid* or *secid* can serve as the root private
-        # *namespace*, a default *currency* must be specified.
+        # *namespace*, a default *currency* must be specified. This has the
+        # same identifier as this *primid* initially but may be changed
+        # subsequently should the need arise.
+        #
+        # Since v.0.2, the same identifier can serve for one instance of each
+        # of the following entity types:
+        #   *primid*    -- a.k.a. *login identity* - unique agent identifier
+        #   *ahid*      -- pairing *identity*
+        #   *secid*     -- a.k.a. *alias* (hidden in omtrad mode)
+        #   *currency*
+        #   *namespace*
+        #   *account*   -- hidden in omtrad mode
+        #
+        # Since an identifier is no longer sufficient to specify the type of an
+        # entity, stewardship lists are now maintained for *namespaces* and
+        # *currencies* separately.
         #
         # Create *primids* table:
         cursor.execute(
-            """
-    	    CREATE TABLE IF NOT EXISTS primids (
-                entity_fph TEXT PRIMARY KEY,
-                active INTEGER NOT NULL DEFAULT 1,
-                primid_realname TEXT,
-                primid_email_1_hash TEXT NOT NULL,
-                primid_email_2_hash TEXT,
-                secids_fph_list BLOB,
-                ahids_fph_list BLOB,
-                accounts_fph_list BLOB,
-                pmap BLOB,
-                stewardships_fph_list BLOB,
-                password_hash BLOB NOT NULL,
-                pin TEXT,
-                access_token_hash BLOB,
-                administrator INTEGER NOT NULL DEFAULT 0
-            );
-            """
+            "CREATE TABLE IF NOT EXISTS primids (" \
+                + "entity_fph TEXT PRIMARY KEY, " \
+                + "active INTEGER NOT NULL DEFAULT 1, " \
+                + "primid_realname TEXT, " \
+                + "primid_email_1_hash TEXT NOT NULL, " \
+                + "primid_email_2_hash TEXT, " \
+                + "secids_fph_list BLOB, " \
+                + "ahids_fph_list BLOB, " \
+                + "accounts_fph_list BLOB, " \
+                + "pmap BLOB, " \
+                + "nstewardships_fph_list BLOB, " \
+                + "cstewardships_fph_list BLOB, " \
+                + "default_currency_fph TEXT NOT NULL, " \
+                + "password_hash BLOB NOT NULL, " \
+                + "pin TEXT, " \
+                + "access_token_hash BLOB, " \
+                + "administrator INTEGER NOT NULL DEFAULT 0" \
+            + ");"
         )
         # Create *secids* table:
         #
         cursor.execute(
-            """
-            CREATE TABLE IF NOT EXISTS secids (
-                entity_fph TEXT,
-                active INTEGER NOT NULL DEFAULT 1,
-                primid_fph TEXT,
-                accounts_fph_list BLOB
-            );
-            """
+            "CREATE TABLE IF NOT EXISTS secids (" \
+                + "entity_fph TEXT, " \
+                + "active INTEGER NOT NULL DEFAULT 1, " \
+                + "primid_fph TEXT, " \
+                + "accounts_fph_list BLOB" \
+            + ");"
         )
         # Create *ahids* (*account-holder identities*) table:
         #
@@ -251,88 +243,168 @@ def create_entities_db():
         #   }
         #
         cursor.execute(
-            """
-            CREATE TABLE IF NOT EXISTS ahids (
-                entity_fph TEXT,
-                primid_fph TEXT,
-                active INTEGER NOT NULL DEFAULT 1
-            );
-            """
+            "CREATE TABLE IF NOT EXISTS ahids (" \
+                + "entity_fph TEXT, " \
+                + "primid_fph TEXT, " \
+                + "active INTEGER NOT NULL DEFAULT 1" \
+            + ");"
         )
-
-
-
         # Create currencies table:
-        #
-        # Added 2025-03-18:
-        #   category TEXT       currency type
-        #
         cursor.execute(
-            """
-            CREATE TABLE IF NOT EXISTS currencies (
-                entity_fph TEXT PRIMARY KEY,
-                active INTEGER NOT NULL DEFAULT 1,
-                private INTEGER NOT NULL DEFAULT 0,
-                currency_prefix TEXT,
-                currency_suffix TEXT,
-                default_account_name TEXT DEFAULT 'local',
-                stewards_fph_list BLOB,
-                sandbox INTEGER NOT NULL DEFAULT 0,
-                category TEXT DEFAULT ''
-            );
-            """
+            "CREATE TABLE IF NOT EXISTS currencies (" \
+                + "entity_fph TEXT PRIMARY KEY, " \
+                + "active INTEGER NOT NULL DEFAULT 1, " \
+                + "private INTEGER NOT NULL DEFAULT 0, " \
+                + "currency_prefix TEXT, " \
+                + "currency_suffix TEXT, " \
+                + "default_account_name TEXT DEFAULT 'local', " \
+                + "stewards_fph_list BLOB, " \
+                + "sandbox INTEGER NOT NULL DEFAULT 0, " \
+                + "category TEXT DEFAULT ''" \
+            + ");"
         )
         # Create accounts table:
-        #
-        # Added 2025-03-18:
-        #   type TEXT       currency type
-        #   vector BLOB
-        #   vector_map BLOB
-        #   matrix BLOB
-        #   matrix_map BLOB
-        #   ts_pointer BLOB
-        #   volume INTEGER NOT NULL DEFAULT 0
-        #
         cursor.execute(
-            """
-            CREATE TABLE IF NOT EXISTS accounts (
-                entity_fph TEXT PRIMARY KEY,
-                active INTEGER NOT NULL DEFAULT 1,
-                account_owner_fph TEXT NOT NULL,
-                account_ahid_fph TEXT NOT NULL DEFAULT "",
-                account_currency_fph TEXT NOT NULL,
-                account_balance INTEGER NOT NULL DEFAULT 0,
-                volume INTEGER NOT NULL DEFAULT 0,
-                type TEXT,
-                vector BLOB,
-                vector_map BLOB,
-                matrix BLOB,
-                matrix_map BLOB,
-                ts_pointer BLOB
-            );
-            """
+            "CREATE TABLE IF NOT EXISTS accounts (" \
+                + "entity_fph TEXT PRIMARY KEY, " \
+                + "active INTEGER NOT NULL DEFAULT 1, " \
+                + "account_owner_fph TEXT NOT NULL, " \
+                + "account_ahid_fph TEXT NOT NULL DEFAULT, " \
+                + "account_currency_fph TEXT NOT NULL, " \
+                + "account_balance INTEGER NOT NULL DEFAULT 0, " \
+                + "volume INTEGER NOT NULL DEFAULT 0, " \
+                + "type TEXT, " \
+                + "vector BLOB, " \
+                + "vector_map BLOB, " \
+                + "matrix BLOB, " \
+                + "matrix_map BLOB, " \
+                + "ts_pointer BLOB" \
+            + ");"
         )
         # Create currency_accounts table:  ### PROBABLY NOT NEEDED
         cursor.execute(
-            """
-            CREATE TABLE IF NOT EXISTS currency_accounts (
-                currency_fph TEXT,
-                account_fph TEXT
-            );
-            """
+            "CREATE TABLE IF NOT EXISTS currency_accounts (" \
+                + "currency_fph TEXT, " \
+                + "account_fph TEXT" \
+            + ");"
         )
         # Create login (temporary data) table:
         cursor.execute(
-            """
-            CREATE TABLE IF NOT EXISTS login (
-                entity_fph TEXT,
-                login_id_fph TEXT,
-                login_authenticated INTEGER NOT NULL DEFAULT 0
-            );
-            """
+            "CREATE TABLE IF NOT EXISTS login (" \
+                + "entity_fph TEXT, " \
+                + "login_id_fph TEXT, " \
+                + "login_authenticated INTEGER NOT NULL DEFAULT 0" \
+            + ");"
         )
         conn.commit()
         cursor.close()
+
+#==============================================================================
+# A new identifier is registered by
+# (1) creation of an FPH>HRNS and HRNS>FPH mapping pair; and
+# (2) creation of an entry in the  identifiers_registered  table.
+
+def register_identifier(identifier_hrns):
+
+    if not re_hrns.match(identifier_hrns):
+        return ""
+
+    name, parent_ns_hrns = split_hrns(identifier_hrns)
+
+    parent_ns_fph, m = hrns_to_fph(parent_ns_hrns)
+
+    identifier_fph, m = hrns_to_fph(identifier_hrns)
+    if m:
+        print(m)
+        delete_fph_from_map(identifier_fph)
+        return ""
+
+    # An entry is created for this FPH in the [entities_registered] table if
+    # and only if it dies not exist already.
+    with sqlite3.connect(ENTITIES_DB) as conn:
+        cursor = conn.cursor()
+        cursor.execute(
+            "SELECT * FROM entities_registered WHERE entity_fph = ?",
+            (entity_fph,)
+        )
+        result = cursor.fetchone()
+        if result is None:
+            insert_str = "INSERT INTO entities_registered (" \
+                       + "entity_fph, " \
+                       + "parent_ns_fph, " \
+                       + "namespace, " \
+                       + "currency, " \
+                       + "account, " \
+                       + "primid, " \
+                       + "secid, " \
+                       + "ahid" \
+                       + ") VALUES (?, ?, ?, ?, ?, ?, ?, ?)"
+            # Initially, no entity type is registered for this identifier:
+            cursor.execute(
+                insert_str, (entity_fph, parent_ns_fph, 0, 0, 0, 0, 0, 0)
+            )
+            conn.commit()
+        cursor.close()
+
+    return identifier_fph
+
+
+#
+def register_identifier_by_name_and_parent_fph(name, parent_ns_fph):
+    parent_ns_fph, parent_ns_hrns, etypes, m = identify_entity(parent_ns_fph)
+    # NB, an existing entity of any type may be accepted as a parent:
+    if not parent_ns_fph:
+        return "", "Parent namespace does not exist"
+    if not re_name.match(name):
+        return "", "Unacceptable name"
+    identifier_hrns = name + NS + parent_ns_hrns
+    identifier_fph = register_identifier(identifier_hrns)
+    return identifier_fph, ""
+
+
+
+
+    identifier_fph, m = hrns_to_fph(identifier_hrns)
+    if m:
+        print(m)
+        delete_fph_from_map(identifier_fph)
+        return ""
+
+    # An entry is created for this FPH in the [entities_registered] table if
+    # and only if it dies not exist already.
+    with sqlite3.connect(ENTITIES_DB) as conn:
+        cursor = conn.cursor()
+        cursor.execute(
+            "SELECT * FROM entities_registered WHERE entity_fph = ?",
+            (entity_fph,)
+        )
+        result = cursor.fetchone()
+        if result is None:
+            insert_str = "INSERT INTO entities_registered (" \
+                       + "entity_fph, " \
+                       + "parent_ns_fph, " \
+                       + "namespace, " \
+                       + "currency, " \
+                       + "account, " \
+                       + "primid, " \
+                       + "secid, " \
+                       + "ahid" \
+                       + ") VALUES (?, ?, ?, ?, ?, ?, ?, ?)"
+            # Initially, no entity type is registered for this identifier:
+            cursor.execute(
+                insert_str, (entity_fph, parent_ns_fph, 0, 0, 0, 0, 0, 0)
+            )
+            conn.commit()
+        cursor.close()
+
+    return identifier_fph
+
+
+
+
+
+
+
 
 #==============================================================================
 ## Get the list of *entity* types registered for a specified FPH::
@@ -374,25 +446,29 @@ def get_entity_types(entity_fph):
     else:
         return [], "No entities of any type registered for " + entity_fph
 
-## Register an *entity* type for a specified FPH:
+
+#==============================================================================
+# Register an *entity* type for a specified identifier FPH:
 
 def register_entity_type(entity_fph, etype):
     if not re_fph.match(entity_fph):
         return "Invalid FPH: " + entity_fph
+    vetypes = ["namespace", "currency", "account", "primid", "secid", "ahid"]
+    if not (entity_type in vetypes):
+        return "Invalid entity type: " + entity_type
     with sqlite3.connect(ENTITIES_DB) as conn:
         cursor = conn.cursor()
+        # First check that the [entities_registered] table contains an entry
+        # for this FPH.
         cursor.execute(
             "SELECT * FROM entities_registered WHERE entity_fph = ?",
             (entity_fph,)
         )
         result = cursor.fetchone()
-        if result is None:  # There is no entry for entity_fph so this must be
-            cursor.execute( # created:
-                "INSERT INTO entities_registered (" \
-                + "namespace, currency, account, primid, secid, ahid" \
-                + ") VALUES (?, ?, ?, ?, ?, ?)",
-                (0, 0, 0, 0, 0, 0) # initially all False
-            )
+        if result is None:
+            # There is no entry for entity_fph:
+            cursor.close()
+            return "Identifier " + entity_fph + " is not registered"
         cursor.execute(
             "UPDATE entities_registered SET " + etype + " = 1 " \
             "WHERE entity_fph = ?",
@@ -401,6 +477,56 @@ def register_entity_type(entity_fph, etype):
         conn.commit()
         cursor.close()
     return ""
+
+#
+# Record the common properties at the point of an entity's creation:
+#def register_entity_type(entity_fph, entity_type):
+#    # 2025-06-28:
+#    # - entity_type field removed because no longer unique to FPH
+#    # - common properties now moved to entities_registered table
+#    #
+#    vetypes = ["namespace", "currency", "account", "primid", "secid", "ahid"]
+#    if not (entity_type in vetypes):
+#        return "Invalid entity type: " + entity_type
+#    with sqlite3.connect(ENTITIES_DB) as conn:
+#        cursor = conn.cursor()
+#        # First check that entities_registered table contains an entry for the
+#        # FPH
+#        cursor.execute(
+#            "SELECT * FROM entities_registered WHERE entity_fph = ?",
+#            (entity_fph,)
+#        )
+#        result = cursor.fetchone()
+#        if result is None:
+#            insert_str = "INSERT INTO entities_registered (" \
+#                       + "entity_fph, " + entity_type + ") VALUES (?, ?)"
+#            cursor.execute(
+#                insert_str, (entity_fph, 1)
+#            )
+#        else:
+#            update_str = "UPDATE entities_registered " \
+#                       + "SET " + entity_type + " = 1 WHERE entity_fph = ?"
+#            cursor.execute(update_str, (entity_fph,))
+#        conn.commit()
+#        cursor.close()
+#    return
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 ## Deregister an *entity* type for a specified FPH (probably never needed):
 
@@ -586,124 +712,75 @@ def get_private_namespace_details(namespace_identifier):
 # function.
 
 # Register the entity types associated with a new identifier:
-def register_entity(
-        entity_fph,
-        parent_ns_fph,
-        entity_types # list
-    ):
-    vetypes = ["namespace", "currency", "account", "primid", "secid", "ahid"]
-    vlist = []
-    for etype in vetypes:
-        if etype in entity_types:
-            vlist.append("1")
-        else:
-            vlist.append("0")
-    valuesstr = "(" + ", ".join(vlist) + ")"
-    with sqlite3.connect(ENTITIES_DB) as conn:
-        cursor = conn.cursor()
-        cursor.execute(
-            "INSERT INTO entities_registered (entity_fph, parent_ns_fph, " \
-            + ", ".join(vetypes) + ") VALUES (" + valuesstr + ")",
-            (entity_fph,)
-        )
-        conn.commit()
-        cursor.close()
-    return
+#def register_entity(
+#        entity_fph,
+#        parent_ns_fph,
+#        entity_types # list
+#    ):
+#    vetypes = ["namespace", "currency", "account", "primid", "secid", "ahid"]
+#    vlist = []
+#    for etype in vetypes:
+#        if etype in entity_types:
+#            vlist.append("1")
+#        else:
+#            vlist.append("0")
+#    valuesstr = "(" + ", ".join(vlist) + ")"
+#    with sqlite3.connect(ENTITIES_DB) as conn:
+#        cursor = conn.cursor()
+#        cursor.execute(
+#            "INSERT INTO entities_registered (entity_fph, parent_ns_fph, " \
+#            + ", ".join(vetypes) + ") VALUES (" + valuesstr + ")",
+#            (entity_fph,)
+#        )
+#        conn.commit()
+#        cursor.close()
+#    return
 
 #==============================================================================
 
-
-
-
-
-
-
-
-
-
-
-# Record the common properties at the point of an entity's creation:
-def register_entity_type(
-        entity_fph,
-        parent_ns_fph,
-        entity_type
-    ):
-    # 2025-06-28:
-    # - entity_type field removed because no longer unique to FPH
-    # - common properties now moved to entities_registered table
-    #
-    vetypes = ["namespace", "currency", "account", "primid", "secid", "ahid"]
-    if not (entity_type in vetypes):
-        return "Invalid entity type: " + entity_type
-    with sqlite3.connect(ENTITIES_DB) as conn:
-        cursor = conn.cursor()
-        # First check that entities_registered table contains an entry for the
-        # FPH
-        cursor.execute(
-            "SELECT * FROM entities_registered WHERE entity_fph = ?",
-            (entity_fph,)
-        )
-        result = cursor.fetchone()
-        if result is None:
-            insert_str = "INSERT INTO entities_registered (" \
-                       + "entity_fph, " \
-                       + "parent_ns_fph, " \
-                       + entity_type + ") VALUES (?, ?, ?)"
-            cursor.execute(
-                insert_str, (entity_fph, parent_ns_fph, 1)
-            )
-        else:
-            update_str = "UPDATE entities_registered " \
-                       + "SET " + entity_type + " = 1 WHERE entity_fph = ?"
-            cursor.execute(update_str, (entity_fph,))
-        conn.commit()
-        cursor.close()
-    return
-
-
-
-def register_entities(
-        entity_fph,
-        parent_ns_fph,
-        *entity_type
-    ):
-    # Any invalid entity types specified will be ignored.
-    etypes = ""
-    valsub = []
-    trues = ""
-    vetypes = ["namespace", "currency", "account", "primid", "secid", "ahid"]
-    for etype in entity_type:
-        if entity_type in vetypes:
-            etypes.append(etype)
-            valsub.append("?")
-            trues.append(1)
-    if len(etypes) == 0:
-        return "No valid entity types were specified"
-    with sqlite3.connect(ENTITIES_DB) as conn:
-        cursor = conn.cursor()
-        # First check that entities_registered table contains an entry for the FPH
-        cursor.execute(
-            "SELECT * FROM entities_registered WHERE entity_fph = ?",
-            (entity_fph,)
-        )
-        result = cursor.fetchone()
-        if result is None:
-            insert_str = "INSERT INTO entities_registered (" \
-                       + "entity_fph, parent_ns_fph, " + ", ".join(etypes) \
-                       + ") VALUES (" + ", ".join(valsub) + ")"
-            cursor.execute(
-                insert_str, (entity_fph, parent_ns_fph, ", ".join(trues))
-            )
-        else:
-            update_str = "UPDATE entities_registered SET "
-            etl = []
-            for etype in etypes:
-                etl.append(entity_type + " = 1")
-            update_str += ",".join(etl) + " WHERE entity_fph = ?"
-            cursor.execute(update_str, (entity_fph,))
-        conn.commit()
-        cursor.close()
-    return ""
+#def register_entities(
+#        entity_fph,
+#        parent_ns_fph,
+#        *entity_type
+#    ):
+#    # Any invalid entity types specified will be ignored.
+#    etypes = ""
+#    valsub = []
+#    trues = ""
+#    vetypes = ["namespace", "currency", "account", "primid", "secid", "ahid"]
+#    for etype in entity_type:
+#        if entity_type in vetypes:
+#            etypes.append(etype)
+#            valsub.append("?")
+#            trues.append(1)
+#    if len(etypes) == 0:
+#        return "No valid entity types were specified"
+#    with sqlite3.connect(ENTITIES_DB) as conn:
+#        cursor = conn.cursor()
+#        # First check that entities_registered table contains an entry for the
+# FPH
+#        cursor.execute(
+#            "SELECT * FROM entities_registered WHERE entity_fph = ?",
+#            (entity_fph,)
+#        )
+#        result = cursor.fetchone()
+#        if result is None:
+#            insert_str = "INSERT INTO entities_registered (" \
+#                       + "entity_fph, parent_ns_fph, " + ", ".join(etypes) \
+#                       + ") VALUES (" + ", ".join(valsub) + ")"
+#            cursor.execute(
+#                insert_str, (entity_fph, parent_ns_fph, ", ".join(trues))
+#            )
+#        else:
+#            update_str = "UPDATE entities_registered SET "
+#            etl = []
+#            for etype in etypes:
+#                etl.append(entity_type + " = 1")
+#            update_str += ",".join(etl) + " WHERE entity_fph = ?"
+#            cursor.execute(update_str, (entity_fph,))
+#        conn.commit()
+#        cursor.close()
+#    return ""
 
 
 
@@ -1042,14 +1119,7 @@ def account_status(account_fph):
     return True, active, currency_fph, owner_fph, ahid_fph, balance, volume, ""
 
 #==============================================================================
-
-
-
-
-
-
-
-
+#
 
 def namespace_status(namespace_fph):
 
@@ -1071,13 +1141,6 @@ def namespace_status(namespace_fph):
         return False, private, False, [], m
 
     return True, private, active, stewards_list, ""
-
-
-
-
-
-
-
 
 
 
@@ -1117,15 +1180,7 @@ def new_primid(
         return "", "", "", m # parent_ns_fph is invalid
 
     namespace_hrns = fph_to_hrns(parent_ns_fph)
-    primid_hrns = username + "." + namespace_hrns
-
-    if entity_type_is_registered(primid_hrns, "primid"):
-        return "", "", "", primid_hrns + " exists already (primid)"
-
-    primid_fph, m = hrns_to_fph(primid_hrns)
-    if m:
-        delete_fph_from_map(primid_fph)
-        return "", "", "", m
+    primid_hrns = username + NS + namespace_hrns
 
     if realname:
         if not re_realname.match(realname):
@@ -1154,11 +1209,6 @@ def new_primid(
 
     # The access authentication details are now added:
 
-    #stewardships_fph_list = pickle.dumps([])
-    secids_fph_list = []
-    accounts_fph_list = []
-    stewardships_fph_list = []
-
     access_token = generate_access_token()
     access_token_hash = auth_hash(access_token)
 
@@ -1170,13 +1220,34 @@ def new_primid(
     # - a *namespace* (the root of this *primid*s private *namesapce* tree)
     # - a *currency* (of which this *primid* will be the initial steward)
     # - an *ahid* (since any *primid* must serve also as an *ahid*)
+    # - an *account* owned by this *primid*
+    # However, a *secid* cannot be created using this identifier.
 
+    # The identifier of any existing entity cannot be used for a new *primid*:
+    if entity_type_is_registered(primid_hrns, "primid"):
+        return "", "", "", primid_hrns + " exists already (primid)"
+    # The identifier can now be registered (creating the HRNS>FPH and FPH>HRNS
+    # mappings):
+    primid_fph = register_identifier(primid_hrns)
+    if not primid_fph: # Unable to register identifier
+        return "", "", "", "Unable to register " + primid_hrns
 
-    register_entity_type(
-        primid_fph,
-        parent_ns_fph,
-        "primid"
-    )
+    #stewardships_fph_list = pickle.dumps([])
+    secids_fph_list = []
+    # This *primid* is the owner of a an *account* having the same FPH:
+    accounts_fph_list = [primid_fph]
+    # This *primid* is the initial steward of a *namespace* and a *currency*
+    # having the same FPH:
+    nstewardships_fph_list = [primid_fph]
+    cstewardships_fph_list = [primid_fph]
+    # POTENTIAL TRAP: This means that whenever either a *namespace* or a
+    # *currency* is created, an entity of the other type must be created and
+    # registered for the same identifier.
+
+    default_currency_fph = primid_fph
+
+    # First we register a *primid* for this identifier:
+    register_entity_type(primid_fph, "primid")
 
     with sqlite3.connect(ENTITIES_DB) as conn:
         cursor = conn.cursor()
@@ -1190,22 +1261,26 @@ def new_primid(
                 secids_fph_list,
                 pmap,
                 accounts_fph_list,
-                stewardships_fph_list,
+                nstewardships_fph_list,
+                cstewardships_fph_list,
+                default_currency_fph,
                 password_hash,
                 pin,
                 access_token_hash
             )
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """,
             (
                 primid_fph,
                 realname,
                 auth_hash(email_address_1),
                 auth_hash(email_address_2),
-                pickle.dumps(secids_fph_list),          # empty list
-                pickle.dumps({}),                       # empty dictionary
-                pickle.dumps(accounts_fph_list),        # empty list
-                pickle.dumps(stewardships_fph_list),    # empty list
+                pickle.dumps(secids_fph_list),
+                pickle.dumps({}),
+                pickle.dumps(accounts_fph_list),
+                pickle.dumps(nstewardships_fph_list),
+                pickle.dumps(cstewardships_fph_list),
+                primid_fph, # identifier of default *currency*
                 #password_already_hashed,    # restored 2024-11-10 19.50
                 auth_hash(password),        # restored 2024-11-10 19.50
                 pin,
@@ -1228,7 +1303,7 @@ def new_primid(
     m = new_namespace(username, parent_ns_fph, currency_fph, primid_fph)
 
     # A new *ahid* is registered with the same identifier as the *primid*
-    register_entity_type(primid_fph, parent_ns_fph, "ahid")
+    register_entity_type(primid_fph, "ahid")
 
     # A new *account* is created  with the same identifier as the *primid*
     # which also serves as its initial steward.
@@ -1237,6 +1312,16 @@ def new_primid(
     m = new_account(
             username, parent_ns_fph, primid_fph, primid_fph, currency_fph
         )
+
+    # A new *secid* is created  with the same identifier as the *primid*:
+
+#    secid_fph, secid_hrns, m = new_secid(
+#        username,
+#        parent_ns_fph,
+#        primid_fph
+#    )
+
+
 
     return primid_fph, primid_hrns, access_token, m
 
@@ -1277,26 +1362,12 @@ def new_secid(
     with sqlite3.connect(ENTITIES_DB) as conn:
         cursor = conn.cursor()
         cursor.execute(
-            """
-            INSERT INTO secids (
-                entity_fph,
-                primid_fph,
-                accounts_fph_list
-            )
-            VALUES (?, ?, ?)
-            """,
-            (
-                secid_fph,
-                primid_fph,         # The *primid* (owner) of this *secid*
-                pickle.dumps([])    # Empty list: accounts will be added later.
-            )
+            "INSERT INTO secids (entity_fph, primid_fph, accounts_fph_list) " \
+            + "VALUES (?, ?, ?)",
+            (secid_fph, primid_fph, pickle.dumps([]))
         )
         cursor.execute(
-            """
-            SELECT secids_fph_list
-            FROM primids
-            WHERE entity_fph = ?
-            """,
+            "SELECT secids_fph_list FROM primids WHERE entity_fph = ?",
             (primid_fph,)
         )
         result = cursor.fetchone()
@@ -1309,11 +1380,7 @@ def new_secid(
         secids_fph_list.append(secid_fph)
         secids_fph_blob = pickle.dumps(secids_fph_list)
         cursor.execute(
-            """
-            UPDATE primids
-            SET secids_fph_list = ?
-            WHERE entity_fph = ?
-            """,
+            "UPDATE primids SET secids_fph_list = ? WHERE entity_fph = ?",
             (secids_fph_blob, primid_fph)
         )
         conn.commit()
@@ -1450,11 +1517,7 @@ def new_namespace(
     # The HRNS and FPH are added to the FPH>HRNS and HRNS>FPH maps:
     namespace_fph, m = hrns_to_fph(namespace_hrns)
 
-    register_entity_type(
-        namespace_fph,
-        parent_ns_fph,
-        "namespace"
-    )
+    register_entity_type(namespace_fph, "namespace")
 
     with sqlite3.connect(ENTITIES_DB) as conn:
         cursor = conn.cursor()
@@ -1518,11 +1581,7 @@ def new_currency(
 
     currency_fph, m = hrns_to_fph(currency_hrns)
 
-    register_entity_type(
-        currency_fph,
-        parent_ns_fph,
-        "currency"              # entity type
-    )
+    register_entity_type(currency_fph, "currency")
 
     # Now add currency specific properties:
     with sqlite3.connect(ENTITIES_DB) as conn:
@@ -1540,22 +1599,22 @@ def new_currency(
             )
         )
         cursor.execute(
-            "SELECT stewardships_fph_list FROM primids WHERE entity_fph = ?",
+            "SELECT cstewardships_fph_list FROM primids WHERE entity_fph = ?",
             (initial_steward_fph,)
         )
         result = cursor.fetchone()
         if result is not None:
-            stewardships_fph_blob = result[0]
-            stewardships_fph_list = pickle.loads(stewardships_fph_blob)
+            cstewardships_fph_blob = result[0]
+            cstewardships_fph_list = pickle.loads(stewardships_fph_blob)
         else:
-            stewardships_fph_list = []
+            cstewardships_fph_list = []
         if not (currency_fph in stewardships_fph_list):
-            stewardships_fph_list.append(currency_fph)
-            stewardships_fph_blob = pickle.dumps(stewardships_fph_list)
+            cstewardships_fph_list.append(currency_fph)
+            cstewardships_fph_blob = pickle.dumps(stewardships_fph_list)
             cursor.execute(
-                "UPDATE primids SET stewardships_fph_list = ? " \
+                "UPDATE primids SET cstewardships_fph_list = ? " \
                 + "WHERE entity_fph = ?",
-                (stewardships_fph_blob, initial_steward_fph)
+                (cstewardships_fph_blob, initial_steward_fph)
             )
             conn.commit()
         cursor.close()
@@ -1627,11 +1686,7 @@ def new_account(
 
     account_fph, m = hrns_to_fph(account_hrns)
 
-    register_entity_type(
-        account_fph,
-        owner_fph, ## NB, currently stored in *accounts* table
-        "account"
-    )
+    register_entity_type(account_fph, "account")
 
     # Now add account specific properties:
     with sqlite3.connect(ENTITIES_DB) as conn:
@@ -2406,67 +2461,58 @@ def get_account_specific_properties(account_fph):
 #------------------------------------------------------------------------------
 # Add a stewardship to a *primid* and a steward to a *namespace* or *currency*:
 
-def add_stewardship(
-        entity_fph,
-        steward_fph
-    ):
+### CHANGE:
+#
+# Separate the following into two distinct functions:
+# i.e.
+#   add_namespace_stewardship(entity_fph, steward_fph)
+#   add_currency_stewardship(entity_fph, steward_fph)
+
+def add_namespace_stewardship(entity_fph, steward_fph):
     if not re_fph.match(steward_fph):
         return steward_fph + " is not an FPH"
 
     if not re_fph.match(entity_fph):
         return entity_fph + " is not an FPH"
 
-    errors = ""
-
     if not entity_type_is_registered(steward_fph, "primid"):
         return steward_fph + " is not a primid."
 
-    if entity_type_is_registered(entity_fph, "namespace"):
-        table = " namespaces " # NB The spaces are important.
-    elif entity_type_is_registered(entity_fph, "currency"):
-        table = " currencies " # NB The spaces are important.
-    else:
-        return entity_fph + " is not a stewarded type.\n"
+    if not entity_type_is_registered(entity_fph, "namespace"):
+        return "namespace not registered for " + entity_fph
 
-    stewards_select_str = "SELECT stewards_fph_list " \
-                        + "FROM" + table \
+    errors = ""
+
+    stewards_select_str = "SELECT stewards_fph_list FROM namespaces " \
                         + "WHERE entity_fph = ?"
 
-    stewards_update_str = "UPDATE" + table \
-                        + "SET stewards_fph_list = ? " \
+    stewards_update_str = "UPDATE namespaces SET stewards_fph_list = ? " \
                         + "WHERE entity_fph = ?"
 
     with sqlite3.connect(ENTITIES_DB) as conn:
         cursor = conn.cursor()
         # Add the stewarded entity's FPH to the *primid*'s stewardships list:
         cursor.execute(
-            """
-            SELECT stewardships_fph_list
-            FROM primids
-            WHERE entity_fph = ?
-            """,
+            "SELECT nstewardships_fph_list FROM primids WHERE entity_fph = ?",
             (steward_fph,)
         )
         result = cursor.fetchone()
         stewardship_has_been_registered_already = False
-        if result is not None:
-            stewardships_fph_list = []
+        if result is None:
+            nstewardships_fph_list = []
         else:
-            stewardships_fph_list = pickle.loads(result[0])
-            if entity_fph in stewardships_fph_list:
+            nstewardships_fph_list = pickle.loads(result[0])
+            if entity_fph in nstewardships_fph_list:
                 stewardship_has_been_registered_already = True
-        stewardships_fph_list.append(entity_fph)
-        stewardships_fph_blob = pickle.dumps(stewardships_fph_list)
+        nstewardships_fph_list.append(entity_fph)
+        nstewardships_fph_blob = pickle.dumps(nstewardships_fph_list)
         cursor.execute(
-            """
-            UPDATE primids
-            SET stewardships_fph_list = ?
-            WHERE entity_fph = ?
-            """,
-            (stewardships_fph_blob, steward_fph)
+            "UPDATE primids SET nstewardships_fph_list = ? " \
+            + "WHERE entity_fph = ?",
+            (nstewardships_fph_blob, steward_fph)
         )
 
-        # Add the steward's FPH to the *namespace* or *currency*:
+        # Add the steward's FPH to the *namespace*:
         cursor.execute(stewards_select_str, (entity_fph,))
         result = cursor.fetchone()
         if result is None:
@@ -2476,13 +2522,10 @@ def add_stewardship(
             if steward_fph in stewards_fph_list:
                 if not stewardship_has_been_registered_already:
                     # Remove the inconsistent steward from entity:
-                    stewardships_fph_list.remove(entity_fph)
+                    nstewardships_fph_list.remove(entity_fph)
                     cursor.execute(
-                        """
-                        UPDATE primids
-                        SET stewardships_fph_list = ?
-                        WHERE entity_fph = ?
-                        """,
+                        "UPDATE primids SET nstewardships_fph_list = ? " \
+                        + "WHERE entity_fph = ?",
                         (stewardships_fph_blob, steward_fph)
                     )
                     errors += "Inconsistency found:\n" \
@@ -2511,23 +2554,95 @@ def add_stewardship(
 
     return errors
 
-# This can probably simplified by separating it into the following functions:
-#   add_steward(entity_fph, steward_fph)
-#       operating only on namespace/currency
-#   add_stewardship(steward_fph, entity_fph)
-#       operating only on steward
-# combining these as:
-#   def pair_steward_and_entity(steward_fph, entity_fph):
-#       m1 = add_steward(entity_fph, steward_fph)
-#       if not m1:
-#           m2 = add_stewardship(steward_fph, entity_fph)
-#           if m2:
-#               m3 = remove_stewardship(steward_fph, entity_fph)
-#               return m3
-#           else:
-#             return m2
-#       else:
-#           return m1
+#
+def add_currency_stewardship(entity_fph, steward_fph):
+    if not re_fph.match(steward_fph):
+        return steward_fph + " is not an FPH"
+    if not re_fph.match(entity_fph):
+        return entity_fph + " is not an FPH"
+    if not entity_type_is_registered(steward_fph, "primid"):
+        return steward_fph + " is not a primid."
+    if not entity_type_is_registered(entity_fph, "currency"):
+        return "currency not registered for " + entity_fph
+
+    errors = ""
+
+    stewards_select_str = "SELECT stewards_fph_list FROM namespaces " \
+                        + "WHERE entity_fph = ?"
+
+    stewards_update_str = "UPDATE namespaces SET stewards_fph_list = ? " \
+                        + "WHERE entity_fph = ?"
+
+    with sqlite3.connect(ENTITIES_DB) as conn:
+        cursor = conn.cursor()
+        # Add the stewarded entity's FPH to the *primid*'s stewardships list:
+        cursor.execute(
+            "SELECT cstewardships_fph_list FROM primids WHERE entity_fph = ?",
+            (steward_fph,)
+        )
+        result = cursor.fetchone()
+        stewardship_has_been_registered_already = False
+        if result is None:
+            cstewardships_fph_list = []
+        else:
+            cstewardships_fph_list = pickle.loads(result[0])
+            if entity_fph in cstewardships_fph_list:
+                stewardship_has_been_registered_already = True
+        cstewardships_fph_list.append(entity_fph)
+        cstewardships_fph_blob = pickle.dumps(cstewardships_fph_list)
+        cursor.execute(
+            "UPDATE primids SET cstewardships_fph_list = ? " \
+            + "WHERE entity_fph = ?",
+            (cstewardships_fph_blob, steward_fph)
+        )
+
+        # Add the steward's FPH to the *namespace*:
+        cursor.execute(stewards_select_str, (entity_fph,))
+        result = cursor.fetchone()
+        if result is None:
+            stewards_fph_list = []
+        else:
+            stewards_fph_list = pickle.loads(result[0])
+            if steward_fph in stewards_fph_list:
+                if not stewardship_has_been_registered_already:
+                    # Remove the inconsistent steward from entity:
+                    nstewardships_fph_list.remove(entity_fph)
+                    cursor.execute(
+                        "UPDATE primids SET cstewardships_fph_list = ? " \
+                        + "WHERE entity_fph = ?",
+                        (cstewardships_fph_blob, steward_fph)
+                    )
+                    errors += "Inconsistency found:\n" \
+                           + "Steward " + steward_fph + " (" \
+                           + fph_to_hrns(steward_fph) + ") has already been " \
+                           + "registered for entity " + entity_fph + " (" \
+                           + fph_to_hrns(entity_fph) + ") but stewardship " \
+                           + "of entity " + entity_fph + " has not been " \
+                           + "registered for steward " + steward_fph + "."
+            else:
+                if stewardship_has_been_registered_already:
+                    # Remove the inconsistent stewardship from steward:
+                    stewards_fph_list.remove(steward_fph)
+                    errors += "Inconsistency found:\n" \
+                           + "Stewardship of entity " + entity_fph + " (" \
+                           + fph_to_hrns(entity_fph) + ") has already been " \
+                           + "registered for steward " + steward_fph + " (" \
+                           + fph_to_hrns(steward_fph) + ") but steward " \
+                           + steward_fph + " has not already been " \
+                           + "registered for entity " + entity_fph + "."
+        stewards_fph_list.append(steward_fph)
+        stewards_fph_blob = pickle.dumps(stewards_fph_list)
+        cursor.execute(stewards_update_str, (stewards_fph_blob, entity_fph))
+        conn.commit()
+        cursor.close()
+
+    return errors
+
+
+
+
+
+
 
 #------------------------------------------------------------------------------
 # Remove single stewardship:
@@ -2711,9 +2826,9 @@ def list_stewards(entity_fph):
     return stewards_fph_list, ""
 
 #------------------------------------------------------------------------------
-# List stewardships of a *primid*:
+# List *namespace* stewardships of a *primid*:
 
-def list_stewardships(primid_fph):
+def list_namespace_stewardships(primid_fph):
 
     if not re_fph.match(primid_fph):
         return [], primid_fph + " is not an FPH"
@@ -2721,41 +2836,66 @@ def list_stewardships(primid_fph):
     with sqlite3.connect(ENTITIES_DB) as conn:
         cursor = conn.cursor()
 
-        #select_str = "SELECT stewardships_fph_list FROM primids " \
-        #           + " WHERE entity_fph = ?"
         cursor.execute(
-            """
-            SELECT stewardships_fph_list
-            FROM primids
-            WHERE entity_fph = ?
-            """,
+            "SELECT nstewardships_fph_list FROM primids WHERE entity_fph = ?",
             (primid_fph,)
         )
         result = cursor.fetchone()
-        #cursor.execute(select_str, (primid_fph,))
-        #stewardships_fph_blob = cursor.fetchone()[0]
     if result is None:
-        stewardships_fph_list = []
-        stewardships_fph_blob = pickle.dumps(stewardships_fph_list)
+        nstewardships_fph_list = []
+        nstewardships_fph_blob = pickle.dumps(nstewardships_fph_list)
         cursor.execute(
-            """
-            UPDATE primids
-            SET stewardships_fph_list = ?
-            WHERE entity_fph = ?
-            """,
-            (stewardships_fph_blob, primid_fph)
+            "UPDATE primids SET nstewardships_fph_list = ? " \
+            + "WHERE entity_fph = ?",
+            (nstewardships_fph_blob, primid_fph)
         )
         conn.commit()
         cursor.close()
-        return [], "The primid " + primid_fph + " has no stewardships."
+        return [], "Primid " + primid_fph + " has no namespace stewardships."
     else:
         cursor.close()
-        stewardships_fph_blob = result[0]
-        stewardships_fph_list = pickle.loads(stewardships_fph_blob)
-        stewardships = []
-        for stewardhip_fph in stewardships_fph_list:
-            stewardships.append(stewardhip_fph)
-    return stewardships, ""
+        nstewardships_fph_blob = result[0]
+        nstewardships_fph_list = pickle.loads(nstewardships_fph_blob)
+        nstewardships = []
+        for nstewardhip_fph in nstewardships_fph_list:
+            nstewardships.append(nstewardhip_fph)
+    return nstewardships, ""
+
+#------------------------------------------------------------------------------
+# List *currency* stewardships of a *primid*:
+
+def list_currency_stewardships(primid_fph):
+
+    if not re_fph.match(primid_fph):
+        return [], primid_fph + " is not an FPH"
+
+    with sqlite3.connect(ENTITIES_DB) as conn:
+        cursor = conn.cursor()
+
+        cursor.execute(
+            "SELECT cstewardships_fph_list FROM primids WHERE entity_fph = ?",
+            (primid_fph,)
+        )
+        result = cursor.fetchone()
+    if result is None:
+        cstewardships_fph_list = []
+        cstewardships_fph_blob = pickle.dumps(cstewardships_fph_list)
+        cursor.execute(
+            "UPDATE primids SET cstewardships_fph_list = ? " \
+            + "WHERE entity_fph = ?",
+            (cstewardships_fph_blob, primid_fph)
+        )
+        conn.commit()
+        cursor.close()
+        return [], "Primid " + primid_fph + " has no currency stewardships."
+    else:
+        cursor.close()
+        cstewardships_fph_blob = result[0]
+        cstewardships_fph_list = pickle.loads(cstewardships_fph_blob)
+        cstewardships = []
+        for cstewardhip_fph in cstewardships_fph_list:
+            cstewardships.append(cstewardhip_fph)
+    return cstewardships, ""
 
 #==============================================================================
 # List existing namespaces, specifying optionally a parent namespace.
@@ -2862,7 +3002,12 @@ def get_ahid_primid(ahid_hrns):
     # (2) Each *primid* may have any number of *ahid*
     # (3) A *primid* may belong to itself as an *ahid*
     ahid_fph, ahid_hrns, etypes, m = identify_entity(ahid_hrns)
-    if not (ahid_fph and ("ahid" in etypes)):
+    print("etypes: ", end="")
+    print(etypes)
+    if not ahid_fph:
+        print("Zeppo")
+        return ""
+    if not ("ahid" in etypes):
         print("ahid_fph = " + ahid_fph)
         print("etypes = ", end="")
         print(etypes)
@@ -2876,9 +3021,10 @@ def get_ahid_primid(ahid_hrns):
         )
         result = cursor.fetchone()
         cursor.close()
+    print("Chico")
     if result is None:
         return ""
-    print("Chico")
+    print("Harpo")
     owner_fph = result[0]
     return owner_fph # owner *primid* FPH
 
@@ -2984,9 +3130,11 @@ def hrns_to_name_and_namespace(hrns):
 def split_hrns(identifier_hrns):
     if not re_hrns.match(identifier_hrns):
         return "", ""
-    names = identifier_hrns.split(".")
+    #names = identifier_hrns.split(".")
+    names = identifier_hrns.split(NS)
     name = names.pop(0)
-    parent_ns_hrns = ".".join(names).strip(".")
+    #parent_ns_hrns = ".".join(names).strip(".")
+    parent_ns_hrns = NS.join(names).strip(NS)
     #print(name + " | " + parent_ns_hrns)
     return name, parent_ns_hrns
 
@@ -3147,22 +3295,21 @@ def create_new_pairing(
         ahid_name, parent_hrns_ = split_hrns(ahid_hrns)
         parent_fph, parent_hrns, etypes, m = identify_entity(parent_hrns_)
 
-        #if not re_hrns.match(parent_hrns):
-        #    return "", "Invalid parent namespace: " + parent_ns_fph
-
         # The *ahid* is added to the HRNS>FPH and FPH>HRNS maps:
-        #
         ahid_fph, m = hrns_to_fph(ahid_hrns)
 
-        # The *ahid* is then added to the entities_common table.
-        # (Unlike other entity types, *ahid* has no table for
-        # specific properties.)
-        #
-        register_entity_type(
-            ahid_fph,
-            parent_fph,
-            "ahid"
-        )
+        # The *ahid* is then added to the entities_registered table.
+        register_entity_type(ahid_fph, "ahid")
+        with sqlite3.connect(ENTITIES_DB) as conn:
+            cursor = conn.cursor()
+            cursor.execute(
+                "INSERT INTO ahids " \
+                + "(entity_fph, primid_fph, active) " \
+                + "VALUES (?, ?, ?)",
+                (ahid_fph, owner_fph, 1)
+            )
+            conn.commit()
+            cursor.close()
 
     # At this point, whether or not it has been necessary to create it, we now
     # have both the HRNS and the FPH of the *ahid*. It can now be paired with
