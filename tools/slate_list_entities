@@ -8,10 +8,10 @@ from app.core.constants import ENTITIES_DB
 #from app.core.slate_core import get_entity_type, identify_entity
 from app.core.slate_core import get_entity_types
 from app.core.slate_core import identify_entity
-from app.core.slate_core import get_account_specific_properties
-from app.core.slate_core import get_namespace_specific_properties
-from app.core.slate_core import get_currency_specific_properties
-from app.core.slate_core import get_entity_common_properties
+from app.core.slate_core import get_account_properties
+from app.core.slate_core import get_namespace_properties
+from app.core.slate_core import get_currency_properties
+#from app.core.slate_core import get_entity_common_properties
 from app.core.fph_hrns_maps import hrns_to_fph, fph_to_hrns
 
 with sqlite3.connect(ENTITIES_DB) as conn:
@@ -61,7 +61,7 @@ for entity in entities_list:
             namespace_owner_fph, \
             namespace_default_currency_fph, \
             namespace_stewards_list, \
-            m = get_namespace_specific_properties(entity_fph)
+            m = get_namespace_properties(entity_fph)
             stewards_sl = []
             for steward_fph in namespace_stewards_list:
                 stewards_sl.append(fph_to_hrns(steward_fph))

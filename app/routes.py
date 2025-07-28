@@ -37,9 +37,9 @@ from app.core.slate_core import account_status
 from app.core.slate_core import list_stewardships, list_stewards
 from app.core.slate_core import retrieve_primid_access_details
 from app.core.slate_core import list_agent_accounts, list_secids, list_ahids
-from app.core.slate_core import get_namespace_specific_properties
-from app.core.slate_core import get_currency_specific_properties
-from app.core.slate_core import get_account_specific_properties
+from app.core.slate_core import get_namespace_properties
+from app.core.slate_core import get_currency_properties
+from app.core.slate_core import get_account_properties
 from app.core.slate_core import set_default_currency
 from app.core.slate_core import get_default_currency
 from app.core.slate_core import list_all_namespaces
@@ -55,7 +55,6 @@ from app.core.qrcode import qrencode_invitation
 
 from app.core.slate_core import retrieve_pmap
 from app.core.slate_core import create_new_pairing
-#from app.core.slate_core import get_ahid_primid
 from app.core.slate_core import retrieve_pairing_account_fph
 from app.core.slate_core import ah_payment
 from app.core.slate_core import import_csv_dataset
@@ -65,11 +64,8 @@ from app.core.slate_core import get_ahid_primid
 from app.core.slate_session import create_slate_session_db
 from app.core.slate_session import session_save_currencies_available
 from app.core.slate_session import session_retrieve_currencies_available
-#from app.core.slate_session import retrieve_currency_options
 from app.core.slate_session import session_save_payment_options
 from app.core.slate_session import session_retrieve_payment_options
-#from app.core.slate_session import session_save_payee_accounts_available
-#from app.core.slate_session import session_retrieve_payee_accounts_available
 from app.core.slate_session import remove_slate_session_data
 
 from app.core.regexp_list import re_fph, re_hrns, re_email
@@ -4721,7 +4717,7 @@ def create_account(owner_fph):
         # can have no more than one *account* in any *currency*:
         #
 #        accounts_fph_list, m = list_primid_accounts(primid_fph)
-        accounts_fph_list, m = list_agent_accounts(primid_fph)
+        accounts_fph_list, m = list_accounts(primid_fph, "primid")
 #        for account_fph in accounts_fph_list:
 #            account_currency_fph = get_account_currency(account_fph)
 #            if account_currency_fph == currency_fph:
