@@ -29,7 +29,7 @@ from app.core.slate_core import account_status
 from app.core.slate_core import list_currencies_in_common_by_fph
 from app.core.slate_core import list_currencies_in_common_by_hrns
 from app.core.slate_core import identify_entity
-from app.core.slate_core import get_currency_specific_properties
+from app.core.slate_core import get_currency_properties
 
 from app.core.messaging import send_message
 
@@ -149,7 +149,7 @@ def payment(payer_account_fph, payee_account_fph, amount, annotation):
     suffix, \
     default_account_name, \
     stewards_list, \
-    m = get_currency_specific_properties(payer_account_currency_fph)
+    m = get_currency_properties(payer_account_currency_fph)
 
     #--------------------------------------------------------------------------
     # Then the payment is recorded in the journal:

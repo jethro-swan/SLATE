@@ -34,7 +34,11 @@ from app.core.slate_core import update_primid_access_details
 from app.core.slate_core import new_namespace, new_currency
 from app.core.slate_core import new_account
 from app.core.slate_core import account_status
-from app.core.slate_core import list_stewardships, list_stewards
+from app.core.slate_core import list_namespace_stewardships
+from app.core.slate_core import list_currency_stewardships
+#from app.core.slate_core import list_namespace_stewards
+#from app.core.slate_core import list_currency_stewards
+from app.core.slate_core import list_stewards
 from app.core.slate_core import retrieve_primid_access_details
 from app.core.slate_core import list_agent_accounts, list_secids, list_ahids
 from app.core.slate_core import get_namespace_properties
@@ -47,7 +51,7 @@ from app.core.slate_core import hrns_to_name_and_namespace
 from app.core.slate_core import authenticate_primid_email
 from app.core.slate_core import get_hub_mode
 from app.core.slate_core import get_version
-from app.core.slate_core import add_stewardship, remove_steward
+#from app.core.slate_core import add_stewardship, remove_steward
 from app.core.slate_core import random_filename
 from app.core.slate_core import get_config
 
@@ -365,7 +369,7 @@ def register():
         suffix, \
         default_account_name, \
         stewards_list, \
-        m = get_currency_specific_properties(currency_fph)
+        m = get_currency_properties(currency_fph)
         if m:
             flash(m)
             return redirect("/register")
@@ -1024,7 +1028,8 @@ def home_ahc():
     working_identity_hrns = primid_hrns
     working_identity_type = "primid"
 
-    stewardships_list, m = list_stewardships(primid_fph)
+    nstewardships_list, m = list_namespace_stewardships(primid_fph)
+    cstewardships_list, m = list_currency_stewardships(primid_fph)
 
     pmap_t, m = retrieve_pmap(primid_fph)
 
@@ -1096,7 +1101,7 @@ def home_ahc():
             suffix, \
             default_account_name, \
             stewards_list, \
-            m = get_currency_specific_properties(account_currency_fph)
+            m = get_currency_properties(account_currency_fph)
 
             p_row = {}
             p_row["currency_hrns"] = currency_hrns
@@ -1311,7 +1316,7 @@ def home():
             account_ahid_fph, \
             account_balance, \
             account_volume, \
-            m = get_account_specific_properties(account_fph)
+            m = get_account_properties(account_fph)
 
             # Fetch currency details:
             currency_fph, \
@@ -1323,7 +1328,7 @@ def home():
             suffix, \
             default_account_name, \
             stewards_list, \
-            m = get_currency_specific_properties(account_currency_fph)
+            m = get_currency_properties(account_currency_fph)
 
             # Assemble a dictonary of *account* properties:
             a = {}
@@ -1512,7 +1517,7 @@ def list_accounts():
             account_ahid_fph, \
             account_balance, \
             account_volume, \
-            m = get_account_specific_properties(account_fph)
+            m = get_account_properties(account_fph)
 
             # Fetch currency details:
             currency_fph, \
@@ -1524,7 +1529,7 @@ def list_accounts():
             suffix, \
             default_account_name, \
             stewards_list, \
-            m = get_currency_specific_properties(account_currency_fph)
+            m = get_currency_properties(account_currency_fph)
 
             # Assemble a dictonary of *account* properties:
             a = {}
@@ -1721,7 +1726,7 @@ def payment_options():
             a_owner_fph, \
             a_balance, \
             a_volume, \
-            m = get_account_specific_properties(a_fph)
+            m = get_account_properties(a_fph)
             a_balance_d = integer_to_money_format(a_balance)
 
             isneg = (a_balance < 0)
@@ -1736,7 +1741,7 @@ def payment_options():
             c_suffix, \
             c_default_account_name, \
             c_stewards_list, \
-            m = get_currency_specific_properties(c_fph)
+            m = get_currency_properties(c_fph)
 
             currency_changed = (c_fph != previous_currency_fph)
 
@@ -1906,7 +1911,7 @@ def currency_options():
             a_ahid_fph, \
             a_balance, \
             a_volume, \
-            m = get_account_specific_properties(a_fph)
+            m = get_account_properties(a_fph)
             a_balance_d = integer_to_money_format(a_balance)
 
             isneg = (a_balance < 0)
@@ -1921,7 +1926,7 @@ def currency_options():
             c_suffix, \
             c_default_account_name, \
             c_stewards_list, \
-            m = get_currency_specific_properties(c_fph)
+            m = get_currency_properties(c_fph)
 
             # For the "/currency/options" page we need a list of *currencie*
             # available to this *agent*:
@@ -2203,7 +2208,7 @@ def account(payer_account_fph, payee_account_fph, owner_fph = None):
     payer_ahid_fph, \
     payer_balance, \
     volume, \
-    m = get_account_specific_properties(payer_account_fph)
+    m = get_account_properties(payer_account_fph)
 
     if m:
         flash(m)
@@ -2221,7 +2226,7 @@ def account(payer_account_fph, payee_account_fph, owner_fph = None):
     currency_suffix, \
     default_account_name, \
     stewards_list, \
-    m = get_currency_specific_properties(payer_currency_fph)
+    m = get_currency_properties(payer_currency_fph)
 
     # If control reaches this point, it has been established that the *account*
     # specified in the URL slug belongs to the current user.
@@ -2254,7 +2259,7 @@ def account(payer_account_fph, payee_account_fph, owner_fph = None):
         payee_ahid_fph, \
         payee_balance, \
         volume, \
-        m = get_account_specific_properties(payee_account_fph)
+        m = get_account_properties(payee_account_fph)
 
         if payee_currency_fph != payer_currency_fph:
             flash(
@@ -2280,14 +2285,14 @@ def account(payer_account_fph, payee_account_fph, owner_fph = None):
         payer_ahid_fph, \
         payer_balance, \
         volume, \
-        m = get_account_specific_properties(payer_account_fph)
+        m = get_account_properties(payer_account_fph)
 
         payee_currency_fph, \
         payee_owner_fph, \
         payee_ahid_fph, \
         payee_balance, \
         volume, \
-        m = get_account_specific_properties(payee_account_fph)
+        m = get_account_properties(payee_account_fph)
 
         flash(
             "Payment submitted: " \
@@ -2705,7 +2710,7 @@ def pay_from_account_to_agent(payer_account_fph = None):
     payer_account_ahid_fph, \
     payer_account_balance, \
     volume, \
-    m = get_account_specific_properties(payer_account_fph)
+    m = get_account_properties(payer_account_fph)
 
     if payer_account_balance < 0:
         payer_account_balance_negative = True
@@ -2992,14 +2997,14 @@ def pay_agent_direct(payer_currency_fph, payer_identity_fph):
         payer_ahid_fph, \
         payer_balance, \
         payer_volume, \
-        m = get_account_specific_properties(payer_account_fph)
+        m = get_account_properties(payer_account_fph)
 
         payee_currency_fph, \
         payee_owner_fph, \
         payee_ahid_fph, \
         payee_balance, \
         payee_volume, \
-        m = get_account_specific_properties(payee_account_fph)
+        m = get_account_properties(payee_account_fph)
 
         flash(
             "Payment submitted: " \
@@ -3502,7 +3507,7 @@ def make_payment_between_selected_accounts(
     currency_suffix, \
     default_account_name, \
     stewards_list, \
-    m = get_currency_specific_properties(payment_currency_fph)
+    m = get_currency_properties(payment_currency_fph)
 
     # Hub operational mode (read from environment variable HUB_MODE)
     hub_mode = get_hub_mode()
@@ -3550,14 +3555,14 @@ def make_payment_between_selected_accounts(
         payer_ahid_fph, \
         payer_balance, \
         payer_volume, \
-        m = get_account_specific_properties(payer_account_fph)
+        m = get_account_properties(payer_account_fph)
 
         payee_currency_fph, \
         payee_owner_fph, \
         payee_ahid_fph, \
         payee_balance, \
         payee_volume, \
-        m = get_account_specific_properties(payee_account_fph)
+        m = get_account_properties(payee_account_fph)
 
         flash(
             "Payment submitted: " \
@@ -3760,7 +3765,7 @@ def select_payer_account_(payee_account_fph):
     payee_account_ahid_fph, \
     payee_account_balance, \
     payee_account_volume, \
-    m = get_account_specific_properties(payee_account_fph)
+    m = get_account_properties(payee_account_fph)
 
     number_of_payer_accounts = 0
     payer_usable_accounts = []
@@ -3773,7 +3778,7 @@ def select_payer_account_(payee_account_fph):
         account_ahid_fph, \
         account_balance, \
         account_volume, \
-        m = get_account_specific_properties(account_fph)
+        m = get_account_properties(account_fph)
 
 #        print("account = " + account_fph + " > " + fph_to_hrns(account_fph))
 #        print(
@@ -3876,7 +3881,7 @@ def account_details(account_fph):
     ahid_fph, \
     account_balance, \
     account_volume, \
-    m = get_account_specific_properties(account_fph)
+    m = get_account_properties(account_fph)
     if m:
         flash(m)
         return redirect("/account")
@@ -3892,7 +3897,7 @@ def account_details(account_fph):
     currency_suffix, \
     default_account_name, \
     stewards_list, \
-    m = get_currency_specific_properties(currency_fph)
+    m = get_currency_properties(currency_fph)
 
 
     #payments_history, m = dump_account_payments_csv(account_fph)
@@ -4180,7 +4185,7 @@ def currency(currency_fph):
     suffix, \
     default_account_name, \
     stewards_list, \
-    m = get_currency_specific_properties(currency_fph)
+    m = get_currency_properties(currency_fph)
 
     # Compile a list of the stewards of this *currency*, excluding the *primid*
     # of the *agent* logged in here:
@@ -4259,7 +4264,7 @@ def currency_steward_add(currency_fph):
     suffix, \
     default_account_name, \
     stewards_list, \
-    m = get_currency_specific_properties(currency_fph)
+    m = get_currency_properties(currency_fph)
 
     number_of_messages, \
     number_of_indelible_messages = message_count(primid_fph, hub_mode)
@@ -4346,7 +4351,7 @@ def currency_steward_remove(currency_fph, steward_fph):
     suffix, \
     default_account_name, \
     stewards_list, \
-    m = get_currency_specific_properties(currency_fph)
+    m = get_currency_properties(currency_fph)
 
     #stewards_fph_list, m = list_stewards(currency_fph)
     #    primid_fph)
@@ -4609,7 +4614,7 @@ def create_pairing(owner_fph = ""):
         suffix, \
         default_account_name, \
         stewards_list, \
-        m = get_currency_specific_properties(currency_fph)
+        m = get_currency_properties(currency_fph)
 
         account_fph = create_new_pairing(
                           working_identity_fph,
@@ -4764,7 +4769,7 @@ def create_account(owner_fph):
             suffix, \
             default_account_name, \
             stewards_list, \
-            m = get_currency_specific_properties(currency_fph)
+            m = get_currency_properties(currency_fph)
 
             account_name = default_account_name
             namespace_fph = primid_fph
@@ -4914,14 +4919,14 @@ def create_secid():
 
     form = SecidCreateForm()
     if form.validate_on_submit():
-        parent_ns_fph, \
-        parent_ns_hrns, \
+        parent_fph, \
+        parent_hrns, \
         etypes, \
         m = identify_entity(form.parent_namespace_id.data.strip().lstrip("."))
         if m:
             flash(m)
             return redirect("/create_secid")
-        if not parent_ns_fph:
+        if not parent_fph:
             flash("Parent namespace does not exist")
             return redirect("/create_secid")
         # The *namespace* may actually be a *primid* or *secid* (serving as the
@@ -4929,7 +4934,7 @@ def create_secid():
 
         secid_name = form.secid_name.data
         # Check whether an entity with the proposed HRNS exists already.
-        proposed_hrns = secid_name + "." + parent_ns_hrns
+        proposed_hrns = secid_name + "." + parent_hrns
         if hrns_exists_already(proposed_hrns):
             flash(proposed_hrns + " is already registered")
             return redirect("/create_secid")
@@ -4938,7 +4943,7 @@ def create_secid():
         secid_hrns, \
         m = new_secid(
                 secid_name,
-                parent_ns_fph,
+                parent_fph,
                 primid_fph # the *primd* of this *secid*
             )
         flash(
@@ -4950,7 +4955,7 @@ def create_secid():
         # An *account* is now created for this new *alias* in the default
         # *currency* of the parent *namespace*:
 
-        default_currency_fph = get_default_currency(parent_ns_fph)
+        default_currency_fph = get_default_currency(parent_fph)
         m = set_default_currency(secid_fph, default_currency_fph)
         if m:
             flash(m)
@@ -4965,7 +4970,7 @@ def create_secid():
         suffix, \
         default_account_name, \
         stewards_list, \
-        m = get_currency_specific_properties(default_currency_fph)
+        m = get_currency_properties(default_currency_fph)
 
         account_fph, \
         account_hrns, \
@@ -5056,18 +5061,18 @@ def create_namespace():
 
     form = NamespaceCreateForm()
     if form.validate_on_submit():
-        parent_ns_fph, \
-        parent_ns_hrns, \
+        parent_fph, \
+        parent_hrns, \
         etypes, \
         m = identify_entity(form.parent_namespace_id.data.strip().lstrip("."))
 #        if m:
 #            flash(m)
 #            return redirect("/create_namespace")
-        if not parent_ns_fph:
+        if not parent_fph:
             flash("Parent namespace does not exist")
             return redirect("/create_namespace")
 
-        inh_default_currency_fph = get_default_currency(parent_ns_fph)
+        inh_default_currency_fph = get_default_currency(parent_fph)
 #        print(
 #            "inherited default currency = " \
 #            + fph_to_hrns(inh_default_currency_fph)
@@ -5084,7 +5089,7 @@ def create_namespace():
 
         namespace_name = form.namespace_name.data
         # Check whether an entity with the proposed HRNS exists already.
-        proposed_hrns = namespace_name + "." + parent_ns_hrns
+        proposed_hrns = namespace_name + "." + parent_hrns
         if hrns_exists_already(proposed_hrns):
             flash(proposed_hrns + " is already registered")
             return redirect("/create_namespace")
@@ -5093,7 +5098,7 @@ def create_namespace():
         namespace_hrns,\
         m = new_namespace(
                 namespace_name,
-                parent_ns_fph,
+                parent_fph,
                 default_currency_fph,
                 primid_fph
             )
@@ -5245,7 +5250,7 @@ def add_steward():
         suffix, \
         default_account_name, \
         stewards_list, \
-        m = get_currency_specific_properties(currency_fph)
+        m = get_currency_properties(currency_fph)
     else:
         flash("The entity specified is not of a stewarded type")
         return redirect("/home")
@@ -5352,7 +5357,7 @@ def export_account_csv(account_fph):
     ahid_fph, \
     balance, \
     volume, \
-    m = get_account_specific_properties(account_fph)
+    m = get_account_properties(account_fph)
     if m:
         flash(m)
         return redirect("/home")
@@ -5489,7 +5494,7 @@ def export_currency_csv(currency_fph):
     suffix, \
     default_account_name, \
     stewards_list, \
-    m = get_currency_specific_properties(currency_fph)
+    m = get_currency_properties(currency_fph)
     if m:
         flash(m)
         return redirect("/home")

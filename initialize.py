@@ -1,5 +1,4 @@
 #!/home/slate/SLATE/venv/bin/python3
-#!/usr/bin/env python3
 
 # This script can be run to (re)initialize the SLATE installation at any time.
 # Any existing DBM maps and SQLite databases will be backed up first.
@@ -61,11 +60,15 @@ clist = ["kwh.cc", "hrs.cc"]
 for c in clist:
     cname, c_parent_ns_hrns = split_hrns(c)
     parent_namespace_fph, m = hrns_to_fph(c_parent_ns_hrns)
-    currency_fph, currency_hrns, m = new_currency(
-                                         cname,
-                                         parent_namespace_fph,
-                                         steward_fph,
-                                         "",
-                                         "",
-                                         "cname"
-                                     )
+    currency_fph, \
+    currency_hrns, \
+    m = new_currency(
+            cname,
+            parent_namespace_fph,
+            steward_fph,
+            "",
+            "",
+            "cname"
+        )
+    if m:
+        print(m)

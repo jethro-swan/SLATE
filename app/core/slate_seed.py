@@ -8,13 +8,12 @@ from app.core.constants import SUBSTRATE_FPH
 from app.core.common import nshash
 from app.core.regexp_list import *
 from app.core.slate_core import hrns_to_fph, fph_to_hrns
+from app.core.slate_core import register_identifier
 from app.core.slate_core import register_entity_type
 from app.core.slate_core import new_account
 from app.core.slate_core import new_namespace
 from app.core.slate_core import identify_entity
 from app.core.auth import auth_hash
-#from .slate_core import add_namespace_specific_properties
-#from .slate_core import add_account_specific_properties
 from app.core.cctld_list import *
 
 debugging = True
@@ -112,6 +111,7 @@ def create_seed_entities():
     #   cc  as both seed *namespace* and seed *currency*
 #    seed_namespace_hrns     = "cc"
     seed_currency_hrns      = "cc"
+    seed_primid_hrns        = "cc"
     seed_primid_hrns        = "adm.cc"
     seed_account_hrns       = "cc.adm.cc"
 
@@ -133,9 +133,9 @@ def create_seed_entities():
     # - see fph_hrns_maps.py).
     substrate_hrns = ""
     #substrate_fph = nshash("")
-    substrate_fph, m = hrns_to_fph(substrate_hrns) ### 2025-04-26
-    if m:
-        print("Problem mapping substrate HRNS (\"\") to FPH")
+#    substrate_fph, m = hrns_to_fph(substrate_hrns) ### 2025-04-26
+#    if m:
+#        print("Problem mapping substrate HRNS (\"\") to FPH")
 
 
 
@@ -145,23 +145,23 @@ def create_seed_entities():
 #                                # parent namespace: "" (the *substrate*)
 #                                # initial steward:  "adm.cc"
 
-    seed_currency_fph, m        = hrns_to_fph(seed_currency_hrns)
+#    seed_currency_fph, m        = hrns_to_fph(seed_currency_hrns)
     #seed_currency_parent_hrns   = "cc"
-    seed_currency_parent_fph    = SUBSTRATE_FPH
+#    seed_currency_parent_fph    = SUBSTRATE_FPH
                                 # initial steward:  "adm.cc"
 
-    seed_namespace_fph = seed_currency_fph
+#    seed_namespace_fph = seed_currency_fph
 
 
 
-    seed_primid_fph, m          = hrns_to_fph(seed_primid_hrns)
-    seed_primid_parent_hrns     = "cc"
+#    seed_primid_fph, m          = hrns_to_fph(seed_primid_hrns)
+#    seed_primid_parent_hrns     = "cc"
                                 # initial account:  "hrs.adm.cc"
                                 # stewardships:     "cc" (namespace)
                                 #                   "hrs.cc" (currency)
 
-    seed_account_fph, m         = hrns_to_fph(seed_account_hrns)
-    seed_account_parent_hrns    = "adm.cc"
+#    seed_account_fph, m         = hrns_to_fph(seed_account_hrns)
+#    seed_account_parent_hrns    = "adm.cc"
                                 # owned by:         "adm.cc"
                                 # in currency:      "hrs.cc"
 
@@ -192,8 +192,8 @@ def create_seed_entities():
 
 
     #seed_account_currency_fph = seed_currency_fph
-    seed_stewardship_1_fph  = seed_namespace_fph
-    seed_stewardship_2_fph  = seed_currency_fph
+#    seed_stewardship_1_fph  = seed_namespace_fph
+#    seed_stewardship_2_fph  = seed_currency_fph
 
     #seed_primid_account_fph = [seed_account_fph]
 #    seed_primid_account_fph = seed_account_fph
@@ -208,110 +208,37 @@ def create_seed_entities():
     #
     # NB  The *namespace* "cc" is a "root" *namespace*. Therefore it has no
     #     named parent *namespace*.
-    #
 
-# 2025-04-08:   The seed *currency* identifier now serves also as the seed
-#               *namespace*'s identifer'
+    seed_namespace_hrns = "cc"
+    seed_currency_hrns = "cc"
+    seed_primid_hrns        = "adm.cc"
+    seed_account_hrns       = "cc.adm.cc"
 
-#    register_entity_type(
-#        seed_namespace_fph,
-#        substrate_fph,
-#        "namespace",
-#        seed_currency_fph,
-#        False,
-#        "", # This is not a private *namespace* so has no owner
-#        True
-#    )
-#    with sqlite3.connect(ENTITIES_DB) as conn:
-#        cursor = conn.cursor()
-#        cursor.execute(
-#            """
-#            INSERT INTO namespaces (
-#                entity_fph,
-#                stewards_fph_list,
-#                sandbox
-#            )
-#            VALUES (?, ?, ?)
-#            """,
-#            (
-#                seed_namespace_fph,
-#                pickle.dumps([seed_primid_fph]),
-#                False
-#            )
-#        )
-#        conn.commit()
-#        cursor.close()
+    seed_primid_fph = register_identifier(seed_primid_hrns)
+    register_entity_type(seed_primid_fph, "primid")
 
-    #--------------------------------------------------------------------------
-    # Seed *currency*:
-    register_entity_type(
-        seed_currency_fph,
-        seed_currency_parent_fph,
-        "currency"
-    )
-    with sqlite3.connect(ENTITIES_DB) as conn:
-        cursor = conn.cursor()
-        cursor.execute(
-            """
-            INSERT INTO currencies (
-                entity_fph,
-                currency_prefix,
-                currency_suffix,
-                default_account_name,
-                stewards_fph_list
-            )
-            VALUES (?, ?, ?, ?, ?)
-            """,
-            (
-                seed_currency_fph,
-                "",         # currency prefix
-##                "h",        # currency suffix
-##                "hrs",    # default *account* name
-                "",        # currency suffix
-                "cc",    # default *account* name
-                pickle.dumps([seed_primid_fph]) # first steward added to list
-            )
-        )
-        # NB: The following may not be needed, given that the *currency* and
-        #     *account* FPH are both stored in the "accounts" table, but for
-        #     the time being there is no need to remove this step.
-        cursor.execute(
-            """
-            INSERT INTO currency_accounts (
-                currency_fph,
-                account_fph
-            )
-            VALUES (?, ?)
-            """,
-            (
-                seed_currency_fph,
-                seed_account_fph
-            )
-        )
-        conn.commit()
-        cursor.close()
+    seed_account_fph = register_identifier(seed_account_hrns)
+    register_entity_type(seed_account_fph, "account")
 
+    seed_currency_fph = register_identifier(seed_currency_hrns)
+    register_entity_type(seed_currency_fph, "currency")
+
+    seed_namespace_fph = register_identifier(seed_namespace_hrns)
+    register_entity_type(seed_namespace_fph, "namespace")
 
     #--------------------------------------------------------------------------
     # Seed *account*:
-    register_entity_type(
-        seed_account_fph,
-        nshash(seed_account_parent_hrns),
-        "account"
-    )
-    # Then the type-specific properties are added:
+
+    # The seed *account* type-specific properties are added:
     with sqlite3.connect(ENTITIES_DB) as conn:
         cursor = conn.cursor()
         cursor.execute(
-            """
-            INSERT INTO accounts (
-                entity_fph,
-                account_owner_fph,
-                account_currency_fph,
-                account_balance
-            )
-            VALUES (?, ?, ?, ?)
-            """,
+            "INSERT INTO accounts (" \
+                + "entity_fph, " \
+                + "account_owner_fph, " \
+                + "account_currency_fph, " \
+                + "account_balance" \
+            + ") VALUES (?, ?, ?, ?)",
             (
                 seed_account_fph,
                 seed_primid_fph,
@@ -322,42 +249,38 @@ def create_seed_entities():
         conn.commit()
         cursor.close()
 
-
-
+    print("seed_account_fph  = " + seed_account_fph)
+    print("seed_primid_fph   = " + seed_primid_fph)
+    print("seed_currency_fph = " + seed_currency_fph)
 
     #--------------------------------------------------------------------------
     # Seed *primid*:
-    register_entity_type(
-        seed_primid_fph,
-        nshash(seed_primid_parent_hrns),
-        "primid"
-    )
-    # Then the type-specific properties are added:
+
+    # Then seed *primid* type-specific properties are added:
     accounts_fph_list = []
     accounts_fph_list.append(seed_account_fph)
 
-    stewardships_fph_list = []
-    stewardships_fph_list.append(seed_namespace_fph)
-    stewardships_fph_list.append(seed_currency_fph)
+    nstewardships_fph_list = []
+    nstewardships_fph_list.append(seed_namespace_fph)
+    cstewardships_fph_list = []
+    cstewardships_fph_list.append(seed_currency_fph)
 
     with sqlite3.connect(ENTITIES_DB) as conn:
         cursor = conn.cursor()
         cursor.execute(
-            """
-            INSERT INTO primids (
-                entity_fph,
-                primid_realname,
-                primid_email_1_hash,
-                primid_email_2_hash,
-                secids_fph_list,
-                accounts_fph_list,
-                stewardships_fph_list,
-                password_hash,
-                pin,
-                access_token_hash
-            )
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-            """,
+            "INSERT INTO primids (" \
+                + "entity_fph, " \
+                + "primid_realname, " \
+                + "primid_email_1_hash, " \
+                + "primid_email_2_hash, " \
+                + "secids_fph_list, " \
+                + "accounts_fph_list, " \
+                + "nstewardships_fph_list, " \
+                + "cstewardships_fph_list, " \
+                + "password_hash, " \
+                + "pin, " \
+                + "access_token_hash" \
+            + ") VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
             (
                 seed_primid_fph,
                 seed_primid_realname,
@@ -365,7 +288,8 @@ def create_seed_entities():
                 auth_hash(seed_primid_email_2),
                 pickle.dumps([]),
                 pickle.dumps(accounts_fph_list),
-                pickle.dumps(stewardships_fph_list),
+                pickle.dumps(nstewardships_fph_list),
+                pickle.dumps(cstewardships_fph_list),
                 auth_hash(seed_primid_password),
                 seed_primid_pin,
                 auth_hash(seed_primid_access_token)
@@ -376,7 +300,46 @@ def create_seed_entities():
 
 
 
+    #--------------------------------------------------------------------------
+    # The seed *namespace* and *currency* specific properties are added:
 
+    with sqlite3.connect(ENTITIES_DB) as conn:
+        cursor = conn.cursor()
+        cursor.execute(
+            "INSERT INTO currencies (" \
+                + "entity_fph, " \
+                + "currency_prefix, " \
+                + "currency_suffix, " \
+                + "default_account_name, " \
+                + "stewards_fph_list " \
+            + ") VALUES (?, ?, ?, ?, ?)",
+            (
+                seed_currency_fph,
+                "",         # currency prefix
+                "",        # currency suffix
+                "cc",    # default *account* name
+                pickle.dumps([seed_primid_fph]) # first steward added to list
+            )
+        )
+        # NB: The following may not be needed, given that the *currency* and
+        #     *account* FPH are both stored in the "accounts" table, but for
+        #     the time being there is no need to remove this step.
+        cursor.execute(
+            "INSERT INTO currency_accounts (" \
+                + "currency_fph, " \
+                + "account_fph " \
+            + ") VALUES (?, ?)",
+            (
+                seed_currency_fph,
+                seed_account_fph
+            )
+        )
+        conn.commit()
+        cursor.close()
+
+    #seed_account_currency_fph = seed_currency_fph
+    seed_stewardship_1_fph  = seed_namespace_fph
+    seed_stewardship_2_fph  = seed_currency_fph
 
 
 
@@ -418,15 +381,17 @@ def create_quasitld_set(full = False):
     return tld_fph_list, errors
 
 
-# A set of single-letter sandbox root *namesapces* is created:
+# A set of single-letter sandbox root *namespaces* is created:
 def create_sandbox_root_set():
 
-    # These are recreated here in case it is necessary to callthis function
+    # These are recreated here in case it is necessary to call this function
     # before create_seed_entities( ).
-    s_fph, m = hrns_to_fph("s")
-    seed_primid_fph, m  = hrns_to_fph("adm.cc")
+    s_fph = register_identifier("s")
+    register_entity_type(s_fph, "namespace")
+
+##    seed_primid_fph, m  = hrns_to_fph("adm.cc")
 ##    seed_currency_fph, m  = hrns_to_fph("hrs.cc")
-    seed_currency_fph, m  = hrns_to_fph("cc")
+##    seed_currency_fph, m  = hrns_to_fph("cc")
 
     errors = "\n"
     fph_of = {}

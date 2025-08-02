@@ -29,7 +29,7 @@ from app.core.slate_core import list_currencies_in_common_by_fph
 from app.core.slate_core import list_currencies_in_common_by_hrns
 from app.core.slate_core import identify_entity
 from app.core.slate_core import get_hub_mode
-from app.core.slate_core import get_account_specific_properties
+from app.core.slate_core import get_account_properties
 
 #from app.core.display import integer_to_money_format
 from app.core.display import integer_to_money_s_format
@@ -132,7 +132,7 @@ def list_payments_for_account(account_identifier):
         ahid_fph, \
         balance, \
         volume, \
-        m = get_account_specific_properties(account_fph)
+        m = get_account_properties(account_fph)
 
         payer_fph = ahid_fph
         payee_fph = ahid_fph
@@ -316,7 +316,7 @@ def dump_account_payments_csv(
         ahid_fph, \
         balance, \
         volume, \
-        m = get_account_specific_properties(account_fph)
+        m = get_account_properties(account_fph)
 
         csv_filename = "account_" + fph_to_hrns(currency_fph) + "_"\
                      + fph_to_hrns(ahid_fph) + "_journal_" \
