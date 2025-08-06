@@ -9,7 +9,15 @@ from app.core.fph_hrns_maps import fph_to_hrns, hrns_to_fph
 from app.core.slate_core import new_namespace, new_currency, new_primid
 from app.core.slate_core import split_hrns
 
-from app.core.omtrad import *
+from app.core.slate_core import create_new_pairing
+from app.core.slate_core import retrieve_pmap
+from app.core.slate_core import complete_parent_namespace
+from app.core.slate_core import ah_payment
+
+
+
+
+#from app.core.omtrad import *
 
 
 #primid_fph, m = hrns_to_fph("bb.cc")

@@ -110,10 +110,10 @@ def create_seed_entities():
     # *namespace* identifier, e.g.
     #   cc  as both seed *namespace* and seed *currency*
 #    seed_namespace_hrns     = "cc"
-    seed_currency_hrns      = "cc"
-    seed_primid_hrns        = "cc"
-    seed_primid_hrns        = "adm.cc"
-    seed_account_hrns       = "cc.adm.cc"
+##    seed_currency_hrns      = "cc"
+##    seed_primid_hrns        = "cc"
+##    seed_primid_hrns        = "adm.cc"
+##    seed_account_hrns       = "cc.adm.cc"
 
     # Seed entities (see https://nests.lrc.org.uk/entity_dependencies.html)
     # by HRNS:
@@ -209,22 +209,33 @@ def create_seed_entities():
     # NB  The *namespace* "cc" is a "root" *namespace*. Therefore it has no
     #     named parent *namespace*.
 
-    seed_namespace_hrns = "cc"
-    seed_currency_hrns = "cc"
-    seed_primid_hrns        = "adm.cc"
-    seed_account_hrns       = "cc.adm.cc"
+#    seed_namespace_hrns = "cc"
+#    seed_currency_hrns  = "cc"
+#    seed_primid_hrns    = "adm.cc"
+#    seed_account_hrns   = "cc.adm.cc"
 
-    seed_primid_fph = register_identifier(seed_primid_hrns)
-    register_entity_type(seed_primid_fph, "primid")
+    seed_entity_set_hrns  = "cc"
 
-    seed_account_fph = register_identifier(seed_account_hrns)
-    register_entity_type(seed_account_fph, "account")
+    seed_ahid_hrns = seed_currency_hrns = seed_entity_set_hrns
 
-    seed_currency_fph = register_identifier(seed_currency_hrns)
-    register_entity_type(seed_currency_fph, "currency")
 
-    seed_namespace_fph = register_identifier(seed_namespace_hrns)
-    register_entity_type(seed_namespace_fph, "namespace")
+    seed_entity_set_fph = register_identifier(seed_entity_set_hrns)
+    register_entity_type(seed_entity_set_fph, "primid")
+    register_entity_type(seed_entity_set_fph, "ahid")
+    register_entity_type(seed_entity_set_fph, "namespace")
+    register_entity_type(seed_entity_set_fph, "currency")
+    register_entity_type(seed_entity_set_fph, "account")
+
+    seed_namespace_fph = seed_entity_set_fph
+    seed_currency_fph = seed_entity_set_fph
+    seed_primid_fph = seed_entity_set_fph
+    seed_ahid_fph = seed_entity_set_fph
+    seed_account_fph = seed_entity_set_fph
+
+    pmap = {}
+    pmap[seed_ahid_hrns] = {}
+    pmap[seed_ahid_hrns][seed_currency_fph] = seed_account_fph
+
 
     #--------------------------------------------------------------------------
     # Seed *account*:
@@ -240,18 +251,14 @@ def create_seed_entities():
                 + "account_balance" \
             + ") VALUES (?, ?, ?, ?)",
             (
-                seed_account_fph,
-                seed_primid_fph,
-                seed_currency_fph,
+                seed_account_fph,   # *account* FPH
+                seed_ahid_fph,      # *account* owner's FPH (*ahid*)
+                seed_currency_fph,   # *account* *currency*'s FPH'
                 0
             )
         )
         conn.commit()
         cursor.close()
-
-    print("seed_account_fph  = " + seed_account_fph)
-    print("seed_primid_fph   = " + seed_primid_fph)
-    print("seed_currency_fph = " + seed_currency_fph)
 
     #--------------------------------------------------------------------------
     # Seed *primid*:
@@ -259,6 +266,9 @@ def create_seed_entities():
     # Then seed *primid* type-specific properties are added:
     accounts_fph_list = []
     accounts_fph_list.append(seed_account_fph)
+
+    ahids_fph_list = []
+    ahids_fph_list.append(seed_ahid_fph)
 
     nstewardships_fph_list = []
     nstewardships_fph_list.append(seed_namespace_fph)
@@ -274,20 +284,24 @@ def create_seed_entities():
                 + "primid_email_1_hash, " \
                 + "primid_email_2_hash, " \
                 + "secids_fph_list, " \
+                + "ahids_fph_list, " \
                 + "accounts_fph_list, " \
+                + "pmap, " \
                 + "nstewardships_fph_list, " \
                 + "cstewardships_fph_list, " \
                 + "password_hash, " \
                 + "pin, " \
                 + "access_token_hash" \
-            + ") VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+            + ") VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
             (
                 seed_primid_fph,
                 seed_primid_realname,
                 auth_hash(seed_primid_email_1),
                 auth_hash(seed_primid_email_2),
                 pickle.dumps([]),
+                pickle.dumps(ahids_fph_list),
                 pickle.dumps(accounts_fph_list),
+                pickle.dumps(pmap),
                 pickle.dumps(nstewardships_fph_list),
                 pickle.dumps(cstewardships_fph_list),
                 auth_hash(seed_primid_password),
@@ -315,12 +329,19 @@ def create_seed_entities():
             + ") VALUES (?, ?, ?, ?, ?)",
             (
                 seed_currency_fph,
-                "",         # currency prefix
-                "",        # currency suffix
-                "cc",    # default *account* name
+                "",     # *currency* prefix
+                "",     # *currency* suffix
+                "cc",   # default *account* name
                 pickle.dumps([seed_primid_fph]) # first steward added to list
             )
         )
+
+    #--------------------------------------------------------------------------
+    # The seed *ahid* and *currency* specific properties are added:
+
+
+
+
         # NB: The following may not be needed, given that the *currency* and
         #     *account* FPH are both stored in the "accounts" table, but for
         #     the time being there is no need to remove this step.

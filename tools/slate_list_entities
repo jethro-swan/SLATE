@@ -5,22 +5,23 @@ import os
 import pickle
 from prettytable import PrettyTable
 from app.core.constants import ENTITIES_DB
-#from app.core.slate_core import get_entity_type, identify_entity
 from app.core.slate_core import get_entity_types
 from app.core.slate_core import identify_entity
 from app.core.slate_core import get_account_properties
 from app.core.slate_core import get_namespace_properties
 from app.core.slate_core import get_currency_properties
-#from app.core.slate_core import get_entity_common_properties
+from app.core.slate_core import get_primid_properties
+from app.core.slate_core import get_ahid_properties
+from app.core.slate_core import get_secid_properties
 from app.core.fph_hrns_maps import hrns_to_fph, fph_to_hrns
 
 with sqlite3.connect(ENTITIES_DB) as conn:
     cursor = conn.cursor()
     # Retrieve the list of entities (FPH):
     cursor.execute("SELECT entity_fph FROM entities_registered")
-    entities_list = cursor.fetchall()
+    identifiers_list = cursor.fetchall()
     cursor.close()
-if entities_list is None:
+if identifiers_list is None:
     print("Cannot retrieve entities")
     sys.exit(1)
 
@@ -38,17 +39,24 @@ entity_table.field_names = [
 table_rows = []
 
 # For each FPH, entities of several distinct types may have been registered.
-for entity in entities_list:
-    entity_fph = entity[0]
-    entity_types, m = get_entity_types(entity_fph) # list the types registered
-    entity_hrns = fph_to_hrns(entity_fph)
+for identifier in identifiers_list:
+    identifier_fph = identifier[0]
+    entity_types, m = get_entity_types(identifier_fph) # list types registered
+
+    print("entities registered: ", end="")
+    print(entity_types)
+
+    identifier_hrns = fph_to_hrns(identifier_fph)
     if m: # (this should never happen)
         print(m)
     for etype in entity_types:
+
+        print(">>> " + etype)
+
         table_row = []  # a new row in the table is required for each entity
-                        # type registered.
+                        # type registered for this
         # column 1:
-        table_row.append(entity_hrns) # entity HRNS
+        table_row.append(identifier_hrns) # identifier HRNS
 
         # column 2:
         table_row.append(etype) # entity type
@@ -61,7 +69,7 @@ for entity in entities_list:
             namespace_owner_fph, \
             namespace_default_currency_fph, \
             namespace_stewards_list, \
-            m = get_namespace_properties(entity_fph)
+            m = get_namespace_properties(identifier_fph)
             stewards_sl = []
             for steward_fph in namespace_stewards_list:
                 stewards_sl.append(fph_to_hrns(steward_fph))
@@ -76,7 +84,7 @@ for entity in entities_list:
             suffix, \
             default_account_name, \
             stewards_list, \
-            m = get_currency_specific_properties(entity_fph)
+            m = get_currency_properties(identifier_fph)
             stewards_sl = []
             n_stewards = len(stewards_list)
             stewards_count = 0
@@ -94,25 +102,34 @@ for entity in entities_list:
             with sqlite3.connect(ENTITIES_DB) as conn:
                 cursor = conn.cursor()
                 cursor.execute(
-                    "SELECT stewardships_fph_list FROM primids " \
-                    + "WHERE entity_fph = ?", (entity_fph,)
+                    "SELECT " \
+                    + "nstewardships_fph_list " \
+                    + "cstewardships_fph_list " \
+                    + "FROM primids " \
+                    + "WHERE entity_fph = ?", (identifier_fph,)
                 )
                 result = cursor.fetchone()
                 cursor.close()
-            stewardships_list = pickle.loads(result[0])
-            stewardships_sl = []
-            n_stewardships = len(stewardships_list)
-            stewardships_count = 0
-            for stewardship_fph in stewardships_list:
-                stewardships_sl.append(fph_to_hrns(stewardship_fph))
-                stewardships_count += 1
-                if stewardships_count < 2:
-                    continue
-                else:
-                    stewardships_sl.append("... (" + str(n_stewardships) + ")")
-                    break
-                stewardships_sl.append(fph_to_hrns(stewardship_fph))
-            table_row.append(", ".join(stewardships_sl))
+            if result is not None:
+                stewardships_list = pickle.loads(result[0])
+                stewardships_sl = []
+                n_stewardships = len(stewardships_list)
+                stewardships_count = 0
+                for stewardship_fph in stewardships_list:
+                    stewardships_sl.append(fph_to_hrns(stewardship_fph))
+                    stewardships_count += 1
+                    if stewardships_count < 2:
+                        continue
+                    else:
+                        stewardships_sl.append(
+                            "... (" + str(n_stewardships) + ")"
+                        )
+                        break
+                    stewardships_sl.append(fph_to_hrns(stewardship_fph))
+                table_row.append(", ".join(stewardships_sl))
+            else:
+                table_row.append("")
+                print("No primid found for " + identifier_fph)
         else:
             table_row.append("")
 
@@ -124,24 +141,46 @@ for entity in entities_list:
             balance, \
             volume, \
             active, \
-            m = get_account_specific_properties(entity_fph)
+            m = get_account_properties(identifier_fph)
             account_owner_hrns = fph_to_hrns(owner_fph)
             account_currency_hrns = fph_to_hrns(currency_fph)
             table_row.append("A: " + account_currency_hrns)
             table_row.append("A: " + account_owner_hrns) # owner (*identity*)
-        elif etype in ["namespace", "primid", "secid", "ahid"]:
-            entity_fph, \
-            parent_ns_fph, \
-            m = get_entity_common_properties(entity_fph, etype)
+        elif etype == "namespace":
+            active, \
+            sandbox, \
+            private, \
+            owner_fph, \
+            currency_fph, \
+            stewards_list, \
+            m = get_namespace_properties(identifier_fph)
             table_row.append("N: " + fph_to_hrns(currency_fph))
-            if owner_fph:
-                if etype == "namespace":
-                    table_row.append("N: " + fph_to_hrns(owner_fph))
-                else:
-                    table_row.append("I: " + fph_to_hrns(owner_fph))
-            else:
-                table_row.append("")
-#            table_row.append("")
+            table_row.append("N: " + fph_to_hrns(owner_fph))
+        elif etype == "ahid":
+            active, \
+            primid_fph, \
+            accounts_fph_list, \
+            m = get_ahid_properties(identifier_fph)
+            table_row.append("I: " + fph_to_hrns(owner_fph))
+            table_row.append("")
+        elif etype == "primid":
+            active, \
+            administrator, \
+            ahids_fph_list, \
+            secids_fph_list, \
+            pmap, \
+            nstewardships_fph_list, \
+            cstewardships_fph_list, \
+            m = get_primid_properties(identifier_fph)
+            table_row.append("")
+            table_row.append("")
+        elif etype == "secid":
+            active, \
+            primid_fph, \
+            accounts_fph_list, \
+            m = get_secid_properties(identifier_fph)
+            table_row.append("")
+            table_row.append("")
         else:
             table_row.append("")
             table_row.append("")
@@ -165,7 +204,7 @@ for entity in entities_list:
 #        print(table_row)
         table_rows.append(table_row)
 
-entity_table.add_rows(table_rows[0:])
+    entity_table.add_rows(table_rows[0:])
 
 print(entity_table)
 

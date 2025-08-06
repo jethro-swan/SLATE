@@ -18,23 +18,20 @@ script_name = script_name.replace("/usr/local/bin/", "")
 if script_name == "fph_to_hrns":
     fph = sys.argv[1]
     etypes, m = get_entity_types(fph)
-    #print(fph + " >>> " + etype, end="")
-#    print(fph, end="")
+    print(fph_to_hrns(fph) + " >>> ", end="")
+    print(etypes)
     if m:
         print(" (" + m + ")")
-#    else:
-#        print()
-    print(fph_to_hrns(fph) + " >>> " + etype)
 elif script_name == "hrns_to_fph":
     hrns = sys.argv[1]
-#    print(hrns)
     fph_1 = nshash(hrns)
     fph_2, m = hrns_to_fph(hrns)
     if fph_1 != fph_2:
         print("hash mismatch")
     if fph_to_hrns(fph_2) == hrns:
         etypes, m = get_entity_types(fph_2)
-        print(fph_2 + " >>> " + etype, end="")
+        print(fph_2 + " >>> ", end="")
+        print(etypes)
         if m:
             print(" (" + m + ")")
     else:

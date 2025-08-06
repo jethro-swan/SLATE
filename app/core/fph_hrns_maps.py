@@ -4,10 +4,13 @@ from app.core.unix_functions import fcopy
 from app.core.regexp_list import re_fph, re_hrns
 from app.core.constants import DB_DIR
 from app.core.constants import MAP_BKP_DIR, FPH_TO_HRNS_MAP, HRNS_C_FPH_MAP
+from app.core.constants import SUBSTRATE_FPH
 from app.core.common import filename_timestamp as timestamp
 from app.core.common import nshash
 from app.core.dbm_functions import dbm_store, dbm_fetch, dbm_delete, dbm_keys
 from app.core.dbm_functions import dbm_create_map
+
+
 
 #------------------------------------------------------------------------------
 # Create new empty FPH<>HRNS maps:
@@ -64,6 +67,10 @@ def hrns_exists_already(hrns):
 # passed will the FPH>HRNS map be affected.
 
 def hrns_to_fph(hrns): # returns FPH and message
+
+    if hrns == "":
+        return SUBSTRATE_FPH, ""
+
     # First, the indirect HRNS>FPH map is queried in case this is a known HRNS
     # for which a collision has been identified previously. If the HRNS exists
     # already in the HRNS>FPH collisions map and has been mapped as a collision
