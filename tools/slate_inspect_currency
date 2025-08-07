@@ -1,0 +1,96 @@
+#!/home/slate/SLATE/venv/bin/python3
+
+import sqlite3
+import sys
+import os
+import pickle
+from prettytable import PrettyTable
+from app.core.constants import ENTITIES_DB
+from app.core.slate_core import get_entity_types
+from app.core.slate_core import identify_entity
+from app.core.slate_core import get_currency_properties
+from app.core.fph_hrns_maps import hrns_to_fph, fph_to_hrns
+
+
+script_name = sys.argv[0].replace(".py", "").replace("./", "")
+script_name = script_name.replace("/usr/local/bin/", "")
+script_name = script_name.replace("tools/", "")
+
+entity_identifier = sys.argv[1] # identifier (FPH or HRNS)
+
+identifier_fph, identifier_hrns, etypes, m = identify_entity(entity_identifier)
+
+if not ("currency" in etypes):
+    print(
+        "No currency registered: " + identifier_hrns + " (" + identifier_fph \
+        + ")"
+    )
+    sys.exit(1)
+
+# Fetch *currency* properties
+currency_fph, \
+currency_hrns, \
+active, \
+private, \
+sandbox, \
+prefix, \
+suffix, \
+default_account_name, \
+stewards_list, \
+m = get_currency_properties(identifier_fph)
+# Set up table:
+currency_table = PrettyTable()
+currency_table.align = "l"
+currency_table.field_names = ["property", "value(s)"]
+table_rows = [] # one row per property
+# Identifier HRNS
+table_row = []
+table_row.append("HRNS")
+table_row.append(identifier_hrns)
+table_rows.append(table_row)
+# Identifier FPH
+table_row = []
+table_row.append("FPH")
+table_row.append(identifier_fph)
+table_rows.append(table_row)
+# Active?
+table_row = []
+table_row.append("Active")
+table_row.append(str(active))
+table_rows.append(table_row)
+# Private?
+table_row = []
+table_row.append("Private")
+table_row.append(str(private))
+table_rows.append(table_row)
+# Stewards:
+table_row = []
+table_row.append("Stewards")
+stewards = []
+for steward_fph in stewards_list:
+    stewards.append(fph_to_hrns(steward_fph))
+if len(stewards) > 0:
+    table_row.append(", ".join(stewards))
+else:
+    table_row.append("none")
+table_rows.append(table_row)
+# Default *account* name:
+table_row = []
+table_row.append("Default account name")
+table_row.append(default_account_name)
+table_rows.append(table_row)
+# Prefix:
+table_row = []
+table_row.append("Prefix")
+table_row.append(prefix)
+table_rows.append(table_row)
+# Suffix:
+table_row = []
+table_row.append("Suffix")
+table_row.append(suffix)
+table_rows.append(table_row)
+
+currency_table.add_rows(table_rows[0:])
+print(currency_table)
+
+sys.exit(1)

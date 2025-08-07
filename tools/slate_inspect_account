@@ -1,0 +1,83 @@
+#!/home/slate/SLATE/venv/bin/python3
+
+import sqlite3
+import sys
+import os
+import pickle
+from prettytable import PrettyTable
+from app.core.constants import ENTITIES_DB
+from app.core.slate_core import get_entity_types
+from app.core.slate_core import identify_entity
+from app.core.slate_core import get_account_properties
+from app.core.fph_hrns_maps import hrns_to_fph, fph_to_hrns
+from app.core.display import integer_to_money_format
+from app.core.display import integer_to_money_s_format
+
+script_name = sys.argv[0].replace(".py", "").replace("./", "")
+script_name = script_name.replace("/usr/local/bin/", "")
+script_name = script_name.replace("tools/", "")
+
+entity_identifier = sys.argv[1] # identifier (FPH or HRNS)
+
+identifier_fph, identifier_hrns, etypes, m = identify_entity(entity_identifier)
+
+if not ("account" in etypes):
+    print(
+        "No account registered: " + identifier_hrns + " (" + identifier_fph \
+        + ")"
+    )
+    sys.exit(1)
+
+# Fetch *account* properties
+currency_fph, \
+owner_fph, \
+ahid_fph, \
+balance, \
+volume, \
+active, \
+m = get_account_properties(identifier_fph)
+# Set up table:
+account_table = PrettyTable()
+account_table.align = "l"
+account_table.field_names = ["property", "value(s)"]
+table_rows = [] # one row per property
+# Identifier HRNS
+table_row = []
+table_row.append("HRNS")
+table_row.append(identifier_hrns)
+table_rows.append(table_row)
+# Identifier FPH
+table_row = []
+table_row.append("FPH")
+table_row.append(identifier_fph)
+table_rows.append(table_row)
+# Active?
+table_row = []
+table_row.append("Active")
+table_row.append(str(active))
+table_rows.append(table_row)
+# Owner:
+table_row = []
+table_row.append("owner")
+table_row.append(fph_to_hrns(owner_fph))
+table_rows.append(table_row)
+# AHID:
+table_row = []
+table_row.append("AHID")
+table_row.append(fph_to_hrns(ahid_fph))
+table_rows.append(table_row)
+# Balance:
+table_row = []
+table_row.append("Balance")
+table_row.append(integer_to_money_format(balance))
+table_rows.append(table_row)
+# Volume:
+table_row = []
+table_row.append("Volume")
+table_row.append(integer_to_money_format(volume))
+table_rows.append(table_row)
+
+account_table.add_rows(table_rows[0:])
+print(account_table)
+
+sys.exit(1)

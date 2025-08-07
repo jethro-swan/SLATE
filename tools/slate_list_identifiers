@@ -1,0 +1,93 @@
+#!/home/slate/SLATE/venv/bin/python3
+
+import sqlite3
+from prettytable import PrettyTable
+from app.core.constants import ENTITIES_DB
+from app.core.fph_hrns_maps import hrns_to_fph, fph_to_hrns
+from app.core.slate_core import get_entity_types
+
+with sqlite3.connect(ENTITIES_DB) as conn:
+    cursor = conn.cursor()
+    # Retrieve the list of entities (FPH):
+    cursor.execute("SELECT entity_fph FROM entities_registered")
+    identifiers_list = cursor.fetchall()
+    cursor.close()
+if identifiers_list is None:
+    print("Cannot retrieve entities")
+    sys.exit(1)
+
+entity_table = PrettyTable()
+entity_table.align = "l"
+entity_table.field_names = [
+                             "entity HRNS",
+                             "entity FPH",
+                             "N",
+                             "C",
+                             "A",
+                             "H",
+                             "P",
+                             "S"
+                           ]
+table_rows = []
+for identifier in identifiers_list:
+    identifier_fph = identifier[0]
+    identifier_hrns = fph_to_hrns(identifier_fph)
+    etypes, m = get_entity_types(identifier_fph) # list types registered
+    if m: # (this should never happen)
+        print(m)
+    table_row = []  # a new row in the table is required for each entity type
+                    # registered for this
+
+    # column 1: identifier HRNS
+    table_row.append(identifier_hrns)
+
+    # column 2: identifier FPH
+    table_row.append(identifier_fph)
+
+    # Column 3:
+    if "namespace" in etypes:
+        table_row.append("N")
+    else:
+        table_row.append("")
+    # Column 4:
+    if "currency" in etypes:
+        table_row.append("C")
+    else:
+        table_row.append("")
+    # Column 5:
+    if "account" in etypes:
+        table_row.append("A")
+    else:
+        table_row.append("")
+    # Column 6:
+    if "ahid" in etypes:
+        table_row.append("H")
+    else:
+        table_row.append("")
+    # Column 7:
+    if "primid" in etypes:
+        table_row.append("P")
+    else:
+        table_row.append("")
+    # Column 8:
+    if "secid" in etypes:
+        table_row.append("S")
+    else:
+        table_row.append("")
+
+    table_rows.append(table_row)
+
+entity_table.add_rows(table_rows[0:])
+
+print(entity_table)
+
+print(
+    "\n" \
+    + "Entity types registered for each identifier:"
+    + "  N = namespace\n" \
+    + "  C = currency\n" \
+    + "  A = account (variable)\n" \
+    + "  H = account-holder identity (ahid)\n" \
+    + "  P = primary identity (primid)\n" \
+    + "  S = secondary identity (secid)\n"
+)

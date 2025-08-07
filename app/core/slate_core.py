@@ -444,10 +444,7 @@ def register_full_entity_set(identifier_fph):
           + "secid = 1, " \
           + "ahid = 1 " \
           + "WHERE entity_fph = ?"
-        #print(u)
-        cursor.execute(
-            u, (identifier_fph,)
-        )
+        cursor.execute(u, (identifier_fph,))
         conn.commit()
         cursor.close()
     return ""
@@ -474,7 +471,6 @@ def register_primid_entity_set(identifier_fph):
           + "primid = 1, " \
           + "ahid = 1 " \
           + "WHERE entity_fph = ?"
-        #print(u)
         cursor.execute(
             u, (identifier_fph,)
         )
@@ -501,10 +497,7 @@ def register_general_entity_set(identifier_fph):
           + "namespace = 1, " \
           + "currency = 1 " \
           + "WHERE entity_fph = ?"
-        #print(u)
-        cursor.execute(
-            u, (identifier_fph,)
-        )
+        cursor.execute(u, (identifier_fph,))
         conn.commit()
         cursor.close()
     return ""
@@ -526,7 +519,7 @@ def identify_entity(entity_identifier): # HRNS or FPH
     if (entity_identifier is None) or (not isinstance(entity_identifier, str)):
         return "", "", [], "Invalid identifier"
     entity_identifier = entity_identifier.strip()
-    print("entity_identifier = " + entity_identifier)
+#    print("entity_identifier = " + entity_identifier)
     if entity_identifier == SUBSTRATE_FPH: # unique exception
         return entity_identifier, "", ["namespace"], ""
     if re_fph.match(entity_identifier): # this is an FPH string?
@@ -546,10 +539,6 @@ def identify_entity(entity_identifier): # HRNS or FPH
             return "", "", [], m
         if entity_fph: # entity exists
             entity_types, m = get_entity_types(entity_fph)
-
-            print("Entity types: ", end="")
-            print(entity_types)
-
             if m:
                 print("m3: " + m)
                 print("Anya")
@@ -1495,9 +1484,9 @@ def get_currency_properties(currency_id):
         m = "Currency " + fph_to_hrns(currency_fph) + " not found"
         return "", "", False, False, False, "", "", "", [], m
     #
-    active = result[0]
-    private = result[1]
-    sandbox = result[2]
+    active = bool(result[0])
+    private = bool(result[1])
+    sandbox = bool(result[2])
     prefix = result[3]
     suffix = result[4]
     default_account_name = result[5]
@@ -2618,15 +2607,15 @@ def get_ahid_primid(ahid_hrns):
     # (2) Each *primid* may have any number of *ahid*
     # (3) A *primid* may belong to itself as an *ahid*
     ahid_fph, ahid_hrns, etypes, m = identify_entity(ahid_hrns)
-    print("etypes: ", end="")
-    print(etypes)
+    #print("etypes: ", end="")
+    #print(etypes)
     if not ahid_fph:
         print("Zeppo")
         return ""
     if not ("ahid" in etypes):
         print("ahid_fph = " + ahid_fph)
         print("etypes = ", end="")
-        print(etypes)
+        #print(etypes)
         return ""
     print("Groucho")
     with sqlite3.connect(ENTITIES_DB) as conn:

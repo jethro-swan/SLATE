@@ -25,16 +25,29 @@ if identifiers_list is None:
     print("Cannot retrieve entities")
     sys.exit(1)
 
+print("="*150)
+for identifier in identifiers_list:
+    identifier_fph = identifier[0]
+    print(identifier_fph + " > " + fph_to_hrns(identifier_fph))
+    entity_types, m = get_entity_types(identifier_fph)
+    print("entities registered: ", end="")
+    print(entity_types)
+    print("-"*150)
+
+
+
+
+
+
 entity_table = PrettyTable()
 entity_table.align = "l"
 entity_table.field_names = [
                              "entity HRNS",
+                             "entity FPH",
                              "type",
-                             "stewards | stewardships",
+                             "stewards|hips",
                              "currency (A|N)",
-                             "owner (A|N|I)",
-                             "private",
-                             "active"
+                             "owner (A|P)"
                            ]
 table_rows = []
 
@@ -55,26 +68,73 @@ for identifier in identifiers_list:
 
         table_row = []  # a new row in the table is required for each entity
                         # type registered for this
-        # column 1:
-        table_row.append(identifier_hrns) # identifier HRNS
 
-        # column 2:
-        table_row.append(etype) # entity type
+        # column 1: identifier HRNS
+        table_row.append(identifier_hrns)
 
-        # column 3:
-        if etype == "namespace": # stewarded
+        # column 2: identifier FPH
+        table_row.append(identifier_fph)
+
+        # In preparation for columns 3, 5 and 6, we need to find the following:
+        # - For column 3: the [active] or [private] state:
+        #                 * private
+        #                 % inactive/suspended
+        # - For column 5: (A:) the CURRENCY of an ACCOUNT
+        #                 (N:) the default CURRENCY of a NAMESPACE
+        # - For column 6: the "owner" of the entity
+        #                 (A:) the AHID or SECID to which an ACCOUNT belongs
+        #                 (P:) the PRIMID to which an AHID or SECID belongs
+        #
+        if etype == "account":
+            currency_fph, \
+            owner_fph, \
+            ahid_fph, \
+            balance, \
+            volume, \
+            active, \
+            m = get_account_properties(identifier_fph)
+            owner_hrns = fph_to_hrns(owner_fph)
+            currency_hrns = fph_to_hrns(currency_fph)
+            private = False # n/a
+        elif etype == "namespace":
             active, \
             sandbox, \
             private, \
-            namespace_owner_fph, \
-            namespace_default_currency_fph, \
-            namespace_stewards_list, \
+            owner_fph, \
+            currency_fph, \
+            stewards_list, \
             m = get_namespace_properties(identifier_fph)
-            stewards_sl = []
-            for steward_fph in namespace_stewards_list:
-                stewards_sl.append(fph_to_hrns(steward_fph))
-            table_row.append(", ".join(stewards_sl))
-        elif etype == "currency": # stewarded
+            owner_hrns = fph_to_hrns(owner_fph)
+            currency_hrns = fph_to_hrns(currency_fph)
+        elif etype == "ahid":
+            active, \
+            primid_fph, \
+            accounts_fph_list, \
+            m = get_ahid_properties(identifier_fph)
+            private = False # n/a
+            owner_hrns = fph_to_hrns(primid_fph)
+            currency_hrns = "" # n/a
+        elif etype == "primid":
+            active, \
+            administrator, \
+            ahids_fph_list, \
+            secids_fph_list, \
+            pmap, \
+            nstewardships_fph_list, \
+            cstewardships_fph_list, \
+            m = get_primid_properties(identifier_fph)
+            owner_hrns = "" # n/a
+            private = False # n/a
+            currency_hrns = "" # n/a
+        elif etype == "secid":
+            active, \
+            primid_fph, \
+            accounts_fph_list, \
+            m = get_secid_properties(identifier_fph)
+            private = False
+            currency_hrns = "" # n/a
+            owner_hrns = fph_to_hrns(primid_fph)
+        elif etype == "currency":
             currency_fph, \
             currency_hrns, \
             active, \
@@ -83,21 +143,44 @@ for identifier in identifiers_list:
             prefix, \
             suffix, \
             default_account_name, \
-            stewards_list, \
+            currency_stewards_list, \
             m = get_currency_properties(identifier_fph)
-            stewards_sl = []
-            n_stewards = len(stewards_list)
-            stewards_count = 0
-            for steward_fph in stewards_list:
-                stewards_sl.append(fph_to_hrns(steward_fph))
-                stewards_count += 1
-                if stewards_count < 2:
-                    continue
-                else:
-                    stewards_sl.append("... (" + str(n_steward) + ")")
-                    break
-                stewards_sl.append(fph_to_hrns(steward_fph))
-            table_row.append(", ".join(stewards_sl))
+            private = False # n/a
+            currency_hrns = "" # n/a
+
+        # column 3: entity type
+        if etype == "namespace":
+            rmsg = "namespace "
+            if private:
+                rmsg += " *"
+            if not active:
+                rmsg += " %"
+            table_row.append(rmsg)
+        else:
+            table_row.append(etype)
+
+        # column 4: number of stewards
+        if etype == "namespace": # a stewarded entity
+            active, \
+            sandbox, \
+            private, \
+            namespace_owner_fph, \
+            namespace_default_currency_fph, \
+            namespace_stewards_list, \
+            m = get_namespace_properties(identifier_fph)
+            table_row.append("P:" + str(len(namespace_stewards_list)))
+        elif etype == "currency": # a stewarded entity
+            currency_fph, \
+            currency_hrns, \
+            active, \
+            private, \
+            sandbox, \
+            prefix, \
+            suffix, \
+            default_account_name, \
+            currency_stewards_list, \
+            m = get_currency_properties(identifier_fph)
+            table_row.append("P:" + str(len(currency_stewards_list)))
         elif etype == "primid":
             with sqlite3.connect(ENTITIES_DB) as conn:
                 cursor = conn.cursor()
@@ -111,97 +194,33 @@ for identifier in identifiers_list:
                 result = cursor.fetchone()
                 cursor.close()
             if result is not None:
-                stewardships_list = pickle.loads(result[0])
-                stewardships_sl = []
-                n_stewardships = len(stewardships_list)
-                stewardships_count = 0
-                for stewardship_fph in stewardships_list:
-                    stewardships_sl.append(fph_to_hrns(stewardship_fph))
-                    stewardships_count += 1
-                    if stewardships_count < 2:
-                        continue
-                    else:
-                        stewardships_sl.append(
-                            "... (" + str(n_stewardships) + ")"
-                        )
-                        break
-                    stewardships_sl.append(fph_to_hrns(stewardship_fph))
-                table_row.append(", ".join(stewardships_sl))
+                nstewardships_list = pickle.loads(result[0])
+                n_nstewardships = str(len(nstewardships_list))
+                cstewardships_list = pickle.loads(result[0])
+                n_cstewardships = str(len(cstewardships_list))
+                table_row.append(
+                    "N:" + str(len(nstewardships_list)) \
+                    + " C:" + str(len(cstewardships_list))
+                )
             else:
                 table_row.append("")
-                print("No primid found for " + identifier_fph)
         else:
             table_row.append("")
 
-        # columns 4 and 5:
+        # columns 5 and 6:
         if etype == "account":
-            currency_fph, \
-            owner_fph, \
-            ahid_fph, \
-            balance, \
-            volume, \
-            active, \
-            m = get_account_properties(identifier_fph)
-            account_owner_hrns = fph_to_hrns(owner_fph)
-            account_currency_hrns = fph_to_hrns(currency_fph)
-            table_row.append("A: " + account_currency_hrns)
-            table_row.append("A: " + account_owner_hrns) # owner (*identity*)
+            table_row.append("A: " + currency_hrns)
+            table_row.append("A: " + owner_hrns) # owner (*identity*)
         elif etype == "namespace":
-            active, \
-            sandbox, \
-            private, \
-            owner_fph, \
-            currency_fph, \
-            stewards_list, \
-            m = get_namespace_properties(identifier_fph)
             table_row.append("N: " + fph_to_hrns(currency_fph))
             table_row.append("N: " + fph_to_hrns(owner_fph))
         elif etype == "ahid":
-            active, \
-            primid_fph, \
-            accounts_fph_list, \
-            m = get_ahid_properties(identifier_fph)
             table_row.append("I: " + fph_to_hrns(owner_fph))
             table_row.append("")
-        elif etype == "primid":
-            active, \
-            administrator, \
-            ahids_fph_list, \
-            secids_fph_list, \
-            pmap, \
-            nstewardships_fph_list, \
-            cstewardships_fph_list, \
-            m = get_primid_properties(identifier_fph)
-            table_row.append("")
-            table_row.append("")
-        elif etype == "secid":
-            active, \
-            primid_fph, \
-            accounts_fph_list, \
-            m = get_secid_properties(identifier_fph)
-            table_row.append("")
-            table_row.append("")
         else:
             table_row.append("")
             table_row.append("")
 
-        # column 6:
-        if etype == "namespace":
-            if private: # private?
-                table_row.append("yes")
-            else:
-                table_row.append("no")
-        else:
-            table_row.append("")
-
-        # column 7:
-        if active: # active?
-            table_row.append("yes")
-        else:
-            table_row.append("no")
-
-#        print(str(len(table_row)) + " :: ", end="")
-#        print(table_row)
         table_rows.append(table_row)
 
     entity_table.add_rows(table_rows[0:])
@@ -210,17 +229,22 @@ print(entity_table)
 
 print(
     "\n\n" \
-    + "In the \"stewards | stewardships\" column:" \
+    + "In the \"type\" column:" \
     + "\n\n" \
-    + "    If the entity type is an IDENTITY (a PRIMID or a SECID), the\n" \
-    + "    first two items in a list of stewarded entities (stewardships)\n" \
-    + "    is shown. If there are more than two (which will usually be the\n" \
-    + "    case), a count of stewardhips is shown." \
+    + "    Each entity type registered for this identifier is listed in a" \
+    + "    separate line.\n" \
+    + "    * indicates a private NAMESPACE\n" \
+    + "    % indicates an inactive (suspended) NAMESPACE, CURRENCY, PRIMID, " \
+    + "    AHID, SECID or ACCOUNT\n" \
+    + "\n\n" \
+    + "In the \"stewards|hips\" column:" \
+    + "\n\n" \
+    + "    If the entity type is a PRIMID (PRIMARY IDENTITY), the number of" \
+    + "    stewardships it holds will be shown with the prefix \"N:\" or" \
+    + "    \"C:\" for NAMESPACES and CURRENCIES respectively.\n" \
     + "\n\n" \
     + "    If the entity is of a stewarded type (a NAMESPACE or CURRENCY),\n" \
-    + "    the first two items in a list of stewards (PRIMIDS) is shown.\n" \
-    + "    If there are more than two stewards (which will usually be the.\n" \
-    + "    case), a count of stewards is shown.\n" \
+    + "    the number of stewards (PRIMIDS) is shown with prefix \"P:\".\n" \
     + "\n\n" \
     + "In the \"currency (A|N)\" column:" \
     + "\n\n" \

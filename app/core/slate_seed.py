@@ -236,6 +236,40 @@ def create_seed_entities():
     pmap[seed_ahid_hrns] = {}
     pmap[seed_ahid_hrns][seed_currency_fph] = seed_account_fph
 
+    stewards_fph_list = []
+    stewards_fph_list.append(seed_primid_fph)
+    stewards_fph_blob = pickle.dumps(stewards_fph_list)
+
+    #--------------------------------------------------------------------------
+    # Seed *namespace*:
+
+    # The seed *namespace* type-specific properties are added:
+    with sqlite3.connect(ENTITIES_DB) as conn:
+        cursor = conn.cursor()
+        cursor.execute(
+            "INSERT INTO namespaces (" \
+                + "entity_fph, " \
+                + "active, " \
+                + "sandbox, " \
+                + "private, " \
+                + "stewards_fph_list, " \
+                + "default_currency_fph, " \
+                + "owner_fph" \
+            + ") VALUES (?, ?, ?, ?, ?, ?, ?)",
+            (
+                seed_account_fph,   # *account* FPH
+                1,                  # active
+                0,                  # sandbox
+                0,                  # private
+                stewards_fph_blob,  #
+                seed_currency_fph,  # *account* *currency*'s FPH'
+                seed_ahid_fph       # *account* owner's FPH (*ahid*)
+            )
+        )
+        conn.commit()
+        cursor.close()
+
+
 
     #--------------------------------------------------------------------------
     # Seed *account*:
@@ -246,19 +280,24 @@ def create_seed_entities():
         cursor.execute(
             "INSERT INTO accounts (" \
                 + "entity_fph, " \
+                + "active, " \
                 + "account_owner_fph, " \
                 + "account_currency_fph, " \
                 + "account_balance" \
-            + ") VALUES (?, ?, ?, ?)",
+            + ") VALUES (?, ?, ?, ?, ?)",
             (
                 seed_account_fph,   # *account* FPH
+                1,                  # active
                 seed_ahid_fph,      # *account* owner's FPH (*ahid*)
-                seed_currency_fph,   # *account* *currency*'s FPH'
+                seed_currency_fph,  # *account* *currency*'s FPH'
                 0
             )
         )
         conn.commit()
         cursor.close()
+
+
+
 
     #--------------------------------------------------------------------------
     # Seed *primid*:
@@ -280,6 +319,7 @@ def create_seed_entities():
         cursor.execute(
             "INSERT INTO primids (" \
                 + "entity_fph, " \
+                + "active, " \
                 + "primid_realname, " \
                 + "primid_email_1_hash, " \
                 + "primid_email_2_hash, " \
@@ -292,9 +332,10 @@ def create_seed_entities():
                 + "password_hash, " \
                 + "pin, " \
                 + "access_token_hash" \
-            + ") VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+            + ") VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
             (
                 seed_primid_fph,
+                1,
                 seed_primid_realname,
                 auth_hash(seed_primid_email_1),
                 auth_hash(seed_primid_email_2),
@@ -322,13 +363,17 @@ def create_seed_entities():
         cursor.execute(
             "INSERT INTO currencies (" \
                 + "entity_fph, " \
+                + "active, " \
+                + "private, " \
                 + "currency_prefix, " \
                 + "currency_suffix, " \
                 + "default_account_name, " \
                 + "stewards_fph_list " \
-            + ") VALUES (?, ?, ?, ?, ?)",
+            + ") VALUES (?, ?, ?, ?, ?, ?, ?)",
             (
                 seed_currency_fph,
+                1,      # active
+                0,      # private
                 "",     # *currency* prefix
                 "",     # *currency* suffix
                 "cc",   # default *account* name
@@ -338,9 +383,6 @@ def create_seed_entities():
 
     #--------------------------------------------------------------------------
     # The seed *ahid* and *currency* specific properties are added:
-
-
-
 
         # NB: The following may not be needed, given that the *currency* and
         #     *account* FPH are both stored in the "accounts" table, but for
