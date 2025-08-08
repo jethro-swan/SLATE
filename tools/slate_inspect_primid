@@ -8,93 +8,102 @@ from prettytable import PrettyTable
 from app.core.constants import ENTITIES_DB
 from app.core.slate_core import get_entity_types
 from app.core.slate_core import identify_entity
-from app.core.slate_core import get_account_properties
-from app.core.slate_core import get_namespace_properties
-from app.core.slate_core import get_currency_properties
 from app.core.slate_core import get_primid_properties
-from app.core.slate_core import get_ahid_properties
-from app.core.slate_core import get_secid_properties
 from app.core.fph_hrns_maps import hrns_to_fph, fph_to_hrns
+from app.core.display import truefalse
 
-
-script_name = sys.argv[0].replace(".py", "").replace("./", "")
-script_name = script_name.replace("/usr/local/bin/", "")
-script_name = script_name.replace("tools/", "")
+#script_name = sys.argv[0].replace(".py", "").replace("./", "")
+#script_name = script_name.replace("/usr/local/bin/", "")
+#script_name = script_name.replace("tools/", "")
 
 entity_identifier = sys.argv[1] # identifier (FPH or HRNS)
 
 identifier_fph, identifier_hrns, etypes, m = identify_entity(entity_identifier)
 
-if not ("namespace" in etypes):
-    print(
-        "No namespace registered: " + identifier_hrns + " (" + identifier_fph \
-        + ")"
-    )
+if not ("primid" in etypes):
+    print("No primid: " + identifier_hrns + " (" + identifier_fph + ")")
     sys.exit(1)
 
-# Fetch *namespace* properties
+# Fetch *primid* properties
 active, \
-sandbox, \
-private, \
-owner_fph, \
-currency_fph, \
-stewards_list, \
-m = get_namespace_properties(identifier_fph)
-# Set up table:
-namespace_table = PrettyTable()
-namespace_table.align = "l"
-namespace_table.field_names = ["property", "value(s)"]
+administrator, \
+ahids_fph_list, \
+secids_fph_list, \
+pmap, \
+nstewardships_list, \
+cstewardships_list, \
+m = get_primid_properties(identifier_fph)
+# set up table:
+primid_table = PrettyTable()
+primid_table.align = "l"
+primid_table.field_names = ["property", "value(s)"]
 table_rows = [] # one row per property
-# Identifier HRNS
+# identifier HRNS
 table_row = []
 table_row.append("HRNS")
 table_row.append(identifier_hrns)
 table_rows.append(table_row)
-# Identifier FPH
+# identifier FPH
 table_row = []
 table_row.append("FPH")
 table_row.append(identifier_fph)
 table_rows.append(table_row)
-# Active?
+# active?
 table_row = []
-table_row.append("Active")
-table_row.append(str(active))
+table_row.append("active")
+table_row.append(truefalse(active))
 table_rows.append(table_row)
-# Private?
+# administrator?
 table_row = []
-table_row.append("Private")
-table_row.append(str(private))
+table_row.append("administrator")
+table_row.append(truefalse(administrator))
 table_rows.append(table_row)
-# Owner (if private)
+# ahids:
 table_row = []
-table_row.append("Owner")
-if private:
-    table_row.append(fph_to_hrns(owner_fph))
+table_row.append("ahids")
+ahids = []
+for ahid_fph in ahids_fph_list:
+    ahids.append(fph_to_hrns(ahid_fph))
+if len(ahids) > 0:
+    table_row.append(", ".join(ahids))
 else:
     table_row.append("none")
 table_rows.append(table_row)
-# Default *currency*
+# secids:
 table_row = []
-table_row.append("Default currency")
-if currency_fph:
-    table_row.append(fph_to_hrns(currency_fph))
+table_row.append("secids")
+secids = []
+for secid_fph in secids_fph_list:
+    secids.append(fph_to_hrns(secid_fph))
+if len(secids) > 0:
+    table_row.append(", ".join(secids))
 else:
     table_row.append("none")
 table_rows.append(table_row)
-# Stewards:
+# namespace stewardships:
 table_row = []
-table_row.append("Stewards")
-stewards = []
-for steward_fph in stewards_list:
-    stewards.append(fph_to_hrns(steward_fph))
-if len(stewards) > 0:
-    table_row.append(", ".join(stewards))
+table_row.append("namespace stewardships")
+nstewardships = []
+for nstewardship_fph in nstewardships_list:
+    nstewardships.append(fph_to_hrns(nstewardship_fph))
+if len(nstewardships) > 0:
+    table_row.append(", ".join(nstewardships))
+else:
+    table_row.append("none")
+table_rows.append(table_row)
+# currency stewardships:
+table_row = []
+table_row.append("currency stewardships")
+cstewardships = []
+for cstewardship_fph in cstewardships_list:
+    cstewardships.append(fph_to_hrns(cstewardship_fph))
+if len(cstewardships) > 0:
+    table_row.append(", ".join(cstewardships))
 else:
     table_row.append("none")
 table_rows.append(table_row)
 
-namespace_table.add_rows(table_rows[0:])
-print(namespace_table)
-
+primid_table.add_rows(table_rows[0:])
+print(primid_table)
 
 sys.exit(1)

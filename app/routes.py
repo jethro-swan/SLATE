@@ -264,7 +264,7 @@ def register():
     form = RegistrationForm()
 
     # The fields displayed depend upon the policy set by the stewards of the
-    # initial *currency* and *namespace&. For example, for some *currencies*
+    # initial *currency* and *namespace*. For example, for some *currencies*
     # (many perhaps) it may be considered very useful to have some information
     # about the geographical location of the user's base (home or business
     # address), particularly where this is going to be used to create a map

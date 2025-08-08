@@ -47,6 +47,8 @@ deflist*
 tools/islands31
 others
 obsolete
+tools/obsolete
+
 
 __pycache__
 

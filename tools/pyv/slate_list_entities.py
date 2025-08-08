@@ -14,6 +14,7 @@ from app.core.slate_core import get_primid_properties
 from app.core.slate_core import get_ahid_properties
 from app.core.slate_core import get_secid_properties
 from app.core.fph_hrns_maps import hrns_to_fph, fph_to_hrns
+from app.core.display import truefalse
 
 with sqlite3.connect(ENTITIES_DB) as conn:
     cursor = conn.cursor()

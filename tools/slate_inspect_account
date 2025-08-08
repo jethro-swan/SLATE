@@ -12,23 +12,21 @@ from app.core.slate_core import get_account_properties
 from app.core.fph_hrns_maps import hrns_to_fph, fph_to_hrns
 from app.core.display import integer_to_money_format
 from app.core.display import integer_to_money_s_format
+from app.core.display import truefalse
 
-script_name = sys.argv[0].replace(".py", "").replace("./", "")
-script_name = script_name.replace("/usr/local/bin/", "")
-script_name = script_name.replace("tools/", "")
+#script_name = sys.argv[0].replace(".py", "").replace("./", "")
+#script_name = script_name.replace("/usr/local/bin/", "")
+#script_name = script_name.replace("tools/", "")
 
 entity_identifier = sys.argv[1] # identifier (FPH or HRNS)
 
 identifier_fph, identifier_hrns, etypes, m = identify_entity(entity_identifier)
 
 if not ("account" in etypes):
-    print(
-        "No account registered: " + identifier_hrns + " (" + identifier_fph \
-        + ")"
-    )
+    print("No account: " + identifier_hrns + " (" + identifier_fph + ")")
     sys.exit(1)
 
-# Fetch *account* properties
+# fetch *account* properties
 currency_fph, \
 owner_fph, \
 ahid_fph, \
@@ -36,44 +34,44 @@ balance, \
 volume, \
 active, \
 m = get_account_properties(identifier_fph)
-# Set up table:
+# set up table:
 account_table = PrettyTable()
 account_table.align = "l"
 account_table.field_names = ["property", "value(s)"]
 table_rows = [] # one row per property
-# Identifier HRNS
+# identifier HRNS
 table_row = []
 table_row.append("HRNS")
 table_row.append(identifier_hrns)
 table_rows.append(table_row)
-# Identifier FPH
+# identifier FPH
 table_row = []
 table_row.append("FPH")
 table_row.append(identifier_fph)
 table_rows.append(table_row)
-# Active?
+# active?
 table_row = []
-table_row.append("Active")
+table_row.append("active")
 table_row.append(str(active))
 table_rows.append(table_row)
-# Owner:
+# owner:
 table_row = []
 table_row.append("owner")
 table_row.append(fph_to_hrns(owner_fph))
 table_rows.append(table_row)
-# AHID:
+# ahid:
 table_row = []
 table_row.append("AHID")
 table_row.append(fph_to_hrns(ahid_fph))
 table_rows.append(table_row)
-# Balance:
+# balance:
 table_row = []
-table_row.append("Balance")
+table_row.append("balance")
 table_row.append(integer_to_money_format(balance))
 table_rows.append(table_row)
-# Volume:
+# volume:
 table_row = []
-table_row.append("Volume")
+table_row.append("volume")
 table_row.append(integer_to_money_format(volume))
 table_rows.append(table_row)
 

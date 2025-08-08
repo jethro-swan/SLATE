@@ -15,24 +15,21 @@ from app.core.slate_core import get_primid_properties
 from app.core.slate_core import get_ahid_properties
 from app.core.slate_core import get_secid_properties
 from app.core.fph_hrns_maps import hrns_to_fph, fph_to_hrns
+from app.core.display import truefalse
 
-
-script_name = sys.argv[0].replace(".py", "").replace("./", "")
-script_name = script_name.replace("/usr/local/bin/", "")
-script_name = script_name.replace("tools/", "")
+#script_name = sys.argv[0].replace(".py", "").replace("./", "")
+#script_name = script_name.replace("/usr/local/bin/", "")
+#script_name = script_name.replace("tools/", "")
 
 entity_identifier = sys.argv[1] # identifier (FPH or HRNS)
 
 identifier_fph, identifier_hrns, etypes, m = identify_entity(entity_identifier)
 
 if not ("namespace" in etypes):
-    print(
-        "No namespace registered: " + identifier_hrns + " (" + identifier_fph \
-        + ")"
-    )
+    print("No namespace: " + identifier_hrns + " (" + identifier_fph + ")")
     sys.exit(1)
 
-# Fetch *namespace* properties
+# fetch *namespace* properties
 active, \
 sandbox, \
 private, \
@@ -40,12 +37,12 @@ owner_fph, \
 currency_fph, \
 stewards_list, \
 m = get_namespace_properties(identifier_fph)
-# Set up table:
+# set up table:
 namespace_table = PrettyTable()
 namespace_table.align = "l"
 namespace_table.field_names = ["property", "value(s)"]
 table_rows = [] # one row per property
-# Identifier HRNS
+# identifier HRNS
 table_row = []
 table_row.append("HRNS")
 table_row.append(identifier_hrns)
@@ -55,35 +52,35 @@ table_row = []
 table_row.append("FPH")
 table_row.append(identifier_fph)
 table_rows.append(table_row)
-# Active?
+# active?
 table_row = []
-table_row.append("Active")
-table_row.append(str(active))
+table_row.append("active")
+table_row.append(truefalse(active))
 table_rows.append(table_row)
-# Private?
+# private?
 table_row = []
-table_row.append("Private")
-table_row.append(str(private))
+table_row.append("private")
+table_row.append(truefalse(private))
 table_rows.append(table_row)
-# Owner (if private)
+# owner (if private)
 table_row = []
-table_row.append("Owner")
+table_row.append("owner")
 if private:
     table_row.append(fph_to_hrns(owner_fph))
 else:
     table_row.append("none")
 table_rows.append(table_row)
-# Default *currency*
+# default *currency*
 table_row = []
-table_row.append("Default currency")
+table_row.append("default currency")
 if currency_fph:
     table_row.append(fph_to_hrns(currency_fph))
 else:
     table_row.append("none")
 table_rows.append(table_row)
-# Stewards:
+# stewards:
 table_row = []
-table_row.append("Stewards")
+table_row.append("stewards")
 stewards = []
 for steward_fph in stewards_list:
     stewards.append(fph_to_hrns(steward_fph))
@@ -95,6 +92,5 @@ table_rows.append(table_row)
 
 namespace_table.add_rows(table_rows[0:])
 print(namespace_table)
-
 
 sys.exit(1)

@@ -44,12 +44,19 @@ def Yn(prompt):
     else:
         return True
 
-
 def yesno(b):
     if b:
         return "yes"
     else:
         return "no"
+
+
+def truefalse(b):
+    if b:
+        return "true"
+    else:
+        return "false"
+
 
 etypes = ["namespace", "currency", "account", "primid", "secid", "ahid"]
 def entity_type_verbose(etype):
