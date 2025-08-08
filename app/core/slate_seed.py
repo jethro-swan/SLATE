@@ -1,5 +1,4 @@
 import sqlite3
-#import random
 import os
 import pickle
 
@@ -51,6 +50,26 @@ debugging = True
 # - When the initial primid "adm.cc" is created, an account with HRNS
 #   "hrs.adm.cc" is created for it in the currency "hrs.cc" (the default
 # currency for identities created within the "cc" namespace).
+
+def create_substrate():
+    # The substrate is unique in that
+    # (a) its parent has no HRNS
+    # (b) it serves as its own parent *namespace*
+    # (c) its identifier has only one registered entity type (*namesapce*)
+    with sqlite3.connect(ENTITIES_DB) as conn:
+        cursor = conn.cursor()
+        cursor.execute(
+            "INSERT INTO entities_registered (" \
+            + "entity_fph, parent_fph, " \
+            + "namespace, currency, account, primid, secid, ahid" \
+            + ") VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+            (SUBSTRATE_FPH, SUBSTRATE_FPH, 1, 0, 0, 0, 0, 0)
+        )
+        conn.commit()
+        cursor.close()
+    print("SUBSTRATE_FPH = " + SUBSTRATE_FPH)
+
+
 
 def create_seed_entities():
 
@@ -218,13 +237,25 @@ def create_seed_entities():
 
     seed_ahid_hrns = seed_currency_hrns = seed_entity_set_hrns
 
-
+    print("Registering " + seed_entity_set_hrns)
     seed_entity_set_fph = register_identifier(seed_entity_set_hrns)
-    register_entity_type(seed_entity_set_fph, "primid")
-    register_entity_type(seed_entity_set_fph, "ahid")
-    register_entity_type(seed_entity_set_fph, "namespace")
-    register_entity_type(seed_entity_set_fph, "currency")
-    register_entity_type(seed_entity_set_fph, "account")
+    print(seed_entity_set_fph)
+    m = register_entity_type(seed_entity_set_fph, "primid")
+    if m:
+        print(m)
+    m = register_entity_type(seed_entity_set_fph, "ahid")
+    if m:
+        print(m)
+    m = register_entity_type(seed_entity_set_fph, "namespace")
+    if m:
+        print(m)
+    m = register_entity_type(seed_entity_set_fph, "currency")
+    if m:
+        print(m)
+    m = register_entity_type(seed_entity_set_fph, "account")
+    if m:
+        print(m)
+    print("Registered " + seed_entity_set_hrns)
 
     seed_namespace_fph = seed_entity_set_fph
     seed_currency_fph = seed_entity_set_fph
@@ -235,10 +266,14 @@ def create_seed_entities():
     pmap = {}
     pmap[seed_ahid_hrns] = {}
     pmap[seed_ahid_hrns][seed_currency_fph] = seed_account_fph
+    print("pmap:", end="")
+    print(pmap)
 
     stewards_fph_list = []
     stewards_fph_list.append(seed_primid_fph)
     stewards_fph_blob = pickle.dumps(stewards_fph_list)
+    print("stewards_fph_list:", end="")
+    print(stewards_fph_list)
 
     #--------------------------------------------------------------------------
     # Seed *namespace*:
@@ -420,7 +455,7 @@ def create_quasitld_set(full = False):
 
     # These are recreated here in case it is necessary to callthis function
     # before create_seed_entities( ).
-    substrate_fph = nshash("")
+##    substrate_fph = nshash("")
     seed_primid_fph = nshash("adm.cc")
 ##    seed_currency_fph = nshash("hrs.cc")
     seed_currency_fph = nshash("cc")
@@ -428,11 +463,12 @@ def create_quasitld_set(full = False):
     errors = "\n"
     tld_fph_list = []
     for tld in cctld_list_here:
+        print(tld)
         namespace_fph, \
         namespace_hrns, \
         m = new_namespace(
                 tld,
-                substrate_fph,
+                SUBSTRATE_FPH,
                 seed_currency_fph,
                 seed_primid_fph
             )
@@ -440,6 +476,8 @@ def create_quasitld_set(full = False):
             print(m)
         errors += m + "\n"
         tld_fph_list.append(namespace_fph)
+
+        print(namespace_fph + " > " + namespace_hrns)
 
     return tld_fph_list, errors
 

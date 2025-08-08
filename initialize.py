@@ -10,12 +10,12 @@ from app.core.slate_core import create_hubs_db
 from app.core.payments import create_payments_db
 from app.core.messaging import create_messages_db
 from app.core.slate_seed import create_seed_entities, create_quasitld_set
+from app.core.slate_seed import create_substrate
 from app.core.constants import SLATE_LOGS, SLATE_LOGS_BKP_DIR
 from app.core.constants import DEBUG_LOG, ERROR_LOG, AUTH_LOG, ACTIVITY_LOG
 
 from app.core.slate_core import new_namespace, new_currency
 from app.core.slate_core import split_hrns
-
 
 print("creating DBM maps")
 create_maps()
@@ -31,6 +31,9 @@ print("creating hubs databases (SQLite)")
 create_hubs_db()
 print("creating messages databases (SQLite)")
 create_messages_db()
+
+create_substrate()
+
 print("creating quasi-TLD root namespace set")
 tld_fph_list, errors = create_quasitld_set(False)
 #print(errors)
