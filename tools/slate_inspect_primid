@@ -80,6 +80,11 @@ if len(secids) > 0:
 else:
     table_row.append("none")
 table_rows.append(table_row)
+# pmap:
+table_row = []
+table_row.append("pmap (pairing map)")
+table_row.append(pmap)
+table_rows.append(table_row)
 # namespace stewardships:
 table_row = []
 table_row.append("namespace stewardships")

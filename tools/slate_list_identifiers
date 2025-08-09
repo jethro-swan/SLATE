@@ -83,7 +83,7 @@ print(entity_table)
 
 print(
     "\n" \
-    + "Entity types registered for each identifier:"
+    + "Entity types registered for each identifier:\n"
     + "  N = namespace\n" \
     + "  C = currency\n" \
     + "  A = account (variable)\n" \

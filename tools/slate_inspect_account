@@ -49,20 +49,10 @@ table_row = []
 table_row.append("FPH")
 table_row.append(identifier_fph)
 table_rows.append(table_row)
-# active?
+# currency:
 table_row = []
-table_row.append("active")
-table_row.append(str(active))
-table_rows.append(table_row)
-# owner:
-table_row = []
-table_row.append("owner")
-table_row.append(fph_to_hrns(owner_fph))
-table_rows.append(table_row)
-# ahid:
-table_row = []
-table_row.append("AHID")
-table_row.append(fph_to_hrns(ahid_fph))
+table_row.append("currency")
+table_row.append(fph_to_hrns(currency_fph))
 table_rows.append(table_row)
 # balance:
 table_row = []
@@ -73,6 +63,24 @@ table_rows.append(table_row)
 table_row = []
 table_row.append("volume")
 table_row.append(integer_to_money_format(volume))
+table_rows.append(table_row)
+# active?
+table_row = []
+table_row.append("active")
+table_row.append(truefalse(active))
+table_rows.append(table_row)
+# owner:
+table_row = []
+table_row.append("owner")
+table_row.append(fph_to_hrns(owner_fph))
+table_rows.append(table_row)
+# ahid:
+table_row = []
+table_row.append("ahid")
+if ahid_fph:
+    table_row.append(fph_to_hrns(ahid_fph))
+else:
+    table_row.append("none")
 table_rows.append(table_row)
 
 account_table.add_rows(table_rows[0:])
