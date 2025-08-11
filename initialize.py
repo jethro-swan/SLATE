@@ -44,7 +44,7 @@ tld_fph_list, errors = create_quasitld_set(False)
 print("\n\nThe following seed entities have been created (HRNS):")
 print("\tseed namespace  = \"cc\"")
 print("\tseed currency   = \"cc\"")
-print("\tseed primid     = \"adm.cc\"")
+print("\tseed primid     = \"cc\"")
 print("\tseed account    = \"cc.adm.cc\"")
 print()
 print(

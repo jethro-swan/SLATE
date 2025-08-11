@@ -227,15 +227,6 @@ def create_entities_db():
         )
         # Create *ahids* (*account-holder identities*) table:
         #
-        # Unlike *secids* or *primids", an *ahid* can have only one *account*
-        # in each *currency*. Therefore, the *accounts* belonging to each
-        # *ahid* are mapped from *currencies* in a dictionary:
-        #   {
-        #       currency1_hrns : account1_fph,
-        #       currency2_hrns : account2_fph,
-        #       ...
-        #   }
-        #
         cursor.execute(
             "CREATE TABLE IF NOT EXISTS ahids (" \
             + "entity_fph TEXT, " \
@@ -265,9 +256,8 @@ def create_entities_db():
             + "entity_fph TEXT PRIMARY KEY, " \
             + "active INTEGER NOT NULL DEFAULT 1, " \
             + "account_owner_fph TEXT NOT NULL, " \
-            + "account_ahid_fph TEXT NOT NULL DEFAULT '', " \
             + "account_currency_fph TEXT NOT NULL DEFAULT '', " \
-            + "account_balance INTEGER NOT NULL DEFAULT 0, " \
+            + "balance INTEGER NOT NULL DEFAULT 0, " \
             + "volume INTEGER NOT NULL DEFAULT 0, " \
             + "account_type TEXT DEFAULT 'money', " \
             + "vector BLOB, " \
@@ -307,10 +297,15 @@ def register_identifier(identifier_hrns):
     parent_fph, m = hrns_to_fph(parent_hrns)
     identifier_fph, m = hrns_to_fph(identifier_hrns)
     if m:
+        print(m)
+        print("Deleting " + identifier_fph + " from map")
         delete_fph_from_map(identifier_fph)
         return ""
+
+    print("identifier_fph = " + identifier_fph)
+
     # An entry is created for this FPH in the [entities_registered] table if
-    # and only if it dies not exist already.
+    # and only if it does not exist already.
     with sqlite3.connect(ENTITIES_DB) as conn:
         cursor = conn.cursor()
         cursor.execute(
@@ -335,6 +330,16 @@ def register_identifier(identifier_hrns):
             )
             conn.commit()
         cursor.close()
+
+    print("-"*160)
+    id_fph,  id_hrns, etypes, m = identify_entity(identifier_fph)
+    print("New identifier registered: " + identifier_fph)
+    print("id_fph = " + id_fph)
+    print("id_hrns = " + id_hrns)
+    print("etypes = ", end="")
+    print(etypes)
+    print("-"*160)
+
 
     return identifier_fph
 
@@ -558,15 +563,14 @@ def deregister_entity_type(identifier_fph, entity_type):
 
 def identify_entity(entity_id): # HRNS or FPH
     if (entity_id is None) or (not isinstance(entity_id, str)):
-        #print("Invalid identifier " + entity_id)
         return "", "", [], "Invalid identifier"
     entity_id = entity_id.strip()
-    #print("(1) entity_id = " + entity_id)
+    print("(1) entity_id = " + entity_id)
     if entity_id == SUBSTRATE_FPH: # unique exception
         #print("substrate")
-        return entity_id, "", ["namespace"], ""
+        return entity_id, "", list("namespace",), ""
     if re_fph.match(entity_id): # this is an FPH string?
-        #print("this is an FPH")
+        print(entity_id + " is an FPH")
         entity_fph = entity_id
         entity_hrns = fph_to_hrns(entity_fph)
         if entity_hrns: # this entity mapping exists
@@ -577,7 +581,7 @@ def identify_entity(entity_id): # HRNS or FPH
         else:
             return "", "", [], "Entity " + entity_fph + " does not exist\n"
     elif re_hrns.match(entity_id): # this is an HRNS string?
-        #print("this is an HRNS")
+        print(entity_id + " is an HRNS")
         entity_hrns = entity_id
         entity_fph, m = hrns_to_fph(entity_id)
         if m: # something wrong here
@@ -1068,10 +1072,10 @@ def new_primid(
     account_fph, \
     account_hrns, \
     m = new_account(
-            username, parent_fph,   # identifier
-            primid_fph,             # owner *secid*
-            primid_fph,             # *ahid*
-            currency_fph            # *currency*
+            username,
+            parent_fph,     # parent identifier
+            primid_fph,     # owner *ahid* or *secid* identifier
+            currency_fph    # *currency* identifier
         )
 
     if m:
@@ -1171,37 +1175,39 @@ def new_ahid(
         primid_fph
     ):
     if not re_slatename.match(ahidname):
+        print("Invalid name provided = " + ahidname)
         return "", "", "Invalid name provided"
     parent_fph, parent_hrns, etypes, m = identify_entity(parent_id)
     if not parent_fph:
+        print(parent_id + " is not a registered identifier (20)")
         return "", "", m # parent is invalid
-    if not re_slatename.match(ahidname):
-        return "", "", "Invalid name provided"
     if not ("namespace" in etypes):
+        print(parent_hrns + " has no namespace registered")
         return "", "", "Parent namespace not registered"
     ahid_hrns = ahidname + NSS + parent_hrns
+    # Does this *ahid* exist already?
     if identifier_unregistered(ahid_hrns):
         ahid_fph = register_identifier(ahid_hrns)
-    # Does this *ahid* exist already?
-    ahid_fph, ahid_hrns, etypes, m = identify_entity(ahid_hrns)
-    if "ahid" in etypes:
+    elif entity_type_is_registered(ahid_hrns, "ahid"):
         return "", "", "Account-holder " + ahid_hrns + " exists already"
-    register_entity_type(ahid_fph, "ahid")
-    #accounts_fph_list = []
-    #accounts_fph_blob = pickle.dumps(accounts_fph_list)
-    with sqlite3.connect(ENTITIES_DB) as conn:
-        cursor = conn.cursor()
-        cursor.execute(
-            "INSERT INTO ahids (" \
-            + "entity_fph, " \
-            + "primid_fph, " \
-            + "accounts_fph_list, " \
-            + "active" \
-            + ") VALUES (?, ?, ?, ?)",
-            (ahid_fph, parent_fph, pickle.dumps([]), 1)
-        )
-        conn.commit()
-        cursor.close()
+    else:
+        ahid_fph = register_identifier(ahid_hrns)
+        register_entity_type(ahid_fph, "ahid")
+        #accounts_fph_list = []
+        #accounts_fph_blob = pickle.dumps(accounts_fph_list)
+        with sqlite3.connect(ENTITIES_DB) as conn:
+            cursor = conn.cursor()
+            cursor.execute(
+                "INSERT INTO ahids (" \
+                + "entity_fph, " \
+                + "primid_fph, " \
+                + "accounts_fph_list, " \
+                + "active" \
+                + ") VALUES (?, ?, ?, ?)",
+                (ahid_fph, parent_fph, pickle.dumps([]), 1)
+            )
+            conn.commit()
+            cursor.close()
     return ahid_fph, ahid_hrns, ""
 
 #==============================================================================
@@ -1210,8 +1216,8 @@ def new_ahid(
 def new_namespace(
         nsname,
         parent_id,
-        default_currency_fph,
-        initial_steward_fph
+        currency_id,
+        steward_id
     ):
     if not re_slatename.match(nsname):
         return "", "", nsname + " is not a valid name"
@@ -1234,6 +1240,18 @@ def new_namespace(
     if ("namespace" in etypes):
         # The identifier of an existing *namespace* cannot be used for another.
         return "", "", namespace_hrns + " exists already (namespace)"
+    else:
+        register_entity_type(namespace_fph, "namespace")
+    currency_fph, currency_hrns, etypes, m = identify_entity(currency_id)
+    if not currency_fph:
+        return "", "", currency_id + " is not a registered identifier (14)"
+    if not ("currency" in etypes):
+        return "", "", currency_hrns + " has no registered currency"
+    steward_fph, steward_hrns, etypes, m = identify_entity(steward_id)
+    if not steward_fph:
+        return "", "", steward_id + " is not a registered identifier (15)"
+    if not ("primid" in etypes):
+        return "", "", steward_hrns + " has no registered primid"
     # We can now register a *namespace* for this identifier:
     register_entity_type(namespace_fph, "namespace")
     with sqlite3.connect(ENTITIES_DB) as conn:
@@ -1246,8 +1264,8 @@ def new_namespace(
             + ") VALUES (?, ?, ?)",
             (
                 namespace_fph,
-                pickle.dumps([initial_steward_fph]),
-                default_currency_fph
+                pickle.dumps([steward_fph]),
+                currency_fph
             )
         )
         conn.commit()
@@ -1344,8 +1362,7 @@ def new_account(
         account_name,
         parent_id,
         owner_id,       # (Owner may be an *ahid* or a *secid*)
-        ahid_fph,       # *account-holder* for omtrad mode.
-        currency_fph
+        currency_id
     ):
     errors = ""
     parent_fph, parent_hrns, etypes, m = identify_entity(parent_id)
@@ -1361,8 +1378,12 @@ def new_account(
         # The identifier of an existing *account* cannot be used for another.
         return "", "", account_hrns + " exists already (account)"
     register_entity_type(account_fph, "account")
-    if not entity_type_is_registered(currency_fph, "currency"):
-        return "", "", currency_fph + " is not a currency"
+
+    currency_fph, currency_hrns, etypes, m = identify_entity(currency_id)
+    if not currency_fph:
+        return "", "", currency_id + " is not a registered identifier"
+    if not ("currency" in etypes):
+        return "", "", currency_fph + " has no registered currency"
     currency_fph, currency_hrns, active, private, sandbox, \
     prefix, suffix, default_account_name, \
     stewards_list, m = get_currency_properties(currency_fph)
@@ -1389,10 +1410,10 @@ def new_account(
         cursor = conn.cursor()
         cursor.execute(
             "INSERT INTO accounts (" \
-            + "entity_fph, account_owner_fph, account_ahid_fph, " \
-            + "account_currency_fph, account_balance, volume, account_type"
-            + ") VALUES (?, ?, ?, ?, ?, ?, ?)",
-            (account_fph, owner_fph, ahid_fph, currency_fph, 0, 0, "money")
+            + "entity_fph, account_owner_fph, account_currency_fph, " \
+            + "balance, volume, account_type"
+            + ") VALUES (?, ?, ?, ?, ?, ?)",
+            (account_fph, owner_fph, currency_fph, 0, 0, "money")
         )
         conn.commit()
         cursor.execute(
@@ -1546,7 +1567,7 @@ def get_currency_name(currency_fph):
 def list_accounts(identity_id, identity_etype):
     identity_fph, identity_hrns, etypes, m = identify_entity(identity_id)
     if not identity_fph:
-        return [], identity_id + " is not a registered identifier"
+        return [], identity_id + " is not a registered identifier (3)"
     if not (identity_etype in etypes): # *primid*, *ahid* or *secid*
         return [], identity_hrns + " has no registered " + identity_etype
     with sqlite3.connect(ENTITIES_DB) as conn:
@@ -1581,7 +1602,7 @@ def list_accounts(identity_id, identity_etype):
 def list_id_accounts_in_currency(identity_id, identity_etype, currency_id):
     currency_fph, currency_hrns, etypes, m = identify_entity(identity_id)
     if not currency_fph:
-        return [], currency_id + " is not a registered identifier"
+        return [], currency_id + " is not a registered identifier (4)"
     if not ("currency" in etypes):
         return [], "No currency is registered for " + currency_hrns
     accounts_fph_list, m = list_accounts(identity_id, identity_etype)
@@ -1603,11 +1624,7 @@ def list_secid_accounts(secid_fph):
     with sqlite3.connect(ENTITIES_DB) as conn:
         cursor = conn.cursor()
         cursor.execute(
-            """
-            SELECT accounts_fph_list
-            FROM secids
-            WHERE entity_fph = ?
-            """,
+            "SELECT accounts_fph_list FROM secids WHERE entity_fph = ?",
             (secid_fph,)
         )
         result = cursor.fetchone()
@@ -1615,11 +1632,7 @@ def list_secid_accounts(secid_fph):
             accounts_fph_list = []
             accounts_fph_blob = pickle.dumps(accounts_fph_list)
             cursor.execute(
-                """
-                UPDATE secids
-                SET accounts_fph_list = ?
-                WHERE entity_fph = ?
-                """,
+                "UPDATE secids SET accounts_fph_list = ? WHERE entity_fph = ?",
                 (accounts_fph_blob, secid_fph)
             )
             conn.commit()
@@ -1664,7 +1677,7 @@ def list_agent_accounts(agent_fph, etype):
 def get_account_currency(account_id):
     account_fph, account_hrns, etypes, m = identify_entity(account_id)
     if not account_fph:
-        return "", account_id + " is not a registered identifier"
+        return "", account_id + " is not a registered identifier (5)"
     if not ("account" in etypes):
         return [], "No account is registered for " + account_hrns
     with sqlite3.connect(ENTITIES_DB) as conn:
@@ -1691,7 +1704,7 @@ def get_account_currency(account_id):
 def list_all_accounts_in_currency(currency_id):
     currency_fph, currency_hrns, etypes, m = identify_entity(currency_id)
     if not currency_fph:
-        return [], currency_id + " is not a registered identifier"
+        return [], currency_id + " is not a registered identifier (6)"
     if not ("currency" in etypes):
         return [], "No currency registered for " + currency_hrns
     with sqlite3.connect(ENTITIES_DB) as conn:
@@ -1750,12 +1763,12 @@ def list_id_accounts_in_currency(identity_id, identity_etype, currency_id):
         return "", identity_etype + " is not an identity type"
     identity_fph, identity_hrns, etypes, m = identify_entity(identity_id)
     if not identity_fph:
-        return "", identity_id + " is not a registered identifier"
+        return "", identity_id + " is not a registered identifier (7)"
     if not (identity_etype in etypes):
         return "", "No " + identity_etype + " registered for " + identity_hrns
     currency_fph, currency_hrns, etypes, m = identify_entity(currency_id)
     if not currency_fph:
-        return "", currency_id + " is not a registered identifier"
+        return "", currency_id + " is not a registered identifier (8)"
     if not ("currency" in etypes):
         return "", "No currency is registered for " + currency_hrns
     with sqlite3.connect(ENTITIES_DB) as conn:
@@ -1806,7 +1819,7 @@ def list_secid_currencies(secid_fph):
 def list_secids(primid_id):
     primid_fph, primid_hrns, etypes, m = identify_entity(primid_id)
     if not primid_fph:
-        return [], primid_id + " is not a registered identifier"
+        return [], primid_id + " is not a registered identifier (9)"
     if not ("primid" in etypes):
         return [], "No primid registered for " + primid_hrns
     with sqlite3.connect(ENTITIES_DB) as conn:
@@ -1831,7 +1844,7 @@ def list_secids(primid_id):
 def list_ahids(primid_id):
     primid_fph, primid_hrns, etypes, m = identify_entity(primid_id)
     if not primid_fph:
-        return [], primid_id + " is not a registered identifier"
+        return [], primid_id + " is not a registered identifier (10)"
     if not ("primid" in etypes):
         return [], "No primid registered for " + primid_hrns
     with sqlite3.connect(ENTITIES_DB) as conn:
@@ -1998,9 +2011,8 @@ def get_account_properties(account_id):
         cursor.execute(
             "SELECT " \
             + "account_owner_fph, " \
-            + "account_ahid_fph, " \
             + "account_currency_fph, " \
-            + "account_balance, " \
+            + "balance, " \
             + "volume, " \
             + "active " \
             + "FROM accounts WHERE entity_fph = ?",
@@ -2010,10 +2022,7 @@ def get_account_properties(account_id):
         cursor.close()
     if result is None:
         return "", "", "", 0, 0, False, "Account not found"
-    # The owner of this *account* may be any of the three following types:
-    # *primid* - used if and only if no *ahid* shares the same identifier
-    # *secid* - used if and only if no *ahid* shares the same identifier
-    # *ahid*
+    # The owner of this *account* may be either an *ahid* or a *secid*.
     owner_fph, owner_hrns, etypes, m = identify_entity(result[0])
     if not (("ahid" in etypes) or ("secid" in etypes)):
         return "", "", "", 0, 0, False, "Account  has no owner"
@@ -2024,7 +2033,8 @@ def get_account_properties(account_id):
     balance = result[3]
     volume = result[4]
     active = bool(result[5])
-    return currency_fph, owner_fph, ahid_fph, balance, volume, active, ""
+#    return currency_fph, owner_fph, ahid_fph, balance, volume, active, ""
+    return currency_fph, owner_fph, balance, volume, active, ""
 
 
 def get_primid_properties(primid_id):
@@ -2559,21 +2569,9 @@ def list_active_namespaces(ancestor_namespace_identifier = ""): # FPH or HRNS
     # is active and has the specified ancestor *namespace* as its parent:
     with sqlite3.connect(ENTITIES_DB) as conn:
         cursor = conn.cursor()
-        #cursor.execute(
-        #    """
-        #    SELECT entity_fph
-        #    FROM entities_registered
-        #    WHERE entity_type = 'namespace'
-        #    AND active = 1;
-        #    """
-        #)
         cursor.execute(
-            """
-            SELECT entity_fph
-            FROM entities_registered
-            WHERE entity_type = ?
-            AND active = ?
-            """,
+            "SELECT entity_fph FROM entities_registered " \
+            + "WHERE entity_type = ? AND active = ?",
             ("namespace", 1)
         )
         results = list(cursor.fetchall())
@@ -2616,11 +2614,7 @@ def get_primid(id_identifier): # *secid* or *ahid*
     with sqlite3.connect(ENTITIES_DB) as conn:
         cursor = conn.cursor()
         cursor.execute(
-            """
-            SELECT primid_fph
-            FROM secids
-            WHERE entity_fph = ?
-            """,
+            "SELECT primid_fph FROM secids WHERE entity_fph = ?",
             (id_fph,)
         )
         result = cursor.fetchone()
@@ -2638,7 +2632,7 @@ def get_ahid_primid(ahid_id):
     # (3) A *primid* may belong to itself as an *ahid*
     ahid_fph, ahid_hrns, etypes, m = identify_entity(ahid_id)
     if not ahid_fph:
-        print(ahid_id + " is not a registered identifier")
+        print(ahid_id + " is not a registered identifier (11)")
         return ""
     if not ("ahid" in etypes):
         print(ahid_hrns + " has not ahid")
@@ -2712,11 +2706,8 @@ def authenticate_primid_email(primid_fph, email):
     with sqlite3.connect(ENTITIES_DB) as conn:
         cursor = conn.cursor()
         cursor.execute(
-            """
-            SELECT primid_email_1_hash, primid_email_2_hash
-            FROM primids
-            WHERE entity_fph = ?
-            """,
+            "SELECT primid_email_1_hash, primid_email_2_hash FROM primids " \
+            + "WHERE entity_fph = ?",
             (primid_fph,)
         )
         result = cursor.fetchone()
@@ -2760,7 +2751,10 @@ def split_hrns(identifier_hrns):
         return "", ""
     names = identifier_hrns.split(NSS)
     name = names.pop(0)
+    print("split: " + name + " & ", end="")
+    print(names)
     parent_hrns = NSS.join(names).strip(NSS)
+    print(">>> " + name + ":" + parent_hrns)
     return name, parent_hrns
 
 
@@ -2878,7 +2872,8 @@ def retrieve_pmap(owner_id):
     if result is None:
         print("No pmap for " + owner_hrns + " (a)")
         return {}, ""
-    elif isinstance(result, tuple) and (result[0] is None):
+    #elif isinstance(result, tuple) and (result[0] is None):
+    elif result[0] is None:
         print("No pmap for " + owner_hrns + " (b)")
         return {}, ""
     else:
@@ -2899,21 +2894,38 @@ def create_new_pairing(
     # create a new *account-holder*. Only if both exist will a new *account*
     # or *account-holder* be created.
     currency_fph, currency_hrns, cetypes, m = identify_entity(currency_id)
+    if m:
+        print(m)
     if not currency_fph:
-        return "", currency_id + " is not a registered identifier"
+        print(currency_id + " is not a registered identifier (12)")
+        return "", currency_id + " is not a registered identifier (12)"
     if not ("currency" in cetypes):
+        print(currency_hrns + " is not a currency")
         return "", currency_hrns + " is not a currency"
     owner_fph, owner_hrns, petypes, m = identify_entity(owner_id)
-    if not owner_id:
-        return "", owner_id + " is not a registered identifier"
+    if m:
+        print(m)
+    if not owner_fph:
+        print(owner_id + " is not a registered identifier (13)")
+        return "", "", owner_id + " is not a registered identifier (13)"
     if not ("primid" in petypes):
-        return "", owner_id + " is not a primid"
+        print(owner_hrns + " is not a primid")
+        return "", "", owner_hrns + " is not a primid"
+    print("meow!")
     # If the *ahid* does not exist already it must be created:
-    ahid_fph, ahid_hrns, etypes, m = identify_entity(ahid_hrns)
+    print("ahid_hrns supplied = " + ahid_hrns)
+    r_ahid_fph, r_ahid_hrns, etypes, m = identify_entity(ahid_hrns)
+    print("ahid_hrns retrieved = " + r_ahid_hrns)
     if not ("ahid" in etypes):
         # A new *ahid* is created:
         ahid_name, parent_hrns = split_hrns(ahid_hrns)
+        print("ahid_hrns = " + ahid_hrns)
+        print("ahid_name = " + ahid_name)
         ahid_fph, ahid_hrns, m = new_ahid(ahid_name, parent_hrns, owner_fph)
+        print("Creating ahid " + ahid_hrns)
+    else:
+        ahid_fph = r_ahid_fph
+        print("ahid = " + ahid_hrns)
     # At this point, whether or not it has been necessary to create it, we now
     # have both the HRNS and the FPH of the *ahid*. It can now be paired with
     # the specified *currency* to index a new *account*.
@@ -2926,6 +2938,7 @@ def create_new_pairing(
     ah_id = "^".join(ahid_hrns.split(NSS))
     c_id = "^".join(currency_hrns.split(NSS))
     account_name = "_".join(["", ah_id, "&", c_id, ""])
+    print("pairing account name = " + account_name)
     #
     # This name is then prefixed to the root of the owner *primid*'s private
     # *namespace*.
@@ -2936,9 +2949,13 @@ def create_new_pairing(
             account_name,
             owner_fph,
             owner_fph,
-            ahid_fph,
             currency_fph
         )
+    print("woof!")
+
+    print("pairing account = " + account_fph + " > " + account_hrns)
+
+    print("Zeppo")
 
     # The *ahid* may be paired with any *currency* (once only). These
     # serve as the co-ordinates in a grid identifying the *account* created
@@ -2948,17 +2965,14 @@ def create_new_pairing(
     #
     # The pairings dictionary is retrieved:
     pmap, m = retrieve_pmap(owner_fph)
-
     if pmap is None:
         pmap = {}
-
     #if not (ahid_hrns in pmap):
     if not (ahid_hrns in pmap.keys()):
         #print(ahid_hrns + " not in pmap")
         pmap[ahid_hrns] = {}
     if not (currency_hrns in pmap[ahid_hrns].keys()):
         pmap[ahid_hrns][currency_hrns] = account_fph
-
     with sqlite3.connect(ENTITIES_DB) as conn:
         cursor = conn.cursor()
         # Update the pmap:
@@ -2984,8 +2998,7 @@ def create_new_pairing(
             )
             conn.commit()
         cursor.close()
-
-    return account_fph
+    return account_fph, account_hrns, ""
 
 #=============================================================================
 
@@ -3011,12 +3024,12 @@ def list_primid_ahids(primid_fph):
 def retrieve_pairing_account_fph(ahid_id, currency_id):
     ahid_fph, ahid_hrns, etypes, m = identify_entity(ahid_id)
     if not ahid_fph:
-        return "", "", ahid_id + " is not a registered identifier"
+        return "", "", ahid_id + " is not a registered identifier (1)"
     if not ("ahid" in etypes):
         return "", "", ahid_hrns + " is not an account-holder"
     currency_fph, currency_hrns, etypes, m = identify_entity(currency_id)
     if not currency_fph:
-        return "", "", currency_id + " is not a registered identifier"
+        return "", "", currency_id + " is not a registered identifier (2)"
     if not ("currency" in etypes):
         return "", "", currency_fph + " is not a currency"
     primid_fph = get_ahid_primid(ahid_fph)
@@ -3074,7 +3087,6 @@ def ah_payment(
     payer_account_active, \
     payer_account_currency_fph, \
     payer_account_owner_fph, \
-    payer_account_ahid_fph, \
     payer_account_balance, \
     payer_volume, \
     m = account_status(payer_account_fph)
@@ -3087,7 +3099,6 @@ def ah_payment(
     payee_account_active, \
     payee_account_currency_fph, \
     payee_account_owner_fph, \
-    payee_account_ahid_fph, \
     payee_account_balance, \
     payee_volume, \
     m = account_status(payee_account_fph)
@@ -3113,19 +3124,11 @@ def ah_payment(
         cursor = conn.cursor()
         # First the balances are adjusted:
         cursor.execute(
-            """
-            UPDATE accounts
-            SET account_balance = ?, volume = ?
-            WHERE entity_fph = ?
-            """,
+            "UPDATE accounts SET balance = ?, volume = ? WHERE entity_fph = ?",
             (payer_account_balance, payer_volume, payer_account_fph)
         )
         cursor.execute(
-            """
-            UPDATE accounts
-            SET account_balance = ?, volume = ?
-            WHERE entity_fph = ?
-            """,
+            "UPDATE accounts SET balance = ?, volume = ? WHERE entity_fph = ?",
             (payee_account_balance, payee_volume, payee_account_fph)
         )
         conn.commit()
@@ -3147,19 +3150,16 @@ def ah_payment(
     with sqlite3.connect(PAYMENTS_DB) as conn:
         cursor = conn.cursor()
         cursor.execute(
-            """
-            INSERT INTO payments (
-                timestamp,
-                payer_fph,
-                payee_fph,
-                currency_fph,
-                amount,
-                payer_balance,
-                payee_balance,
-                annotation
-            )
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-            """,
+            "INSERT INTO payments (" \
+            + "timestamp, " \
+            + "payer_fph, " \
+            + "payee_fph, " \
+            + "currency_fph, " \
+            + "amount, " \
+            + "payer_balance, " \
+            + "payee_balance, " \
+            + "annotation" \
+            + ") VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
             (
                 payment_timestamp,
                 payer_ahid_fph,     # The *ahid* and *account* FPH are stored

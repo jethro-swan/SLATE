@@ -6,11 +6,14 @@ from app.core.slate_core import set_entity_type
 from app.core.slate_core import register_full_entity_set
 from app.core.slate_core import register_entity_type
 from app.core.slate_core import deregister_entity_type
+from app.core.slate_core import identify_entity
 #from app.core.slate_core import
 #from app.core.slate_core import
 #from app.core.slate_core import
 #from app.core.slate_core import
 from app.core.slate_core import new_primid
+from app.core.slate_core import new_account
+from app.core.slate_core import create_new_pairing
 from app.core.fph_hrns_maps import hrns_to_fph, fph_to_hrns
 
 def list_etypes(e_fph):
@@ -81,10 +84,10 @@ list_etypes(qq_fph)
 register_full_entity_set(qq_fph)
 list_etypes(qq_fph)
 
+print("\nCreating test primid\n")
 
-
-primid_fph, \
-primid_hrns, \
+cthulhu_fph, \
+cthulhu_hrns, \
 access_token, \
 m = new_primid(
         "cthulhu",
@@ -96,8 +99,43 @@ m = new_primid(
         "987654"
     )
 
-print("primid_fph: " + primid_fph)
-print("primid_hrns: " + primid_hrns)
+print("primid_fph: " + cthulhu_fph)
+print("primid_hrns: " + cthulhu_hrns)
 print("access_token: " + access_token)
 print("primid creation message:")
 print(m)
+
+
+cthulhu_fph, cthulhu_hrns, etypes, m = identify_entity(cthulhu_fph)
+print("cthulhu_fph = " + cthulhu_fph)
+print("cthulhu_hrns = " + cthulhu_hrns)
+print("etypes = ", end="")
+print(etypes)
+if m:
+    print(m)
+
+print("\nCreating test account\n")
+
+account_fph, \
+account_hrns, \
+m = new_account(
+        "montecristo",
+        "bb.cc",
+        "bb.cc",
+        "hrs.cc"
+    )
+print("test account: " + account_fph + " > " + account_hrns)
+
+
+print("\nCreating test pairing\n")
+
+account_fph, \
+account_hrns, \
+m = create_new_pairing(
+        cthulhu_hrns,     # *primid* HRNS or FPH
+        "ah1.cthulhu.cc", # HRNS (may not exist already)
+        "hrs.cc"          # HRNS or FPH (must exist already)
+    )
+
+print("account_fph = " + account_fph)
+print("account_hrns = " + account_hrns)

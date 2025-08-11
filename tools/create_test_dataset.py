@@ -274,8 +274,10 @@ for secid_fph in l_secids:
         account_fph, \
         account_hrns, \
         m = new_account(
-                random_char(), random.choice(l_namespaces),
-                secid_fph, currency_fph
+                random_char(),
+                random.choice(l_namespaces),
+                secid_fph,
+                currency_fph
             )
         if m:
             continue

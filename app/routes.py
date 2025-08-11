@@ -393,7 +393,6 @@ def register():
                     default_account_name,
                     primid_fph,
                     primid_fph,
-                    "", # *ahid_fph* not required here
                     currency_fph
                 )
             if m:
@@ -4781,7 +4780,6 @@ def create_account(owner_fph):
         m = new_account(
                 account_name,
                 namespace_fph,
-                "", # *ahid_fph* not required here
                 owner_fph, # the owner of this *account*
                 currency_fph
             )
@@ -4978,7 +4976,6 @@ def create_secid():
             default_account_name,
             secid_fph,
             secid_fph,
-            "", # *ahid_fph* not required here
             default_currency_fph
         )
         flash(

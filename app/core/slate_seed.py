@@ -318,7 +318,7 @@ def create_seed_entities():
                 + "active, " \
                 + "account_owner_fph, " \
                 + "account_currency_fph, " \
-                + "account_balance" \
+                + "balance" \
             + ") VALUES (?, ?, ?, ?, ?)",
             (
                 seed_account_fph,   # *account* FPH

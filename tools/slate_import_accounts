@@ -87,7 +87,7 @@ for line in sys.stdin:
     m = new_account(
             account_name,
             parent_namespace_fph,
-            owner_fph, # (Owner may be a *primid* or a *secid*)
+            owner_fph, # (Owner may be an *ahid* or a *secid*)
             currency_fph
         )
     if m:

@@ -35,42 +35,42 @@ primid_fph, m = hrns_to_fph("bb.cc")
 nslist = ["uk.cc", "mon.uk.cc", "chep.mon.uk.cc"]
 clist = ["kwh.cc", "hrs.cc", "kwh.uk.cc", "hrs.mon.uk.cc", "h.chep.mon.uk.cc"]
 
-
-
-
-
 for ns in nslist:
-    nsname, ns_parent_ns_hrns = split_hrns(ns)
-    parent_namespace_fph, m = hrns_to_fph(ns_parent_ns_hrns)
+    nsname, parent_hrns = split_hrns(ns)
+    print(nsname + ": " + parent_hrns + "  ", end="")
+    parent_fph, m = hrns_to_fph(parent_hrns)
+    print(parent_fph + " > " + parent_hrns)
 
     namespace_fph, \
     namespace_hrns, \
     m = new_namespace(
-            nsname,
-            parent_namespace_fph,
-            "cc",
-            primid_fph
+            nsname,         # name of *namespace*
+            parent_fph,     # parent of *namespace*
+            "cc",           # default *currency* of *namespace*
+            primid_fph      # steward of *namespace*
         )
 
-    print(namespace_fph + " > " + namespace_hrns)
+    print("namespace: " + namespace_fph + " > " + namespace_hrns)
     print()
 
 for c in clist:
-    cname, c_parent_ns_hrns = split_hrns(c)
-    parent_namespace_fph, m = hrns_to_fph(c_parent_ns_hrns)
+    cname, parent_hrns = split_hrns(c)
+    print(cname + ": " + parent_hrns + "  ", end="")
+    parent_fph, m = hrns_to_fph(parent_hrns)
+    print(parent_fph + " > " + parent_hrns)
 
     currency_fph, \
     currency_hrns, \
     m = new_currency(
-            cname,
-            parent_namespace_fph,
-            primid_fph,
-            "",
-            "",
-            "cname"
+            cname,          # name of *currency*
+            parent_fph,     # parent of *currency*
+            primid_fph,     # steward of *currency*
+            "",             # prefix
+            "",             # suffix
+            "cname"         # default *account* name
         )
 
-    print(currency_fph + " > " + currency_hrns)
+    print("currency: " + currency_fph + " > " + currency_hrns)
     print()
 
 
@@ -80,12 +80,16 @@ for c in clist:
 #name1, namespace1 = split_hrns("tom.dick.harry")
 #print(name1 + " : " + namespace1)
 
+print("="*160)
+print("Running test entity identification loop")
+print("-"*160)
 for ahid_hrns in ["ah1.bb.cc", "ah2.bb.cc", "ah3.bb.cc", "ah4.bb.cc"]:
 #for ahid_hrns in ["ah5.bb.cc", "ah6.bb.cc", "ah7.bb.cc", "ah8.bb.cc"]:
     for c_hrns in ["cc", "hrs.cc", "kwh.cc"]:
     #for c_hrns in ["g£.cc", "MWh.cc", "g$.cc"]:
         p_fph = create_new_pairing("bb.cc", ahid_hrns, c_hrns)
         print(p_fph)
+print("="*160)
 
 
 #ah1_fph = create_new_pairing("bb.cc", "ah1.cc", "cc")
@@ -140,26 +144,34 @@ ahid_hrns_list = ["ah1.bb.cc", "ah2.bb.cc", "ah3.bb.cc", "ah4.bb.cc"]
 currency_hrns_list = ["cc", "hrs.cc", "kwh.cc"]
 
 if test_entity_identification:
+    print("="*160)
+    print("Running test entity identification loop")
+    print("-"*160)
     for ahid_hrns in ahid_hrns_list:
-        ahid_fph, \
-        ahid_hrns, \
-        etype, \
-        m = identify_entity(ahid_hrns)
+        ahid_fph, ahid_hrns, etypes, m = identify_entity(ahid_hrns)
         if m:
             print(m)
+        if not ahid_fph:
+            print(ahid_fph + " is not a registered identifier (18)")
+        elif not ("ahid" in etypes):
+            print(ahid_hrns + " has no registered ahid")
         print(etype + ": " + ahid_fph + " > " + ahid_hrns)
     for currency_hrns in currency_hrns_list:
-        currency_fph, \
-        currency_hrns, \
-        etype, \
-        m = identify_entity(currency_hrns)
+        currency_fph, currency_hrns, etypes, m = identify_entity(currency_hrns)
         if m:
             print(m)
+        if not currency_fph:
+            print(currency_fph + " is not a registered identifier (19)")
+        elif not ("currency" in etypes):
+            print(currency_hrns + " has no registered  currency")
         print(etype + ": " + currency_fph + " > " + currency_hrns)
-    print()
+    print("="*160)
 
 
 if run_payment_test_loop:
+    print("="*160)
+    print("Running payment test loop")
+    print("-"*160)
     for n in range(100):
         payer_ahid_hrns = random.choice(ahid_hrns_list)
         payee_ahid_hrns = random.choice(ahid_hrns_list)
@@ -185,4 +197,4 @@ if run_payment_test_loop:
                     )
                 if m:
                     print(m)
-    print()
+    print("="*160)
