@@ -110,12 +110,9 @@ def list_payments_in_currency(currency_identifier):
 #==============================================================================
 # Create a list of payments made to or from the specified *account*:
 
-def list_payments_for_account(account_identifier):
+def list_payments_for_account(account_id):
 
-    account_fph, \
-    account_hrns, \
-    etype, \
-    m = identify_entity(account_identifier)
+    account_fph, account_hrns, etype, m = identify_entity(account_id)
     if m:
         return [], m
     if account_fph == "":
@@ -144,19 +141,18 @@ def list_payments_for_account(account_identifier):
         cursor = conn.cursor()
         # Read transactions for specified currency:
         cursor.execute(
-            """
-            SELECT timestamp,
-                   payment_id,
-                   payer_fph,
-                   payee_fph,
-                   currency_fph,
-                   amount,
-                   payer_balance,
-                   payee_balance,
-                   annotation
-            FROM payments
-            WHERE payer_fph = ? OR payee_fph = ?
-            """,
+            "SELECT " \
+            + "timestamp, " \
+            + "payment_id, " \
+            + "payer_fph, " \
+            + "payee_fph, " \
+            + "currency_fph, " \
+            + "amount, " \
+            + "payer_balance, " \
+            + "payee_balance, " \
+            + "annotation " \
+            + "FROM payments " \
+            + "WHERE payer_fph = ? OR payee_fph = ?",
             (payer_fph, payee_fph)
         )
         all_payments = cursor.fetchall()
@@ -225,30 +221,23 @@ def list_payments_for_account(account_identifier):
 # Export a CSV listing of all payments made in a specified *currency*
 # (Complete and working)
 
-def dump_currency_payments_csv(
-        currency_identifier,
-        show_header_row = True
-    ):
+def dump_currency_payments_csv(currency_id, show_header_row = True):
 
     SC = "," # add as argument later
 
-    currency_fph, \
-    currency_hrns, \
-    etype, \
-    m = identify_entity(currency_identifier)
+    currency_fph, currency_hrns, etype, m = identify_entity(currency_id)
     if m:
         return "", m
-    if etype != "currency":
-        return "", "The entity specified is not a currency"
-    if currency_fph == "":
-        return "", "No valid currency was specified"
+    if not currency_fph:
+        return "", currency_id + " is not a registered identifier"
+    if not ("currency" in etypes):
+        return "", currency_hrns + " has no registered currency"
 
     # Hub operational mode (read from environment variable HUB_MODE)
     hub_mode = get_hub_mode()
 
-    payment_rows, m = list_payments_in_currency(currency_identifier)
+    payment_rows, m = list_payments_in_currency(currency_id)
     if m:
-#        print("m = " + m)
         return "", m
 
     csv_filename = "currency_" + fph_to_hrns(currency_fph) + "_journal_" \
@@ -284,42 +273,33 @@ def dump_currency_payments_csv(
 #==============================================================================
 # Export a CSV listing of all payments made to or from a specified *account*
 
-def dump_account_payments_csv(
-        account_identifier,
-        show_header_row = False
-    ):
+def dump_account_payments_csv(account_id, show_header_row = False):
 
     SC = "," # add as argument later
 
-    account_fph, \
-    account_hrns, \
-    etype, \
-    m = identify_entity(account_identifier)
+    account_fph, account_hrns, etypes, m = identify_entity(account_id)
     if m:
         return "", m
-    if etype != "account":
-        return "", "The entity specified is not an account"
-    if account_fph == "":
-        return "", "No valid account was specified"
+    if not account_fph:
+        return "", "The identifer " + account_id + " is not registered"
+    if not ("account" in etypes):
+        return "", "The identifer " + account_hrns + " has no account"
 
     # Hub operational mode (read from environment variable HUB_MODE)
     hub_mode = get_hub_mode()
 
-    payment_rows, m = list_payments_for_account(account_identifier)
-#    print(payment_rows)
-#    if m:
-#       return [], m
+    payment_rows, m = list_payments_for_account(account_id)
 
     if hub_mode == "omtrad":
         currency_fph, \
         owner_fph, \
-        ahid_fph, \
         balance, \
         volume, \
+        active, \
         m = get_account_properties(account_fph)
 
         csv_filename = "account_" + fph_to_hrns(currency_fph) + "_"\
-                     + fph_to_hrns(ahid_fph) + "_journal_" \
+                     + fph_to_hrns(owner_fph) + "_journal_" \
                      + timestamp() + ".csv"
     else:
         csv_filename = "account_" + fph_to_hrns(account_fph) + "_journal_" \
@@ -345,20 +325,6 @@ def dump_account_payments_csv(
             csv_f.write("\n")
 
     return csv_filename, ""
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 #==============================================================================
 ##
@@ -453,11 +419,8 @@ def dump_account_payments(account_fph):
 
         # Read transactions for specified currency:
         cursor.execute(
-            """
-            SELECT payment_id, payer_fph, payee_fph, amount, annotation
-            FROM payments
-            WHERE payer_fph = ? OR payee_fph = ?
-            """,
+            "SELECT payment_id, payer_fph, payee_fph, amount, annotation " \
+            + "FROM payments WHERE payer_fph = ? OR payee_fph = ?",
             (account_fph, account_fph)
         )
         results = cursor.fetchall()
@@ -507,11 +470,8 @@ def dump_currency_payments(currency_fph):
 
         # Read transactions for specified currency:
         cursor.execute(
-            """
-            SELECT payment_id, payer_fph, payee_fph, amount, annotation
-            FROM payments
-            WHERE currency_fph = ?
-            """,
+            "SELECT payment_id, payer_fph, payee_fph, amount, annotation " \
+            + "FROM payments WHERE currency_fph = ?",
             (currency_fph,)
         )
         payments = cursor.fetchall()

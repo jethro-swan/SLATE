@@ -2043,6 +2043,9 @@ def get_account_properties(account_id):
     return currency_fph, owner_fph, balance, volume, active, ""
 
 
+#==============================================================================
+##
+
 def get_primid_properties(primid_id):
     primid_fph, primid_hrns, etypes, m = identify_entity(primid_id)
     if not primid_fph:
@@ -2084,6 +2087,9 @@ def get_primid_properties(primid_id):
            nstewardships_fph_list, cstewardships_fph_list, ""
 
 
+#==============================================================================
+##
+
 def get_ahid_properties(ahid_id):
     ahid_fph, ahid_hrns, etypes, m = identify_entity(ahid_id)
     if not ahid_fph:
@@ -2108,6 +2114,9 @@ def get_ahid_properties(ahid_id):
     accounts_fph_list = pickle.loads(result[2])
     return active, primid_fph, accounts_fph_list, ""
 
+
+#==============================================================================
+##
 
 def get_secid_properties(secid_id):
     secid_fph, secid_hrns, etypes, m = identify_entity(secid_id)
@@ -2135,8 +2144,8 @@ def get_secid_properties(secid_id):
     return active, primid_fph, accounts_fph_list, ""
 
 
-#------------------------------------------------------------------------------
-# Add a stewardship to a *primid* and a steward to a *namespace* or *currency*:
+#==============================================================================
+## Add a stewardship to a *primid* and a steward to a *namespace* or *currency*:
 
 ### CHANGE:
 #
