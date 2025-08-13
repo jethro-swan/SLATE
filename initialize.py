@@ -3,18 +3,26 @@
 # This script can be run to (re)initialize the SLATE installation at any time.
 # Any existing DBM maps and SQLite databases will be backed up first.
 
-from app.core.fph_hrns_maps import create_maps, fph_to_hrns, hrns_to_fph
+from app.core.fph_hrns_maps import create_maps
+from app.core.fph_hrns_maps import fph_to_hrns
+from app.core.fph_hrns_maps import hrns_to_fph
 from app.core.slate_core import create_entities_db
 from app.core.slate_session import create_slate_session_db
 from app.core.slate_core import create_hubs_db
 from app.core.payments import create_payments_db
 from app.core.messaging import create_messages_db
-from app.core.slate_seed import create_seed_entities, create_quasitld_set
+from app.core.slate_seed import create_seed_entities
+from app.core.slate_seed import create_quasitld_set
 from app.core.slate_seed import create_substrate
-from app.core.constants import SLATE_LOGS, SLATE_LOGS_BKP_DIR
-from app.core.constants import DEBUG_LOG, ERROR_LOG, AUTH_LOG, ACTIVITY_LOG
+from app.core.constants import SLATE_LOGS
+from app.core.constants import SLATE_LOGS_BKP_DIR
+from app.core.constants import DEBUG_LOG
+from app.core.constants import ERROR_LOG
+from app.core.constants import AUTH_LOG
+from app.core.constants import ACTIVITY_LOG
 
-from app.core.slate_core import new_namespace, new_currency
+from app.core.slate_core import new_namespace
+from app.core.slate_core import new_currency
 from app.core.slate_core import split_hrns
 
 print("creating DBM maps")

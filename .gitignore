@@ -48,6 +48,7 @@ tools/islands31
 others
 obsolete
 tools/obsolete
+tools/tests/obsolete
 
 
 __pycache__

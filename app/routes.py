@@ -25,13 +25,17 @@ from app.core.fph_hrns_maps import hrns_exists_already
 
 from app.core.common import unixtime_int
 
-from app.core.slate_core import get_entity_types, get_account_currency
-from app.core.slate_core import identify_entity, get_primid
+from app.core.slate_core import get_entity_types
+from app.core.slate_core import get_account_currency
+from app.core.slate_core import identify_entity
+from app.core.slate_core import get_primid
 from app.core.slate_core import entity_type_is_registered
 from app.core.slate_core import entity_types_are_registered
-from app.core.slate_core import new_primid, new_secid
+from app.core.slate_core import new_primid
+from app.core.slate_core import new_secid
 from app.core.slate_core import update_primid_access_details
-from app.core.slate_core import new_namespace, new_currency
+from app.core.slate_core import new_namespace
+from app.core.slate_core import new_currency
 from app.core.slate_core import new_account
 from app.core.slate_core import account_status
 from app.core.slate_core import list_namespace_stewardships
@@ -40,7 +44,9 @@ from app.core.slate_core import list_currency_stewardships
 #from app.core.slate_core import list_currency_stewards
 from app.core.slate_core import list_stewards
 from app.core.slate_core import retrieve_primid_access_details
-from app.core.slate_core import list_agent_accounts, list_secids, list_ahids
+from app.core.slate_core import list_agent_accounts
+from app.core.slate_core import list_secids
+from app.core.slate_core import list_ahids
 from app.core.slate_core import get_namespace_properties
 from app.core.slate_core import get_currency_properties
 from app.core.slate_core import get_account_properties
@@ -58,9 +64,10 @@ from app.core.slate_core import get_config
 from app.core.qrcode import qrencode_invitation
 
 from app.core.slate_core import retrieve_pmap
-from app.core.slate_core import create_new_pairing
+from app.core.slate_core import new_pairing
 from app.core.slate_core import retrieve_pairing_account_fph
-from app.core.slate_core import ah_payment
+#from app.core.slate_core import ah_payment
+from app.core.payments import ah_payment
 from app.core.slate_core import import_csv_dataset
 from app.core.slate_core import is_ancestor, is_in_private_namespace
 from app.core.slate_core import get_ahid_primid
@@ -76,11 +83,13 @@ from app.core.regexp_list import re_fph, re_hrns, re_email
 from app.core.regexp_list import re_pvalue
 from app.core.regexp_list import re_qrfilename
 
-from app.core.slate_login import get_auth_data, register_authenticated_login
+from app.core.slate_login import get_auth_data
+from app.core.slate_login import register_authenticated_login
 
 ##from app.core.auth import pin_random_ord, pin_prompt_message
 from app.core.auth import pin_subset_prompt
-from app.core.auth import check_auth_hash, authenticate_pin
+from app.core.auth import check_auth_hash
+from app.core.auth import authenticate_pin
 
 from app.core.logging import log_event
 
@@ -102,12 +111,14 @@ from app.core.messaging import create_messages_db
 from app.core.messaging import send_message
 from app.core.messaging import fetch_messages
 from app.core.messaging import messages_available
-from app.core.messaging import delete_message, delete_all_messages
+from app.core.messaging import delete_message
+from app.core.messaging import delete_all_messages
 from app.core.messaging import message_count
 
 from app.core.mail_temp import temp_mail_send
 
-from app.core.display import yesno, integer_to_money_format
+from app.core.display import yesno
+from app.core.display import integer_to_money_format
 from app.core.display import etype_to_adtype
 
 from app.core.csv_import import import_minimal_payment_set_as_csv
@@ -380,7 +391,7 @@ def register():
         # If in omtrad mode, an initial *currency*|*ahid* pairing is created
         # using the new *login identity* (*primid*) as the *ahid*:
         if hub_mode == "omtrad":
-            a_fph = create_new_pairing(primid_fph, primid_hrns, currency_hrns)
+            a_fph = new_pairing(primid_fph, primid_hrns, currency_hrns)
             return redirect("/")
 
         # Otherwise, an initial *account* is created (in the new *primid*'s
@@ -883,7 +894,8 @@ def new_home():
     # a list of *accounts* belonging to each. The user will also see a list of
     # entities over which it holds/shares stewardship.
 
-    stewardships_list, m = list_stewardships(primid_fph)
+    nstewardships_list, m = list_nstewardships(primid_fph)
+    cstewardships_list, m = list_cstewardships(primid_fph)
 
     # Since a user may have *accounts* scattered across an arbitrary number of
     # *namespaces*, it is necessary to maintain a list of these:
@@ -1083,7 +1095,6 @@ def home_ahc():
             account_active, \
             account_currency_fph, \
             account_owner_fph, \
-            account_ahid_fph, \
             account_balance, \
             account_volume, \
             m = account_status(account_fph)
@@ -1114,7 +1125,7 @@ def home_ahc():
             p_row["prefix"] = prefix
             p_row["suffix"] = suffix
             #p_row["volume"] = integer_to_money_format(account_volume)
-            if currency_fph in stewardships_list:
+            if currency_fph in cstewardships_list:
                 p_row["primid_currency_steward"] = True
             else:
                 p_row["primid_currency_steward"] = False
@@ -1268,7 +1279,8 @@ def home():
     # a list of *accounts* belonging to each. The user will also see a list of
     # entities over which it holds/shares stewardship.
 
-    stewardships_list, m = list_stewardships(primid_fph)
+    nstewardships_list, m = list_namespace_stewardships(primid_fph)
+    cstewardships_list, m = list_currency_stewardships(primid_fph)
 
     # Since a user may have *accounts* scattered across an arbitrary number of
     # *namespaces*, it is necessary to maintain a list of these:
@@ -1341,7 +1353,7 @@ def home():
             a["suffix"] = suffix
             a["volume"] = integer_to_money_format(account_volume)
             #primid_currency_steward = (currency_fph in stewardships_list)
-            if currency_fph in stewardships_list:
+            if currency_fph in cstewardships_list:
                 primid_currency_steward = True
             else:
                 primid_currency_steward = False
@@ -1382,18 +1394,35 @@ def home():
             secid["hrns"] = fph_to_hrns(secid_fph)
             secids.append(secid)
 
-    stewardships = []
-    for stewardship_fph in stewardships_list:
-        if stewardship_fph != "":
-            stewardship = {}
+    nstewardships = []
+    for nstewardship_fph in nstewardships_list:
+        if nstewardship_fph != "":
+            nstewardship = {}
             entity_fph, \
             entity_hrns, \
             etypes, \
-            m = identify_entity(stewardship_fph)
-            stewardship["fph"] = stewardship_fph
-            stewardship["hrns"] = entity_hrns
-            stewardship["etype"] = etype
-            stewardships.append(stewardship)
+            m = identify_entity(nstewardship_fph)
+            nstewardship["fph"] = nstewardship_fph
+            nstewardship["hrns"] = entity_hrns
+            nstewardship["etype"] = etype
+            nstewardships.append(stewardship)
+
+    cstewardships = []
+    for cstewardship_fph in cstewardships_list:
+        if cstewardship_fph != "":
+            cstewardship = {}
+            entity_fph, \
+            entity_hrns, \
+            etypes, \
+            m = identify_entity(cstewardship_fph)
+            cstewardship["fph"] = cstewardship_fph
+            cstewardship["hrns"] = entity_hrns
+            cstewardship["etype"] = etype
+            cstewardships.append(stewardship)
+
+
+
+
 
     return render_template(
         "home.html",
@@ -1471,7 +1500,8 @@ def list_accounts():
     # a list of *accounts* belonging to each. The user will also see a list of
     # entities over which it holds/shares stewardship.
 
-    stewardships_list, m = list_stewardships(primid_fph)
+    nstewardships_list, m = list_namespaces_stewardships(primid_fph)
+    cstewardships_list, m = list_currency_stewardships(primid_fph)
 
     # Since a user may have *accounts* scattered across an arbitrary number of
     # *namespaces*, it is necessary to maintain a list of these:
@@ -1542,7 +1572,7 @@ def list_accounts():
             a["suffix"] = suffix
             a["volume"] = integer_to_money_format(account_volume)
             #primid_currency_steward = (currency_fph in stewardships_list)
-            if currency_fph in stewardships_list:
+            if currency_fph in cstewardships_list:
                 primid_currency_steward = True
             else:
                 primid_currency_steward = False
@@ -1564,18 +1594,36 @@ def list_accounts():
             secid["hrns"] = fph_to_hrns(secid_fph)
             secids.append(secid)
 
-    stewardships = []
-    for stewardship_fph in stewardships_list:
-        if stewardship_fph != "":
-            stewardship = {}
+    nstewardships = []
+    for nstewardship_fph in nstewardships_list:
+        if nstewardship_fph != "":
+            nstewardship = {}
             entity_fph, \
             entity_hrns, \
             etypes, \
-            m = identify_entity(stewardship_fph)
-            stewardship["fph"] = stewardship_fph
-            stewardship["hrns"] = entity_hrns
-            stewardship["etype"] = etype
-            stewardships.append(stewardship)
+            m = identify_entity(nstewardship_fph)
+            nstewardship["fph"] = nstewardship_fph
+            nstewardship["hrns"] = entity_hrns
+            nstewardship["etype"] = etype
+            nstewardships.append(stewardship)
+
+    cstewardships = []
+    for cstewardship_fph in cstewardships_list:
+        if cstewardship_fph != "":
+            cstewardship = {}
+            entity_fph, \
+            entity_hrns, \
+            etypes, \
+            m = identify_entity(cstewardship_fph)
+            cstewardship["fph"] = cstewardship_fph
+            cstewardship["hrns"] = entity_hrns
+            cstewardship["etype"] = etype
+            cstewardships.append(stewardship)
+
+
+
+
+
 
     return render_template(
         "list_accounts.html",
@@ -1596,7 +1644,8 @@ def list_accounts():
         # List of (nested) dictionaries for display in "home.html":
         identities = identities,
         secids = secids,
-        stewardships = stewardships
+        nstewardships = nstewardships,
+        cstewardships = cstewardships
      )
 
 
@@ -1668,7 +1717,8 @@ def payment_options():
     # a list of *accounts* belonging to each. The user will also see a list of
     # entities over which it holds/shares stewardship.
 
-    stewardships_list, m = list_stewardships(primid_fph)
+    nstewardships_list, m = list_namespace_stewardships(primid_fph)
+    nstewardships_list, m = list_currency_stewardships(primid_fph)
 
     # Since a user may have *accounts* scattered across an arbitrary number of
     # *namespaces*, it is necessary to maintain a list of these:
@@ -1750,7 +1800,7 @@ def payment_options():
             p["currency"]["fph"] = c_fph
             p["currency"]["hrns"] = fph_to_hrns(c_fph)
             #p["currency"]["primid_is_c_steward"] = primid_currency_steward
-            if c_fph in stewardships_list:
+            if c_fph in cstewardships_list:
                 p["currency"]["primid_is_c_steward"] = True
             else:
                 p["currency"]["primid_is_c_steward"] = False
@@ -1846,7 +1896,8 @@ def currency_options():
     # a list of *accounts* belonging to each. The user will also see a list of
     # entities over which it holds/shares stewardship.
 
-    stewardships_list, m = list_stewardships(primid_fph)
+    nstewardships_list, m = list_namespace_stewardships(primid_fph)
+    cstewardships_list, m = list_currency_stewardships(primid_fph)
 
     # Since a user may have *accounts* scattered across an arbitrary number of
     # *namespaces*, it is necessary to maintain a list of these:
@@ -1932,7 +1983,7 @@ def currency_options():
             c = {}
             c["fph"] = c_fph
             c["hrns"] = fph_to_hrns(c_fph)
-            if c_fph in stewardships_list:
+            if c_fph in cstewardships_list:
                 c["primid_is_c_steward"] = True
             else:
                 c["primid_is_c_steward"] = False
@@ -1949,7 +2000,7 @@ def currency_options():
             p["currency"] = {}
             p["currency"]["fph"] = c_fph
             p["currency"]["hrns"] = fph_to_hrns(c_fph)
-            if c_fph in stewardships_list:
+            if c_fph in cstewardships_list:
                 p["currency"]["primid_is_c_steward"] = True
             else:
                 p["currency"]["primid_is_c_steward"] = False
@@ -2551,7 +2602,6 @@ def journal(ahid_fph, currency_fph):
     account_active, \
     account_currency_fph, \
     account_owner_fph, \
-    account_ahid_fph, \
     account_balance, \
     account_volume, \
     m = account_status(account_fph)
@@ -2560,19 +2610,18 @@ def journal(ahid_fph, currency_fph):
         cursor = conn.cursor()
         # Read transactions for specified currency:
         cursor.execute(
-            """
-            SELECT timestamp,
-                   payment_id,
-                   payer_fph,
-                   payee_fph,
-                   currency_fph,
-                   amount,
-                   payer_balance,
-                   payee_balance,
-                   annotation
-            FROM payments
-            WHERE (payer_fph = ? OR payee_fph = ?) and (currency_fph = ?)
-            """,
+            "SELECT " \
+            + "timestamp, " \
+            + "payment_id, " \
+            + "payer_fph, " \
+            + "payee_fph, " \
+            + "currency_fph, " \
+            + "amount, " \
+            + "payer_balance, " \
+            + "payee_balance, " \
+            + "annotation " \
+            + "FROM payments " \
+            + "WHERE (payer_fph = ? OR payee_fph = ?) and (currency_fph = ?)",
             (ahid_fph, ahid_fph, currency_fph)
         )
         all_payments = cursor.fetchall()
@@ -4615,7 +4664,7 @@ def create_pairing(owner_fph = ""):
         stewards_list, \
         m = get_currency_properties(currency_fph)
 
-        account_fph = create_new_pairing(
+        account_fph = new_pairing(
                           working_identity_fph,
                           ahid_hrns,
                           currency_hrns

@@ -9,10 +9,11 @@ from app.core.fph_hrns_maps import fph_to_hrns, hrns_to_fph
 from app.core.slate_core import new_namespace, new_currency, new_primid
 from app.core.slate_core import split_hrns
 
-from app.core.slate_core import create_new_pairing
+from app.core.slate_core import new_pairing
 from app.core.slate_core import retrieve_pmap
 from app.core.slate_core import complete_parent_namespace
-from app.core.slate_core import ah_payment
+#from app.core.slate_core import ah_payment
+from app.core.payments import ah_payment
 
 
 
@@ -87,12 +88,12 @@ for ahid_hrns in ["ah1.bb.cc", "ah2.bb.cc", "ah3.bb.cc", "ah4.bb.cc"]:
 #for ahid_hrns in ["ah5.bb.cc", "ah6.bb.cc", "ah7.bb.cc", "ah8.bb.cc"]:
     for c_hrns in ["cc", "hrs.cc", "kwh.cc"]:
     #for c_hrns in ["g£.cc", "MWh.cc", "g$.cc"]:
-        p_fph = create_new_pairing("bb.cc", ahid_hrns, c_hrns)
+        p_fph = new_pairing("bb.cc", ahid_hrns, c_hrns)
         print(p_fph)
 print("="*160)
 
 
-#ah1_fph = create_new_pairing("bb.cc", "ah1.cc", "cc")
+#ah1_fph = new_pairing("bb.cc", "ah1.cc", "cc")
 
 #print(ah1_fph)
 

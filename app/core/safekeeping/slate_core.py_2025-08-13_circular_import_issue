@@ -17,7 +17,7 @@ from app.core.common import ledger_timestamp
 from app.core.common import nshash
 from app.core.common import unixtime_str
 
-#from app.core.messaging import send_message
+from app.core.messaging import send_message
 
 from app.core.fph_hrns_maps import hrns_to_fph, fph_to_hrns, create_maps
 from app.core.fph_hrns_maps import delete_fph_from_map
@@ -2383,9 +2383,9 @@ def remove_steward(entity_id, removing_steward_id, removed_steward_id):
         return m
     if entity_fph == "":
         return "Entity does not exist"
-    if ("namespace" in etypes):
+    if etype == "namespace":
         table = "namespaces"
-    elif ("currency" in etypes):
+    elif etype == "currency":
         table = "currencies"
     else:
         return "Entity is not a stewarded type"
@@ -2623,32 +2623,27 @@ def list_active_namespaces(ancestor_namespace_identifier = ""): # FPH or HRNS
 # Get the *primid* to which a *secid* belongs:
 
 def get_primid(id_identifier): # *secid* or *ahid*
-    # (1) Each *ahid* or *secid* belongs to one *primid*
-    # (2) Each *primid* may have any number of *ahid* or *secids*
-    # (3) The identifier of a *primid* also identifies the first *ahid* in the
-    #     set available to that *primid*. In effect, this particular *ahid*
-    #     belongs to that *primid*.
-    id_fph, id_hrns, etypes, m = identify_entity(id_identifier)
-    if not id_fph:
-        return "", d_identifier + " is not a registered identifier"
-    if ("ahid" in etypes):
-        table = "ahids"
-    elif ("secid" in etypes):
-        table = "secids"
-    else:
-        return "", id_hrns + " identifies neither an ahid nor a secid"
+    id_fph, \
+    id_hrns, \
+    etypes, \
+    m = identify_entity(id_identifier)
+    if m:
+        return "", m
+    if etype == "ahid":
+        return get_ahid_primid(id_fph)
+
     with sqlite3.connect(ENTITIES_DB) as conn:
         cursor = conn.cursor()
         cursor.execute(
-            "SELECT primid_fph FROM " + table + " WHERE entity_fph = ?",
+            "SELECT primid_fph FROM secids WHERE entity_fph = ?",
             (id_fph,)
         )
         result = cursor.fetchone()
-        cursor.close()
-    if result is None:
-        return "", "Owner not recorded (this should never happen)"
-    owner_fph = result[0]
-    return owner_fph, ""
+    if result is not None:
+        primid_fph = result[0]
+        if isinstance(primid_fph, str) and re_fph.match(primid_fph):
+            return primid_fph, ""
+    return "", "No primid was found for " + id_identifier
 
 #==============================================================================
 

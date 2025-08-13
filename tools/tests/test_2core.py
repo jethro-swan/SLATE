@@ -13,7 +13,7 @@ from app.core.slate_core import identify_entity
 #from app.core.slate_core import
 from app.core.slate_core import new_primid
 from app.core.slate_core import new_account
-from app.core.slate_core import create_new_pairing
+from app.core.slate_core import new_pairing
 from app.core.fph_hrns_maps import hrns_to_fph, fph_to_hrns
 
 def list_etypes(e_fph):
@@ -131,7 +131,7 @@ print("\nCreating test pairing\n")
 
 account_fph, \
 account_hrns, \
-m = create_new_pairing(
+m = new_pairing(
         cthulhu_hrns,     # *primid* HRNS or FPH
         "ah1.cthulhu.cc", # HRNS (may not exist already)
         "hrs.cc"          # HRNS or FPH (must exist already)

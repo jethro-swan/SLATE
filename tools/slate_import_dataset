@@ -1,9 +1,10 @@
-#!/home/slate/SLATE/venv/bin/python3
 
 import sys, os, re, argparse
 #from datetime import datetime, date, time, timezone
 
-from app.core.slate_core import identify_entity, get_entity_type, new_account
+from app.core.slate_core import identify_entity
+from app.core.slate_core import get_entity_type
+from app.core.slate_core import new_account
 from app.core.slate_core import split_hrns
 from app.core.slate_core import new_currency
 from app.core.slate_core import random_filename
@@ -15,7 +16,7 @@ from app.core.fph_hrns_maps import fph_to_hrns, hrns_to_fph
 
 from app.core.omtrad import import_csv_dataset
 from app.core.omtrad import complete_parent_namespace
-from app.core.omtrad import create_new_pairing
+from app.core.omtrad import new_pairing
 from app.core.omtrad import ah_payment
 from app.core.omtrad import retrieve_pmap
 

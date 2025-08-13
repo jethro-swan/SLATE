@@ -7,9 +7,19 @@ import sys
 
 re_realname = re.compile(r"")
 
-# Names in SLATE are limited to alphanumeric Latin characters:
+# Most names in SLATE are limited to alphanumeric Latin characters:
 re_slatename = re.compile(r"^[a-zA-Z][a-zA-Z0-9]*$")
 #re_slatename = re.compile(r"^[a-fA-F0-9]{1,}$")
+
+# Pairing-indexed *account* names in SLATE may include [_^&]
+#no_us_re = "([^\W\d_][^\W_]*^)+[^\W\d_][^\W_]*"
+#no_us_re = "([a-zA-Z][a-zA-Z0-9]*^)+[a-zA-Z][a-zA-Z0-9]*"
+#pa_re = "^_" + no_us_re + "_&_" + no_us_re + "_$"
+#re_pairaccountname = re.compile(pa_re, re.UNICODE)
+
+# Validating pairing-indexed *account* identifier, e.g. _ah3^bb^cc_&_kwh^cc_
+re_pan1 = re.compile(r"^_[^_]+_&_[^_]+_$")
+re_pan2 = re.compile(r"^(?:[^\^]+\^)*[^\^]+$")
 
 re_access_token = re.compile(r"^[0-9a-fA-F]{32}$") # (currently same as for FPH)
 
