@@ -1080,18 +1080,9 @@ def new_primid(
         )
 
     if m:
-#        print("m5: ", end="")
         print(m)
 
     return primid_fph, primid_hrns, access_token, errors
-
-    #register_entity_type(primid_fph, "ahid")
-    #register_entity_type(primid_fph, "namespace")
-    #register_entity_type(primid_fph, "currency")
-    #register_entity_type(primid_fph, "account")
-
-
-
 
 # Although the initial access token is generated automatically here, it may be
 # updated by the *primid* at any time.
@@ -2917,36 +2908,25 @@ def new_pairing(
     if m:
         print("identify_entity(currency_id): " + m)
     if not currency_fph:
-#        print(currency_id + " is not a registered identifier (12)")
         return "", currency_id + " is not a registered identifier (12)"
     if not ("currency" in cetypes):
-#        print(currency_hrns + " is not a currency")
         return "", currency_hrns + " is not a currency"
     owner_fph, owner_hrns, petypes, m = identify_entity(owner_id)
     if m:
         print("identify_entity(owner_id)" + m)
     if not owner_fph:
-#        print(owner_id + " is not a registered identifier (13)")
         return "", "", owner_id + " is not a registered identifier (13)"
     if not ("primid" in petypes):
-#        print(owner_hrns + " is not a primid")
         return "", "", owner_hrns + " is not a primid"
-#    print("meow!")
     # If the *ahid* does not exist already it must be created:
-#    print("ahid_hrns supplied = " + ahid_hrns)
     r_ahid_fph, r_ahid_hrns, etypes, m = identify_entity(ahid_hrns)
-#    print("ahid_hrns retrieved = " + r_ahid_hrns)
     if not ("ahid" in etypes):
         # A new *ahid* is created:
         ahid_name, parent_hrns = split_hrns(ahid_hrns)
-#        print("ahid_hrns = " + ahid_hrns)
-#        print("ahid_name = " + ahid_name)
         ahid_fph, ahid_hrns, m = new_ahid(ahid_name, parent_hrns, owner_fph)
-#        print("Creating ahid " + ahid_hrns)
     else:
         ahid_fph = r_ahid_fph
         ahid_hrns = r_ahid_hrns
-#    print("ahid_hrns = " + ahid_hrns)
     # At this point, whether or not it has been necessary to create it, we now
     # have both the HRNS and the FPH of the *ahid*. It can now be paired with
     # the specified *currency* to index a new *account*.
@@ -2959,7 +2939,6 @@ def new_pairing(
     ah_id = "^".join(ahid_hrns.split(NSS))
     c_id = "^".join(currency_hrns.split(NSS))
     account_name = "_".join(["", ah_id, "&", c_id, ""])
-#    print("pairing account name = " + account_name)
     #
     # This name is then prefixed to the root of the owner *primid*'s private
     # *namespace*.
@@ -2972,8 +2951,6 @@ def new_pairing(
             owner_fph,
             currency_fph
         )
-#    print("new_pairing: account = " + account_fph + " > " + account_hrns)
-
     # The *ahid* may be paired with any *currency* (once only). These
     # serve as the co-ordinates in a grid identifying the *account* created
     # above.
@@ -2986,7 +2963,6 @@ def new_pairing(
         pmap = {}
     #if not (ahid_hrns in pmap):
     if not (ahid_hrns in pmap.keys()):
-        #print(ahid_hrns + " not in pmap")
         pmap[ahid_hrns] = {}
     if not (currency_hrns in pmap[ahid_hrns].keys()):
         pmap[ahid_hrns][currency_hrns] = account_fph
@@ -3019,11 +2995,6 @@ def new_pairing(
 
 #=============================================================================
 
-
-
-
-#=============================================================================
-
 def list_primid_ahids(primid_fph):
 
 
@@ -3051,7 +3022,6 @@ def retrieve_pairing_account_fph(ahid_id, currency_id):
         return "", "", currency_fph + " is not a currency"
     primid_fph = get_ahid_primid(ahid_fph)
     if primid_fph:
-#        print("primid = " + primid_fph)
         pmap, m = retrieve_pmap(primid_fph)
     else:
         return "", "", "Unable to retrieve pmap for ahid " + ahid_hrns
@@ -3125,13 +3095,6 @@ def create_import_currency(currency_hrns, steward_fph):
         )
     return currency_fph, currency_hrns, ""
 
-
-
-
-
-
-
-
 #==============================================================================
 # CSV import
 #
@@ -3148,7 +3111,6 @@ def create_import_currency(currency_hrns, steward_fph):
 #
 
 def import_csv_dataset(fpath, primid_identifier):
-#def import_csv_dataset(fpath, primid_identifier, SC=","):
 
     # The uploaded file will have been given a randomly generated name and is
     # identified as fpath. The file will be deleted as soon as it has been
@@ -3187,7 +3149,6 @@ def import_csv_dataset(fpath, primid_identifier):
         if len(field) == 5:
             SC = c
             break
-    #print("SC = " + c)
 
     row_count = 0
     for row in rows:
@@ -3206,16 +3167,6 @@ def import_csv_dataset(fpath, primid_identifier):
             currency_hrns_ = currency_hrns_.lstrip("@")
         else: # relative identifier path
             currency_hrns_ = currency_hrns_ + NSS + primid_hrns
-
-#        if payer_hrns[0] == "@": # absolute identifier path
-#            payer_hrns.lstrip("@")
-#        else: # relative identifier path
-#            payer_hrns = primid_hrns + NSS + payer_hrns
-#
-#        if payee_hrns[0] == "@": # absolute identifier path
-#            payee_hrns.lstrip("@")
-#        else: # relative identifier path
-#            payee_hrns = primid_hrns + NSS + payee_hrns
 
         # Create any missing *currency*:
         currency_fph, currency_hrns, etype, m = identify_entity(currency_hrns_)

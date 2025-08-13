@@ -6069,7 +6069,7 @@ def message_send():
 
         # THIS MAKES NO SENSE ...
 
-        if set(recipient_type) >= set(["ahid", "primid", "secid", "currency"]):
+        if set(recipient_types) >= set(["ahid", "primid", "secid", "currency"]):
             flash("Invalid recipient type")
             return redirect("/home")
 
@@ -6199,6 +6199,11 @@ def messages_show(recipient_fph):
         working_identity_hrns, \
         etypes, \
         m = identify_entity(session["working_identity"])
+        # TEMPORARY FUDGE ...
+        if ("secid" in etypes):
+            working_identity_type = "secid"
+        else:
+            working_identity_type = "primid"
     else:
         working_identity_fph = primid_fph
         session["working_identity"] = working_identity_fph
@@ -6240,7 +6245,7 @@ def messages_show(recipient_fph):
     recipient_hrns, \
     etypes, \
     m = identify_entity(recipient_fph)
-    if not (etype in ["primid", "secid", "ahid"]):
+    if len(set(["primid", "secid", "ahid"]) & set(etypes)) == 0:
         flash("Recipient is not an agent")
         return redirect("/home")
 
