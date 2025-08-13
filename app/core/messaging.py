@@ -280,28 +280,25 @@ def send_message(
     with sqlite3.connect(MESSAGES_DB) as conn:
         cursor = conn.cursor()
         cursor.execute(
-            """
-            INSERT INTO messages (
-                timestamp,
-                expiry_timestamp,
-                deletion_scheduled,
-                category,
-                indelible,
-                stewardship_fph,
-                sender_fph,
-                recipient_identity_fph,
-                recipient_primid_fph,
-                payer_account_fph,
-                payee_account_fph,
-                payer_ahid_fph,
-                payee_ahid_fph,
-                currency_fph,
-                amount,
-                subject,
-                message_body
-            )
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-            """,
+            "INSERT INTO messages (" \
+            + "timestamp, " \
+            + "expiry_timestamp, " \
+            + "deletion_scheduled, " \
+            + "category, " \
+            + "indelible, " \
+            + "stewardship_fph, " \
+            + "sender_fph, " \
+            + "recipient_identity_fph, " \
+            + "recipient_primid_fph, " \
+            + "payer_account_fph, " \
+            + "payee_account_fph, " \
+            + "payer_ahid_fph, " \
+            + "payee_ahid_fph, " \
+            + "currency_fph, " \
+            + "amount, " \
+            + "subject, " \
+            + "message_body" \
+            + ") VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
             (
                 message_timestamp,
                 expiry_datetime,
@@ -324,7 +321,6 @@ def send_message(
         )
         conn.commit()
         cursor.close()
-
     return ""
 
 #==============================================================================
@@ -342,29 +338,27 @@ def fetch_messages(recipient_identifier):
     with sqlite3.connect(MESSAGES_DB) as conn:
         cursor = conn.cursor()
         cursor.execute(
-            """
-            SELECT
-                message_id,
-                timestamp,
-                expiry_timestamp,
-                deletion_scheduled,
-                category,
-                indelible,
-                stewardship_fph,
-                sender_fph,
-                recipient_identity_fph,
-                recipient_primid_fph,
-                payer_account_fph,
-                payee_account_fph,
-                payer_ahid_fph,
-                payee_ahid_fph,
-                currency_fph,
-                amount,
-                subject,
-                message_body
-            FROM messages
-            WHERE recipient_identity_fph = ?
-            """,
+            "SELECT " \
+            + "message_id, " \
+            + "timestamp, " \
+            + "expiry_timestamp, " \
+            + "deletion_scheduled, " \
+            + "category, " \
+            + "indelible, " \
+            + "stewardship_fph, " \
+            + "sender_fph, " \
+            + "recipient_identity_fph, " \
+            + "recipient_primid_fph, " \
+            + "payer_account_fph, " \
+            + "payee_account_fph, " \
+            + "payer_ahid_fph, " \
+            + "payee_ahid_fph, " \
+            + "currency_fph, " \
+            + "amount, " \
+            + "subject, " \
+            + "message_body " \
+            + "FROM messages " \
+            + "WHERE recipient_identity_fph = ?",
             (recipient_fph,)
         )
         message_list = list(cursor.fetchall())
@@ -374,9 +368,6 @@ def fetch_messages(recipient_identifier):
         deletions_due = []
         messages = [] # list of dictionaries
         for message in message_list:
-
-#            print(message)
-
             message_id = message[0]
             timestamp = message[1]
             expiry_timestamp = message[2]
@@ -530,17 +521,12 @@ def message_count(primid_id, hub_mode):
 #        print(fph_to_hrns(recipient_fph))
 
     number_of_messages = 0
-    #number_of_indelible_messages = 0
     with sqlite3.connect(MESSAGES_DB) as conn:
         cursor = conn.cursor()
         for recipient_fph in recipient_list:
-#            print(fph_to_hrns(recipient_fph))
             cursor.execute(
-                """
-                SELECT message_id
-                FROM messages
-                WHERE recipient_primid_fph = ?
-                """,
+                "SELECT message_id FROM messages " \
+                + "WHERE recipient_primid_fph = ?",
                 (primid_fph,)
             )
         message_id_list = list(cursor.fetchall())
@@ -549,11 +535,8 @@ def message_count(primid_id, hub_mode):
             return 0, 0 # no messages returned
         number_of_messages += len(message_id_list)
         cursor.execute(
-            """
-            SELECT indelible
-            FROM messages
-            WHERE recipient_primid_fph = ? AND indelible = 1
-            """,
+            "SELECT indelible FROM messages " \
+            + "WHERE recipient_primid_fph = ? AND indelible = 1",
             (primid_fph,)
         )
         indelible_message_list = list(cursor.fetchall())
@@ -561,8 +544,6 @@ def message_count(primid_id, hub_mode):
     if indelible_message_list is None:
         return number_of_messages, 0 # no indelible messages found
     else:
-#        print("messages: " + str(number_of_messages))
-#        print("indelible messages: " + str(len(indelible_message_list)))
         return number_of_messages, len(indelible_message_list)
 
 
@@ -576,41 +557,26 @@ def messages_available(recipient_identifier):
     recipient_type, \
     em = identify_entity(recipient_identifier)
 
-#    print("recipient_fph = " + recipient_fph)
-#    print("recipient_hrns = " + recipient_hrns)
-
     with sqlite3.connect(MESSAGES_DB) as conn:
         cursor = conn.cursor()
         cursor.execute(
-            """
-            SELECT message_id
-            FROM messages
-            WHERE recipient_identity_fph = ?
-            """,
+            "SELECT message_id FROM messages " \
+            + "WHERE recipient_identity_fph = ?",
             (recipient_fph,)
         )
-        #message_list = list(cursor.fetchall())
         message_id_list = list(cursor.fetchall())
         if message_id_list is None:
             cursor.close()
             return 0, 0 # no messages returned
-#        print(message_id_list)
 
         number_of_messages = len(message_id_list)
-#        print(
-#            recipient_hrns + " has received "
-#            + str(number_of_messages) + " messages"
-#        )
 
         # If the recipient is a *primid*, some messages may be indelible:
         if recipient_type != "primid":
             return number_of_messages, 0
         cursor.execute(
-            """
-            SELECT indelible
-            FROM messages
-            WHERE recipient_identity_fph = ? AND indelible = 1
-            """,
+            "SELECT indelible FROM messages " \
+            + "WHERE recipient_identity_fph = ? AND indelible = 1",
             (recipient_fph,)
         )
         indelible_message_list = list(cursor.fetchall())

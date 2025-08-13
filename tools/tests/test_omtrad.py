@@ -12,25 +12,10 @@ from app.core.slate_core import split_hrns
 from app.core.slate_core import new_pairing
 from app.core.slate_core import retrieve_pmap
 from app.core.slate_core import complete_parent_namespace
-#from app.core.slate_core import ah_payment
 from app.core.payments import ah_payment
-
-
-
-
-#from app.core.omtrad import *
-
-
-#primid_fph, m = hrns_to_fph("bb.cc")
 
 parent_fph, m = hrns_to_fph("cc")
 
-#primid_fph, \
-#primid_hrns, \
-#access_token, \
-#m = new_primid(
-#        "bb", parent_fph, "JW", "john@lrc.org.uk", "", "zxcvbnm", "123456"
-#    )
 primid_fph, m = hrns_to_fph("bb.cc")
 
 nslist = ["uk.cc", "mon.uk.cc", "chep.mon.uk.cc"]
@@ -71,63 +56,22 @@ for c in clist:
             "cname"         # default *account* name
         )
 
-    print("currency: " + currency_fph + " > " + currency_hrns)
-    print()
-
-
-
-
-
-#name1, namespace1 = split_hrns("tom.dick.harry")
-#print(name1 + " : " + namespace1)
+#    print("currency: " + currency_fph + " > " + currency_hrns)
+#    print()
 
 print("="*160)
 print("Running test entity identification loop")
 print("-"*160)
 for ahid_hrns in ["ah1.bb.cc", "ah2.bb.cc", "ah3.bb.cc", "ah4.bb.cc"]:
-#for ahid_hrns in ["ah5.bb.cc", "ah6.bb.cc", "ah7.bb.cc", "ah8.bb.cc"]:
     for c_hrns in ["cc", "hrs.cc", "kwh.cc"]:
-    #for c_hrns in ["g£.cc", "MWh.cc", "g$.cc"]:
         p_fph = new_pairing("bb.cc", ahid_hrns, c_hrns)
         print(p_fph)
 print("="*160)
 
-
-#ah1_fph = new_pairing("bb.cc", "ah1.cc", "cc")
-
-#print(ah1_fph)
-
-#print(fph_to_hrns(ah1_fph))
-
-#with sqlite3.connect(ENTITIES_DB) as conn:
-#    cursor = conn.cursor()
-#    cursor.execute("SELECT pmap FROM primids;")
-#    results = cursor.fetchall()
-#    cursor.close()
-#
-#if results is None:
-#    print("No pmaps found")
-#else:
-#    print(results)
-#    for result in results[0]:
-#        if result is None:
-#            print("invalid pmap")
-#        else:
-#            pmap = pickle.loads(result)
-#            print(pmap)
-
-
 pmap, m = retrieve_pmap("bb.cc")
 
-#print("Retrieved pmap:")
-#print(pmap)
-#print()
 
 complete_parent_namespace("zx.cv.l5.cald.mon.uk", primid_fph)
-#currency_fph, currency_hrns, m = create_import_currency("qw.er.ty.ui.pa.uk")
-#print(currency_fph)
-#print(currency_hrns)
-#print(m)
 
 test_entity_identification = True
 test_entity_identification = False
@@ -168,7 +112,6 @@ if test_entity_identification:
         print(etype + ": " + currency_fph + " > " + currency_hrns)
     print("="*160)
 
-
 if run_payment_test_loop:
     print("="*160)
     print("Running payment test loop")
@@ -187,7 +130,6 @@ if run_payment_test_loop:
                     + " | " + str(amount) \
                     + " | " + annotation
                 )
-
             if test_payments:
                 m = ah_payment(
                         payer_ahid_hrns,

@@ -7,10 +7,6 @@ from app.core.slate_core import register_full_entity_set
 from app.core.slate_core import register_entity_type
 from app.core.slate_core import deregister_entity_type
 from app.core.slate_core import identify_entity
-#from app.core.slate_core import
-#from app.core.slate_core import
-#from app.core.slate_core import
-#from app.core.slate_core import
 from app.core.slate_core import new_primid
 from app.core.slate_core import new_account
 from app.core.slate_core import new_pairing
@@ -21,8 +17,6 @@ def list_etypes(e_fph):
     print("etypes: ", end="")
     print(etypes)
 
-
-
 qq_fph = register_identifier("qq.cc")
 print("qq.cc")
 print(qq_fph + " > " + fph_to_hrns(qq_fph))
@@ -30,21 +24,17 @@ qq_fph2, m = hrns_to_fph("qq.cc")
 if qq_fph2 != qq_fph:
     print("Map inversion failure")
 
-
 list_etypes(qq_fph)
 
 register_entity_type(qq_fph, "currency")
-#set_entity_type(qq_fph, "namespace", True)
 
 list_etypes(qq_fph)
 
 register_entity_type(qq_fph, "namespace")
-#set_entity_type(qq_fph, "currency", True)
 
 list_etypes(qq_fph)
 
 register_entity_type(qq_fph, "ahid")
-#set_entity_type(qq_fph, "ahid", True)
 
 list_etypes(qq_fph)
 
@@ -61,17 +51,14 @@ deregister_entity_type(qq_fph, "namespace")
 list_etypes(qq_fph)
 
 register_entity_type(qq_fph, "currency")
-#set_entity_type(qq_fph, "namespace", True)
 
 list_etypes(qq_fph)
 
 register_entity_type(qq_fph, "namespace")
-#set_entity_type(qq_fph, "currency", True)
 
 list_etypes(qq_fph)
 
 register_entity_type(qq_fph, "ahid")
-#set_entity_type(qq_fph, "ahid", True)
 
 list_etypes(qq_fph)
 
@@ -105,7 +92,6 @@ print("access_token: " + access_token)
 print("primid creation message:")
 print(m)
 
-
 cthulhu_fph, cthulhu_hrns, etypes, m = identify_entity(cthulhu_fph)
 print("cthulhu_fph = " + cthulhu_fph)
 print("cthulhu_hrns = " + cthulhu_hrns)
@@ -125,7 +111,6 @@ m = new_account(
         "hrs.cc"
     )
 print("test account: " + account_fph + " > " + account_hrns)
-
 
 print("\nCreating test pairing\n")
 

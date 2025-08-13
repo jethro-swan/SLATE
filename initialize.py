@@ -44,10 +44,6 @@ create_substrate()
 
 print("creating quasi-TLD root namespace set")
 tld_fph_list, errors = create_quasitld_set(False)
-#print(errors)
-#print(tld_fph_list)
-#for n_fph in tld_fph_list:
-#    print(fph_to_hrns(n_fph))
 
 print("\n\nThe following seed entities have been created (HRNS):")
 print("\tseed namespace  = \"cc\"")
@@ -64,9 +60,8 @@ print("\tpassword = Gl0balM3ltd0wn")
 print("\tPIN      = 123456")
 print()
 
-# 2025-05-30
-# Create the following seed *currencies* with  adm.cc  as the initial steward.
-steward_fph, m = hrns_to_fph("adm.cc")
+# Create the following seed *currencies* with  "cc"  as the initial steward.
+steward_fph, m = hrns_to_fph("cc")
 clist = ["kwh.cc", "hrs.cc"]
 for c in clist:
     cname, c_parent_ns_hrns = split_hrns(c)

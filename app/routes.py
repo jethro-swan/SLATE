@@ -2598,13 +2598,23 @@ def journal(ahid_fph, currency_fph):
     primid_fph, \
     m = retrieve_pairing_account_fph(ahid_hrns, currency_fph)
 
-    account_exists, \
-    account_active, \
+#    account_exists, \
+#    account_active, \
+#    account_currency_fph, \
+#    account_owner_fph, \
+#    account_balance, \
+#    account_volume, \
+#    m = account_status(account_fph)
+
     account_currency_fph, \
     account_owner_fph, \
     account_balance, \
     account_volume, \
-    m = account_status(account_fph)
+    account_active, \
+    m = get_account_properties(account_fph)
+
+
+
 
     with sqlite3.connect(PAYMENTS_DB) as conn:
         cursor = conn.cursor()
