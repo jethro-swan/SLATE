@@ -39,18 +39,16 @@ from app import app
 #==============================================================================
 # Create a list of payments made in the specified *currency*:
 
-def list_payments_in_currency(currency_identifier):
+def list_payments_in_currency(currency_id):
 
-    currency_fph, \
-    currency_hrns, \
-    etype, \
-    m = identify_entity(currency_identifier)
+    currency_fph, currency_hrns, etypes, \
+    m = identify_entity(currency_id)
     if m:
         return [], m
-    if currency_fph == "":
-        [], "No valid entity was specified"
-    if etype != "currency":
-        return [], "The entity specified is not a currency"
+    if not currency_fph:
+        [], currency_id + "is not a registered identifier"
+    if not ("currency" in etypes):
+        return [], currency_hrns + " has no registered currency"
 
     # Hub operational mode (read from environment variable HUB_MODE)
     hub_mode = get_hub_mode()
@@ -59,18 +57,16 @@ def list_payments_in_currency(currency_identifier):
         cursor = conn.cursor()
         # Read transactions for specified currency:
         cursor.execute(
-            """
-            SELECT timestamp,
-                   payment_id,
-                   payer_fph,
-                   payee_fph,
-                   amount,
-                   payer_balance,
-                   payee_balance,
-                   annotation
-            FROM payments
-            WHERE currency_fph = ?
-            """,
+            "SELECT " \
+            + "timestamp, " \
+            + "payment_id, " \
+            + "payer_fph, " \
+            + "payee_fph, " \
+            + "amount, " \
+            + "payer_balance, " \
+            + "payee_balance, " \
+            + "annotation " \
+            + "FROM payments WHERE currency_fph = ?",
             (currency_fph,)
         )
         all_payments = cursor.fetchall()
@@ -111,31 +107,38 @@ def list_payments_in_currency(currency_identifier):
 # Create a list of payments made to or from the specified *account*:
 
 def list_payments_for_account(account_id):
-
-    account_fph, account_hrns, etype, m = identify_entity(account_id)
+    account_fph, account_hrns, etypes, m = identify_entity(account_id)
     if m:
         return [], m
-    if account_fph == "":
-        [], "No valid entity was specified"
-    if etype != "account":
-        return [], "The entity specified is not an account"
+    if not account_fph:
+        [], account_id + " is not a registered identifier"
+    currency_fph, owner_fph, balance, volume, active, \
+    m = get_account_properties(account_fph)
 
-    # Hub operational mode (read from environment variable HUB_MODE)
-    hub_mode = get_hub_mode()
-
-    if hub_mode == "omtrad":
-        currency_fph, \
-        owner_fph, \
-        ahid_fph, \
-        balance, \
-        volume, \
-        m = get_account_properties(account_fph)
-
-        payer_fph = ahid_fph
-        payee_fph = ahid_fph
+    owner_fph, owner_hrns, etypes, m = identify_entity(owner_fph)
+    pair_indexed_account = directly_indexed_account = False
+    if ("ahid" in etypes):
+        # This is a *currency*|*ahid* pairing-identified *account* so the payer
+        # or payee is displayed as the *ahid*'s identifier.
+        pair_indexed_account = True
+        payer_fph = payee_fph = ahid_fph = owner_fph
+        print("paired: " + owner_fph + " > " + fph_to_hrns(owner_fph))
+    elif ("account" in etypes):
+        # This is a directly-addressed *account* so the payer or payee is
+        # displayed as the *account*'s own identifier.
+        directly_indexed_account = True
+        payer_fph = payee_fph = account_fph
+        print("direct: " + account_fph + " > " + fph_to_hrns(account_fph))
     else:
-        payer_fph = account_fph
-        payee_fph = account_fph
+        return [], "Identifier " + account_hrns + " has no registered account"
+    # Hub operational mode (read from environment variable HUB_MODE)
+#    hub_mode = get_hub_mode()
+    print("list_payments_for_account(" + account_hrns + ")")
+
+#    currency_fph, owner_fph, balance, volume, active, \
+#    m = get_account_properties(account_fph)
+#
+#    payer_fph = payee_fph = account_fph
 
     with sqlite3.connect(PAYMENTS_DB) as conn:
         cursor = conn.cursor()
@@ -151,8 +154,7 @@ def list_payments_for_account(account_id):
             + "payer_balance, " \
             + "payee_balance, " \
             + "annotation " \
-            + "FROM payments " \
-            + "WHERE payer_fph = ? OR payee_fph = ?",
+            + "FROM payments WHERE payer_fph = ? OR payee_fph = ?",
             (payer_fph, payee_fph)
         )
         all_payments = cursor.fetchall()
@@ -176,11 +178,8 @@ def list_payments_for_account(account_id):
         annotation = p[8]
         payment_row.append(timestamp)
         payment_row.append(payment_id)
-        if hub_mode == "omtrad":
+        if pair_indexed_account:
             payment_row.append(currency_hrns)
-        # If THIS *account* is the payee, put the amount in the recipts
-        # column (3) and leave the payments column blank:
-        if hub_mode == "omtrad":
             if payee_fph == ahid_fph:
                 payment_row.append(amount)          # amount received
                 payment_row.append("")
@@ -290,12 +289,12 @@ def dump_account_payments_csv(account_id, show_header_row = False):
 
     payment_rows, m = list_payments_for_account(account_id)
 
+    print("export journal: rows retrieved for CSV file")
+    for row in payment_rows:
+        print(row)
+
     if hub_mode == "omtrad":
-        currency_fph, \
-        owner_fph, \
-        balance, \
-        volume, \
-        active, \
+        currency_fph, owner_fph, balance, volume, active, \
         m = get_account_properties(account_fph)
 
         csv_filename = "account_" + fph_to_hrns(currency_fph) + "_"\
@@ -304,6 +303,9 @@ def dump_account_payments_csv(account_id, show_header_row = False):
     else:
         csv_filename = "account_" + fph_to_hrns(account_fph) + "_journal_" \
                      + timestamp() + ".csv"
+
+    print("export journal: ready to compile journal CSV file")
+
     csv_export_filepath = os.path.join(app.root_path, "export", csv_filename)
     with open(csv_export_filepath, "w") as csv_f:
         if show_header_row:

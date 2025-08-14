@@ -5370,7 +5370,6 @@ def export_account_csv(account_fph):
     print("export journal: account_fph = " + account_fph)
     print("export journal: etypes = ", end="")
     print(etypes)
-
     if m:
         flash(m)
         return redirect("/home")
@@ -5419,9 +5418,9 @@ def export_account_csv(account_fph):
         flash(currency_id + " is not a currency")
         return redirect("/home")
 
-    csv_file, \
-    m = dump_account_payments_csv(account_fph, True)
+    csv_file, m = dump_account_payments_csv(account_fph, True)
     if m:
+        print("export journal: dump_account_payments_csv( )")
         flash(m)
         return redirect("/home")
 

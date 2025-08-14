@@ -1342,9 +1342,6 @@ def new_currency(
 #==============================================================================
 ## A new account is created in a specified currency:
 
-# NB - This needs to be changed. The owner will be either an *ahid* or a
-#      *secid* so there is no need for a separate *secid* field.
-
 def new_account(
         account_name,
         parent_id,
@@ -2951,15 +2948,11 @@ def new_pairing(
     #
     # This name is then prefixed to the root of the owner *primid*'s private
     # *namespace*.
+#    account_fph, account_hrns, \
+#    m = new_account(account_name, owner_id, owner_id, currency_fph)
+    account_fph, account_hrns, \
+    m = new_account(account_name, owner_id, ahid_fph, currency_fph)
     #
-    account_fph, \
-    account_hrns, \
-    m = new_account(
-            account_name,
-            owner_fph,
-            owner_fph,
-            currency_fph
-        )
     # The *ahid* may be paired with any *currency* (once only). These
     # serve as the co-ordinates in a grid identifying the *account* created
     # above.

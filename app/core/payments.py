@@ -51,19 +51,17 @@ def create_payments_db():
         cursor = conn.cursor()
         # Create payments table:
         cursor.execute(
-            """
-            CREATE TABLE IF NOT EXISTS payments (
-                timestamp INTEGER TEXT NOT NULL,
-                payment_id INTEGER PRIMARY KEY AUTOINCREMENT,
-                payer_fph TEXT NOT NULL,
-                payee_fph TEXT NOT NULL,
-                currency_fph TEXT NOT NULL,
-                amount INTEGER NOT NULL,
-                payer_balance INTEGER NOT NULL,
-                payee_balance INTEGER NOT NULL,
-                annotation TEXT
-            );
-            """
+            "CREATE TABLE IF NOT EXISTS payments (" \
+            + "timestamp INTEGER TEXT NOT NULL, " \
+            + "payment_id INTEGER PRIMARY KEY AUTOINCREMENT, " \
+            + "payer_fph TEXT NOT NULL, " \
+            + "payee_fph TEXT NOT NULL, " \
+            + "currency_fph TEXT NOT NULL, " \
+            + "amount INTEGER NOT NULL, " \
+            + "payer_balance INTEGER NOT NULL, " \
+            + "payee_balance INTEGER NOT NULL, " \
+            + "annotation TEXT" \
+            + ");"
         )
         conn.commit()
         cursor.close()
