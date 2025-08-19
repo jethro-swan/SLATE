@@ -73,9 +73,7 @@ list_etypes(qq_fph)
 
 print("\nCreating test primid\n")
 
-cthulhu_fph, \
-cthulhu_hrns, \
-access_token, \
+cthulhu_fph, cthulhu_hrns, access_token, \
 m = new_primid(
         "cthulhu",
         "cc",
@@ -83,7 +81,8 @@ m = new_primid(
         "cthulhu@rlyeh.net",
         "",
         "yog-sothoth",
-        "987654"
+        "987654",
+        "kwh.cc"
     )
 
 print("primid_fph: " + cthulhu_fph)

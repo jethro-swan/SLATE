@@ -81,10 +81,10 @@ else:
     table_row.append("none")
 table_rows.append(table_row)
 # pmap:
-table_row = []
-table_row.append("pmap (pairing map)")
-table_row.append(pmap)
-table_rows.append(table_row)
+#table_row = []
+#table_row.append("pmap (pairing map)")
+#table_row.append(pmap)
+#table_rows.append(table_row)
 # namespace stewardships:
 table_row = []
 table_row.append("namespace stewardships")
@@ -110,5 +110,36 @@ table_rows.append(table_row)
 
 primid_table.add_rows(table_rows[0:])
 print(primid_table)
+
+print("\npmap (pairing map)")
+#print(pmap)
+#for ahid_hrns in pmap.keys():
+#    #print("\n" + ahid_hrns)
+#    for c_hrns in pmap[ahid_hrns].keys():
+#        print(
+#            "( " + ahid_hrns + ", " + c_hrns + " ) > " \
+#            + fph_to_hrns(pmap[ahid_hrns][c_hrns])
+#        )
+
+# set up table:
+pmap_table = PrettyTable()
+pmap_table.align = "l"
+pmap_table.field_names = ["ahid", "currency", "account FPH", "account HRNS"]
+table_rows = [] # one row per pairing
+for ahid_hrns in pmap.keys():
+    for currency_hrns in pmap[ahid_hrns].keys():
+        table_row = []
+        table_row.append(ahid_hrns)
+        table_row.append(currency_hrns)
+        table_row.append(pmap[ahid_hrns][currency_hrns])
+        table_row.append(fph_to_hrns(pmap[ahid_hrns][currency_hrns]))
+        table_rows.append(table_row)
+
+#for row in table_rows:
+#    print("( " + row[0] + ", " + row[1] + " ) > " + row[2])
+
+
+pmap_table.add_rows(table_rows[0:])
+print(pmap_table)
 
 sys.exit(1)

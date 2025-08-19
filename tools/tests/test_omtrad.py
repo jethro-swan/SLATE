@@ -63,8 +63,8 @@ print("="*160)
 print("Running test entity identification loop")
 print("-"*160)
 for ahid_hrns in ["ah1.bb.cc", "ah2.bb.cc", "ah3.bb.cc", "ah4.bb.cc"]:
-    for c_hrns in ["cc", "hrs.cc", "kwh.cc"]:
-        p_fph = new_pairing("bb.cc", ahid_hrns, c_hrns)
+    for currency_hrns in ["cc", "hrs.cc", "kwh.cc"]:
+        p_fph = new_pairing("bb.cc", ahid_hrns, currency_hrns)
         print(p_fph)
 print("="*160)
 

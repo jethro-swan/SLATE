@@ -27,12 +27,7 @@ if not ("account" in etypes):
     sys.exit(1)
 
 # fetch *account* properties
-currency_fph, \
-owner_fph, \
-ahid_fph, \
-balance, \
-volume, \
-active, \
+currency_fph, owner_fph, balance, volume, active, \
 m = get_account_properties(identifier_fph)
 # set up table:
 account_table = PrettyTable()
@@ -72,15 +67,13 @@ table_rows.append(table_row)
 # owner:
 table_row = []
 table_row.append("owner")
-table_row.append(fph_to_hrns(owner_fph))
-table_rows.append(table_row)
-# ahid:
-table_row = []
-table_row.append("ahid")
-if ahid_fph:
-    table_row.append(fph_to_hrns(ahid_fph))
-else:
-    table_row.append("none")
+owner_fph, owner_hrns, etypes, m = identify_entity(owner_fph)
+owner = fph_to_hrns(owner_fph) + " ("
+if ("ahid" in etypes):
+    owner += "ahid)"
+elif ("secid" in etypes):
+    owner += "secid)"
+table_row.append(owner)
 table_rows.append(table_row)
 
 account_table.add_rows(table_rows[0:])

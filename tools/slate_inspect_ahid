@@ -25,29 +25,29 @@ if not ("ahid" in etypes):
     sys.exit(1)
 
 # fetch *ahid* properties
-active, \
-primid_fph, \
-accounts_fph_list, \
-m = get_ahid_properties(identifier_fph)
+active, primid_fph, accounts_fph_list, m = get_ahid_properties(identifier_fph)
 # set up table:
 ahid_table = PrettyTable()
 ahid_table.align = "l"
-ahid_table.field_names = ["property", "value(s)"]
+ahid_table.field_names = ["property", "value(s)", "(FPH)"]
 table_rows = [] # one row per property
 # identifier HRNS
 table_row = []
-table_row.append("HRNS")
+table_row.append("identifier")
 table_row.append(identifier_hrns)
+table_row.append(identifier_fph)
 table_rows.append(table_row)
 # identifier FPH
 table_row = []
-table_row.append("FPH")
-table_row.append(identifier_fph)
+table_row.append("owner (primid)")
+table_row.append(fph_to_hrns(primid_fph))
+table_row.append(primid_fph)
 table_rows.append(table_row)
 # active?
 table_row = []
 table_row.append("active")
 table_row.append(truefalse(active))
+table_row.append("")
 table_rows.append(table_row)
 # accounts:
 table_row = []
@@ -56,6 +56,7 @@ accounts_fph_list = []
 for account_fph in accounts_fph_list:
     accounts_fph_list.append(fph_to_hrns(account_fph))
 table_row.append(", ".join(accounts_fph_list))
+table_row.append("")
 table_rows.append(table_row)
 
 ahid_table.add_rows(table_rows[0:])
