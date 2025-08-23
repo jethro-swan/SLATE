@@ -1,22 +1,13 @@
 #!/home/slate/SLATE/venv/bin/python3
 
-import sqlite3
 import sys
-import os
-import pickle
 from prettytable import PrettyTable
-from app.core.constants import ENTITIES_DB
-from app.core.slate_core import get_entity_types
 from app.core.slate_core import identify_entity
 from app.core.slate_core import get_account_properties
-from app.core.fph_hrns_maps import hrns_to_fph, fph_to_hrns
+from app.core.fph_hrns_maps import fph_to_hrns
 from app.core.display import integer_to_money_format
 from app.core.display import integer_to_money_s_format
 from app.core.display import truefalse
-
-#script_name = sys.argv[0].replace(".py", "").replace("./", "")
-#script_name = script_name.replace("/usr/local/bin/", "")
-#script_name = script_name.replace("tools/", "")
 
 entity_identifier = sys.argv[1] # identifier (FPH or HRNS)
 
@@ -36,13 +27,8 @@ account_table.field_names = ["property", "value(s)"]
 table_rows = [] # one row per property
 # identifier HRNS
 table_row = []
-table_row.append("HRNS")
-table_row.append(identifier_hrns)
-table_rows.append(table_row)
-# identifier FPH
-table_row = []
-table_row.append("FPH")
-table_row.append(identifier_fph)
+table_row.append("identifier (FPH <> HRNS)")
+table_row.append(identifier_fph + " <> " + identifier_hrns)
 table_rows.append(table_row)
 # currency:
 table_row = []
@@ -65,15 +51,19 @@ table_row.append("active")
 table_row.append(truefalse(active))
 table_rows.append(table_row)
 # owner:
-table_row = []
-table_row.append("owner")
 owner_fph, owner_hrns, etypes, m = identify_entity(owner_fph)
-owner = fph_to_hrns(owner_fph) + " ("
 if ("ahid" in etypes):
-    owner += "ahid)"
+    owner_type = "ahid"
 elif ("secid" in etypes):
-    owner += "secid)"
-table_row.append(owner)
+    owner_type = "secid"
+table_row = []
+table_row.append("owner (FPH <> HRNS)")
+table_row.append(owner_fph + " <> " + owner_hrns)
+table_rows.append(table_row)
+# owner type:
+table_row = []
+table_row.append("owner type")
+table_row.append(owner_type)
 table_rows.append(table_row)
 
 account_table.add_rows(table_rows[0:])

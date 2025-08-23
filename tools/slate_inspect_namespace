@@ -1,25 +1,11 @@
 #!/home/slate/SLATE/venv/bin/python3
 
-import sqlite3
 import sys
-import os
-import pickle
 from prettytable import PrettyTable
-from app.core.constants import ENTITIES_DB
-from app.core.slate_core import get_entity_types
 from app.core.slate_core import identify_entity
-from app.core.slate_core import get_account_properties
 from app.core.slate_core import get_namespace_properties
-from app.core.slate_core import get_currency_properties
-from app.core.slate_core import get_primid_properties
-from app.core.slate_core import get_ahid_properties
-from app.core.slate_core import get_secid_properties
-from app.core.fph_hrns_maps import hrns_to_fph, fph_to_hrns
+from app.core.fph_hrns_maps import fph_to_hrns
 from app.core.display import truefalse
-
-#script_name = sys.argv[0].replace(".py", "").replace("./", "")
-#script_name = script_name.replace("/usr/local/bin/", "")
-#script_name = script_name.replace("tools/", "")
 
 entity_identifier = sys.argv[1] # identifier (FPH or HRNS)
 
@@ -30,12 +16,7 @@ if not ("namespace" in etypes):
     sys.exit(1)
 
 # fetch *namespace* properties
-active, \
-sandbox, \
-private, \
-owner_fph, \
-currency_fph, \
-stewards_list, \
+active, sandbox, private, owner_fph, currency_fph, stewards_list, \
 m = get_namespace_properties(identifier_fph)
 # set up table:
 namespace_table = PrettyTable()
@@ -44,13 +25,8 @@ namespace_table.field_names = ["property", "value(s)"]
 table_rows = [] # one row per property
 # identifier HRNS
 table_row = []
-table_row.append("HRNS")
-table_row.append(identifier_hrns)
-table_rows.append(table_row)
-# Identifier FPH
-table_row = []
-table_row.append("FPH")
-table_row.append(identifier_fph)
+table_row.append("identifier (FPH & HRNS)")
+table_row.append(identifier_fph + " <> " + identifier_hrns)
 table_rows.append(table_row)
 # active?
 table_row = []
@@ -78,19 +54,18 @@ if currency_fph:
 else:
     table_row.append("none")
 table_rows.append(table_row)
-# stewards:
-table_row = []
-table_row.append("stewards")
-stewards = []
-for steward_fph in stewards_list:
-    stewards.append(fph_to_hrns(steward_fph))
-if len(stewards) > 0:
-    table_row.append(", ".join(stewards))
-else:
-    table_row.append("none")
-table_rows.append(table_row)
 
 namespace_table.add_rows(table_rows[0:])
 print(namespace_table)
+
+# stewards:
+print("\nstewards: ", end="")
+if len(stewards_list) == 0:
+    print("none")
+else:
+    print()
+    for steward_fph in stewards_list:
+        print("  " + steward_fph + " <> " + fph_to_hrns(steward_fph))
+print()
 
 sys.exit(1)

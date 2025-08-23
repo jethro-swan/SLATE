@@ -1,33 +1,26 @@
 #!/home/slate/SLATE/venv/bin/python3
 
-import sqlite3
 import sys
-import os
-import pickle
 from prettytable import PrettyTable
-from app.core.constants import ENTITIES_DB
-from app.core.slate_core import get_entity_types
 from app.core.slate_core import identify_entity
 from app.core.slate_core import get_secid_properties
-from app.core.fph_hrns_maps import hrns_to_fph, fph_to_hrns
+from app.core.fph_hrns_maps import fph_to_hrns
 from app.core.display import truefalse
 
-#script_name = sys.argv[0].replace(".py", "").replace("./", "")
-#script_name = script_name.replace("/usr/local/bin/", "")
-#script_name = script_name.replace("tools/", "")
-
-entity_identifier = sys.argv[1] # identifier (FPH or HRNS)
+if sys.argv[1] == "-A": # list *accounts*?
+    list_accounts = True
+    entity_identifier = sys.argv[2] # identifier (FPH or HRNS)
+else:
+    list_accounts = False
+    entity_identifier = sys.argv[1] # identifier (FPH or HRNS)
 
 identifier_fph, identifier_hrns, etypes, m = identify_entity(entity_identifier)
-
 if not ("secid" in etypes):
     print("No secid: " + identifier_hrns + " (" + identifier_fph + ")")
     sys.exit(1)
 
 # fetch *secid* properties
-active, \
-primid_fph, \
-accounts_list, \
+active, primid_fph, accounts_list, \
 m = get_secid_properties(identifier_fph)
 # set up table:
 secid_table = PrettyTable()
@@ -36,13 +29,8 @@ secid_table.field_names = ["property", "value(s)"]
 table_rows = [] # one row per property
 # identifier HRNS
 table_row = []
-table_row.append("HRNS")
-table_row.append(identifier_hrns)
-table_rows.append(table_row)
-# identifier FPH
-table_row = []
-table_row.append("FPH")
-table_row.append(identifier_fph)
+table_row.append("identifier (FPH & HRNS)")
+table_row.append(identifier_fph + " <> " + identifier_hrns)
 table_rows.append(table_row)
 # active?
 table_row = []
@@ -68,5 +56,19 @@ table_rows.append(table_row)
 
 secid_table.add_rows(table_rows[0:])
 print(secid_table)
+
+# *accounst*:
+print("\naccounts: ", end="")
+print(len(accounts_fph_list))
+if list_accounts:
+    for account_fph in accounts_fph_list:
+        print("  " + account_fph + " <> " + fph_to_hrns(account_fph))
+print()
+
+
+
+
+
+
 
 sys.exit(1)

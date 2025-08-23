@@ -10,7 +10,6 @@ from itsdangerous import URLSafeTimedSerializer
 
 from datetime import datetime, date
 
-
 ## SLATE components: -----------------------------------------------------------
 
 from app.core.constants import NSS
@@ -176,16 +175,12 @@ from app.forms import InvitationQRForm
 from markupsafe import escape
 
 #------------------------------------------------------------------------------
-
-
-
-
-#------------------------------------------------------------------------------
 # Shared local functions:
 
 # Create the identity type display string:
 def fph_to_display_type(agent_id):
-    agent_fph, agent_hrns, etypes, m = identify_entity(agent_id)
+    agent_fph, agent_hrns, etypes, \
+    m = identify_entity(agent_id)
     if "primid" in etypes:
         return "login identity"
     elif "secid" in etypes:
@@ -196,7 +191,8 @@ def fph_to_display_type(agent_id):
 # The *primid* need be displayed only if the current active *identity* is a
 # *secid*:
 def fph_to_primid_iff_needed(agent_id):
-    agent_fph, agent_hrns, etypes, m = identify_entity(agent_id)
+    agent_fph, agent_hrns, etypes, \
+    m = identify_entity(agent_id)
     if entity_type(agent_fph, "secid"):
         primid_fph = get_primid(agent_fph)
         primid_hrns = fph_to_hrns(primid_fph)
@@ -256,17 +252,13 @@ def register():
     url_currency_id = request.args.get("c")
     initial_namespace_id = request.args.get("s")
 
-    initial_currency_fph, \
-    initial_currency_hrns, \
-    etypes, \
+    initial_currency_fph, initial_currency_hrns, etypes, \
     m = identify_entity(request.args.get("c"))
     if not (initial_currency_fph and ("currency" in etypes)):
         initial_currency_fph = ""
         initial_currency_hrns = ""
 
-    initial_namespace_fph, \
-    initial_namespace_hrns, \
-    etypes, \
+    initial_namespace_fph, initial_namespace_hrns, etypes, \
     m = identify_entity(request.args.get("s"))
     if not initial_namespace_fph:
         initial_namespace_fph = ""
@@ -364,7 +356,11 @@ def register():
             log_event("error", "primid creation", m)
             flash(m)
             return redirect("/register")
-        flash(primid_hrns + " has been registered")
+        flash(
+            "A login identity, an account-holder identity, a currency and a " \
+            + "namespace have been created using the identifier "
+            + primid_hrns + "."
+        )
 
         currency_fph, currency_hrns, active, private, sandbox, \
         prefix, suffix, default_account_name, stewards_list, \
@@ -454,9 +450,7 @@ def login():
         primid_has_been_identified_from_email = False
 
         if agent_id:
-            identity_fph, \
-            identity_hrns, \
-            etypes, \
+            identity_fph, identity_hrns, etypes, \
             m = identify_entity(form.identity.data)
             if m:
                 flash(m)
@@ -473,27 +467,13 @@ def login():
                         "errors", "primid entification",
                         "The primid cannot be identified from " + identity_fph
                     )
-#                    return redirect(url_for("login"))
-#                break
-#            elif "secid" in etypes:
             else:
                 primid_fph = identity_fph
-
-
-
-#            if primid_fph:
-#                # If control reaches this point and the FPH exists, we have a
-#                # valid *primid* for the HRNS or FPH entered.
-#                primid_has_been_identified_from_identity = True
-#            else:
-#                flash(identity_fph + " is not a registered identity.")
         else:
             flash("No valid identifier has been provided.")
             return redirect(url_for("login"))
 
-        password_hash, \
-        stored_pin, \
-        access_token_hash, \
+        password_hash, stored_pin, access_token_hash, \
         m = get_auth_data(primid_fph)
         if m:
             flash(m)
@@ -590,11 +570,8 @@ def login_recover():
         agent_id = form.identity.data
         agent_email = form.email.data
 
-        agent_fph, \
-        agent_hrns, \
-        etypes, \
+        agent_fph, agent_hrns, etypes, \
         m = identify_entity(agent_id)
-
         if "primid" in etypes:
             agent_primid_fph = agent_fph
         elif "secid" in etypes:
@@ -699,24 +676,11 @@ def login_reset(user_id, token):
     # Hub operational mode (read from environment variable HUB_MODE)
     hub_mode = get_hub_mode()
 
-    primid_fph, \
-    primid_hrns, \
-    etypes, \
-    m = identify_entity(user_id) # from URL slug
+    primid_fph, primid_hrns, etypes, \
+    m = identify_entity(user_id) # from slug
 
-    password_hash, \
-    stored_pin, \
-    access_token_hash, \
+    password_hash, stored_pin, access_token_hash, \
     m = get_auth_data(user_id) # from URL slug
-
-#    print(
-#        "SECRET_KEY = " \
-#        + app.config["SECRET_KEY"]
-#    )
-#    print(
-#        "RESET_PASS_TOKEN_MAX_AGE = " \
-#        + str(app.config["RESET_PASS_TOKEN_MAX_AGE"])
-#    )
 
     serializer = URLSafeTimedSerializer(app.config["SECRET_KEY"])
     reset_token_data = serializer.loads(
@@ -725,15 +689,10 @@ def login_reset(user_id, token):
                             #max_age = app.config["RESET_PASS_TOKEN_MAX_AGE"],
                             salt = password_hash
                         )
-#    print(type(reset_token_data))
-#    print(reset_token_data)
 
-#    if reset_token_data["agent_primid_fph"] != identity_fph:
     if reset_token_data != primid_fph:
         flash("Login reset token error")
         return redirect("/login")
-
-#    print("user_id = " + user_id + " > " + fph_to_hrns(user_id))
 
     form = LoginResetForm()
     if form.validate_on_submit():
@@ -779,9 +738,7 @@ def change_working_identity(new_identity_fph):
     #version = get_version()()
 
 
-    new_identity_fph, \
-    new_identity_hrns, \
-    etypes, \
+    new_identity_fph, new_identity_hrns, etypes, \
     m = identify_entity(new_identity_fph)
     if m:
         flash(m)
@@ -790,9 +747,7 @@ def change_working_identity(new_identity_fph):
         flash(new_identity_fph + " is not a valid identity")
         return redirect("/home")
 
-    login_identity_fph, \
-    login_identity_hrns, \
-    etypes, \
+    login_identity_fph, login_identity_hrns, etypes, \
     m = identify_entity(current_user.get_id())
 
     if "working_identity" in session:
@@ -801,9 +756,7 @@ def change_working_identity(new_identity_fph):
         session["working_identity"] = login_identity_fph
         current_working_identity_fph = login_identity_fph
 
-    current_identity_fph, \
-    current_identity_hrns, \
-    etypes, \
+    current_identity_fph, current_identity_hrns, etypes, \
     m = identify_entity(current_working_identity_fph)
 
     if new_identity_fph == current_identity_fph:
@@ -813,9 +766,7 @@ def change_working_identity(new_identity_fph):
     identities_fph_list = list_secids(login_identity_fph)
     identities_fph_list.append(login_identity_fph)
     if new_identity_fph in identities_fph_list:
-        working_identity_fph, \
-        working_identity_hrns, \
-        etypes, \
+        working_identity_fph, working_identity_hrns, etypes, \
         m = identify_entity(new_identity_fph)
         session["working_identity"] = working_identity_fph
         flash("Working identity changed to " + working_identity_hrns)
@@ -857,15 +808,11 @@ def new_home():
     paying = False
     logged_in = current_user.is_authenticated
 
-    primid_fph, \
-    primid_hrns, \
-    etypes, \
+    primid_fph, primid_hrns, etypes, \
     m = identify_entity(current_user.get_id())
 
     if "working_identity" in session:
-        working_identity_fph, \
-        working_identity_hrns, \
-        etypes, \
+        working_identity_fph, working_identity_hrns, etypes, \
         m = identify_entity(session["working_identity"])
     else:
         working_identity_fph = primid_fph
@@ -947,9 +894,7 @@ def hold():
     paying = False
     logged_in = current_user.is_authenticated
 
-    primid_fph, \
-    primid_hrns, \
-    etypes, \
+    primid_fph, primid_hrns, etypes, \
     m = identify_entity(current_user.get_id())
 
     # In omtrad mode, the working *identity* is always the *primid*.
@@ -970,7 +915,7 @@ def hold():
         primid_hrns = primid_hrns,
         working_identity_fph = working_identity_fph,
         working_identity_hrns = working_identity_hrns,
-        working_identity_type = working_identity_type,
+        working_identity_type = working_identity_type
     )
 
 
@@ -1007,19 +952,8 @@ def home_ahc():
     paying = False
     logged_in = current_user.is_authenticated
 
-    primid_fph, \
-    primid_hrns, \
-    etypes, \
+    primid_fph, primid_hrns, etypes, \
     m = identify_entity(current_user.get_id())
-
-#    if "primid" in etypes:
-#        print("primid FPH = " + primid_fph)
-#        print("primid HRNS = " + primid_hrns)
-#    elif primid_fph:
-#        print("Entity types registered for " + primid_hrns + " are:", end="")
-#        print(etypes)
-#    else:
-#        print("No primid is registered")
 
     # In omtrad mode, the working *identity* is always the *primid*.
     working_identity_fph = primid_fph
@@ -1035,26 +969,6 @@ def home_ahc():
     ahid_list = []
     for ahid_hrns in pmap_t.keys():
         ahid_list.append(ahid_hrns)
-
-# Commented out 2025-06-02:
-#    total_number_of_messages = 0
-#    total_number_of_indelible_messages = 0
-#    # List identities for which messages are available:
-#    message_recipients_list = [] # (list of dictionaries for template)
-#    for ahid_hrns in ahid_list:
-#        number_of_messages, \
-#        number_of_indelible_messages = messages_available(ahid_hrns)
-#        total_number_of_messages += number_of_messages
-#        total_number_of_indelible_messages += number_of_indelible_messages
-#
-#    if total_number_of_messages > 0:
-#        number_of_messages = str(total_number_of_messages)
-#    else:
-#        number_of_messages = ""
-#    if total_number_of_indelible_messages > 0:
-#        number_of_indelible_messages = str(total_number_of_indelible_messages)
-#    else:
-#        number_of_indelible_messages = ""
 
     number_of_messages, \
     number_of_indelible_messages = message_count(primid_fph, hub_mode)
@@ -1189,15 +1103,11 @@ def home():
     paying = False
     logged_in = current_user.is_authenticated
 
-    primid_fph, \
-    primid_hrns, \
-    etypes, \
+    primid_fph, primid_hrns, etypes, \
     m = identify_entity(current_user.get_id())
 
     if "working_identity" in session:
-        working_identity_fph, \
-        working_identity_hrns, \
-        etypes, \
+        working_identity_fph, working_identity_hrns, etypes, \
         m = identify_entity(session["working_identity"])
     else:
         working_identity_fph = primid_fph
@@ -1271,7 +1181,8 @@ def home():
 
         id = {} # the outer dictionary for this *identity*
 
-        id_fph, id_hrns, etypes, m = identify_entity(id_fph)
+        id_fph, id_hrns, etypes, \
+        m = identify_entity(id_fph)
         if m:
             flash(m)
 
@@ -1362,9 +1273,7 @@ def home():
     for nstewardship_fph in nstewardships_list:
         if nstewardship_fph != "":
             nstewardship = {}
-            entity_fph, \
-            entity_hrns, \
-            etypes, \
+            entity_fph, entity_hrns, etypes, \
             m = identify_entity(nstewardship_fph)
             nstewardship["fph"] = nstewardship_fph
             nstewardship["hrns"] = entity_hrns
@@ -1375,18 +1284,12 @@ def home():
     for cstewardship_fph in cstewardships_list:
         if cstewardship_fph != "":
             cstewardship = {}
-            entity_fph, \
-            entity_hrns, \
-            etypes, \
+            entity_fph, entity_hrns, etypes, \
             m = identify_entity(cstewardship_fph)
             cstewardship["fph"] = cstewardship_fph
             cstewardship["hrns"] = entity_hrns
             cstewardship["etype"] = etype
             cstewardships.append(stewardship)
-
-
-
-
 
     return render_template(
         "home.html",
@@ -1442,15 +1345,11 @@ def list_accounts():
     paying = False
     logged_in = current_user.is_authenticated
 
-    primid_fph, \
-    primid_hrns, \
-    etypes, \
+    primid_fph, primid_hrns, etypes, \
     m = identify_entity(current_user.get_id())
 
     if "working_identity" in session:
-        working_identity_fph, \
-        working_identity_hrns, \
-        etypes, \
+        working_identity_fph, working_identity_hrns, etypes, \
         m = identify_entity(session["working_identity"])
     else:
         working_identity_fph = primid_fph
@@ -1480,9 +1379,7 @@ def list_accounts():
 
         id = {} # the outer dictionary for this *identity*
 
-        id_fph, \
-        id_hrns, \
-        etypes, \
+        id_fph, id_hrns, etypes, \
         m = identify_entity(id_fph)
         if m:
             flash(m)
@@ -1553,9 +1450,7 @@ def list_accounts():
     for nstewardship_fph in nstewardships_list:
         if nstewardship_fph != "":
             nstewardship = {}
-            entity_fph, \
-            entity_hrns, \
-            etypes, \
+            entity_fph, entity_hrns, etypes, \
             m = identify_entity(nstewardship_fph)
             nstewardship["fph"] = nstewardship_fph
             nstewardship["hrns"] = entity_hrns
@@ -1566,19 +1461,12 @@ def list_accounts():
     for cstewardship_fph in cstewardships_list:
         if cstewardship_fph != "":
             cstewardship = {}
-            entity_fph, \
-            entity_hrns, \
-            etypes, \
+            entity_fph, entity_hrns, etypes, \
             m = identify_entity(cstewardship_fph)
             cstewardship["fph"] = cstewardship_fph
             cstewardship["hrns"] = entity_hrns
             cstewardship["etype"] = etype
             cstewardships.append(stewardship)
-
-
-
-
-
 
     return render_template(
         "list_accounts.html",
@@ -1643,22 +1531,15 @@ def payment_options():
     group = "home" # Used to control top menu behaviour.
 
     namespace_steward = False
-
     currency_steward = False
-
     paying = False
-
     logged_in = current_user.is_authenticated
 
-    primid_fph, \
-    primid_hrns, \
-    etypes, \
+    primid_fph, primid_hrns, etypes, \
     m = identify_entity(current_user.get_id())
 
     if "working_identity" in session:
-        working_identity_fph, \
-        working_identity_hrns, \
-        etypes, \
+        working_identity_fph, working_identity_hrns, etypes, \
         m = identify_entity(session["working_identity"])
     else:
         working_identity_fph = primid_fph
@@ -1703,9 +1584,7 @@ def payment_options():
     payment_options_list = [] # a list of dictionaries to be iterated
     for id_fph in identities_list:
 
-        id_fph, \
-        id_hrns, \
-        etypes, \
+        id_fph, id_hrns, etypes, \
         m = identify_entity(id_fph)
         if m: # (this should never happen)
             flash(m)
@@ -1819,15 +1698,11 @@ def currency_options():
 
     logged_in = current_user.is_authenticated
 
-    primid_fph, \
-    primid_hrns, \
-    etypes, \
+    primid_fph, primid_hrns, etypes, \
     m = identify_entity(current_user.get_id())
 
     if "working_identity" in session:
-        working_identity_fph, \
-        working_identity_hrns, \
-        etypes, \
+        working_identity_fph, working_identity_hrns, etypes, \
         m = identify_entity(session["working_identity"])
     else:
         working_identity_fph = primid_fph
@@ -1878,9 +1753,7 @@ def currency_options():
 
     for id_fph in identities_list:
 
-        id_fph, \
-        id_hrns, \
-        etypes, \
+        id_fph, id_hrns, etypes, \
         m = identify_entity(id_fph)
         if m: # (this should never happen)
             flash(m)
@@ -2028,28 +1901,16 @@ def account_options(currency_fph):
     if m == "Payment options unavailable":
         #flash(m)
         return redirect("/currency/options")
-    #m = session_retrieve_payment_options()
-
-    #print("session_retrieve_currencies_available() done")
-
-    #for c_fph in currencies_available:
-    #    print("currency available: " + fph_to_hrns(c_fph))
-
-    #for p in payment_options_list:
-    #    print("payment option: ", end="")
-    #    print(p)
-
 
     currency_selected_hrns = fph_to_hrns(currency_fph)
 
     logged_in = current_user.is_authenticated # for menu display control
 
-    primid_fph, primid_hrns, etypes, m = identify_entity(current_user.get_id())
+    primid_fph, primid_hrns, etypes, \
+    m = identify_entity(current_user.get_id())
 
     if "working_identity" in session:
-        working_identity_fph, \
-        working_identity_hrns, \
-        etypes, \
+        working_identity_fph, working_identity_hrns, etypes, \
         m = identify_entity(session["working_identity"])
     else:
         working_identity_fph = primid_fph
@@ -2105,9 +1966,7 @@ def account_options(currency_fph):
 def account(payer_account_fph, payee_account_fph, owner_fph = None):
 
     if owner_fph is not None:
-        account_owner_fph, \
-        account_owner_hrns, \
-        etypes, \
+        account_owner_fph, account_owner_hrns, etypes, \
         m = identify_entity(owner_fph)
         if m:
             flash(m)
@@ -2136,9 +1995,7 @@ def account(payer_account_fph, payee_account_fph, owner_fph = None):
     #primid_type = fph_to_display_type(primid_fph)
 
     if "working_identity" in session:
-        working_identity_fph, \
-        working_identity_hrns, \
-        etypes, \
+        working_identity_fph, working_identity_hrns, etypes, \
         m = identify_entity(session["working_identity"])
     else:
         working_identity_fph = primid_fph
@@ -2205,9 +2062,7 @@ def account(payer_account_fph, payee_account_fph, owner_fph = None):
         amount = int(round(float(amount_entered)*100))
 
         if (payee_account_id is not None) and payee_account_id:
-            payee_account_fph, \
-            payee_account_hrns, \
-            etypes, \
+            payee_account_fph, payee_account_hrns, etypes, \
             m = identify_entity(payee_account_id)
 
             if "account" in etypes:
@@ -2237,8 +2092,6 @@ def account(payer_account_fph, payee_account_fph, owner_fph = None):
         m = payment(payer_account_fph, payee_account_fph, amount, annotation)
         if m:
             flash(m)
-            #return redirect("/account/" + payer_account_fph)
-            #return redirect("/account/" + payer_account_fph)
             return redirect("/home")
 
         print("/account/.../.../... payer_account_fph = " + payer_account_fph)
@@ -2314,16 +2167,15 @@ def pay_ahid(payer_ahid_fph, payment_currency_fph):
     previous_page = session["previous_page"] # Ensure correct page sequence
     session["previous_page"] = page
 
-    primid_fph, primid_hrns, etypes, m = identify_entity(current_user.get_id())
+    primid_fph, primid_hrns, etypes, \
+    m = identify_entity(current_user.get_id())
     working_identity_fph = primid_fph
     working_identity_hrns = primid_hrns
     working_identity_type = "primid"
 
     form = SpecifyPayeeAccountHolderForm()
     if form.validate_on_submit():
-        payee_ahid_fph, \
-        payee_ahid_hrns, \
-        etypes, \
+        payee_ahid_fph, payee_ahid_hrns, etypes, \
         m = identify_entity(form.payee_ahid.data) # HRNS or FPH
         if m:
             flash(m)
@@ -2336,7 +2188,6 @@ def pay_ahid(payer_ahid_fph, payment_currency_fph):
                        "/pay_to_ahid/" + payer_ahid_fph + "/" + currency_fph
                    )
         if not get_ahid_primid(payee_ahid_hrns):
-        #if not ("ahid" in etypes):
             flash("The payee specified is not an account-holder")
             return redirect(
                        "/pay_to_ahid/" + payer_ahid_fph + "/" + currency_fph
@@ -2401,15 +2252,11 @@ def pay_account():
     previous_page = session["previous_page"] # Ensure correct page sequence
     session["previous_page"] = page
 
-    primid_fph, \
-    primid_hrns, \
-    etypes, \
+    primid_fph, primid_hrns, etypes, \
     m = identify_entity(current_user.get_id())
 
     if "working_identity" in session:
-        working_identity_fph, \
-        working_identity_hrns, \
-        etypes, \
+        working_identity_fph, working_identity_hrns, etypes, \
         m = identify_entity(session["working_identity"])
     else:
         working_identity_fph = primid_fph
@@ -2420,9 +2267,7 @@ def pay_account():
 
     form = SpecifyPayeeAccountForm()
     if form.validate_on_submit():
-        payee_account_fph, \
-        payee_account_hrns, \
-        etypes, \
+        payee_account_fph, payee_account_hrns, etypes, \
         m = identify_entity(form.to_account_id.data) # HRNS or FPH
         if m:
             flash(m)
@@ -2457,12 +2302,14 @@ def pay_account():
 @login_required
 def journal(ahid_fph, currency_fph):
 
-    ahid_fph, ahid_hrns, etypes, m = identify_entity(ahid_fph)
+    ahid_fph, ahid_hrns, etypes, \
+    m = identify_entity(ahid_fph)
     if ahid_fph == "":
         flash("Invalid account-holder")
         return redirect("/home_ahc")
 
-    currency_fph, currency_hrns, etypes, m = identify_entity(currency_fph)
+    currency_fph, currency_hrns, etypes, \
+    m = identify_entity(currency_fph)
     if currency_fph == "":
         flash("Invalid currency")
         return redirect("/home_ahc")
@@ -2477,7 +2324,8 @@ def journal(ahid_fph, currency_fph):
     previous_page = session["previous_page"] # Ensure correct page sequence
     session["previous_page"] = page
 
-    primid_fph, primid_hrns, etypes, m = identify_entity(current_user.get_id())
+    primid_fph, primid_hrns, etypes, \
+    m = identify_entity(current_user.get_id())
 
     working_identity_fph = primid_fph
     working_identity_hrns = primid_hrns
@@ -2622,9 +2470,7 @@ def pay_from_account_to_agent(payer_account_fph = None):
     if payer_account_fph is None:
         flash("No payer account specified in URL")
         return redirect("/home")
-    payer_account_fph, \
-    payer_account_hrns, \
-    etypes, \
+    payer_account_fph, payer_account_hrns, etypes, \
     m = identify_entity(payer_account_fph)
     if m:
         flash(m)
@@ -2665,12 +2511,11 @@ def pay_from_account_to_agent(payer_account_fph = None):
         flash("Incorrect page succession")
         return redirect("/home")
 
-    primid_fph, primid_hrns, etypes, m = identify_entity(current_user.get_id())
+    primid_fph, primid_hrns, etypes, \
+    m = identify_entity(current_user.get_id())
 
     if "working_identity" in session:
-        working_identity_fph, \
-        working_identity_hrns, \
-        etypes, \
+        working_identity_fph, working_identity_hrns, etypes, \
         m = identify_entity(session["working_identity"])
     else:
         working_identity_fph = primid_fph
@@ -2704,9 +2549,7 @@ def pay_from_account_to_agent(payer_account_fph = None):
     form = SpecifyPayeeAgentForm()
     if form.validate_on_submit():
 
-        payee_identity_fph, \
-        payee_identity_hrns, \
-        etypes, \
+        payee_identity_fph, payee_identity_hrns, etypes, \
         m = identify_entity(form.to_identity_id.data) # HRNS or FPH
         if m:
             flash(m)
@@ -2789,9 +2632,7 @@ def pay_agent_direct(payer_currency_fph, payer_identity_fph):
     m = identify_entity(current_user.get_id())
 
     if "working_identity" in session:
-        working_identity_fph, \
-        working_identity_hrns, \
-        etypes, \
+        working_identity_fph, working_identity_hrns, etypes, \
         m = identify_entity(session["working_identity"])
     else:
         working_identity_fph = primid_fph
@@ -3011,15 +2852,11 @@ def pay_agent():
     previous_page = session["previous_page"] # Ensure correct page sequence
     session["previous_page"] = page
 
-    primid_fph, \
-    primid_hrns, \
-    etypes, \
+    primid_fph, primid_hrns, etypes, \
     m = identify_entity(current_user.get_id())
 
     if "working_identity" in session:
-        working_identity_fph, \
-        working_identity_hrns, \
-        etypes, \
+        working_identity_fph, working_identity_hrns, etypes, \
         m = identify_entity(session["working_identity"])
     else:
         working_identity_fph = primid_fph
@@ -3051,9 +2888,7 @@ def pay_agent():
     form = SpecifyPayeeAgentAndCurrencyForm()
     if form.validate_on_submit():
 
-        payee_identity_fph, \
-        payee_identity_hrns, \
-        etypes, \
+        payee_identity_fph, payee_identity_hrns, etypes, \
         m = identify_entity(form.to_identity_id.data) # HRNS or FPH
         if m:
             flash(m)
@@ -3063,9 +2898,7 @@ def pay_agent():
             return redirect("/pay/agent")
         session["payee_identity_fph"] = payee_identity_fph
 
-        currency_fph, \
-        currency_hrns, \
-        etypes, \
+        currency_fph, currency_hrns, etypes, \
         m = identify_entity(form.currency_id.data)
         if m:
             flash(m)
@@ -3151,15 +2984,11 @@ def select_payer_account():
     previous_page = session["previous_page"] # Ensure correct page sequence
     session["previous_page"] = page
 
-    primid_fph, \
-    primid_hrns, \
-    etypes, \
+    primid_fph, primid_hrns, etypes, \
     m = identify_entity(current_user.get_id())
 
     if "working_identity" in session:
-        working_identity_fph, \
-        working_identity_hrns, \
-        etypes, \
+        working_identity_fph, working_identity_hrns, etypes, \
         m = identify_entity(session["working_identity"])
     else:
         working_identity_fph = primid_fph
@@ -3242,9 +3071,7 @@ def select_payee_account(payer_account_fph = None):
         flash("Payer account not specified in URL")
         return redirect("/pay/agent")
 
-    payer_account_fph, \
-    payer_account_hrns, \
-    etypes, \
+    payer_account_fph, payer_account_hrns, etypes, \
     m = identify_entity(payer_account_fph)
     if m:
         flash(m)
@@ -3264,15 +3091,11 @@ def select_payee_account(payer_account_fph = None):
     previous_page = session["previous_page"] # Ensure correct page sequence
     session["previous_page"] = page
 
-    primid_fph, \
-    primid_hrns, \
-    etypes, \
+    primid_fph, primid_hrns, etypes, \
     m = identify_entity(current_user.get_id())
 
     if "working_identity" in session:
-        working_identity_fph, \
-        working_identity_hrns, \
-        etypes, \
+        working_identity_fph, working_identity_hrns, etypes, \
         m = identify_entity(session["working_identity"])
     else:
         working_identity_fph = primid_fph
@@ -3422,9 +3245,7 @@ def make_payment_between_selected_accounts(
     previous_page = session["previous_page"] # Ensure correct page sequence
     session["previous_page"] = page
 
-    primid_fph, \
-    primid_hrns, \
-    etypes, \
+    primid_fph, primid_hrns, etypes, \
     m = identify_entity(current_user.get_id())
 
     if "working_identity" in session:
@@ -3554,15 +3375,11 @@ def select_account_combination_in_currency(payee_identity_fph, currency_fph):
     previous_page = session["previous_page"] # Ensure correct page sequence
     session["previous_page"] = page
 
-    primid_fph, \
-    primid_hrns, \
-    etypes, \
+    primid_fph, primid_hrns, etypes, \
     m = identify_entity(current_user.get_id())
 
     if "working_identity" in session:
-        working_identity_fph, \
-        working_identity_hrns, \
-        etypes, \
+        working_identity_fph, working_identity_hrns, etypes, \
         m = identify_entity(session["working_identity"])
     else:
         working_identity_fph = primid_fph
@@ -3621,15 +3438,11 @@ def select_payer_account_(payee_account_fph):
 
     logged_in = current_user.is_authenticated
 
-    primid_fph, \
-    primid_hrns, \
-    etypes, \
+    primid_fph, primid_hrns, etypes, \
     m = identify_entity(current_user.get_id())
 
     if "working_identity" in session:
-        working_identity_fph, \
-        working_identity_hrns, \
-        etypes, \
+        working_identity_fph, working_identity_hrns, etypes, \
         m = identify_entity(session["working_identity"])
     else:
         working_identity_fph = primid_fph
@@ -3643,9 +3456,7 @@ def select_payer_account_(payee_account_fph):
     # several accounts in this *currenccy*, so one of these must be selected.
 
     if payee_account_fph and re_fph.match(payee_account_fph):
-        payee_account_fph, \
-        payee_account_hrns, \
-        etypes, \
+        payee_account_fph, payee_account_hrns, etypes, \
         m = identify_entity(payee_account_fph)
         if "account" in etypes:
             flash(payee_account_fph + " in URL slug is not an account")
@@ -3735,15 +3546,11 @@ def account_details(account_fph):
 
     logged_in = current_user.is_authenticated
 
-    primid_fph, \
-    primid_hrns, \
-    etypes, \
+    primid_fph, primid_hrns, etypes, \
     m = identify_entity(current_user.get_id())
 
     if "working_identity" in session:
-        working_identity_fph, \
-        working_identity_hrns, \
-        etypes, \
+        working_identity_fph, working_identity_hrns, etypes, \
         m = identify_entity(session["working_identity"])
     else:
         working_identity_fph = primid_fph
@@ -3754,7 +3561,8 @@ def account_details(account_fph):
     # If an *account* has been specified (by FPH) in the URL slug
 #    print("Account " + account_fph)
 
-    account_fph, account_hrns, etypes, m = identify_entity(account_fph)
+    account_fph, account_hrns, etypes, \
+    m = identify_entity(account_fph)
 
     if not account_fph:
         flash("The FPH in the URL cannot be identified.")
@@ -3831,15 +3639,11 @@ def stewardships(identity_fph):
     paying = False
     logged_in = current_user.is_authenticated
 
-    primid_fph, \
-    primid_hrns, \
-    etypes, \
+    primid_fph, primid_hrns, etypes, \
     m = identify_entity(current_user.get_id())
 
     if "working_identity" in session:
-        working_identity_fph, \
-        working_identity_hrns, \
-        etypes, \
+        working_identity_fph, working_identity_hrns, etypes, \
         m = identify_entity(session["working_identity"])
     else:
         working_identity_fph = primid_fph
@@ -3904,15 +3708,11 @@ def secids(identity_fph):
     paying = False
     logged_in = current_user.is_authenticated
 
-    primid_fph, \
-    primid_hrns, \
-    etypes, \
+    primid_fph, primid_hrns, etypes, \
     m = identify_entity(current_user.get_id())
 
     if "working_identity" in session:
-        working_identity_fph, \
-        working_identity_hrns, \
-        etypes, \
+        working_identity_fph, working_identity_hrns, etypes, \
         m = identify_entity(session["working_identity"])
     else:
         working_identity_fph = primid_fph
@@ -3921,9 +3721,6 @@ def secids(identity_fph):
         working_identity_type = etype_to_adtype(working_identity_type)
 
     secids = list_secids(primid_fph)
-
-#    for secid_fph in secids:
-#        print(secid_fph + " > " + fph_to_hrns(secid_fph))
 
     return render_template(
         "secids.html",
@@ -3970,15 +3767,11 @@ def manage_secid(secid_fph):
     paying = False
     logged_in = current_user.is_authenticated
 
-    primid_fph, \
-    primid_hrns, \
-    etypes, \
+    primid_fph, primid_hrns, etypes, \
     m = identify_entity(current_user.get_id())
 
     if "working_identity" in session:
-        working_identity_fph, \
-        working_identity_hrns, \
-        etypes, \
+        working_identity_fph, working_identity_hrns, etypes, \
         m = identify_entity(session["working_identity"])
     else:
         working_identity_fph = primid_fph
@@ -3987,9 +3780,6 @@ def manage_secid(secid_fph):
         working_identity_type = etype_to_adtype(working_identity_type)
 
     secids = list_secids(primid_fph)
-
-#    for secid_fph in secids:
-#        print(secid_fph + " > " + fph_to_hrns(secid_fph))
 
     return render_template(
         "manage_secid.html",
@@ -4030,15 +3820,11 @@ def currency(currency_fph):
 
     logged_in = current_user.is_authenticated
 
-    primid_fph, \
-    primid_hrns, \
-    etypes, \
+    primid_fph, primid_hrns, etypes, \
     m = identify_entity(current_user.get_id())
 
     if "working_identity" in session:
-        working_identity_fph, \
-        working_identity_hrns, \
-        etypes, \
+        working_identity_fph, working_identity_hrns, etypes, \
         m = identify_entity(session["working_identity"])
     else:
         working_identity_fph = primid_fph
@@ -4046,22 +3832,13 @@ def currency(currency_fph):
         working_identity_hrns = primid_hrns
         working_identity_type = etype_to_adtype(working_identity_type)
 
-    currency_fph, \
-    currency_hrns, \
-    etypes, \
+    currency_fph, currency_hrns, etypes, \
     m = identify_entity(currency_fph)
     if (not ("currency" in etypes)):
         return "", "", currency_fph + " is not a currency"
 
-    currency_fph, \
-    currency_hrns, \
-    active, \
-    private, \
-    sandbox, \
-    prefix, \
-    suffix, \
-    default_account_name, \
-    stewards_list, \
+    currency_fph, currency_hrns, active, private, sandbox, prefix, suffix, \
+    default_account_name, stewards_list, \
     m = get_currency_properties(currency_fph)
 
     # Compile a list of the stewards of this *currency*, excluding the *primid*
@@ -4116,15 +3893,11 @@ def currency_steward_add(currency_fph):
 
     logged_in = current_user.is_authenticated
 
-    primid_fph, \
-    primid_hrns, \
-    etype, \
+    primid_fph, primid_hrns, etype, \
     m = identify_entity(current_user.get_id())
 
     if "working_identity" in session:
-        working_identity_fph, \
-        working_identity_hrns, \
-        etypes, \
+        working_identity_fph, working_identity_hrns, etypes, \
         m = identify_entity(session["working_identity"])
     else:
         working_identity_fph = primid_fph
@@ -4132,15 +3905,8 @@ def currency_steward_add(currency_fph):
         working_identity_hrns = primid_hrns
     #    working_identity_type = etype_to_adtype(working_identity_type)
 
-    currency_fph, \
-    currency_hrns, \
-    active, \
-    private, \
-    sandbox, \
-    prefix, \
-    suffix, \
-    default_account_name, \
-    stewards_list, \
+    currency_fph, currency_hrns, active, private, sandbox, prefix, suffix, \
+    default_account_name, stewards_list, \
     m = get_currency_properties(currency_fph)
 
     number_of_messages, \
@@ -4148,9 +3914,7 @@ def currency_steward_add(currency_fph):
 
     form = StewardAddForm()
     if form.validate_on_submit():
-        new_steward_fph, \
-        new_steward_hrns, \
-        etypes, \
+        new_steward_fph, new_steward_hrns, etypes, \
         m = identify_entity(form.new_steward.data)
         if new_steward_fph:
             m = add_stewardship(currency_fph, new_steward_fph)
@@ -4203,15 +3967,11 @@ def currency_steward_remove(currency_fph, steward_fph):
 
     logged_in = current_user.is_authenticated
 
-    primid_fph, \
-    primid_hrns, \
-    etypes, \
+    primid_fph, primid_hrns, etypes, \
     m = identify_entity(current_user.get_id())
 
     if "working_identity" in session:
-        working_identity_fph, \
-        working_identity_hrns, \
-        etypes, \
+        working_identity_fph, working_identity_hrns, etypes, \
         m = identify_entity(session["working_identity"])
     else:
         working_identity_fph = primid_fph
@@ -4219,19 +3979,10 @@ def currency_steward_remove(currency_fph, steward_fph):
         working_identity_hrns = primid_hrns
         working_identity_type = etype_to_adtype(working_identity_type)
 
-    currency_fph, \
-    currency_hrns, \
-    active, \
-    private, \
-    sandbox, \
-    prefix, \
-    suffix, \
-    default_account_name, \
-    stewards_list, \
+    currency_fph, currency_hrns, active, private, sandbox, prefix, suffix, \
+    default_account_name, stewards_list, \
     m = get_currency_properties(currency_fph)
 
-    #stewards_fph_list, m = list_stewards(currency_fph)
-    #    primid_fph)
     if primid_fph in stewards_list:
         m = remove_steward(currency_fph, primid_fph, steward_fph)
 
@@ -4266,15 +4017,11 @@ def manage():
     paying = False
     logged_in = current_user.is_authenticated
 
-    primid_fph, \
-    primid_hrns, \
-    etypes, \
+    primid_fph, primid_hrns, etypes, \
     m = identify_entity(current_user.get_id())
 
     if "working_identity" in session:
-        working_identity_fph, \
-        working_identity_hrns, \
-        etypes, \
+        working_identity_fph, working_identity_hrns, etypes, \
         m = identify_entity(session["working_identity"])
     else:
         working_identity_fph = primid_fph
@@ -4321,9 +4068,7 @@ def create_currency():
     paying = True
     logged_in = current_user.is_authenticated
 
-    primid_fph, \
-    primid_hrns, \
-    etypes, \
+    primid_fph, primid_hrns, etypes, \
     m = identify_entity(current_user.get_id())
 
     if "working_identity" in session:
@@ -4342,9 +4087,7 @@ def create_currency():
 
     form = CurrencyCreateForm()
     if form.validate_on_submit():
-        namespace_fph, \
-        namespace_hrns, \
-        etypes, \
+        namespace_fph, namespace_hrns, etypes, \
         m = identify_entity(form.namespace_id.data.strip().lstrip("."))
         if m:
             flash(m)
@@ -4360,8 +4103,7 @@ def create_currency():
             flash(proposed_hrns + " is already registered")
             return redirect("/create_currency")
 
-        currency_fph, \
-        currency_hrns,\
+        currency_fph, currency_hrns, \
         m = new_currency(
                 currency_name,
                 namespace_fph,
@@ -4425,9 +4167,7 @@ def create_pairing(owner_fph = ""):
     logged_in = current_user.is_authenticated
 
     if owner_fph:
-        owner_fph, \
-        owner_hrns, \
-        owner_type, \
+        owner_fph, owner_hrns, owner_type, \
         m = identify_entity(owner_fph)
         if m:
             flash(m)
@@ -4440,9 +4180,7 @@ def create_pairing(owner_fph = ""):
         flash("This endpoint is not valid in the current mode.")
         return redirect("/home")
 
-    primid_fph, \
-    primid_hrns, \
-    etypes, \
+    primid_fph, primid_hrns, etypes, \
     m = identify_entity(current_user.get_id())
 
     # In omtrad mode the *working identity* is always the *primary identity*.
@@ -4469,9 +4207,7 @@ def create_pairing(owner_fph = ""):
 
         currency_id = form.currency_id.data
 
-        currency_fph, \
-        currency_hrns, \
-        etypes, \
+        currency_fph, currency_hrns, etypes, \
         m = identify_entity(currency_id)
         if m:
             flash(m)
@@ -4482,15 +4218,8 @@ def create_pairing(owner_fph = ""):
             return redirect("/create_pairing/" + owner_fph)
             #return redirect("/create_ahid/" + owner_fph)
 
-        currency_fph, \
-        currency_hrns, \
-        active, \
-        private, \
-        sandbox, \
-        prefix, \
-        suffix, \
-        default_account_name, \
-        stewards_list, \
+        currency_fph, currency_hrns, active, private, sandbox, \
+        prefix, suffix, default_account_name, stewards_list, \
         m = get_currency_properties(currency_fph)
 
         account_fph = new_pairing(
@@ -4546,9 +4275,7 @@ def create_account(owner_fph):
     paying = True
     logged_in = current_user.is_authenticated
 
-    owner_fph, \
-    owner_hrns, \
-    owner_type, \
+    owner_fph, owner_hrns, owner_type, \
     m = identify_entity(owner_fph)
     if m:
         flash(m)
@@ -4557,15 +4284,11 @@ def create_account(owner_fph):
         flash("The owner FPH in the URL cannot be identified")
         return redirect("/home")
 
-    primid_fph, \
-    primid_hrns, \
-    etypes, \
+    primid_fph, primid_hrns, etypes, \
     m = identify_entity(current_user.get_id())
 
     if "working_identity" in session:
-        working_identity_fph, \
-        working_identity_hrns, \
-        etypes, \
+        working_identity_fph, working_identity_hrns, etypes, \
         m = identify_entity(session["working_identity"])
     else:
         working_identity_fph = primid_fph
@@ -4582,9 +4305,7 @@ def create_account(owner_fph):
 
         currency_id = form.currency_id.data
 
-        currency_fph, \
-        currency_hrns, \
-        etypes, \
+        currency_fph, currency_hrns, etypes, \
         m = identify_entity(currency_id)
         if m:
             flash(m)
@@ -4608,9 +4329,7 @@ def create_account(owner_fph):
 
 
         if hub_mode != "slate_minimal":
-            namespace_fph, \
-            namespace_hrns, \
-            etypes, \
+            namespace_fph, namespace_hrns, etypes, \
             m = identify_entity(form.namespace_id.data.strip().lstrip("."))
             if m:
                 flash(m)
@@ -4637,24 +4356,14 @@ def create_account(owner_fph):
             # from a concatentation of *primid* and *currency* HRNS and placed
             # in the "cc" seed *namespace*.
 
-            currency_fph, \
-            currency_hrns, \
-            active, \
-            private, \
-            sandbox, \
-            prefix, \
-            suffix, \
-            default_account_name, \
-            stewards_list, \
+            currency_fph, currency_hrns, active, private, sandbox, \
+            prefix, suffix, default_account_name, stewards_list, \
             m = get_currency_properties(currency_fph)
 
             account_name = default_account_name
             namespace_fph = primid_fph
 
-
-
-        account_fph, \
-        account_hrns, \
+        account_fph, account_hrns, \
         m = new_account(
                 account_name,
                 namespace_fph,
@@ -4712,15 +4421,11 @@ def list_identiies():
 
     logged_in = current_user.is_authenticated
 
-    primid_fph, \
-    primid_hrns, \
-    etypes, \
+    primid_fph, primid_hrns, etypes, \
     m = identify_entity(current_user.get_id())
 
     if "working_identity" in session:
-        working_identity_fph, \
-        working_identity_hrns, \
-        etypes, \
+        working_identity_fph, working_identity_hrns, etypes, \
         m = identify_entity(session["working_identity"])
     else:
         working_identity_fph = primid_fph
@@ -4774,15 +4479,11 @@ def create_secid():
 
     logged_in = current_user.is_authenticated
 
-    primid_fph, \
-    primid_hrns, \
-    etypes, \
+    primid_fph, primid_hrns, etypes, \
     m = identify_entity(current_user.get_id())
 
     if "working_identity" in session:
-        working_identity_fph, \
-        working_identity_hrns, \
-        etypes, \
+        working_identity_fph, working_identity_hrns, etypes, \
         m = identify_entity(session["working_identity"])
     else:
         working_identity_fph = primid_fph
@@ -4795,9 +4496,7 @@ def create_secid():
 
     form = SecidCreateForm()
     if form.validate_on_submit():
-        parent_fph, \
-        parent_hrns, \
-        etypes, \
+        parent_fph, parent_hrns, etypes, \
         m = identify_entity(form.parent_namespace_id.data.strip().lstrip("."))
         if m:
             flash(m)
@@ -4895,8 +4594,6 @@ def create_namespace():
 
     # Hub operational mode (read from environment variable HUB_MODE)
     hub_mode = get_hub_mode()
-    #version = get_version()()
-
 
     page = "create_namespace"
     previous_page = session["previous_page"]
@@ -4909,15 +4606,11 @@ def create_namespace():
     paying = True
     logged_in = current_user.is_authenticated
 
-    primid_fph, \
-    primid_hrns, \
-    etypes, \
+    primid_fph, primid_hrns, etypes, \
     m = identify_entity(current_user.get_id())
 
     if "working_identity" in session:
-        working_identity_fph, \
-        working_identity_hrns, \
-        etypes, \
+        working_identity_fph, working_identity_hrns, etypes, \
         m = identify_entity(session["working_identity"])
         if "primid" in etypes:
             working_identity_type = "primid"
@@ -4936,26 +4629,15 @@ def create_namespace():
 
     form = NamespaceCreateForm()
     if form.validate_on_submit():
-        parent_fph, \
-        parent_hrns, \
-        etypes, \
+        parent_fph, parent_hrns, etypes, \
         m = identify_entity(form.parent_namespace_id.data.strip().lstrip("."))
-#        if m:
-#            flash(m)
-#            return redirect("/create_namespace")
         if not parent_fph:
             flash("Parent namespace does not exist")
             return redirect("/create_namespace")
 
         inh_default_currency_fph = get_default_currency(parent_fph)
-#        print(
-#            "inherited default currency = " \
-#            + fph_to_hrns(inh_default_currency_fph)
-#        )
 
-        default_currency_fph, \
-        default_currency_hrns, \
-        etypes, \
+        default_currency_fph, default_currency_hrns, etypes, \
         m = identify_entity(form.default_currency_id.data.strip().lstrip("."))
         if default_currency_fph == "":
             default_currency_fph = inh_default_currency_fph
@@ -4969,8 +4651,7 @@ def create_namespace():
             flash(proposed_hrns + " is already registered")
             return redirect("/create_namespace")
 
-        namespace_fph, \
-        namespace_hrns,\
+        namespace_fph, namespace_hrns,\
         m = new_namespace(
                 namespace_name,
                 parent_fph,
@@ -4980,7 +4661,6 @@ def create_namespace():
         flash(
             "A new namespace has been created, identified as \n" \
             + namespace_hrns
-#            + namespace_hrns + " [" + namespace_fph + "]"
         )
         return redirect("/home")
 
@@ -5023,15 +4703,11 @@ def list_namespaces():
     currency_steward = False
     logged_in = current_user.is_authenticated
 
-    primid_fph, \
-    primid_hrns, \
-    etypes, \
+    primid_fph, primid_hrns, etypes, \
     m = identify_entity(current_user.get_id())
 
     if "working_identity" in session:
-        working_identity_fph, \
-        working_identity_hrns, \
-        etypes, \
+        working_identity_fph, working_identity_hrns, etypes, \
         m = identify_entity(session["working_identity"])
     else:
         working_identity_fph = primid_fph
@@ -5079,15 +4755,11 @@ def add_steward():
     group = "home" # Used to control top menu behaviour.
     logged_in = current_user.is_authenticated
 
-    primid_fph, \
-    primid_hrns, \
-    etypes, \
+    primid_fph, primid_hrns, etypes, \
     m = identify_entity(current_user.get_id())
 
     if "working_identity" in session:
-        working_identity_fph, \
-        working_identity_hrns, \
-        etypes, \
+        working_identity_fph, working_identity_hrns, etypes, \
         m = identify_entity(session["working_identity"])
     else:
         working_identity_fph = primid_fph
@@ -5099,10 +4771,8 @@ def add_steward():
     # The entity (*namespace* or *currency* to which this new steward is to be
     # added):
 
-    entity_fph, \
-    entity_hrns, \
-    etypes, \
-    m = identify_entity(entity_fph) # from URL slug
+    entity_fph, entity_hrns, etypes, \
+    m = identify_entity(entity_fph) # slug
     if m:
         flash(m)
         return redirect("/home")
@@ -5110,21 +4780,11 @@ def add_steward():
         flash("The entity specified does not exist")
         return redirect("/home")
     if "namespace" in etypes:
-        namespace_exists, \
-        namespace_private, \
-        namespace_active,
-        stewards_list, \
+        namespace_exists, namespace_private, namespace_active, stewards_list, \
         m = namespace_status(namespace_fph)
     elif "currency" in etypes:
-        currency_fph, \
-        currency_hrns, \
-        active, \
-        private, \
-        sandbox, \
-        prefix, \
-        suffix, \
-        default_account_name, \
-        stewards_list, \
+        currency_fph, currency_hrns, active, private, sandbox, \
+        prefix, suffix, default_account_name,  stewards_list, \
         m = get_currency_properties(currency_fph)
     else:
         flash("The entity specified is not of a stewarded type")
@@ -5132,9 +4792,7 @@ def add_steward():
 
     form = StewardAddForm()
     if form.validate_on_submit():
-        steward_fph, \
-        steward_hrns, \
-        etypes, \
+        steward_fph, steward_hrns, etypes, \
         m = identify_entity(form.new_steward.data)
         if m:
             flash(m)
@@ -5185,16 +4843,15 @@ def export_account_csv(account_fph):
     group = "home" # Used to control top menu behaviour.
     logged_in = current_user.is_authenticated
 
-    primid_fph, primid_hrns, etypes, m = identify_entity(current_user.get_id())
+    primid_fph, primid_hrns, etypes, \
+    m = identify_entity(current_user.get_id())
 
     if hub_mode == "omtrad":
         working_identity_fph = primid_fph
         working_identity_hrns = primid_hrns
         working_identity_type = "primid"
     elif "working_identity" in session:
-        working_identity_fph, \
-        working_identity_hrns, \
-        etypes, \
+        working_identity_fph, working_identity_hrns, etypes, \
         m = identify_entity(session["working_identity"])
     else:
         working_identity_fph = primid_fph
@@ -5203,11 +4860,12 @@ def export_account_csv(account_fph):
         working_identity_type = "primid"
     working_identity_type = etype_to_adtype(working_identity_type)
 
-    account_fph, account_hrns, etypes, m = identify_entity(account_fph) # slug
-    print("\nexport journal: account_hrns = " + account_hrns)
-    print("export journal: account_fph = " + account_fph)
-    print("export journal: etypes = ", end="")
-    print(etypes)
+    account_fph, account_hrns, etypes, \
+    m = identify_entity(account_fph) # slug
+#    print("\nexport journal: account_hrns = " + account_hrns)
+#    print("export journal: account_fph = " + account_fph)
+#    print("export journal: etypes = ", end="")
+#    print(etypes)
     if m:
         flash(m)
         return redirect("/home")
@@ -5235,7 +4893,8 @@ def export_account_csv(account_fph):
 #    print("account: " + account_fph + " > " + account_hrns)
 #    print("ahid: " + ahid_fph + " > " + ahid_hrns)
 
-    owner_fph, owner_hrns, etypes, m = identify_entity(owner_fph)
+    owner_fph, owner_hrns, etypes, \
+    m = identify_entity(owner_fph)
     if m:
         flash(m)
         return redirect("/home")
@@ -5249,7 +4908,8 @@ def export_account_csv(account_fph):
         flash("None of your identities owns this account")
         return redirect("/home")
 
-    currency_fph, currency_hrns, etypes, m = identify_entity(currency_fph)
+    currency_fph, currency_hrns, etypes, \
+    m = identify_entity(currency_fph)
     if m:
         flash(m)
         return redirect("/home")
@@ -5307,9 +4967,7 @@ def export_currency_csv(currency_fph):
     group = "home" # Used to control top menu behaviour.
     logged_in = current_user.is_authenticated
 
-    primid_fph, \
-    primid_hrns, \
-    etypes, \
+    primid_fph, primid_hrns, etypes, \
     m = identify_entity(current_user.get_id())
 
     if hub_mode == "omtrad":
@@ -5317,9 +4975,7 @@ def export_currency_csv(currency_fph):
         working_identity_hrns = primid_hrns
         working_identity_type = "primid"
     elif "working_identity" in session:
-        working_identity_fph, \
-        working_identity_hrns, \
-        etypes, \
+        working_identity_fph, working_identity_hrns, etypes, \
         m = identify_entity(session["working_identity"])
     else:
         working_identity_fph = primid_fph
@@ -5328,9 +4984,7 @@ def export_currency_csv(currency_fph):
         working_identity_type = "primid"
     working_identity_type = etype_to_adtype(working_identity_type)
 
-    currency_fph, \
-    currency_hrns, \
-    etypes, \
+    currency_fph, currency_hrns, etypes, \
     m = identify_entity(currency_fph) # from URL slug
     if m:
         flash(m)
@@ -5342,15 +4996,8 @@ def export_currency_csv(currency_fph):
         flash("The entity specified is not a currency")
         return redirect("/home")
 
-    currency_fph, \
-    currency_hrns, \
-    active, \
-    private, \
-    sandbox, \
-    prefix, \
-    suffix, \
-    default_account_name, \
-    stewards_list, \
+    currency_fph, currency_hrns, active, private, sandbox, \
+    prefix, suffix, default_account_name, stewards_list, \
     m = get_currency_properties(currency_fph)
     if m:
         flash(m)
@@ -5437,9 +5084,7 @@ def importing(file):
     previous_page = session["previous_page"]
     session["previous_page"] = page
     group = "home" # Used to control top menu behaviour.
-    primid_fph, \
-    primid_hrns, \
-    etypes, \
+    primid_fph, primid_hrns, etypes, \
     m = identify_entity(current_user.get_id())
     working_identity_fph = primid_fph
     working_identity_hrns = primid_hrns
@@ -5487,9 +5132,7 @@ def import_payment_set():
     previous_page = session["previous_page"]
     session["previous_page"] = page
     group = "home" # Used to control top menu behaviour.
-    primid_fph, \
-    primid_hrns, \
-    etypes, \
+    primid_fph, primid_hrns, etypes, \
     m = identify_entity(current_user.get_id())
     working_identity_fph = primid_fph
     working_identity_hrns = primid_hrns
@@ -5679,15 +5322,11 @@ def messages():
     paying = False
     logged_in = current_user.is_authenticated
 
-    primid_fph, \
-    primid_hrns, \
-    etypes, \
+    primid_fph, primid_hrns, etypes, \
     m = identify_entity(current_user.get_id())
 
     if "working_identity" in session:
-        working_identity_fph, \
-        working_identity_hrns, \
-        etypes, \
+        working_identity_fph, working_identity_hrns, etypes, \
         m = identify_entity(session["working_identity"])
         if "primid" in etypes:
             working_identity_type = "primid"
@@ -5812,15 +5451,11 @@ def message_send():
     paying = False
     logged_in = current_user.is_authenticated
 
-    primid_fph, \
-    primid_hrns, \
-    etypes, \
+    primid_fph, primid_hrns, etypes, \
     m = identify_entity(current_user.get_id())
 
     if "working_identity" in session:
-        working_identity_fph, \
-        working_identity_hrns, \
-        etypes, \
+        working_identity_fph, working_identity_hrns, etypes, \
         m = identify_entity(session["working_identity"])
     else:
         working_identity_fph = primid_fph
@@ -5832,19 +5467,13 @@ def message_send():
     number_of_messages, \
     number_of_indelible_messages = message_count(primid_fph, hub_mode)
 
-
-
-
     form = UserMessageForm()
     if form.validate_on_submit():
 
         if hub_mode == "omtrad":
             # This section is used only if sent as an *ahid*.
-            sender_fph, \
-            sender_hrns, \
-            sender_type, \
+            sender_fph, sender_hrns, sender_type, \
             m = identify_entity(form.sender.data)
-#            print(sender_type)
             if sender_type not in ["ahid", "primid"]:
                 flash("The specified sender is not an ahid")
                 return redirect("/message/send")
@@ -5857,9 +5486,7 @@ def message_send():
         else:
             sender_fph = working_identity_fph
 
-        recipient_fph, \
-        recipient_hrns, \
-        recipient_types, \
+        recipient_fph, recipient_hrns, recipient_types, \
         m = identify_entity(form.recipient.data)
         if m:
             flash(m)
@@ -5990,15 +5617,11 @@ def messages_show(recipient_fph):
     paying = False
     logged_in = current_user.is_authenticated
 
-    primid_fph, \
-    primid_hrns, \
-    etypes, \
+    primid_fph, primid_hrns, etypes, \
     m = identify_entity(current_user.get_id())
 
     if "working_identity" in session:
-        working_identity_fph, \
-        working_identity_hrns, \
-        etypes, \
+        working_identity_fph, working_identity_hrns, etypes, \
         m = identify_entity(session["working_identity"])
         # TEMPORARY FUDGE ...
         if ("secid" in etypes):
@@ -6042,9 +5665,7 @@ def messages_show(recipient_fph):
 #    else:
 #        number_of_indelible_messages = ""
 
-    recipient_fph, \
-    recipient_hrns, \
-    etypes, \
+    recipient_fph, recipient_hrns, etypes, \
     m = identify_entity(recipient_fph)
     if len(set(["primid", "secid", "ahid"]) & set(etypes)) == 0:
         flash("Recipient is not an agent")
@@ -6083,14 +5704,10 @@ def messages_show(recipient_fph):
 @login_required
 def message_delete(recipient_fph, message_id):
 
-    primid_fph, \
-    primid_hrns, \
-    etypes, \
+    primid_fph, primid_hrns, etypes, \
     m = identify_entity(current_user.get_id())
 
-    recipient_fph, \
-    recipient_hrns, \
-    recipient_types, \
+    recipient_fph, recipient_hrns, recipient_types, \
     m = identify_entity(recipient_fph)
 
     if recipient_fph == "":
@@ -6133,14 +5750,10 @@ def message_delete(recipient_fph, message_id):
 @login_required
 def messages_clear(recipient_fph):
 
-    primid_fph, \
-    primid_hrns, \
-    etypes, \
+    primid_fph, primid_hrns, etypes, \
     m = identify_entity(current_user.get_id())
 
-    recipient_fph, \
-    recipient_hrns, \
-    recipient_types, \
+    recipient_fph, recipient_hrns, recipient_types, \
     m = identify_entity(recipient_fph)
 
     if recipient_fph == "":
@@ -6202,15 +5815,11 @@ def invitation_generate():
 
     logged_in = current_user.is_authenticated
 
-    primid_fph, \
-    primid_hrns, \
-    etypes, \
+    primid_fph, primid_hrns, etypes, \
     m = identify_entity(current_user.get_id())
 
     if (hub_mode != "omtrad") and ("working_identity" in session):
-        working_identity_fph, \
-        working_identity_hrns, \
-        etypes, \
+        working_identity_fph, working_identity_hrns, etypes, \
         m = identify_entity(session["working_identity"])
     else:
         working_identity_fph = primid_fph
@@ -6231,17 +5840,13 @@ def invitation_generate():
     form = InvitationQRForm()
     if form.validate_on_submit():
 
-        namespace_fph, \
-        namespace_hrns, \
-        etypes, \
+        namespace_fph, namespace_hrns, etypes, \
         m = identify_entity(form.namespace_id.data)
         if namespace_fph == "":
             flash("Invalid namespace")
             return redirect("/invitation/generate")
 
-        currency_fph, \
-        currency_hrns, \
-        etypes, \
+        currency_fph, currency_hrns, etypes, \
         m = identify_entity(form.currency_id.data)
         if currency_fph == "":
             flash("Invalid currency")
@@ -6302,15 +5907,11 @@ def invitation_display(qrfilename):
 
     logged_in = current_user.is_authenticated
 
-    primid_fph, \
-    primid_hrns, \
-    etypes, \
+    primid_fph, primid_hrns, etypes, \
     m = identify_entity(current_user.get_id())
 
     if (hub_mode != "omtrad") and ("working_identity" in session):
-        working_identity_fph, \
-        working_identity_hrns, \
-        etypes, \
+        working_identity_fph, working_identity_hrns, etypes, \
         m = identify_entity(session["working_identity"])
     else:
         working_identity_fph = primid_fph

@@ -1,20 +1,11 @@
 #!/home/slate/SLATE/venv/bin/python3
 
-import sqlite3
 import sys
-import os
-import pickle
 from prettytable import PrettyTable
-from app.core.constants import ENTITIES_DB
-from app.core.slate_core import get_entity_types
 from app.core.slate_core import identify_entity
 from app.core.slate_core import get_primid_properties
-from app.core.fph_hrns_maps import hrns_to_fph, fph_to_hrns
+from app.core.fph_hrns_maps import fph_to_hrns
 from app.core.display import truefalse
-
-#script_name = sys.argv[0].replace(".py", "").replace("./", "")
-#script_name = script_name.replace("/usr/local/bin/", "")
-#script_name = script_name.replace("tools/", "")
 
 entity_identifier = sys.argv[1] # identifier (FPH or HRNS)
 
@@ -25,13 +16,8 @@ if not ("primid" in etypes):
     sys.exit(1)
 
 # Fetch *primid* properties
-active, \
-administrator, \
-ahids_fph_list, \
-secids_fph_list, \
-pmap, \
-nstewardships_list, \
-cstewardships_list, \
+active, administrator, ahids_fph_list, secids_fph_list, pmap, \
+nstewardships_list, cstewardships_list, \
 m = get_primid_properties(identifier_fph)
 # set up table:
 primid_table = PrettyTable()
@@ -40,13 +26,8 @@ primid_table.field_names = ["property", "value(s)"]
 table_rows = [] # one row per property
 # identifier HRNS
 table_row = []
-table_row.append("HRNS")
-table_row.append(identifier_hrns)
-table_rows.append(table_row)
-# identifier FPH
-table_row = []
-table_row.append("FPH")
-table_row.append(identifier_fph)
+table_row.append("identifier (FPH & HRNS)")
+table_row.append(identifier_fph + " <> " + identifier_hrns)
 table_rows.append(table_row)
 # active?
 table_row = []
@@ -58,69 +39,11 @@ table_row = []
 table_row.append("administrator")
 table_row.append(truefalse(administrator))
 table_rows.append(table_row)
-# ahids:
-table_row = []
-table_row.append("ahids")
-ahids = []
-for ahid_fph in ahids_fph_list:
-    ahids.append(fph_to_hrns(ahid_fph))
-if len(ahids) > 0:
-    table_row.append(", ".join(ahids))
-else:
-    table_row.append("none")
-table_rows.append(table_row)
-# secids:
-table_row = []
-table_row.append("secids")
-secids = []
-for secid_fph in secids_fph_list:
-    secids.append(fph_to_hrns(secid_fph))
-if len(secids) > 0:
-    table_row.append(", ".join(secids))
-else:
-    table_row.append("none")
-table_rows.append(table_row)
-# pmap:
-#table_row = []
-#table_row.append("pmap (pairing map)")
-#table_row.append(pmap)
-#table_rows.append(table_row)
-# namespace stewardships:
-table_row = []
-table_row.append("namespace stewardships")
-nstewardships = []
-for nstewardship_fph in nstewardships_list:
-    nstewardships.append(fph_to_hrns(nstewardship_fph))
-if len(nstewardships) > 0:
-    table_row.append(", ".join(nstewardships))
-else:
-    table_row.append("none")
-table_rows.append(table_row)
-# currency stewardships:
-table_row = []
-table_row.append("currency stewardships")
-cstewardships = []
-for cstewardship_fph in cstewardships_list:
-    cstewardships.append(fph_to_hrns(cstewardship_fph))
-if len(cstewardships) > 0:
-    table_row.append(", ".join(cstewardships))
-else:
-    table_row.append("none")
-table_rows.append(table_row)
 
 primid_table.add_rows(table_rows[0:])
 print(primid_table)
 
 print("\npmap (pairing map)")
-#print(pmap)
-#for ahid_hrns in pmap.keys():
-#    #print("\n" + ahid_hrns)
-#    for c_hrns in pmap[ahid_hrns].keys():
-#        print(
-#            "( " + ahid_hrns + ", " + c_hrns + " ) > " \
-#            + fph_to_hrns(pmap[ahid_hrns][c_hrns])
-#        )
-
 # set up table:
 pmap_table = PrettyTable()
 pmap_table.align = "l"
@@ -135,11 +58,45 @@ for ahid_hrns in pmap.keys():
         table_row.append(fph_to_hrns(pmap[ahid_hrns][currency_hrns]))
         table_rows.append(table_row)
 
-#for row in table_rows:
-#    print("( " + row[0] + ", " + row[1] + " ) > " + row[2])
-
-
 pmap_table.add_rows(table_rows[0:])
 print(pmap_table)
+print()
+
+# namespace stewardships:
+print("namespace stewardships: ", end="")
+if len(nstewardships_list) == 0:
+    print("none\n")
+else:
+    print()
+    for nstewardship_fph in nstewardships_list:
+        print("  " + nstewardship_fph + " > " + fph_to_hrns(nstewardship_fph))
+    print()
+
+# currency stewardships:
+print("currency stewardships: ", end="")
+if len(cstewardships_list) == 0:
+    print("none\n")
+else:
+    print()
+    for cstewardship_fph in cstewardships_list:
+        print("  " + cstewardship_fph + " > " + fph_to_hrns(cstewardship_fph))
+
+# ahids:
+print("\nahids: ", end="")
+if len(ahids_fph_list) == 0:
+    print("none\n")
+else:
+    print()
+    for ahid_fph in ahids_fph_list:
+        print("  " + ahid_fph + " > " + fph_to_hrns(ahid_fph))
+
+# secids:
+print("\nsecids: ", end="")
+if len(secids_fph_list) == 0:
+    print("none\n")
+else:
+    print()
+    for secid_fph in secids_fph_list:
+        print("  " + secid_fph + " > " + fph_to_hrns(secid_fph))
 
 sys.exit(1)

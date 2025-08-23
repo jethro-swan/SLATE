@@ -70,28 +70,26 @@ def create_messages_db():
         # The initial values for the following details are read from a
         # configuration file at the time of installation.
         cursor.execute(
-            """
-            CREATE TABLE IF NOT EXISTS messages (
-                message_id INTEGER PRIMARY KEY AUTOINCREMENT,
-                timestamp TEXT,
-                expiry_timestamp TEXT,
-                deletion_scheduled INTEGER DEFAULT 0,
-                category INTEGER DEFAULT 0,
-                indelible INTEGER DEFAULT 0,
-                stewardship_fph TEXT,
-                sender_fph TEXT,
-                recipient_identity_fph TEXT,
-                recipient_primid_fph TEXT,
-                payer_account_fph TEXT,
-                payee_account_fph TEXT,
-                payer_ahid_fph TEXT,
-                payee_ahid_fph TEXT,
-                currency_fph TEXT,
-                amount INTEGER,
-                subject TEXT,
-                message_body TEXT
-            );
-            """
+            "CREATE TABLE IF NOT EXISTS messages (" \
+            + "message_id INTEGER PRIMARY KEY AUTOINCREMENT, " \
+            + "timestamp TEXT, " \
+            + "expiry_timestamp TEXT, " \
+            + "deletion_scheduled INTEGER DEFAULT 0, " \
+            + "category INTEGER DEFAULT 0, " \
+            + "indelible INTEGER DEFAULT 0, " \
+            + "stewardship_fph TEXT, " \
+            + "sender_fph TEXT, " \
+            + "recipient_identity_fph TEXT, " \
+            + "recipient_primid_fph TEXT, " \
+            + "payer_account_fph TEXT, " \
+            + "payee_account_fph TEXT, " \
+            + "payer_ahid_fph TEXT, " \
+            + "payee_ahid_fph TEXT, " \
+            + "currency_fph TEXT, " \
+            + "amount INTEGER, " \
+            + "subject TEXT, " \
+            + "message_body TEXT " \
+            + ");"
         )
 
     # Fields:
@@ -149,8 +147,8 @@ def create_messages_db():
 
 def send_message(
         message_timestamp,
-        sender_identifier,      # FPH or HRNS - *primid*, *secid* or *ahid*
-        recipient_identifier,   # FPH or HRNS - *primid*, *secid* or *ahid*
+        sender_id,              # FPH or HRNS - *primid*, *secid* or *ahid*
+        recipient_id,           # FPH or HRNS - *primid*, *secid* or *ahid*
         category,               # string
         subject_prefix,         # string
         subject,                # string
@@ -169,8 +167,8 @@ def send_message(
 
 #    print()
 #    print(message_timestamp)
-#    print("from: " + fph_to_hrns(sender_identifier))
-#    print("to: " + fph_to_hrns(recipient_identifier))
+#    print("from: " + fph_to_hrns(sender_id))
+#    print("to: " + fph_to_hrns(recipient_id))
 #    print("category: " + category)
 #    if subject_prefix:
 #        print(subject_prefix)
@@ -197,34 +195,25 @@ def send_message(
 #    print(indelible)
 #    print()
 
-
-    sender_fph, \
-    sender_hrns, \
-    etype, \
-    em = identify_entity(sender_identifier)
+    sender_fph, sender_hrns, etypes, \
+    em = identify_entity(sender_id)
     if em:
         return "Sender unknown"
 
-    recipient_identity_fph, \
-    recipient_identity_hrns, \
-    etype, \
-    em = identify_entity(recipient_identifier)
+    recipient_identity_fph, recipient_identity_hrns, etypes, \
+    em = identify_entity(recipient_id)
     if em:
         return "Recipient unknown"
 
     recipient_primid_fph, m = get_primid(recipient_identity_fph)
 
-
-
     if stewardship_id:
-        stewardship_fph, \
-        stewardship_hrns, \
-        etype, \
+        stewardship_fph, stewardship_hrns, etypes, \
         em = identify_entity(stewardship_id)
     else:
         stewardship_fph = ""
         stewardship_hrns = ""
-        etype = ""
+#        etype = ""
 
     if not isinstance(subject_prefix, str):
         return "Invalid subject prefix string"
@@ -326,12 +315,10 @@ def send_message(
 #==============================================================================
 #
 
-def fetch_messages(recipient_identifier):
+def fetch_messages(recipient_id):
 
-    recipient_fph, \
-    recipient_hrns, \
-    recipient_type, \
-    em = identify_entity(recipient_identifier)
+    recipient_fph, recipient_hrns, recipient_type, \
+    em = identify_entity(recipient_id)
 
 #    print(recipient_hrns)
 
@@ -483,9 +470,7 @@ def fetch_messages(recipient_identifier):
 #
 def message_count(primid_id, hub_mode):
 
-    primid_fph, \
-    primid_hrns, \
-    etypes, \
+    primid_fph, primid_hrns, etypes, \
     m = identify_entity(primid_id)
     if m:
         log_event(
@@ -550,12 +535,10 @@ def message_count(primid_id, hub_mode):
 #==============================================================================
 # Are any messages available for the specified recipient?
 #
-def messages_available(recipient_identifier):
+def messages_available(recipient_id):
 
-    recipient_fph, \
-    recipient_hrns, \
-    recipient_type, \
-    em = identify_entity(recipient_identifier)
+    recipient_fph, recipient_hrns, recipient_type, \
+    em = identify_entity(recipient_id)
 
     with sqlite3.connect(MESSAGES_DB) as conn:
         cursor = conn.cursor()
@@ -585,13 +568,6 @@ def messages_available(recipient_identifier):
             return number_of_messages, 0 # no indelible messages found
         else:
             return number_of_messages, len(indelible_message_list)
-
-
-
-
-
-
-
 
 #==============================================================================
 # Are any messages available?

@@ -246,36 +246,26 @@ def ah_payment(
     if payer_ahid_hrns == payee_ahid_hrns:
         return "An account cannot pay to itself"
 
-    payer_account_fph, \
-    payer_primid_fph, \
+    payer_account_fph, payer_primid_fph, \
     m = retrieve_pairing_account_fph(payer_ahid_hrns, currency_hrns)
     if m:
         return m
 
-    payee_account_fph, \
-    payee_primid_fph, \
+    payee_account_fph, payee_primid_fph, \
     m = retrieve_pairing_account_fph(payee_ahid_hrns, currency_hrns)
     if m:
         return m
 
-    payer_account_exists, \
-    payer_account_active, \
-    payer_account_currency_fph, \
-    payer_account_owner_fph, \
-    payer_account_balance, \
-    payer_volume, \
+    payer_account_exists, payer_account_active, payer_account_currency_fph, \
+    payer_account_owner_fph, payer_account_balance, payer_volume, \
     m = account_status(payer_account_fph)
     if not payer_account_exists:
         return "Payer account " + payer_account_fph + " does not exist"
     if not payer_account_active:
         return "Payer account " + payer_account_fph + " is inactive"
 
-    payee_account_exists, \
-    payee_account_active, \
-    payee_account_currency_fph, \
-    payee_account_owner_fph, \
-    payee_account_balance, \
-    payee_volume, \
+    payee_account_exists, payee_account_active, payee_account_currency_fph, \
+    payee_account_owner_fph, payee_account_balance, payee_volume, \
     m = account_status(payee_account_fph)
     if not payee_account_exists:
         return "Payee account " + payee_account_fph + " does not exist"
@@ -364,23 +354,23 @@ def ah_payment(
     #   amount
     #   annotation
     m = send_message(
-            payment_timestamp,          # message timestamp
-            payer_ahid_fph,             # sender_id
-            payee_ahid_fph,             # recipient_id
-            "payment",                  # category
-            "",                         # subject prefix string
-            subject_line,               # subject
-            "",                         # stewardship_id (n/a)
-            0,                          # longevity (indefinite)
-            "",                         # expiry_datetime (no expiry)
-            "",          # string
-            "",          # string
-            payee_ahid_fph,             # string
-            payee_ahid_fph,             # string
-            currency_fph,               # string
-            amount,                     # integer
-            message_body,               #
-            False                       # indelibility
+            payment_timestamp,  # message timestamp
+            payer_ahid_fph,     # sender_id
+            payee_ahid_fph,     # recipient_id
+            "payment",          # category
+            "",                 # subject prefix string
+            subject_line,       # subject
+            "",                 # stewardship_id (n/a)
+            0,                  # longevity (indefinite)
+            "",                 # expiry_datetime (no expiry)
+            "",                 # string
+            "",                 # string
+            payee_ahid_fph,     # string
+            payee_ahid_fph,     # string
+            currency_fph,       # string
+            amount,             # integer
+            message_body,       #
+            False               # indelibility
         )
 #    if m:
 #        print("Problem in  send_message( )  function")
