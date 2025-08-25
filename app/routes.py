@@ -814,6 +814,10 @@ def new_home():
     if "working_identity" in session:
         working_identity_fph, working_identity_hrns, etypes, \
         m = identify_entity(session["working_identity"])
+        if ("secid" in etypes):
+            working_identity_type = "secid"
+        else:
+            working_identity_type = "primid"
     else:
         working_identity_fph = primid_fph
         session["working_identity"] = working_identity_fph
@@ -992,9 +996,9 @@ def home_ahc():
 
             account_fph = pmap_t[ahid_hrns][currency_hrns]
 
-            account_exists, account_active, account_currency_fph, \
-            account_owner_fph, account_balance, account_volume, \
-            m = account_status(account_fph)
+            account_currency_fph, account_owner_fph, \
+            account_balance, account_volume, account_active, \
+            m = get_account_properties(account_fph)
 
             if fph_to_hrns(account_currency_fph) != currency_hrns:
                 continue # (This should never happen)
@@ -1351,6 +1355,10 @@ def list_accounts():
     if "working_identity" in session:
         working_identity_fph, working_identity_hrns, etypes, \
         m = identify_entity(session["working_identity"])
+        if ("secid" in etypes):
+            working_identity_type = "secid"
+        else:
+            working_identity_type = "primid"
     else:
         working_identity_fph = primid_fph
         session["working_identity"] = working_identity_fph
@@ -1541,6 +1549,10 @@ def payment_options():
     if "working_identity" in session:
         working_identity_fph, working_identity_hrns, etypes, \
         m = identify_entity(session["working_identity"])
+        if ("secid" in etypes):
+            working_identity_type = "secid"
+        else:
+            working_identity_type = "primid"
     else:
         working_identity_fph = primid_fph
         session["working_identity"] = working_identity_fph
@@ -1704,6 +1716,10 @@ def currency_options():
     if "working_identity" in session:
         working_identity_fph, working_identity_hrns, etypes, \
         m = identify_entity(session["working_identity"])
+        if ("secid" in etypes):
+            working_identity_type = "secid"
+        else:
+            working_identity_type = "primid"
     else:
         working_identity_fph = primid_fph
         session["working_identity"] = working_identity_fph
@@ -1912,6 +1928,10 @@ def account_options(currency_fph):
     if "working_identity" in session:
         working_identity_fph, working_identity_hrns, etypes, \
         m = identify_entity(session["working_identity"])
+        if ("secid" in etypes):
+            working_identity_type = "secid"
+        else:
+            working_identity_type = "primid"
     else:
         working_identity_fph = primid_fph
         session["working_identity"] = working_identity_fph
@@ -1997,6 +2017,10 @@ def account(payer_account_fph, payee_account_fph, owner_fph = None):
     if "working_identity" in session:
         working_identity_fph, working_identity_hrns, etypes, \
         m = identify_entity(session["working_identity"])
+        if ("secid" in etypes):
+            working_identity_type = "secid"
+        else:
+            working_identity_type = "primid"
     else:
         working_identity_fph = primid_fph
         session["working_identity"] = working_identity_fph
@@ -2258,6 +2282,10 @@ def pay_account():
     if "working_identity" in session:
         working_identity_fph, working_identity_hrns, etypes, \
         m = identify_entity(session["working_identity"])
+        if ("secid" in etypes):
+            working_identity_type = "secid"
+        else:
+            working_identity_type = "primid"
     else:
         working_identity_fph = primid_fph
         session["working_identity"] = working_identity_fph
@@ -2517,6 +2545,10 @@ def pay_from_account_to_agent(payer_account_fph = None):
     if "working_identity" in session:
         working_identity_fph, working_identity_hrns, etypes, \
         m = identify_entity(session["working_identity"])
+        if ("secid" in etypes):
+            working_identity_type = "secid"
+        else:
+            working_identity_type = "primid"
     else:
         working_identity_fph = primid_fph
         session["working_identity"] = working_identity_fph
@@ -2634,6 +2666,10 @@ def pay_agent_direct(payer_currency_fph, payer_identity_fph):
     if "working_identity" in session:
         working_identity_fph, working_identity_hrns, etypes, \
         m = identify_entity(session["working_identity"])
+        if ("secid" in etypes):
+            working_identity_type = "secid"
+        else:
+            working_identity_type = "primid"
     else:
         working_identity_fph = primid_fph
         session["working_identity"] = working_identity_fph
@@ -2858,6 +2894,10 @@ def pay_agent():
     if "working_identity" in session:
         working_identity_fph, working_identity_hrns, etypes, \
         m = identify_entity(session["working_identity"])
+        if ("secid" in etypes):
+            working_identity_type = "secid"
+        else:
+            working_identity_type = "primid"
     else:
         working_identity_fph = primid_fph
         session["working_identity"] = working_identity_fph
@@ -2990,6 +3030,10 @@ def select_payer_account():
     if "working_identity" in session:
         working_identity_fph, working_identity_hrns, etypes, \
         m = identify_entity(session["working_identity"])
+        if ("secid" in etypes):
+            working_identity_type = "secid"
+        else:
+            working_identity_type = "primid"
     else:
         working_identity_fph = primid_fph
         session["working_identity"] = working_identity_fph
@@ -3097,6 +3141,10 @@ def select_payee_account(payer_account_fph = None):
     if "working_identity" in session:
         working_identity_fph, working_identity_hrns, etypes, \
         m = identify_entity(session["working_identity"])
+        if ("secid" in etypes):
+            working_identity_type = "secid"
+        else:
+            working_identity_type = "primid"
     else:
         working_identity_fph = primid_fph
         session["working_identity"] = working_identity_fph
@@ -3251,6 +3299,10 @@ def make_payment_between_selected_accounts(
     if "working_identity" in session:
         working_identity_fph, working_identity_hrns, etypes, \
         m = identify_entity(session["working_identity"])
+        if ("secid" in etypes):
+            working_identity_type = "secid"
+        else:
+            working_identity_type = "primid"
     else:
         working_identity_fph = primid_fph
         session["working_identity"] = working_identity_fph
@@ -3381,6 +3433,10 @@ def select_account_combination_in_currency(payee_identity_fph, currency_fph):
     if "working_identity" in session:
         working_identity_fph, working_identity_hrns, etypes, \
         m = identify_entity(session["working_identity"])
+        if ("secid" in etypes):
+            working_identity_type = "secid"
+        else:
+            working_identity_type = "primid"
     else:
         working_identity_fph = primid_fph
         session["working_identity"] = working_identity_fph
@@ -3444,6 +3500,10 @@ def select_payer_account_(payee_account_fph):
     if "working_identity" in session:
         working_identity_fph, working_identity_hrns, etypes, \
         m = identify_entity(session["working_identity"])
+        if ("secid" in etypes):
+            working_identity_type = "secid"
+        else:
+            working_identity_type = "primid"
     else:
         working_identity_fph = primid_fph
         session["working_identity"] = working_identity_fph
@@ -3552,6 +3612,10 @@ def account_details(account_fph):
     if "working_identity" in session:
         working_identity_fph, working_identity_hrns, etypes, \
         m = identify_entity(session["working_identity"])
+        if ("secid" in etypes):
+            working_identity_type = "secid"
+        else:
+            working_identity_type = "primid"
     else:
         working_identity_fph = primid_fph
         session["working_identity"] = working_identity_fph
@@ -3645,6 +3709,10 @@ def stewardships(identity_fph):
     if "working_identity" in session:
         working_identity_fph, working_identity_hrns, etypes, \
         m = identify_entity(session["working_identity"])
+        if ("secid" in etypes):
+            working_identity_type = "secid"
+        else:
+            working_identity_type = "primid"
     else:
         working_identity_fph = primid_fph
         session["working_identity"] = working_identity_fph
@@ -3714,6 +3782,10 @@ def secids(identity_fph):
     if "working_identity" in session:
         working_identity_fph, working_identity_hrns, etypes, \
         m = identify_entity(session["working_identity"])
+        if ("secid" in etypes):
+            working_identity_type = "secid"
+        else:
+            working_identity_type = "primid"
     else:
         working_identity_fph = primid_fph
         session["working_identity"] = working_identity_fph
@@ -3826,6 +3898,10 @@ def currency(currency_fph):
     if "working_identity" in session:
         working_identity_fph, working_identity_hrns, etypes, \
         m = identify_entity(session["working_identity"])
+        if ("secid" in etypes):
+            working_identity_type = "secid"
+        else:
+            working_identity_type = "primid"
     else:
         working_identity_fph = primid_fph
         session["working_identity"] = working_identity_fph
@@ -3899,6 +3975,10 @@ def currency_steward_add(currency_fph):
     if "working_identity" in session:
         working_identity_fph, working_identity_hrns, etypes, \
         m = identify_entity(session["working_identity"])
+        if ("secid" in etypes):
+            working_identity_type = "secid"
+        else:
+            working_identity_type = "primid"
     else:
         working_identity_fph = primid_fph
         session["working_identity"] = working_identity_fph
@@ -4023,6 +4103,10 @@ def manage():
     if "working_identity" in session:
         working_identity_fph, working_identity_hrns, etypes, \
         m = identify_entity(session["working_identity"])
+        if ("secid" in etypes):
+            working_identity_type = "secid"
+        else:
+            working_identity_type = "primid"
     else:
         working_identity_fph = primid_fph
         session["working_identity"] = working_identity_fph
@@ -4427,6 +4511,10 @@ def list_identiies():
     if "working_identity" in session:
         working_identity_fph, working_identity_hrns, etypes, \
         m = identify_entity(session["working_identity"])
+        if ("secid" in etypes):
+            working_identity_type = "secid"
+        else:
+            working_identity_type = "primid"
     else:
         working_identity_fph = primid_fph
         session["working_identity"] = working_identity_fph
@@ -4485,6 +4573,10 @@ def create_secid():
     if "working_identity" in session:
         working_identity_fph, working_identity_hrns, etypes, \
         m = identify_entity(session["working_identity"])
+        if ("secid" in etypes):
+            working_identity_type = "secid"
+        else:
+            working_identity_type = "primid"
     else:
         working_identity_fph = primid_fph
         session["working_identity"] = working_identity_fph
@@ -4709,6 +4801,10 @@ def list_namespaces():
     if "working_identity" in session:
         working_identity_fph, working_identity_hrns, etypes, \
         m = identify_entity(session["working_identity"])
+        if ("secid" in etypes):
+            working_identity_type = "secid"
+        else:
+            working_identity_type = "primid"
     else:
         working_identity_fph = primid_fph
         session["working_identity"] = working_identity_fph
@@ -4761,6 +4857,10 @@ def add_steward():
     if "working_identity" in session:
         working_identity_fph, working_identity_hrns, etypes, \
         m = identify_entity(session["working_identity"])
+        if ("secid" in etypes):
+            working_identity_type = "secid"
+        else:
+            working_identity_type = "primid"
     else:
         working_identity_fph = primid_fph
         session["working_identity"] = working_identity_fph
@@ -5008,7 +5108,7 @@ def export_currency_csv(currency_fph):
         return redirect("/home")
 
     csv_file, \
-    m = dump_currency_payments_csv(currency_fph, False)
+    m = dump_currency_payments_csv(currency_fph, True)
     if m:
         flash(m)
         return redirect("/home")
@@ -5457,6 +5557,10 @@ def message_send():
     if "working_identity" in session:
         working_identity_fph, working_identity_hrns, etypes, \
         m = identify_entity(session["working_identity"])
+        if ("secid" in etypes):
+            working_identity_type = "secid"
+        else:
+            working_identity_type = "primid"
     else:
         working_identity_fph = primid_fph
         session["working_identity"] = working_identity_fph

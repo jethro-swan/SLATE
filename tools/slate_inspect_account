@@ -28,7 +28,7 @@ table_rows = [] # one row per property
 # identifier HRNS
 table_row = []
 table_row.append("identifier (FPH <> HRNS)")
-table_row.append(identifier_fph + " <> " + identifier_hrns)
+table_row.append(identifier_fph + " = " + identifier_hrns)
 table_rows.append(table_row)
 # currency:
 table_row = []
@@ -58,7 +58,7 @@ elif ("secid" in etypes):
     owner_type = "secid"
 table_row = []
 table_row.append("owner (FPH <> HRNS)")
-table_row.append(owner_fph + " <> " + owner_hrns)
+table_row.append(owner_fph + " = " + owner_hrns)
 table_rows.append(table_row)
 # owner type:
 table_row = []

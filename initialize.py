@@ -66,8 +66,7 @@ clist = ["kwh.cc", "hrs.cc"]
 for c in clist:
     cname, c_parent_ns_hrns = split_hrns(c)
     parent_namespace_fph, m = hrns_to_fph(c_parent_ns_hrns)
-    currency_fph, \
-    currency_hrns, \
+    currency_fph, currency_hrns, \
     m = new_currency(
             cname,
             parent_namespace_fph,

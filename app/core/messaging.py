@@ -411,33 +411,8 @@ def fetch_messages(recipient_id):
                     m["payee_hrns"] = fph_to_hrns(payee_ahid_fph)
                 elif payee_account_fph:
                     m["payee_account_hrns"] = fph_to_hrns(payee_account_fph)
-#                payer_account_exists, \
-#                payer_account_active, \
-#                payer_account_currency_fph, \
-#                payer_account_owner_fph, \
-#                payer_account_ahid_fph, \
-#                payer_account_balance, \
-#                payer_account_volume, \
-#                em = account_status(payer_account_fph)
-#                m["payer_identity_hrns"] = fph_to_hrns(payer_account_owner_fph)
-#                m["payee_account_fph"] = payee_account_fph
-#                if payee_account_fph: # may be blank
-#                    m["payee_account_hrns"] = fph_to_hrns(payee_account_fph)
-#                payee_account_exists, \
-#                payee_account_active, \
-#                payee_account_currency_fph, \
-#                payee_account_owner_fph, \
-#                payee_account_ahid_fph, \
-#                payee_account_balance, \
-#                payee_account_volume, \
-#                em = account_status(payee_account_fph)
-#                m["payee_identity_hrns"] = fph_to_hrns(payer_account_owner_fph)
                 if currency_fph:
                     m["currency_hrns"] = fph_to_hrns(currency_fph)
-#                    print("Groucho")
-#                else:
-#                    continue    # omit this message from list returned (should
-                                # never happen)
 
                 if isinstance(amount, int):
                     m["amount"] = integer_to_money_s_format(amount)

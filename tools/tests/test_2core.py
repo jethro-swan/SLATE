@@ -99,10 +99,9 @@ print(etypes)
 if m:
     print(m)
 
-print("\nCreating test account\n")
+print("\nCreating test account ...\n")
 
-account_fph, \
-account_hrns, \
+account_fph, account_hrns, \
 m = new_account(
         "montecristo",
         "bb.cc",
@@ -111,10 +110,9 @@ m = new_account(
     )
 print("test account: " + account_fph + " > " + account_hrns)
 
-print("\nCreating test pairing\n")
+print("\nCreating test pairing ...\n")
 
-account_fph, \
-account_hrns, \
+account_fph, account_hrns, \
 m = new_pairing(
         cthulhu_hrns,     # *primid* HRNS or FPH
         "ah1.cthulhu.cc", # HRNS (may not exist already)

@@ -15,41 +15,66 @@ from app.core.slate_core import identify_entity
 from app.core.auth import auth_hash
 from app.core.cctld_list import *
 
-debugging = True
-
 #==============================================================================
 # The initial (minimal) set of entities created in a SLATE node are constrained
 # by dependency rules similar to those in NESTS although slightly simpler
 # because
-# (a) there atr two classes of agent (primid and secid);
-# (b) there is only one namespace separator (".");
-# (c) only the Latin alphabet is used; and
-# (b) there is only one class of currency (money).
+# (1) there is currenctly only one tested *namespace* separator (".");
+# (2) only the Latin alphabet is used; and
+# (3) there is only one class of *currency* (money).
+
+# A note on namespaces:
+#
+# The name of every entity, of whatever type, is prefixed to the identifier of
+# an existing *namespace*. Namespaces fall into three categories:
+# (1) The term *namespace* is generally used to mean a non-terminal
+#     *namespace* that can contain the name of any type of entity.
+# (2) The identifier of an agent (whether a *primid*, and *ahid" or a *secid*)
+#     identifies the root of a private *namespace*.
+# (3) A *root namespace* is one the ancestor of which is identified by an empty
+#     string (""). The *root namespaces* may include (typically) geographical
+#     containers (such as "uk", "ca", "es", "de", "fr", etc.) or containers
+#     having a different significance. The first *root namespace* created (the
+#     "seed namespace") has the identifier "cc".
+
+# Entity dependency
+#
+# The entity dependency rules for both SLATE and the (revised version of) NESTS
+# are essentially as summarized here:
+# (a) there are three classes of agent (*primid*, *ahid* and *secid*);
+# (b) a *primid* is a.k.a. a *login identity* and is the unique identifier
+#     anchoring the agent in the real world; and secid);
+# (c) each *ahid* or *secid* has one *primid*;
+# (d) each *primid* may have any number of *ahid* or *secid*;
+# (e) each *account* has either one *ahid* or one *secid*;
+# (f) each *account* is indexed either indirectly by a unique pairing of a
+#     *secid* identifier and a *currency* identifier or directly by an
+#     *account* identifier; and
+# (g) all *root namespaces* share a nameless ancestor (the substrate) which has
+#     and FPH but an empty HRNS. Uniquely, the substrate id its own ancestor.
 # (see https://nests.lrc.org.uk/entity_dependencies.html
 #
 # Every SLATE or NESTS installation must be provided with a minimal set of
 # pre-existing entities:
 #
-# - A namespace to be the parent both of the initial agents and the initial
+# - A *namespace* to be the parent both of the initial agents and the initial
 #   currencies. For simplicity, this is given the name "cc".
 #
-#   A primid (primary identity) to serve as the initial steward of the first
-#   namespace or currency created after installation.
+# - A *primid* (*primary identity* or *login identity*) to serve as the initial
+#   steward of the first *namespace* or *currency* created after installation.
 #
-#   This primid is also the initial steward of all of the the geographical root
-#   namespaces create during installation. It belongs (at least initially) to
-#   the system adminstrator who creates the NESTS hub.
+#   This *primid* is also the initial steward of all of the the geographical
+#   root *namespaces* create during installation. It belongs (at least
+#   initially) to the system adminstrator who creates the SLATE/NESTS hub.
 #
-#   The default name (HRNS) of this primid is "adm.cc".
+#   The default name (HRNS) of this *primid* is "cc".
 #
-# - A currency (cc in scope) which can be can be used to create the initial
-#   accounts for the first new primids created. The default name (HRNS) of this
-#   currency is "hrs.cc" and its default initial steward's HRNS for this is
-# "adm.cc".
+# - A *currency* (cc) which can be can be used to create the initial *accounts*
+#   for the first new *ahids* created. The default name (HRNS) of this
+#   *currency* is "cc" and its default initial steward is "adm.cc".
 #
-# - When the initial primid "adm.cc" is created, an account with HRNS
-#   "hrs.adm.cc" is created for it in the currency "hrs.cc" (the default
-# currency for identities created within the "cc" namespace).
+# - When the initial *primid* is created, an *account*, a *namespace*, an
+#   *ahid* and a *currency* are created with the same identifier.
 
 def create_substrate():
     # The substrate is unique in that
@@ -68,7 +93,6 @@ def create_substrate():
         conn.commit()
         cursor.close()
     print("SUBSTRATE_FPH = " + SUBSTRATE_FPH)
-
 
 
 def create_seed_entities():
@@ -104,119 +128,11 @@ def create_seed_entities():
             seed_primid_access_token = l[1].strip()
 
 
-    # A note on namespaces:
-    #
-    # The name of every entity, of whatever type, is contained within a
-    # namespace.
-    #
-    # Namespaces fall into three categories:
-    # (1) The term *namespace* is generally used to mean a non-terminal
-    #     namespace that can contain the name of any type of entity.
-    # (2) The name of an agent (whether a *primid* or a *secid*) identifies a
-    #     special type of namespace (a "terminal" *namespace*) that can contain
-    #     only the names of *accounts*.
-    # (3) A *root namespace* is one the name of which is not contained within
-    #     a named *namespace*. Such *root namespace* all share an unnamed
-    #     namespace ("") which contains only the names of *root namespaces*,
-    #     which include (typically) geographical containers (such as "uk",
-    #     "ca", "es", "de", "fr", etc.) or containers having a different
-    #     significance.
-    #     The first *root namespace* created (the "seed namespace") is named
-    #     "cc".
-
-
-    # 2025-04-06: Changes to accommodate use of any entity identifier as a
-    # *namespace* identifier, e.g.
-    #   cc  as both seed *namespace* and seed *currency*
-#    seed_namespace_hrns     = "cc"
-##    seed_currency_hrns      = "cc"
-##    seed_primid_hrns        = "cc"
-##    seed_primid_hrns        = "adm.cc"
-##    seed_account_hrns       = "cc.adm.cc"
-
-    # Seed entities (see https://nests.lrc.org.uk/entity_dependencies.html)
-    # by HRNS:
-    # Previous version:
-#    seed_namespace_hrns     = "cc"
-#    seed_currency_hrns      = "hrs.cc"
-#    seed_primid_hrns        = "adm.cc"
-#    seed_account_hrns       = "hrs.adm.cc"
-
-
-
-
-
     # The *substrate* is the nameless *namespace* from which all others ramify,
-    # the parent *namespace* of all "root" *namespace* (such as "cc"). This has
-    # already been added to the FPH>HRNS map (at the point of its creation
-    # - see fph_hrns_maps.py).
+    # the parent *namespace* of all "root" *namespace* (such as "cc"). This
+    # will already have been added to the FPH>HRNS map (at the point of its
+    # creation (see fph_hrns_maps.py).
     substrate_hrns = ""
-    #substrate_fph = nshash("")
-#    substrate_fph, m = hrns_to_fph(substrate_hrns) ### 2025-04-26
-#    if m:
-#        print("Problem mapping substrate HRNS (\"\") to FPH")
-
-
-
-    # The seed entities are now added to the FPH>HRNS map:
-
-#    seed_namespace_fph, m       = hrns_to_fph(seed_namespace_hrns)
-#                                # parent namespace: "" (the *substrate*)
-#                                # initial steward:  "adm.cc"
-
-#    seed_currency_fph, m        = hrns_to_fph(seed_currency_hrns)
-    #seed_currency_parent_hrns   = "cc"
-#    seed_currency_parent_fph    = SUBSTRATE_FPH
-                                # initial steward:  "adm.cc"
-
-#    seed_namespace_fph = seed_currency_fph
-
-
-
-#    seed_primid_fph, m          = hrns_to_fph(seed_primid_hrns)
-#    seed_primid_parent_hrns     = "cc"
-                                # initial account:  "hrs.adm.cc"
-                                # stewardships:     "cc" (namespace)
-                                #                   "hrs.cc" (currency)
-
-#    seed_account_fph, m         = hrns_to_fph(seed_account_hrns)
-#    seed_account_parent_hrns    = "adm.cc"
-                                # owned by:         "adm.cc"
-                                # in currency:      "hrs.cc"
-
-    # Every *namespace* or *currency* needs a set of stewards. At this point
-    # only one *primid* ("adm.cc") exists so, for the time being, this
-    # must serve as the sole steward for the "cc" *namespace* and the
-    # "hrs.cc" *currency*.
-    #stewards_fph_list       = [seed_primid_fph]
-    #stewards_fph_blob       = pickle.dumps(stewards_fph_list)
-    #
-    # The these stewardships must be added to the seed *primid* ("adm.cc"):
-    #stewardships_fph_list   = [seed_namespace_hrns, seed_currency_hrns]
-    #stewardships_fph_blob   = pickle.dumps(stewardships_fph_list)
-    #
-    # (In SLATE, these FPH lists are saved in SQLite as blobs, for which reason
-    # they must be serialized. In NESTS, they are saved as simple text files.
-
-    # The seed *account* ("hrs.adm.cc") is in the seed *currency*
-    # ("hrs.cc"):
-    #account_currency_fph    = seed_currency_fph
-    # An *account* can obviously have only one *currency*, so this does not
-    # have to be saved as a serialized list.
-    #
-    # At this point, the seed *currency* ("hrs.cc") has only one
-    # *account* ("hrs.adm.cc"):
-    #currency_accts_fph_list = [seed_account_fph]
-    #currency_accts_fph_blob = pickle.dumps(currency_accts_fph_list)
-
-
-    #seed_account_currency_fph = seed_currency_fph
-#    seed_stewardship_1_fph  = seed_namespace_fph
-#    seed_stewardship_2_fph  = seed_currency_fph
-
-    #seed_primid_account_fph = [seed_account_fph]
-#    seed_primid_account_fph = seed_account_fph
-    #seed_primid_accts_fph_blob   = pickle.dumps(seed_primid_accts_fph_list)
 
     # NB  There is no need for a seed *secid*
 
@@ -228,40 +144,35 @@ def create_seed_entities():
     # NB  The *namespace* "cc" is a "root" *namespace*. Therefore it has no
     #     named parent *namespace*.
 
-#    seed_namespace_hrns = "cc"
-#    seed_currency_hrns  = "cc"
-#    seed_primid_hrns    = "adm.cc"
-#    seed_account_hrns   = "cc.adm.cc"
+    seed_entity_hrns  = "cc" # The identifier HRNS shared by all seed entities.
 
-    seed_entity_set_hrns  = "cc"
+    seed_ahid_hrns = seed_currency_hrns = seed_entity_hrns
 
-    seed_ahid_hrns = seed_currency_hrns = seed_entity_set_hrns
+    print("Registering " + seed_entity_hrns)
+    seed_entity_fph = register_identifier(seed_entity_hrns)
+    print(seed_entity_fph)
+    m = register_entity_type(seed_entity_fph, "primid")
+    if m:
+        print(m)
+    m = register_entity_type(seed_entity_fph, "ahid")
+    if m:
+        print(m)
+    m = register_entity_type(seed_entity_fph, "namespace")
+    if m:
+        print(m)
+    m = register_entity_type(seed_entity_fph, "currency")
+    if m:
+        print(m)
+    m = register_entity_type(seed_entity_fph, "account")
+    if m:
+        print(m)
+    print("Registered " + seed_entity_hrns)
 
-    print("Registering " + seed_entity_set_hrns)
-    seed_entity_set_fph = register_identifier(seed_entity_set_hrns)
-    print(seed_entity_set_fph)
-    m = register_entity_type(seed_entity_set_fph, "primid")
-    if m:
-        print(m)
-    m = register_entity_type(seed_entity_set_fph, "ahid")
-    if m:
-        print(m)
-    m = register_entity_type(seed_entity_set_fph, "namespace")
-    if m:
-        print(m)
-    m = register_entity_type(seed_entity_set_fph, "currency")
-    if m:
-        print(m)
-    m = register_entity_type(seed_entity_set_fph, "account")
-    if m:
-        print(m)
-    print("Registered " + seed_entity_set_hrns)
-
-    seed_namespace_fph = seed_entity_set_fph
-    seed_currency_fph = seed_entity_set_fph
-    seed_primid_fph = seed_entity_set_fph
-    seed_ahid_fph = seed_entity_set_fph
-    seed_account_fph = seed_entity_set_fph
+    seed_namespace_fph = seed_entity_fph
+    seed_currency_fph = seed_entity_fph
+    seed_primid_fph = seed_entity_fph
+    seed_ahid_fph = seed_entity_fph
+    seed_account_fph = seed_entity_fph
 
     pmap = {}
     pmap[seed_ahid_hrns] = {}
@@ -304,8 +215,6 @@ def create_seed_entities():
         conn.commit()
         cursor.close()
 
-
-
     #--------------------------------------------------------------------------
     # Seed *account*:
 
@@ -330,9 +239,6 @@ def create_seed_entities():
         )
         conn.commit()
         cursor.close()
-
-
-
 
     #--------------------------------------------------------------------------
     # Seed *primid*:
@@ -360,14 +266,13 @@ def create_seed_entities():
                 + "primid_email_2_hash, " \
                 + "secids_fph_list, " \
                 + "ahids_fph_list, " \
-                + "accounts_fph_list, " \
                 + "pmap, " \
                 + "nstewardships_fph_list, " \
                 + "cstewardships_fph_list, " \
                 + "password_hash, " \
                 + "pin, " \
                 + "access_token_hash" \
-            + ") VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+            + ") VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
             (
                 seed_primid_fph,
                 1,
@@ -376,7 +281,6 @@ def create_seed_entities():
                 auth_hash(seed_primid_email_2),
                 pickle.dumps([]),
                 pickle.dumps(ahids_fph_list),
-                pickle.dumps(accounts_fph_list),
                 pickle.dumps(pmap),
                 pickle.dumps(nstewardships_fph_list),
                 pickle.dumps(cstewardships_fph_list),
@@ -387,8 +291,6 @@ def create_seed_entities():
         )
         conn.commit()
         cursor.close()
-
-
 
     #--------------------------------------------------------------------------
     # The seed *namespace* and *currency* specific properties are added:
@@ -419,6 +321,19 @@ def create_seed_entities():
     #--------------------------------------------------------------------------
     # The seed *ahid* and *currency* specific properties are added:
 
+        cursor.execute(
+            "INSERT INTO ahids (" \
+            + "entity_fph, "  \
+            + "primid_fph , "  \
+            + "accounts_fph_list"  \
+            + ") VALUES (?, ?, ?)",
+            (
+                seed_ahid_fph,
+                seed_primid_fph,
+                seed_account_fph
+            )
+        )
+
         # NB: The following may not be needed, given that the *currency* and
         #     *account* FPH are both stored in the "accounts" table, but for
         #     the time being there is no need to remove this step.
@@ -435,7 +350,6 @@ def create_seed_entities():
         conn.commit()
         cursor.close()
 
-    #seed_account_currency_fph = seed_currency_fph
     seed_stewardship_1_fph  = seed_namespace_fph
     seed_stewardship_2_fph  = seed_currency_fph
 
@@ -455,17 +369,14 @@ def create_quasitld_set(full = False):
 
     # These are recreated here in case it is necessary to callthis function
     # before create_seed_entities( ).
-##    substrate_fph = nshash("")
-    seed_primid_fph = nshash("adm.cc")
-##    seed_currency_fph = nshash("hrs.cc")
+    seed_primid_fph = nshash("cc")
     seed_currency_fph = nshash("cc")
 
     errors = "\n"
     tld_fph_list = []
     for tld in cctld_list_here:
         print(tld)
-        namespace_fph, \
-        namespace_hrns, \
+        namespace_fph, namespace_hrns, \
         m = new_namespace(
                 tld,
                 SUBSTRATE_FPH,
@@ -477,10 +388,7 @@ def create_quasitld_set(full = False):
         errors += m + "\n"
         tld_fph_list.append(namespace_fph)
 
-        print(namespace_fph + " > " + namespace_hrns)
-
     return tld_fph_list, errors
-
 
 # A set of single-letter sandbox root *namespaces* is created:
 def create_sandbox_root_set():
@@ -490,21 +398,16 @@ def create_sandbox_root_set():
     s_fph = register_identifier("s")
     register_entity_type(s_fph, "namespace")
 
-##    seed_primid_fph, m  = hrns_to_fph("adm.cc")
-##    seed_currency_fph, m  = hrns_to_fph("hrs.cc")
-##    seed_currency_fph, m  = hrns_to_fph("cc")
-
     errors = "\n"
     fph_of = {}
     for s in ["s", "a", "b", "c", "d", "e", "f", "g", "h", "i", "j"]:
-        namespace_fph, \
-        namespace_hrns, \
+        namespace_fph, namespace_hrns, \
         m = new_namespace(s, s_fph, seed_currency_fph, seed_primid_fph)
         if m:
             print(s + ": ", end="")
             print(m)
 
-        print(namespace_fph + " > " + namespace_hrns)
+        print(namespace_fph + " = " + namespace_hrns)
 
         fph_of[namespace_hrns] = namespace_fph
         errors += m + "\n"

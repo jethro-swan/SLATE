@@ -224,7 +224,7 @@ def dump_currency_payments_csv(currency_id, show_header_row = True):
 
     SC = "," # add as argument later
 
-    currency_fph, currency_hrns, etype, m = identify_entity(currency_id)
+    currency_fph, currency_hrns, etypes, m = identify_entity(currency_id)
     if m:
         return "", m
     if not currency_fph:
@@ -251,6 +251,8 @@ def dump_currency_payments_csv(currency_id, show_header_row = True):
                     + "payer" + SC \
                     + "payee" + SC \
                     + "currency" + SC \
+                    + "payer balance" + SC \
+                    + "payee balance" + SC \
                     + "amount" + SC \
                     + "annotation\n"
                 )

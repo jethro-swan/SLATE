@@ -26,7 +26,7 @@ table_rows = [] # one row per property
 # identifier HRNS
 table_row = []
 table_row.append("identifier (FPH & HRNS)")
-table_row.append(identifier_fph + " <> " + identifier_hrns)
+table_row.append(identifier_fph + " = " + identifier_hrns)
 table_rows.append(table_row)
 # active?
 table_row = []
@@ -65,7 +65,7 @@ if len(stewards_list) == 0:
 else:
     print()
     for steward_fph in stewards_list:
-        print("  " + steward_fph + " <> " + fph_to_hrns(steward_fph))
+        print("  " + steward_fph + " = " + fph_to_hrns(steward_fph))
 print()
 
 sys.exit(1)

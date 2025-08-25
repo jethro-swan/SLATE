@@ -12,6 +12,7 @@ from app.core.slate_core import identify_entity
 from app.core.payments import payment
 from app.core.slate_core import new_account, new_currency, new_namespace
 from app.core.slate_core import entity_type_is_registered
+from app.core.slate_core import get_account_properties
 
 #==============================================================================
 # This script is hard-linked to
@@ -244,16 +245,17 @@ if payee_identifier: # The action required is a payment
         )
         sys.exit(1)
     #
-    payee_fph, payee_hrns, entity_type, m = identify_entity(payee_identifier)
-    #
-    if entity_type == "account":
-        # In this case, the currency can be identified from the account:
-        exists, active, currency_fph, owner_fph, m = account_status(account_fph)
-        if not exists:
-            sys.stderr.write(
-                "The account " + payee_identifier + " does not exist."
-            )
-            sys.exit(1)
+    payee_fph, payee_hrns, etype, m = identify_entity(payee_identifier)
+    if not payee_fph:
+        sys.stderr.write(
+            "The account " + payee_identifier + " does not exist."
+        )
+        sys.exit(1)
+
+    if "account" in etypes:
+
+        currency_fph, owner_fph, balance, volume, active, \
+        m = get_account_properties(account_fph)
         if not active:
             sys.stderr.write(
                 "The account " + payee_identifier + " is inactive."

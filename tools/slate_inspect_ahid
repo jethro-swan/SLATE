@@ -14,7 +14,8 @@ else:
     list_accounts = False
     entity_identifier = sys.argv[1] # identifier (FPH or HRNS)
 
-identifier_fph, identifier_hrns, etypes, m = identify_entity(entity_identifier)
+identifier_fph, identifier_hrns, etypes, \
+m = identify_entity(entity_identifier)
 if not ("ahid" in etypes):
     print("No AHID: " + identifier_hrns + " (" + identifier_fph + ")")
     sys.exit(1)
@@ -29,12 +30,12 @@ table_rows = [] # one row per property
 # identifier HRNS
 table_row = []
 table_row.append("identifier (FPH & HRNS)")
-table_row.append(identifier_fph + " <> " + identifier_hrns)
+table_row.append(identifier_fph + " = " + identifier_hrns)
 table_rows.append(table_row)
 # owner
 table_row = []
 table_row.append("owner (primid)")
-table_row.append(primid_fph + " <> " + fph_to_hrns(primid_fph))
+table_row.append(primid_fph + " = " + fph_to_hrns(primid_fph))
 table_rows.append(table_row)
 # active?
 table_row = []
@@ -49,7 +50,7 @@ print("\naccounts: ", end="")
 print(len(accounts_fph_list))
 if list_accounts:
     for account_fph in accounts_fph_list:
-        print("  " + account_fph + " <> " + fph_to_hrns(account_fph))
+        print("  " + account_fph + " = " + fph_to_hrns(account_fph))
 print()
 
 sys.exit(1)

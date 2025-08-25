@@ -23,7 +23,8 @@ from app.core.regexp_list import *
 
 from app.core.unix_functions import fcopy
 
-from app.core.slate_core import account_status
+#from app.core.slate_core import account_status
+from app.core.slate_core import get_account_properties
 from app.core.slate_core import list_currencies_in_common_by_fph
 from app.core.slate_core import list_currencies_in_common_by_hrns
 from app.core.slate_core import identify_entity
@@ -71,29 +72,15 @@ def create_payments_db():
 
 def payment(payer_account_fph, payee_account_fph, amount, annotation):
 
-    payer_account_exists, \
-    payer_account_active, \
-    payer_account_currency_fph, \
-    payer_account_owner_fph, \
-    payer_account_ahid_fph, \
-    payer_account_balance, \
-    payer_volume, \
-    m = account_status(payer_account_fph)
-    if not payer_account_exists:
-        return "Payer account " + payer_account_fph + " does not exist"
+    payer_currency_fph, payer_account_owner_fph, \
+    payer_account_balance, payer_account_volume, payer_account_active, \
+    m = get_account_properties(payer_account_fph)
     if not payer_account_active:
         return "Payer account " + payer_account_fph + " is inactive"
 
-    payee_account_exists, \
-    payee_account_active, \
-    payee_account_currency_fph, \
-    payee_account_owner_fph, \
-    payee_account_ahid_fph, \
-    payee_account_balance, \
-    payee_volume, \
-    m = account_status(payee_account_fph)
-    if not payee_account_exists:
-        return "Payee account " + payee_account_fph + " does not exist"
+    payee_currency_fph, payee_account_owner_fph, \
+    payee_account_balance, payee_account_volume, payee_account_active, \
+    m = get_account_properties(payee_account_fph)
     if not payee_account_active:
         return "Payee account " + payee_account_fph + " is inactive"
 
@@ -119,33 +106,20 @@ def payment(payer_account_fph, payee_account_fph, amount, annotation):
         cursor = conn.cursor()
         # First the balances are adjusted:
         cursor.execute(
-            """
-            UPDATE accounts
-            SET account_balance = ?, volume = ?
-            WHERE entity_fph = ?
-            """,
+            "UPDATE accounts SET account_balance = ?, volume = ? " \
+            + "WHERE entity_fph = ?",
             (payer_account_balance, payer_volume, payer_account_fph)
         )
         cursor.execute(
-            """
-            UPDATE accounts
-            SET account_balance = ?, volume = ?
-            WHERE entity_fph = ?
-            """,
+            "UPDATE accounts SET account_balance = ?, volume = ? " \
+            + "WHERE entity_fph = ?",
             (payee_account_balance, payee_volume, payee_account_fph)
         )
         conn.commit()
         cursor.close()
 
-    currency_fph, \
-    currency_hrns, \
-    active, \
-    private, \
-    sandbox, \
-    prefix, \
-    suffix, \
-    default_account_name, \
-    stewards_list, \
+    currency_fph, currency_hrns, active, private, sandbox, \
+    prefix, suffix, default_account_name, stewards_list, \
     m = get_currency_properties(payer_account_currency_fph)
 
     #--------------------------------------------------------------------------
@@ -157,19 +131,16 @@ def payment(payer_account_fph, payee_account_fph, amount, annotation):
     with sqlite3.connect(PAYMENTS_DB) as conn:
         cursor = conn.cursor()
         cursor.execute(
-            """
-            INSERT INTO payments (
-                timestamp,
-                payer_fph,
-                payee_fph,
-                currency_fph,
-                amount,
-                payer_balance,
-                payee_balance,
-                annotation
-            )
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-            """,
+            "INSERT INTO payments (" \
+            + "timestamp, " \
+            + "payer_fph, " \
+            + "payee_fph, " \
+            + "currency_fph, " \
+            + "amount, " \
+            + "payer_balance, " \
+            + "payee_balance, " \
+            + "annotation " \
+            + ") VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
             (
                 payment_timestamp,
                 payer_account_fph,
@@ -256,19 +227,16 @@ def ah_payment(
     if m:
         return m
 
-    payer_account_exists, payer_account_active, payer_account_currency_fph, \
-    payer_account_owner_fph, payer_account_balance, payer_volume, \
-    m = account_status(payer_account_fph)
-    if not payer_account_exists:
-        return "Payer account " + payer_account_fph + " does not exist"
+    payer_currency_fph, payer_account_owner_fph, \
+    payer_account_balance, payer_account_volume, payer_account_active, \
+    m = get_account_properties(payer_account_fph)
     if not payer_account_active:
         return "Payer account " + payer_account_fph + " is inactive"
 
-    payee_account_exists, payee_account_active, payee_account_currency_fph, \
-    payee_account_owner_fph, payee_account_balance, payee_volume, \
-    m = account_status(payee_account_fph)
-    if not payee_account_exists:
-        return "Payee account " + payee_account_fph + " does not exist"
+    payee_currency_fph, payee_account_owner_fph, \
+    payee_account_balance, payee_account_volume, payee_account_active, \
+    m = get_account_properties(payee_account_fph)
+
     if not payee_account_active:
         return "Payee account " + payee_account_fph + " is inactive"
 
@@ -282,19 +250,19 @@ def ah_payment(
     payee_account_balance += amount
 
     volume_increase = abs(amount)
-    payer_volume += volume_increase
-    payee_volume += volume_increase
+    payer_account_volume += volume_increase
+    payee_account_volume += volume_increase
     #
     with sqlite3.connect(ENTITIES_DB) as conn:
         cursor = conn.cursor()
         # First the balances are adjusted:
         cursor.execute(
             "UPDATE accounts SET balance = ?, volume = ? WHERE entity_fph = ?",
-            (payer_account_balance, payer_volume, payer_account_fph)
+            (payer_account_balance, payer_account_volume, payer_account_fph)
         )
         cursor.execute(
             "UPDATE accounts SET balance = ?, volume = ? WHERE entity_fph = ?",
-            (payee_account_balance, payee_volume, payee_account_fph)
+            (payee_account_balance, payee_account_volume, payee_account_fph)
         )
         conn.commit()
         cursor.close()

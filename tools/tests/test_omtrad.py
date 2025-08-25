@@ -27,8 +27,7 @@ for ns in nslist:
     parent_fph, m = hrns_to_fph(parent_hrns)
     print(parent_fph + " > " + parent_hrns)
 
-    namespace_fph, \
-    namespace_hrns, \
+    namespace_fph, namespace_hrns, \
     m = new_namespace(
             nsname,         # name of *namespace*
             parent_fph,     # parent of *namespace*
@@ -45,8 +44,7 @@ for c in clist:
     parent_fph, m = hrns_to_fph(parent_hrns)
     print(parent_fph + " > " + parent_hrns)
 
-    currency_fph, \
-    currency_hrns, \
+    currency_fph, currency_hrns, \
     m = new_currency(
             cname,          # name of *currency*
             parent_fph,     # parent of *currency*
@@ -93,7 +91,8 @@ if test_entity_identification:
     print("Running test entity identification loop")
     print("-"*160)
     for ahid_hrns in ahid_hrns_list:
-        ahid_fph, ahid_hrns, etypes, m = identify_entity(ahid_hrns)
+        ahid_fph, ahid_hrns, etypes, \
+        m = identify_entity(ahid_hrns)
         if m:
             print(m)
         if not ahid_fph:
@@ -102,7 +101,8 @@ if test_entity_identification:
             print(ahid_hrns + " has no registered ahid")
         print(etype + ": " + ahid_fph + " > " + ahid_hrns)
     for currency_hrns in currency_hrns_list:
-        currency_fph, currency_hrns, etypes, m = identify_entity(currency_hrns)
+        currency_fph, currency_hrns, etypes, \
+        m = identify_entity(currency_hrns)
         if m:
             print(m)
         if not currency_fph:

@@ -27,7 +27,7 @@ table_rows = [] # one row per property
 # identifier HRNS
 table_row = []
 table_row.append("identifier (FPH & HRNS)")
-table_row.append(identifier_fph + " <> " + identifier_hrns)
+table_row.append(identifier_fph + " = " + identifier_hrns)
 table_rows.append(table_row)
 # active?
 table_row = []
@@ -69,7 +69,7 @@ if len(nstewardships_list) == 0:
 else:
     print()
     for nstewardship_fph in nstewardships_list:
-        print("  " + nstewardship_fph + " > " + fph_to_hrns(nstewardship_fph))
+        print("  " + nstewardship_fph + " = " + fph_to_hrns(nstewardship_fph))
     print()
 
 # currency stewardships:
@@ -79,7 +79,7 @@ if len(cstewardships_list) == 0:
 else:
     print()
     for cstewardship_fph in cstewardships_list:
-        print("  " + cstewardship_fph + " > " + fph_to_hrns(cstewardship_fph))
+        print("  " + cstewardship_fph + " = " + fph_to_hrns(cstewardship_fph))
 
 # ahids:
 print("\nahids: ", end="")
@@ -88,7 +88,7 @@ if len(ahids_fph_list) == 0:
 else:
     print()
     for ahid_fph in ahids_fph_list:
-        print("  " + ahid_fph + " > " + fph_to_hrns(ahid_fph))
+        print("  " + ahid_fph + " = " + fph_to_hrns(ahid_fph))
 
 # secids:
 print("\nsecids: ", end="")
@@ -97,6 +97,6 @@ if len(secids_fph_list) == 0:
 else:
     print()
     for secid_fph in secids_fph_list:
-        print("  " + secid_fph + " > " + fph_to_hrns(secid_fph))
+        print("  " + secid_fph + " = " + fph_to_hrns(secid_fph))
 
 sys.exit(1)

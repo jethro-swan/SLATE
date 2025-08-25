@@ -912,6 +912,23 @@ def retrieve_primid_access_details(primid_identifier):
             "", "", "", primid_identifier + " authentication data unavailable"
 
 #==============================================================================
+## Retrive the status of an account:
+#
+# returns:  exists          (boolean),
+#           active          (boolean),
+#           currency        (FPH),
+#           owner           (FPH),
+#           errors          text
+
+def account_status(account_fph):
+    currency_fph, owner_fph, balance, volume, active, \
+    m = get_account_properties(account_fph)
+    if m:
+        print("account_status( ) error: " + m)
+        return False, False, "", "", 0, 0, m
+    return True, active, currency_fph, owner_fph, balance, volume, ""
+
+#==============================================================================
 # A new *primid* is created in the specified namespace. This function is used
 # only at the point of registration.
 #
@@ -2091,28 +2108,6 @@ def get_account_properties(account_id):
     active = bool(result[4])
 #    return currency_fph, owner_fph, ahid_fph, balance, volume, active, ""
     return currency_fph, owner_fph, balance, volume, active, ""
-
-
-
-#
-#==============================================================================
-## Retrive the status of an account:
-#
-# returns:  exists          (boolean),
-#           active          (boolean),
-#           currency        (FPH),
-#           owner           (FPH),
-#           errors          text
-
-def account_status(account_fph):
-    currency_fph, owner_fph, balance, volume, active, \
-    m = get_account_properties(account_fph)
-    if m:
-        print("account_status( ) error: " + m)
-        return False, False, "", "", 0, 0, m
-    #return True, active, currency_fph, owner_fph, balance, volume, ""
-    return active, currency_fph, owner_fph, balance, volume, ""
-
 
 
 #==============================================================================

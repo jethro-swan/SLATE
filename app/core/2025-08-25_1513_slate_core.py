@@ -993,11 +993,10 @@ def new_primid(
 #    print("We can now register a *primid* for " + primid_hrns)
     register_entity_type(primid_fph, "primid")
 
-
-    # At the point of its creation, a *primid* has no *secids", so an empty
-    # list is created:
+    # At the point of its creation, a *primid* has neither *ahids* nor *secids"
+    # so empty list is created:
+    ahids_fph_list = []
     secids_fph_list = []
-
 
     # This *primid* will be the owner of a an *account* sharing the same
     # identifier, but it cannot be created at this point because the *primid*
@@ -1005,14 +1004,11 @@ def new_primid(
     # created here in preparation for that action in due course:
     accounts_fph_list = []
 
-
-
     # A second *account* is created for use in the associated *ahid*|*currency*
     # pairing:
 #    account_fph, account_hrns, \
 #    m = new_pairing(primid_fph, primid_hrns, currency_id)
 #    accounts_fph_list.append(account_fph)
-
 
     ahid_hrns = currency_hrns = primid_hrns # lest we forget
 
@@ -1039,19 +1035,21 @@ def new_primid(
             + "primid_email_1_hash, " \
             + "primid_email_2_hash, " \
             + "secids_fph_list, " \
+            + "ahids_fph_list, " \
             + "pmap, " \
             + "nstewardships_fph_list, " \
             + "cstewardships_fph_list, " \
             + "password_hash, " \
             + "pin, " \
             + "access_token_hash" \
-            + ") VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+            + ") VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
             (
                 primid_fph,
                 realname,
                 auth_hash(email_address_1),
                 auth_hash(email_address_2),
                 pickle.dumps(secids_fph_list),
+                pickle.dumps(ahids_fph_list),
                 pickle.dumps({}),
                 pickle.dumps(nstewardships_fph_list),
                 pickle.dumps(cstewardships_fph_list),
@@ -1190,68 +1188,68 @@ def new_secid(
 ### THIS may not be needed, given that in  new_pairing( )  a new *ahid*
 ###      entity is created directly.
 
-def new_ahid(
-        ahidname,
-        parent_id,
-#        initial_account_fph, # the first *account* assigned to this *ahid*
-        primid_fph
-    ):
-    if not re_slatename.match(ahidname):
-        print("new ahid: invalid name provided")
-        return "", "", "Invalid name provided"
-    parent_fph, parent_hrns, etypes, m = identify_entity(parent_id)
-    if not parent_fph:
-        print("new ahid: invalid parent " + parent_id)
-        return "", "", m # parent is invalid
-    if not ("namespace" in etypes):
-        print("new ahid: parent " + parent_id + " is not registered")
-        return "", "", "Parent namespace not registered"
-    ahid_hrns = ahidname + NSS + parent_hrns
-    # Does this *ahid*'s identifier exist already?
-    if identifier_unregistered(ahid_hrns):
-        print("new ahid: identifier " + ahid_hrns + " not yet registered")
-        ahid_fph = register_identifier(ahid_hrns)
-    ahid_fph, ahid_hrns, etypes, m = identify_entity(ahid_hrns)
-    if not ("ahid" in etypes):
-        register_entity_type(ahid_fph, "ahid")
-        with sqlite3.connect(ENTITIES_DB) as conn:
-            cursor = conn.cursor()
-            cursor.execute(
-                "INSERT INTO ahids (" \
-                + "entity_fph, " \
-                + "primid_fph, " \
-                + "accounts_fph_list, " \
-                + "active" \
-                + ") VALUES (?, ?, ?, ?)",
-                (ahid_fph, primid_fph, pickle.dumps([]), 1)
-            )
-            conn.commit()
-            cursor.close()
-    if not ("namespace" in etypes):
-        # If a new *namespace* is created here
-        # (1) the *ahid*'s owner is assigned the initial stewardship, and
-        # (2) it is assigned the default *currency* of its parent *namespace*.
-        stewards_fph_list = []
-        stewards_fph_list.append(primid_fph)
-        active, sandbox, private, owner_fph, currency_fph, stewards_list, \
-        m = get_namespace_properties(parent_fph)
-        with sqlite3.connect(ENTITIES_DB) as conn:
-            cursor = conn.cursor()
-            cursor.execute(
-                "INSERT INTO namespaces (" \
-                + "entity_fph, " \
-                + "stewards_fph_list, " \
-                + "default_currency_fph" \
-                + ") VALUES (?, ?, ?)",
-                (
-                    ahid_fph, # same identifier
-                    pickle.dumps(stewards_fph_list),
-                    currency_fph
-                )
-            )
-            conn.commit()
-            cursor.close()
-    return ahid_fph, ahid_hrns, ""
+#def new_ahid(
+#        ahidname,
+#        parent_id,
+##        initial_account_fph, # the first *account* assigned to this *ahid*
+ #       primid_fph
+#    ):
+#    if not re_slatename.match(ahidname):
+#        print("new ahid: invalid name provided")
+#        return "", "", "Invalid name provided"
+#    parent_fph, parent_hrns, etypes, m = identify_entity(parent_id)
+#    if not parent_fph:
+#        print("new ahid: invalid parent " + parent_id)
+#        return "", "", m # parent is invalid
+#    if not ("namespace" in etypes):
+#        print("new ahid: parent " + parent_id + " is not registered")
+#        return "", "", "Parent namespace not registered"
+#    ahid_hrns = ahidname + NSS + parent_hrns
+#    # Does this *ahid*'s identifier exist already?
+#    if identifier_unregistered(ahid_hrns):
+#        print("new ahid: identifier " + ahid_hrns + " not yet registered")
+#        ahid_fph = register_identifier(ahid_hrns)
+#    ahid_fph, ahid_hrns, etypes, m = identify_entity(ahid_hrns)
+#    if not ("ahid" in etypes):
+#        register_entity_type(ahid_fph, "ahid")
+#        with sqlite3.connect(ENTITIES_DB) as conn:
+#            cursor = conn.cursor()
+#            cursor.execute(
+#                "INSERT INTO ahids (" \
+#                + "entity_fph, " \
+#                + "primid_fph, " \
+#                + "accounts_fph_list, " \
+#                + "active" \
+#                + ") VALUES (?, ?, ?, ?)",
+#                (ahid_fph, primid_fph, pickle.dumps([]), 1)
+#            )
+#            conn.commit()
+#            cursor.close()
+#    if not ("namespace" in etypes):
+#        # If a new *namespace* is created here
+#        # (1) the *ahid*'s owner is assigned the initial stewardship, and
+#        # (2) it is assigned the default *currency* of its parent *namespace*.
+#        stewards_fph_list = []
+#        stewards_fph_list.append(primid_fph)
+#        active, sandbox, private, owner_fph, currency_fph, stewards_list, \
+#        m = get_namespace_properties(parent_fph)
+#        with sqlite3.connect(ENTITIES_DB) as conn:
+#            cursor = conn.cursor()
+#            cursor.execute(
+#                "INSERT INTO namespaces (" \
+#                + "entity_fph, " \
+#                + "stewards_fph_list, " \
+#                + "default_currency_fph" \
+#                + ") VALUES (?, ?, ?)",
+#                (
+#                    ahid_fph, # same identifier
+#                    pickle.dumps(stewards_fph_list),
+#                    currency_fph
+#                )
+#            )
+#            conn.commit()
+#            cursor.close()
+#    return ahid_fph, ahid_hrns, ""
 
 #==============================================================================
 ## A new *namespace* is created:
@@ -2093,8 +2091,6 @@ def get_account_properties(account_id):
     return currency_fph, owner_fph, balance, volume, active, ""
 
 
-
-#
 #==============================================================================
 ## Retrive the status of an account:
 #
@@ -2108,10 +2104,11 @@ def account_status(account_fph):
     currency_fph, owner_fph, balance, volume, active, \
     m = get_account_properties(account_fph)
     if m:
-        print("account_status( ) error: " + m)
+        print("account_status(" + account_fph + ") error: " + m)
         return False, False, "", "", 0, 0, m
-    #return True, active, currency_fph, owner_fph, balance, volume, ""
+#    return True, active, currency_fph, owner_fph, balance, volume, ""
     return active, currency_fph, owner_fph, balance, volume, ""
+
 
 
 
@@ -2929,6 +2926,11 @@ def new_pairing(
         ahid_hrns,      # *ahid* - must use HRNS because may not exist yet
         currency_id     # *currency* (HRNS or FPH, and must exist already)
     ):
+    print("new pairing: primid_id = " + primid_id)
+    print("new pairing: ahid_hrns = " + ahid_hrns)
+    print("new pairing: currency_id = " + currency_id)
+    # Step 1: Validate entity dependencies:
+    #
     # The *currency* and owner *primid* are validated before proceeding to
     # create a new *ahid* (*account-holder identity*. Only if both exist will a
     # new *account* or *ahid* be created.
@@ -2943,24 +2945,95 @@ def new_pairing(
     if m:
         print("identify_entity(primid_id)" + m)
     if not primid_fph:
+        print("new pairing: " + primid_id + " is not a registered identifier")
         return "", "", primid_id + " is not a registered identifier (13)"
     if not ("primid" in petypes):
         return "", "", primid_hrns + " is not a primid"
-    # If the *ahid* does not exist already it must be created:
-    r_ahid_fph, r_ahid_hrns, etypes, m = identify_entity(ahid_hrns)
-    if not ("ahid" in etypes):
-        # A new *ahid* is created:
-        ahid_name, parent_hrns = split_hrns(ahid_hrns)
-        ahid_fph, ahid_hrns, \
-        m = new_ahid(ahid_name, parent_hrns, primid_fph)
-        print("new pairing: new ahid = " + ahid_fph + " > " + ahid_hrns)
-    else:
-        ahid_fph = r_ahid_fph
-        ahid_hrns = r_ahid_hrns
-        print("new pairing: retrieved ahid = " + ahid_fph + " > " + ahid_hrns)
+    print("new pairing: primid_fph = " + primid_fph)
+    print("new pairing: primid_hrns = " + primid_hrns)
+    print("new pairing: petypes = ", end="")
+    print(petypes)
+    # Step 2: Create the *ahid* if it does not exist already:
+    update_ahids = False
+    ahid_fph, ahid_hrns, etypes, m = identify_entity(ahid_hrns)
+    # The sequence of events follows one of three possibilities:
+    # (a) The *ahid* identifier must be registered if it does not exist;
+    if not ahid_fph:
+        print("new ahid: registering identifier " + ahid_hrns)
+        ahid_fph = register_identifier(ahid_hrns)
+    # or
+    # (b) if the identifier exists already, an *ahid* must be registered and
+    #     created if it does not exist already:
+    elif not ("ahid" in etypes):
+        # Entity type *ahid* is registered for this identifier:
+        register_entity_type(ahid_fph, "ahid")
+        # An *ahid* identifier may be extended (as a parent) in the same way as
+        # that of a *primid* or *secid*, so if no *namespace* is registered it
+        # must be registered here and created below (to avoid database lock
+        # conflict).
+        register_entity_type(ahid_fph, "namespace")
+        # The new *ahid* is created in the *ahids* table:
+        with sqlite3.connect(ENTITIES_DB) as conn:
+            cursor = conn.cursor()
+            cursor.execute(
+                "INSERT INTO ahids (" \
+                + "entity_fph, " \
+                + "primid_fph, " \
+                + "accounts_fph_list, " \
+                + "active" \
+                + ") VALUES (?, ?, ?, ?)",
+                (ahid_fph, primid_fph, pickle.dumps([]), 1)
+            )
+            # The *ahid* must be added to the *primid*'s *ahid* list:
+            cursor.execute(
+                "SELECT ahids_fph_list FROM primids WHERE entity_fph = ?",
+                (primid_fph,)
+            )
+            result = cursor.fetchone()
+            if (result is None) or (result[0] is None): # (should never happen)
+                print("new pairing: ahids_fph_list not found")
+                ahids_fph_list = []
+            else:
+                ahids_fph_list = pickle.loads(result[0])
+            if not (ahid_fph in ahids_fph_list):
+                ahids_fph_list.append(ahid_fph)
+                cursor.execute(
+                    "UPDATE primids SET ahids_fph_list = ? " \
+                    + "WHERE entity_fph = ?",
+                    (pickle.dumps(ahids_fph_list), primid_fph)
+                )
+            stewards_fph_list = []
+            stewards_fph_list.append(primid_fph)
+            if not ("namespace" in etypes):
+                cursor.execute(
+                    "INSERT INTO namespaces (" \
+                    + "entity_fph, " \
+                    + "stewards_fph_list, " \
+                    + "default_currency_fph" \
+                    + ") VALUES (?, ?, ?)",
+                    (
+                        ahid_fph, # same identifier
+                        pickle.dumps(stewards_fph_list),
+                        currency_fph
+                    )
+                )
+            conn.commit()
+            cursor.close()
+        update_ahids = True
+        # At this point, the *accounts* list for this *ahid* is empty. Whether
+        # or not it has been necessary to create the new *ahid* here, this list
+        # will have to be extended only after the *account* has been created
+        # below.
+    # or
+    # (c) the FPH and HRNS values retrieved above already represent an existing
+    #     *ahid* and will therefore not have been overwritten above.
+    #
     # At this point, whether or not it has been necessary to create it, we now
     # have both the HRNS and the FPH of the *ahid*. It can now be paired with
     # the specified *currency* to index a new *account*.
+
+    # Step 3: Create the new *account*
+    #
     # The *account* created for this *ahid"|*currency* pairing will not usually
     # be seen by its owner, but it still needs an HRNS - both in order to be
     # able to assign it an FPH and to insure that it is both unique and easily
@@ -2980,52 +3053,70 @@ def new_pairing(
     # serve as the co-ordinates in a grid identifying the *account* created
     # above.
     #
-    # If a *pairing* entity does not exist already it is created.
-    #
-    # The pairings dictionary is retrieved:
-    pmap, m = retrieve_pmap(primid_fph)
-    if pmap is None:
+    # Any new *pairing* must be added to the pmap (dictionary) and any newly
+    # created *ahid* or *account* must be added to the appropriate tables:
+    pmap, m = retrieve_pmap(primid_fph) # The pairings dictionary is retrieved.
+    update_pmap = False
+    ahid_created = False
+    pairing_created = False
+    if pmap is None: # (should never happen)
         pmap = {}
     if not (ahid_hrns in pmap.keys()):
+        # this is a new *ahid*
         pmap[ahid_hrns] = {}
+        ahid_created = True
+        update_pmap = True
     if not (currency_hrns in pmap[ahid_hrns].keys()):
+        # this is a new *ahid*:*currency* pairing
         pmap[ahid_hrns][currency_hrns] = account_fph
+        pairing_created = True
+        update_pmap = True
     with sqlite3.connect(ENTITIES_DB) as conn:
         cursor = conn.cursor()
         # Update the pmap:
-        cursor.execute(
-            "UPDATE primids SET pmap = ? WHERE entity_fph = ?",
-            (pickle.dumps(pmap), primid_fph)
-        )
+        if update_pmap:
+            cursor.execute(
+                "UPDATE primids SET pmap = ? WHERE entity_fph = ?",
+                (pickle.dumps(pmap), primid_fph)
+            )
         # Update the *ahid*s list:
+        if ahid_created:
+            cursor.execute(
+                "SELECT ahids_fph_list FROM primids WHERE entity_fph = ?",
+                (primid_fph,)
+            )
+            result = cursor.fetchone()
+            if (result is None) or (result[0] is None): # (should never happen)
+                #print("new pairing: ahids_fph_list not found")
+                ahids_fph_list = []
+            else:
+                ahids_fph_list = pickle.loads(result[0])
+            if not (ahid_fph in ahids_fph_list):
+                ahids_fph_list.append(ahid_fph)
+                cursor.execute(
+                    "UPDATE primids SET ahids_fph_list = ? " \
+                    + "WHERE entity_fph = ?",
+                    (pickle.dumps(ahids_fph_list), primid_fph)
+                )
+        # Update the *ahid*'s *account* list:
         cursor.execute(
-            "SELECT ahids_fph_list FROM primids WHERE entity_fph = ?",
-            (primid_fph,)
+            "SELECT accounts_fph_list FROM ahids WHERE entity_fph = ?",
+            (ahid_fph,)
         )
         result = cursor.fetchone()
-        if (result is None) or (result[0] is None):
-            print("new pairing: ahids_fph_list not found")
-            ahids_fph_list = []
+        if (result is None) or (result[0] is None): # (should never happen)
+            #print("new pairing: accounts_fph_list not found")
+            accounts_fph_list = []
         else:
-            ahids_fph_list = pickle.loads(result[0])
-        if not (ahid_fph in ahids_fph_list):
-            ahids_fph_list.append(ahid_fph)
+            accounts_fph_list = pickle.loads(result[0])
+        if not (account_fph in accounts_fph_list):
+            accounts_fph_list.append(account_fph)
             cursor.execute(
-                "UPDATE primids SET ahids_fph_list = ? WHERE entity_fph = ?",
-                (pickle.dumps(ahids_fph_list), primid_fph)
+                "UPDATE ahids SET accounts_fph_list = ? WHERE entity_fph = ?",
+                (pickle.dumps(accounts_fph_list), ahid_fph)
             )
-            conn.commit()
+        conn.commit()
         cursor.close()
-
-
-
-
-
-
-
-
-
-
     return account_fph, account_hrns, ""
 
 #=============================================================================
