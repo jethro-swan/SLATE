@@ -1,27 +1,26 @@
+#!/home/slate/SLATE/venv/bin/python3
 
 import sys, os, re, argparse
-#from datetime import datetime, date, time, timezone
 
 from app.core.slate_core import identify_entity
-from app.core.slate_core import get_entity_type
+from app.core.slate_core import get_entity_types
 from app.core.slate_core import new_account
 from app.core.slate_core import split_hrns
 from app.core.slate_core import new_currency
 from app.core.slate_core import random_filename
+from app.core.slate_core import complete_parent_namespace
+from app.core.slate_core import new_pairing
+from app.core.payments import ah_payment
+from app.core.slate_core import retrieve_pmap
+
+from app.core.csv_import_dataset import import_csv_dataset
 
 from app.core.common import nshash
 from app.core.common import unixtime_str
 
 from app.core.fph_hrns_maps import fph_to_hrns, hrns_to_fph
 
-from app.core.omtrad import import_csv_dataset
-from app.core.omtrad import complete_parent_namespace
-from app.core.omtrad import new_pairing
-from app.core.omtrad import ah_payment
-from app.core.omtrad import retrieve_pmap
-
 from app.core.constants import SLATE_TEMP
-
 
 #==============================================================================
 # Set command line options:
@@ -38,7 +37,6 @@ ap.add_argument(
 )
 args = ap.parse_args()
 
-#tfpath = SLATE_TEMP + "/" + nshash(unixtime_str())
 tfpath = SLATE_TEMP + "/" + random_filename()
 
 #-------------------------------------------------------------------------------
@@ -46,7 +44,7 @@ tfpath = SLATE_TEMP + "/" + random_filename()
 errors = []
 report = []
 
-primid_fph, primid_hrns, etype, m = identify_entity(args.login_identity)
+primid_fph, primid_hrns, etypes, m = identify_entity(args.login_identity)
 
 field_separator = args.field_separator
 if not(field_separator in ["comma", "colon", "semicolon", "tab"]):
@@ -65,20 +63,9 @@ with open(tfpath, "w") as temp_file:
     for row in sys.stdin:
         temp_file.write(row)
 
-#with open(tfpath, "r") as temp_file:
-#    rows = temp_file.readlines()
-#    for row in rows:
-#        print(row)
-
 report, errors = import_csv_dataset(tfpath, primid_fph)
-#report, errors = import_csv_dataset(tfpath, primid_fph, SC=",")
-
 
 os.unlink(tfpath)
-
-
-
-
 
 for line in report:
     print(report)

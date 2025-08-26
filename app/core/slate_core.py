@@ -16,6 +16,8 @@ from app.core.common import filename_timestamp as timestamp
 from app.core.common import ledger_timestamp
 from app.core.common import nshash
 from app.core.common import unixtime_str
+#from app.core.payments import ah_payment
+
 
 #from app.core.messaging import send_message
 
@@ -892,8 +894,8 @@ def update_primid_access_details(
 #==============================================================================
 ## Retrieve the *primid* access details:
 
-def retrieve_primid_access_details(primid_identifier):
-    primid_fph, primid_hrns, etypes, m = identify_entity(primid_identifier)
+def retrieve_primid_access_details(primid_id):
+    primid_fph, primid_hrns, etypes, m = identify_entity(primid_id)
     if m:
         return "", "", "", m
     with sqlite3.connect(ENTITIES_DB) as conn:
@@ -909,7 +911,7 @@ def retrieve_primid_access_details(primid_identifier):
             access_token_hash = result[2]
             return password_hash, pin, access_token_hash, ""
         else:
-            "", "", "", primid_identifier + " authentication data unavailable"
+            "", "", "", primid_id + " authentication data unavailable"
 
 #==============================================================================
 # A new *primid* is created in the specified namespace. This function is used
@@ -1076,10 +1078,10 @@ def new_primid(
             "", "",                 # prefix | suffix
             username                # default account name
         )
-    if m:
-        print("m1: " + m)
+#    if m:
+#        print("m1: " + m)
 
-    print("new_primid: (A) currency_hrns = " + currency_hrns)
+#    print("new_primid: (A) currency_hrns = " + currency_hrns)
 
     # The new *ahid*|*currency* pairing-indexed *account* is created with this
     # *primid* as its owner, where the *ahid* shares the same identifier as the
@@ -1090,10 +1092,10 @@ def new_primid(
             primid_hrns,    # *account* HRNS combines *ahid* & *currency*; and
             currency_fph    # *currency* was created immediately before this.
         )
-    if m:
-        print("m2: " + m)
+#    if m:
+#        print("m2: " + m)
 
-    print("new_primid: (B) account_hrns = " + account_hrns)
+#    print("new_primid: (B) account_hrns = " + account_hrns)
 
     # A second new *account* is created  with the same identifier as the
     # *primid* which also serves as its initial steward:
@@ -1103,10 +1105,10 @@ def new_primid(
             primid_fph,             # owner (*ahid* or *secid*) identifier
             currency_fph            # *currency* identifier
         )
-    if m:
-        print("m3: " + m)
+#    if m:
+#        print("m3: " + m)
 
-    print("new_primid: (C) account_hrns = " + account_hrns)
+#    print("new_primid: (C) account_hrns = " + account_hrns)
 
 
 
@@ -1197,19 +1199,19 @@ def new_ahid(
         primid_fph
     ):
     if not re_slatename.match(ahidname):
-        print("new ahid: invalid name provided")
+#        print("new ahid: invalid name provided")
         return "", "", "Invalid name provided"
     parent_fph, parent_hrns, etypes, m = identify_entity(parent_id)
     if not parent_fph:
-        print("new ahid: invalid parent " + parent_id)
+#        print("new ahid: invalid parent " + parent_id)
         return "", "", m # parent is invalid
     if not ("namespace" in etypes):
-        print("new ahid: parent " + parent_id + " is not registered")
+#        print("new ahid: parent " + parent_id + " is not registered")
         return "", "", "Parent namespace not registered"
     ahid_hrns = ahidname + NSS + parent_hrns
     # Does this *ahid*'s identifier exist already?
     if identifier_unregistered(ahid_hrns):
-        print("new ahid: identifier " + ahid_hrns + " not yet registered")
+#        print("new ahid: identifier " + ahid_hrns + " not yet registered")
         ahid_fph = register_identifier(ahid_hrns)
     ahid_fph, ahid_hrns, etypes, m = identify_entity(ahid_hrns)
     if not ("ahid" in etypes):
@@ -2108,7 +2110,7 @@ def account_status(account_fph):
     currency_fph, owner_fph, balance, volume, active, \
     m = get_account_properties(account_fph)
     if m:
-        print("account_status( ) error: " + m)
+#        print("account_status( ) error: " + m)
         return False, False, "", "", 0, 0, m
     #return True, active, currency_fph, owner_fph, balance, volume, ""
     return active, currency_fph, owner_fph, balance, volume, ""
@@ -2634,11 +2636,11 @@ def list_currency_stewardships(primid_fph):
 #==============================================================================
 # List existing namespaces, specifying optionally a parent namespace.
 
-def list_active_namespaces(ancestor_namespace_identifier = ""): # FPH or HRNS
+def list_active_namespaces(ancestor_namespace_id = ""): # FPH or HRNS
 
     errors = ""
 
-    if ancestor_namespace_identifier == "": # universal substrate namespace
+    if ancestor_namespace_id == "": # universal substrate namespace
         ancestor_fph = SUBSTRATE_FPH
         ancestor_hrns = ""
         etype = "namespace"
@@ -2647,7 +2649,7 @@ def list_active_namespaces(ancestor_namespace_identifier = ""): # FPH or HRNS
         ancestor_fph, \
         ancestor_hrns, \
         etypes, \
-        m = identify_entity(ancestor_namespace_identifier)
+        m = identify_entity(ancestor_namespace_id)
         if m or (etype != "namespace"):
             return [SUBSTRATE_FPH], m
         if m:
@@ -2689,15 +2691,15 @@ def list_active_namespaces(ancestor_namespace_identifier = ""): # FPH or HRNS
 #==============================================================================
 # Get the *primid* to which a *secid* belongs:
 
-def get_primid(id_identifier): # *secid* or *ahid*
+def get_primid(id_id): # *secid* or *ahid*
     # (1) Each *ahid* or *secid* belongs to one *primid*
     # (2) Each *primid* may have any number of *ahid* or *secids*
     # (3) The identifier of a *primid* also identifies the first *ahid* in the
     #     set available to that *primid*. In effect, this particular *ahid*
     #     belongs to that *primid*.
-    id_fph, id_hrns, etypes, m = identify_entity(id_identifier)
+    id_fph, id_hrns, etypes, m = identify_entity(id_id)
     if not id_fph:
-        return "", d_identifier + " is not a registered identifier"
+        return "", d_id + " is not a registered identifier"
     if ("ahid" in etypes):
         table = "ahids"
     elif ("secid" in etypes):
@@ -2933,15 +2935,15 @@ def new_pairing(
     # create a new *ahid* (*account-holder identity*. Only if both exist will a
     # new *account* or *ahid* be created.
     currency_fph, currency_hrns, cetypes, m = identify_entity(currency_id)
-    if m:
-        print("identify_entity(currency_id): " + m)
+#    if m:
+#        print("identify_entity(currency_id): " + m)
     if not currency_fph:
         return "", currency_id + " is not a registered identifier (12)"
     if not ("currency" in cetypes):
         return "", currency_hrns + " is not a currency"
     primid_fph, primid_hrns, petypes, m = identify_entity(primid_id)
-    if m:
-        print("identify_entity(primid_id)" + m)
+#    if m:
+#        print("identify_entity(primid_id)" + m)
     if not primid_fph:
         return "", "", primid_id + " is not a registered identifier (13)"
     if not ("primid" in petypes):
@@ -2953,11 +2955,11 @@ def new_pairing(
         ahid_name, parent_hrns = split_hrns(ahid_hrns)
         ahid_fph, ahid_hrns, \
         m = new_ahid(ahid_name, parent_hrns, primid_fph)
-        print("new pairing: new ahid = " + ahid_fph + " > " + ahid_hrns)
+#        print("new pairing: new ahid = " + ahid_fph + " > " + ahid_hrns)
     else:
         ahid_fph = r_ahid_fph
         ahid_hrns = r_ahid_hrns
-        print("new pairing: retrieved ahid = " + ahid_fph + " > " + ahid_hrns)
+#        print("new pairing: retrieved ahid = " + ahid_fph + " > " + ahid_hrns)
     # At this point, whether or not it has been necessary to create it, we now
     # have both the HRNS and the FPH of the *ahid*. It can now be paired with
     # the specified *currency* to index a new *account*.
@@ -3004,7 +3006,7 @@ def new_pairing(
         )
         result = cursor.fetchone()
         if (result is None) or (result[0] is None):
-            print("new pairing: ahids_fph_list not found")
+#            print("new pairing: ahids_fph_list not found")
             ahids_fph_list = []
         else:
             ahids_fph_list = pickle.loads(result[0])
@@ -3045,9 +3047,9 @@ def list_primid_ahids(primid_fph):
 #=============================================================================
 
 def retrieve_pairing_account_fph(ahid_id, currency_id):
-    print("retrieving pairing account: ", end="")
+#    print("retrieving pairing account: ", end="")
     ahid_fph, ahid_hrns, etypes, m = identify_entity(ahid_id)
-    print("ahid: " + ahid_fph + " > " + ahid_hrns)
+#    print("ahid: " + ahid_fph + " > " + ahid_hrns)
     if not ahid_fph:
         return "", "", ahid_id + " is not a registered identifier (1)"
     if not ("ahid" in etypes):
@@ -3058,13 +3060,13 @@ def retrieve_pairing_account_fph(ahid_id, currency_id):
     if not ("currency" in etypes):
         return "", "", currency_fph + " is not a currency"
 
-    print("ahid = " + ahid_hrns + " and currency = " + currency_hrns)
+#    print("ahid = " + ahid_hrns + " and currency = " + currency_hrns)
 
     primid_fph = get_ahid_primid(ahid_fph)
-    print("primid (1) = " + primid_fph + " > " + fph_to_hrns(primid_fph))
+#    print("primid (1) = " + primid_fph + " > " + fph_to_hrns(primid_fph))
 
     primid_fph, primid_hrns, etypes, m = identify_entity(primid_fph)
-    print("primid (2) = " + primid_fph + " > " + fph_to_hrns(primid_fph))
+#    print("primid (2) = " + primid_fph + " > " + fph_to_hrns(primid_fph))
     if not primid_fph:
         return "", "", primid_fph + " is not a registered identifier (3a)"
 #    if primid_fph:
@@ -3073,15 +3075,15 @@ def retrieve_pairing_account_fph(ahid_id, currency_id):
 #        return "", "", "Unable to retrieve pmap for ahid " + ahid_hrns
     pmap, m = retrieve_pmap(primid_fph)
 
-    print("pmap: ", end="")
-    print(pmap)
-    print("pmap.keys(): ", end="")
-    print(pmap.keys())
-    print("ahid_hrns = " + ahid_hrns)
+#    print("pmap: ", end="")
+#    print(pmap)
+#    print("pmap.keys(): ", end="")
+#    print(pmap.keys())
+#    print("ahid_hrns = " + ahid_hrns)
     if not (ahid_hrns in pmap.keys()):
-        print(ahid_hrns + " is not in pmap.keys()")
+#        print(ahid_hrns + " is not in pmap.keys()")
         return "", "", ahid_hrns + " is not in pmap.keys()"
-    print(pmap[ahid_hrns].keys())
+#    print(pmap[ahid_hrns].keys())
     if not (currency_hrns in pmap[ahid_hrns].keys()):
         return "", "", ahid_hrns + " is not in ahid|currency pairing"
     currencies_available = pmap[ahid_hrns]
@@ -3169,7 +3171,7 @@ def create_import_currency(currency_hrns, steward_fph):
 #   | HRNS       | HRNS         | HRNS         |        |            |
 #
 
-def import_csv_dataset(fpath, primid_identifier):
+def import_csv_dataset(fpath, primid_id):
 
     # The uploaded file will have been given a randomly generated name and is
     # identified as fpath. The file will be deleted as soon as it has been
@@ -3191,10 +3193,17 @@ def import_csv_dataset(fpath, primid_identifier):
     # located within that *primid*'s private namesapce) unless prefixed with an
     # "@" character.
 
-    primid_fph, primid_hrns, etype, m = identify_entity(primid_identifier)
+    errors = [] # a list of errors returned
+
+    primid_fph, primid_hrns, etypes, m = identify_entity(primid_id)
+    if not primid_fph:
+        errors.append(primid_id + " is not a registered identifier")
+        return [], errors
+    if not ("primid" in etypes):
+        errors.append(primid_hrns + " has not registered primid")
+        return [], errors
 
     report = ["New entities created:"] # a report of new entities created
-    errors = [] # a list of errors returned
 
     with open(fpath, "r") as csv_f:
         rows = csv_f.readlines()
@@ -3228,13 +3237,11 @@ def import_csv_dataset(fpath, primid_identifier):
             currency_hrns_ = currency_hrns_ + NSS + primid_hrns
 
         # Create any missing *currency*:
-        currency_fph, currency_hrns, etype, m = identify_entity(currency_hrns_)
-        if etype and (etype != "currency"):
-            errors.append(currency_hrns + " is " + etype + " not currency")
-        if currency_fph == "": # does not exist
+        currency_fph, currency_hrns, etypes, \
+        m = identify_entity(currency_hrns_)
+        if not (currency_fph and ("currency" in etypes)):
             currency_name, parent_hrns = split_hrns(currency_hrns_)
-            currency_fph, \
-            currency_hrns, \
+            currency_fph, currency_hrns, \
             m = new_currency(
                     currency_name,
                     complete_parent_namespace(parent_hrns, primid_fph),
@@ -3243,16 +3250,23 @@ def import_csv_dataset(fpath, primid_identifier):
                     "",
                     currency_name # is used for default *account* name
                 )
+            if not currency_fph: # *currency* could not be created
+                errors.append(
+                    "Currency " + currency_hrns_ + " could not be created.\n" \
+                    + m
+                )
+                continue
         pmap, m = retrieve_pmap(primid_fph)
 
         # Create any missing payer *ahid* and *ahid*|*currency* pairings.
         payer_ahid_name, parent_hrns = split_hrns(payer_ahid_hrns)
         parent_fph = complete_parent_namespace(parent_hrns, primid_fph)
-        payer_account_fph = new_pairing(
-                                primid_hrns,
-                                payer_ahid_hrns,
-                                currency_hrns
-                            )
+        payer_account_fph, payer_account_hrns, \
+        m = new_pairing(
+                primid_hrns,
+                payer_ahid_hrns,
+                 currency_hrns
+            )
         if payer_account_fph:
             report.append(payer_ahid_hrns + " created")
             report.append(fph_to_hrns(payer_account_fph) + " created")
@@ -3262,11 +3276,12 @@ def import_csv_dataset(fpath, primid_identifier):
         # Create any missing payee *ahid* and *ahid*-*currency* pairings.
         payee_ahid_name, parent_hrns = split_hrns(payee_ahid_hrns)
         parent_fph = complete_parent_namespace(parent_hrns, primid_fph)
-        payee_account_fph = new_pairing(
-                                primid_fph,
-                                payee_ahid_hrns,
-                                currency_hrns
-                            )
+        payee_account_fph, payee_account_hrns, \
+        m = new_pairing(
+                primid_fph,
+                payee_ahid_hrns,
+                currency_hrns
+            )
         if payee_account_fph:
             report.append(payee_ahid_hrns + " created")
             report.append(fph_to_hrns(payee_account_fph) + " created")
