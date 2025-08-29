@@ -20,10 +20,22 @@ from app.core.constants import DEBUG_LOG
 from app.core.constants import ERROR_LOG
 from app.core.constants import AUTH_LOG
 from app.core.constants import ACTIVITY_LOG
+from app.core.constants import CONFIG_MAP
 
 from app.core.slate_core import new_namespace
 from app.core.slate_core import new_currency
 from app.core.slate_core import split_hrns
+
+from app.core.configdb import create_config_db
+from app.core.configdb import read_config_file_to_db
+
+# The hub configuration map is populated from the ~/hub_config file.
+create_config_db()
+read_config_file_to_db()
+# The configuration values are displayed:
+for k in dbm_keys(CONFIG_MAP):
+    print(k + " : " + get_config(k))
+
 
 print("creating DBM maps")
 create_maps()

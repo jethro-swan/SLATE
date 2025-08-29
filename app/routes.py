@@ -58,8 +58,8 @@ from app.core.slate_core import get_hub_mode
 from app.core.slate_core import get_version
 #from app.core.slate_core import add_stewardship, remove_steward
 from app.core.slate_core import random_filename
-from app.core.slate_core import get_config
-
+#from app.core.slate_core import get_config
+from app.core.configdb import get_config
 from app.core.qrcode import qrencode_invitation
 
 from app.core.slate_core import retrieve_pmap
@@ -67,9 +67,11 @@ from app.core.slate_core import new_pairing
 from app.core.slate_core import retrieve_pairing_account_fph
 #from app.core.slate_core import ah_payment
 from app.core.payments import ah_payment
-from app.core.slate_core import import_csv_dataset
+#from app.core.slate_core import import_csv_dataset
 from app.core.slate_core import is_ancestor, is_in_private_namespace
 from app.core.slate_core import get_ahid_primid
+
+from app.core.csv_import_dataset import import_csv_dataset
 
 from app.core.slate_session import create_slate_session_db
 from app.core.slate_session import session_save_currencies_available
@@ -635,9 +637,9 @@ def login_recover():
                      + "\nIf you have not requested a login recovery " \
                      + "link, you can ignore this message.\n\n"
 
-        config = get_config()
+        #config = get_config()
         temp_mail_send(
-            config["hub_email"],
+            get_config("hub_email"),
             agent_email,
             "Reset your password and PIN",
             message_body
@@ -5931,10 +5933,15 @@ def invitation_generate():
         working_identity_hrns = primid_hrns
         working_identity_type = etype_to_adtype(working_identity_fph)
 
-    config = get_config()
-    if "hub_url" in config.keys():
-        hub_url = config["hub_url"]
-    else:
+    #config = get_config()
+    #if "hub_url" in config.keys():
+    #    hub_url = config["hub_url"]
+    #else:
+    #    flash("hub_url is not defined in hub_config")
+    #    return redirect("/home")
+
+    hub_url = config("hub_url")
+    if not hub_url:
         flash("hub_url is not defined in hub_config")
         return redirect("/home")
 

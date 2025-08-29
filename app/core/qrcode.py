@@ -4,8 +4,8 @@ import datetime
 
 from app.core.slate_core import random_filename
 from app.core.slate_core import identify_entity
-from app.core.slate_core import get_config
-
+#from app.core.slate_core import get_config
+from app.core.configdb import get_config
 from app.core.common import unixtime_int
 
 from app.core.constants import QR_CODES
@@ -130,16 +130,20 @@ def qrencode_invitation(currency_id, namespace_id, inviter_id):
     namespace_fph, namespace_hrns, etype, m = identify_entity(namespace_id)
     inviter_fph, inviter_hrns, etype, m = identify_entity(inviter_id)
     #time_now = unixtime_int() # nanosecond precision
-    config = get_config()
-    if "qr_lifespan" in config.keys():
-        qr_lifespan = int(config["qr_lifespan"]) # seconds
-    else:
-#        qr_lifespan = 60
-        qr_lifespan = 31536000
-    if "hub_url" in config.keys():
-        hub_url = config["hub_url"]
-    else:
-        return ""
+
+    # Replaced 2025-08-29:
+    #config = get_config()
+    #if "qr_lifespan" in config.keys():
+    #    qr_lifespan = int(config["qr_lifespan"]) # seconds
+    #else:
+    #    qr_lifespan = 31536000
+    #if "hub_url" in config.keys():
+    #    hub_url = config["hub_url"]
+    #else:
+    #    return ""
+    qr_lifespan = int(get_config("qr_lifespan"))
+    hub_url = get_config("hub_url")
+
     qr_expiry_time = str(unixtime_int() + qr_lifespan*1000000000)
     deathtime = str(qr_expiry_time) # for use in filename
     # URL of the website for which we are making QR code
