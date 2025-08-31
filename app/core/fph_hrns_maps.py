@@ -4,6 +4,7 @@ from app.core.unix_functions import fcopy
 from app.core.regexp_list import re_fph, re_hrns
 from app.core.constants import DB_DIR
 from app.core.constants import MAP_BKP_DIR, FPH_TO_HRNS_MAP, HRNS_C_FPH_MAP
+from app.core.constants import FPH_PARENT_MAP
 from app.core.constants import SUBSTRATE_FPH
 from app.core.common import filename_timestamp as timestamp
 from app.core.common import nshash
@@ -11,9 +12,19 @@ from app.core.dbm_functions import dbm_store, dbm_fetch, dbm_delete, dbm_keys
 from app.core.dbm_functions import dbm_create_map
 
 
+# 2025-08-30: Extended to add a mapping of any identifier to its parent in
+# order to simplify the separation of private *namespaces* from those anchored
+# in *namespaces* ramifying from the root. This avoids the need to perform a
+# chain of SQLite database queries.
+#
+# In due course, this may be used to remove the need for a parent FPH field in
+# the entities tables. Alternatively, it may be useful to keep both in place in
+# order to simplify consistency checks.
+
+
 
 #------------------------------------------------------------------------------
-# Create new empty FPH<>HRNS maps:
+# Create new empty FPH<>HRNS and entity>parent (FPH>FPH) maps:
 
 def create_maps(): # MDB map
     # If the databases exists already, they are deleted after a time-stamped
@@ -26,10 +37,16 @@ def create_maps(): # MDB map
     if os.path.exists(HRNS_C_FPH_MAP):
         fcopy(HRNS_C_FPH_MAP, MAP_BKP_DIR + 'HRNS_C_FPH_MAP_' + T + '.dbm')
         os.remove(HRNS_C_FPH_MAP)
+# Added 2025-08-30:
+    if os.path.exists(FPH_PARENT_MAP):
+        fcopy(FPH_PARENT_MAP, MAP_BKP_DIR + 'FPH_PARENT_MAP_' + T + '.dbm')
+        os.remove(FPH_PARENT_MAP)
     # The new empty maps are created:
     #create_maps()
     dbm_create_map(FPH_TO_HRNS_MAP)     # map: FPH>HRNS
-    dbm_create_map(HRNS_C_FPH_MAP)     # map: HRNS>FPH
+    dbm_create_map(HRNS_C_FPH_MAP)      # map: HRNS>FPH
+# Added 2025-08-30:
+    dbm_create_map(FPH_PARENT_MAP)      # map: FPH>FPH (child>parent)
 
     # These two DBM maps are created initially to ensure that the DB type can
     # be identified correctly by the first read operation.
@@ -134,7 +151,7 @@ def delete_fph_from_map(fph):
 
 
 #==============================================================================
-# When any entity is moved to a new namespace, the HRNS>FPH and FPH>HRNS
+# When any entity is moved to a new *namespace*, the HRNS>FPH and FPH>HRNS
 # mappings must be updated.
 
 def update_mapping(current_hrns, new_hrns):
@@ -162,3 +179,23 @@ def update_mapping(current_hrns, new_hrns):
     dbm_store(FPH_TO_HRNS_MAP, current_fph, new_hrns)
 
     return ""
+
+#==============================================================================
+##
+# Added 2025-08-30:
+
+#------------------------------------------------------------------------------
+# Record parent FPH:
+
+def record_parent(entity_fph, parent_fph):
+    return dbm_store(FPH_PARENT_MAP, entity_fph, parent_fph)
+
+#------------------------------------------------------------------------------
+# Retrieve parent FPH from any entity FPH:
+
+def get_parent(entity_fph):
+    if re_fph.match(entity_fph):
+        parent_fph = dbm_fetch(FPH_PARENT_MAP, entity_fph).strip()
+        return parent_fph
+    else:
+        return ""

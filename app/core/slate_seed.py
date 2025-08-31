@@ -6,7 +6,7 @@ from app.core.constants import ENTITIES_DB
 from app.core.constants import SUBSTRATE_FPH
 from app.core.common import nshash
 from app.core.regexp_list import *
-from app.core.slate_core import hrns_to_fph, fph_to_hrns
+from app.core.slate_core import hrns_to_fph, fph_to_hrns, record_parent
 from app.core.slate_core import register_identifier
 from app.core.slate_core import register_entity_type
 from app.core.slate_core import new_account
@@ -92,6 +92,8 @@ def create_substrate():
         )
         conn.commit()
         cursor.close()
+    #
+    record_parent(SUBSTRATE_FPH, SUBSTRATE_FPH)
     print("SUBSTRATE_FPH = " + SUBSTRATE_FPH)
 
 

@@ -365,6 +365,7 @@ def register():
         )
 
         currency_fph, currency_hrns, active, private, sandbox, \
+        type, category, units, metrical_equivalence, dimensions, \
         prefix, suffix, default_account_name, stewards_list, \
         m = get_currency_properties(currency_fph)
         if m:
@@ -1006,6 +1007,7 @@ def home_ahc():
                 continue # (This should never happen)
 
             currency_fph, currency_hrns, active, private, sandbox, \
+            type, category, units, metrical_equivalence, dimensions, \
             prefix, suffix, default_account_name, stewards_list, \
             m = get_currency_properties(account_currency_fph)
 
@@ -1219,6 +1221,7 @@ def home():
 
             # Fetch currency details:
             currency_fph, currency_hrns, active, private, sandbox, \
+            type, category, units, metrical_equivalence, dimensions, \
             prefix, suffix, default_account_name, stewards_list, \
             m = get_currency_properties(account_currency_fph)
 
@@ -1419,6 +1422,7 @@ def list_accounts():
 
             # Fetch currency details:
             currency_fph, currency_hrns, active, private, sandbox, \
+            type, category, units, metrical_equivalence, dimensions, \
             prefix, suffix, default_account_name, stewards_list, \
             m = get_currency_properties(account_currency_fph)
 
@@ -1626,8 +1630,9 @@ def payment_options():
             isneg = (a_balance < 0)
 
             # Fetch *currency* details:
-            c_fph, c_hrns, active, private, sandbox, c_prefix, c_suffix, \
-            c_default_account_name, c_stewards_list, \
+            c_fph, c_hrns, active, private, sandbox, \
+            type, category, units, metrical_equivalence, dimensions, \
+            c_prefix, c_suffix, c_default_account_name, c_stewards_list, \
             m = get_currency_properties(c_fph)
 
             currency_changed = (c_fph != previous_currency_fph)
@@ -1800,6 +1805,7 @@ def currency_options():
 
             # Fetch *currency* details:
             c_fph, c_hrns, active, private, sandbox, \
+            type, category, units, metrical_equivalence, dimensions, \
             c_prefix, c_suffix, c_default_account_name, c_stewards_list, \
             m = get_currency_properties(c_fph)
 
@@ -2072,6 +2078,7 @@ def account(payer_account_fph, payee_account_fph, owner_fph = None):
 
     #currency_hrns = fph_to_hrns(payer_currency_fph)
     currency_fph, currency_hrns, active, private, sandbox, \
+    type, category, units, metrical_equivalence, dimensions, \
     currency_prefix, currency_suffix, default_account_name, stewards_list, \
     m = get_currency_properties(payer_currency_fph)
 
@@ -3281,6 +3288,7 @@ def make_payment_between_selected_accounts(
         payee_account_fph = session["payee_account_fph"]
 
     currency_fph, currency_hrns, active, private, sandbox, \
+    type, category, units, metrical_equivalence, dimensions, \
     currency_prefix, currency_suffix, default_account_name, stewards_list, \
     m = get_currency_properties(payment_currency_fph)
 
@@ -3382,32 +3390,6 @@ def make_payment_between_selected_accounts(
         currency_fph = currency_fph,
         currency_hrns = currency_hrns
     )
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 ###############################################################################
@@ -3647,6 +3629,7 @@ def account_details(account_fph):
     account_balance_is_negative = account_balance < 0
 
     currency_fph, currency_hrns, active, private, sandbox, \
+    type, category, units, metrical_equivalence, dimensions, \
     currency_prefix, currency_suffix, default_account_name, stewards_list, \
     m = get_currency_properties(currency_fph)
 
@@ -3915,8 +3898,9 @@ def currency(currency_fph):
     if (not ("currency" in etypes)):
         return "", "", currency_fph + " is not a currency"
 
-    currency_fph, currency_hrns, active, private, sandbox, prefix, suffix, \
-    default_account_name, stewards_list, \
+    currency_fph, currency_hrns, active, private, sandbox, \
+    type, category, units, metrical_equivalence, dimensions, \
+    prefix, suffix, default_account_name, stewards_list, \
     m = get_currency_properties(currency_fph)
 
     # Compile a list of the stewards of this *currency*, excluding the *primid*
@@ -3987,8 +3971,9 @@ def currency_steward_add(currency_fph):
         working_identity_hrns = primid_hrns
     #    working_identity_type = etype_to_adtype(working_identity_type)
 
-    currency_fph, currency_hrns, active, private, sandbox, prefix, suffix, \
-    default_account_name, stewards_list, \
+    currency_fph, currency_hrns, active, private, sandbox, \
+    type, category, units, metrical_equivalence, dimensions, \
+    prefix, suffix, default_account_name, stewards_list, \
     m = get_currency_properties(currency_fph)
 
     number_of_messages, \
@@ -4061,8 +4046,9 @@ def currency_steward_remove(currency_fph, steward_fph):
         working_identity_hrns = primid_hrns
         working_identity_type = etype_to_adtype(working_identity_type)
 
-    currency_fph, currency_hrns, active, private, sandbox, prefix, suffix, \
-    default_account_name, stewards_list, \
+    currency_fph, currency_hrns, active, private, sandbox, \
+    type, category, units, metrical_equivalence, dimensions, \
+    prefix, suffix, default_account_name, stewards_list, \
     m = get_currency_properties(currency_fph)
 
     if primid_fph in stewards_list:
@@ -4133,7 +4119,6 @@ def manage():
         namespace_steward = namespace_steward,
         currency_steward = currency_steward
     )
-
 
 # create a currency -----------------------------------------------------------
 @app.route("/create_currency", methods = ["GET", "POST"])
@@ -4305,6 +4290,7 @@ def create_pairing(owner_fph = ""):
             #return redirect("/create_ahid/" + owner_fph)
 
         currency_fph, currency_hrns, active, private, sandbox, \
+        type, category, units, metrical_equivalence, dimensions, \
         prefix, suffix, default_account_name, stewards_list, \
         m = get_currency_properties(currency_fph)
 
@@ -4443,6 +4429,7 @@ def create_account(owner_fph):
             # in the "cc" seed *namespace*.
 
             currency_fph, currency_hrns, active, private, sandbox, \
+            type, category, units, metrical_equivalence, dimensions, \
             prefix, suffix, default_account_name, stewards_list, \
             m = get_currency_properties(currency_fph)
 
@@ -4630,19 +4617,12 @@ def create_secid():
             flash(m)
             return redirect("/create_secid")
 
-        currency_fph, \
-        currency_hrns, \
-        active, \
-        private, \
-        sandbox, \
-        prefix, \
-        suffix, \
-        default_account_name, \
-        stewards_list, \
+        currency_fph, currency_hrns, active, private, sandbox, \
+        type, category, units, metrical_equivalence, dimensions, \
+        prefix, suffix, default_account_name, stewards_list, \
         m = get_currency_properties(default_currency_fph)
 
-        account_fph, \
-        account_hrns, \
+        account_fph, account_hrns, \
         m = new_account(
             default_account_name,
             secid_fph,
@@ -4886,6 +4866,7 @@ def add_steward():
         m = namespace_status(namespace_fph)
     elif "currency" in etypes:
         currency_fph, currency_hrns, active, private, sandbox, \
+        type, category, units, metrical_equivalence, dimensions, \
         prefix, suffix, default_account_name,  stewards_list, \
         m = get_currency_properties(currency_fph)
     else:
@@ -5099,6 +5080,7 @@ def export_currency_csv(currency_fph):
         return redirect("/home")
 
     currency_fph, currency_hrns, active, private, sandbox, \
+    type, category, units, metrical_equivalence, dimensions, \
     prefix, suffix, default_account_name, stewards_list, \
     m = get_currency_properties(currency_fph)
     if m:
@@ -5933,14 +5915,7 @@ def invitation_generate():
         working_identity_hrns = primid_hrns
         working_identity_type = etype_to_adtype(working_identity_fph)
 
-    #config = get_config()
-    #if "hub_url" in config.keys():
-    #    hub_url = config["hub_url"]
-    #else:
-    #    flash("hub_url is not defined in hub_config")
-    #    return redirect("/home")
-
-    hub_url = config("hub_url")
+    hub_url = get_config("hub_url")
     if not hub_url:
         flash("hub_url is not defined in hub_config")
         return redirect("/home")

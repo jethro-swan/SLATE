@@ -119,6 +119,7 @@ def payment(payer_account_fph, payee_account_fph, amount, annotation):
         cursor.close()
 
     currency_fph, currency_hrns, active, private, sandbox, \
+    type, category, units, metrical_equivalence, dimensions, \
     prefix, suffix, default_account_name, stewards_list, \
     m = get_currency_properties(payer_account_currency_fph)
 
@@ -268,6 +269,7 @@ def ah_payment(
         cursor.close()
 
     currency_fph, currency_hrns, active, private, sandbox, \
+    type, category, units, metrical_equivalence, dimensions, \
     prefix, suffix, default_account_name, \
     stewards_list, m = get_currency_properties(currency_hrns)
 

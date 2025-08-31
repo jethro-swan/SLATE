@@ -3,7 +3,7 @@
 import sqlite3
 from prettytable import PrettyTable
 from app.core.constants import ENTITIES_DB
-from app.core.fph_hrns_maps import hrns_to_fph, fph_to_hrns
+from app.core.fph_hrns_maps import hrns_to_fph, fph_to_hrns, get_parent
 from app.core.slate_core import get_entity_types
 
 with sqlite3.connect(ENTITIES_DB) as conn:
@@ -21,6 +21,7 @@ entity_table.align = "l"
 entity_table.field_names = [
                              "entity HRNS",
                              "entity FPH",
+                             "parent FPH",
                              "N",
                              "C",
                              "A",
@@ -35,6 +36,9 @@ for identifier in identifiers_list:
     etypes, m = get_entity_types(identifier_fph) # list types registered
     if m: # (this should never happen)
         print(m)
+
+    parent_fph = get_parent(identifier_fph)
+
     table_row = []  # a new row in the table is required for each entity type
                     # registered for this
 
@@ -44,32 +48,35 @@ for identifier in identifiers_list:
     # column 2: identifier FPH
     table_row.append(identifier_fph)
 
-    # Column 3:
+    # Column 3: FPH of parent *namespace*
+    table_row.append(parent_fph)
+
+    # Column 4:
     if "namespace" in etypes:
         table_row.append("N")
     else:
         table_row.append("")
-    # Column 4:
+    # Column 5:
     if "currency" in etypes:
         table_row.append("C")
     else:
         table_row.append("")
-    # Column 5:
+    # Column 6:
     if "account" in etypes:
         table_row.append("A")
     else:
         table_row.append("")
-    # Column 6:
+    # Column 7:
     if "ahid" in etypes:
         table_row.append("H")
     else:
         table_row.append("")
-    # Column 7:
+    # Column 8:
     if "primid" in etypes:
         table_row.append("P")
     else:
         table_row.append("")
-    # Column 8:
+    # Column 9:
     if "secid" in etypes:
         table_row.append("S")
     else:

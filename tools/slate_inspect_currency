@@ -21,8 +21,9 @@ if not ("currency" in etypes):
     sys.exit(1)
 
 # fetch *currency* properties
-currency_fph, currency_hrns, active, private, sandbox, prefix, suffix, \
-default_account_name, stewards_list, \
+currency_fph, currency_hrns, active, private, sandbox, \
+type, category, units, metrical_equivalence, dimensions, \
+prefix, suffix, default_account_name, stewards_list, \
 m = get_currency_properties(identifier_fph)
 # set up table:
 currency_table = PrettyTable()

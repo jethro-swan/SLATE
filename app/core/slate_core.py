@@ -23,6 +23,8 @@ from app.core.common import unixtime_str
 
 from app.core.fph_hrns_maps import hrns_to_fph, fph_to_hrns, create_maps
 from app.core.fph_hrns_maps import delete_fph_from_map
+from app.core.fph_hrns_maps import get_parent
+from app.core.fph_hrns_maps import record_parent
 
 from app.core.dbm_functions import dbm_store, dbm_fetch, dbm_delete, dbm_keys
 from app.core.dbm_functions import dbm_create_map
@@ -132,9 +134,26 @@ def get_config():
 
 
 #==============================================================================
-## Create the SQLite entities database:
+## Create the SQLite entities database
 
-def create_entities_db():
+# 2025-08-30: Extending to allow creation od a new entities database file for
+# each private *namespace* using the owner's FPH as its filename.
+
+#def create_entities_db():
+#
+#    if os.path.exists(ENTITIES_DB):
+#        # If the database exists already, it is deleted after a time-stamped
+#        # copy has been saved.
+#        fcopy(ENTITIES_DB, DB_BKP_DIR + '/entities_' + timestamp() + '.db')
+#        os.remove(ENTITIES_DB)
+
+def create_entities_db(*owner_fph):
+
+    # Added 2025-08-30:
+
+    # The owner of any private *namespace*
+#    if owner_fph is not None:
+
 
     if os.path.exists(ENTITIES_DB):
         # If the database exists already, it is deleted after a time-stamped
@@ -143,7 +162,7 @@ def create_entities_db():
         os.remove(ENTITIES_DB)
 
     # If this entity is a *private namespace* (one that has ramified from a
-    # *primid* or *secid*, both that privacy and its owenerhip must be evident.
+    # *primid* or *secid*, both that privacy and its ownerhip must be evident.
     # By default, ownership is inherited from the parent *namespace* but may
     # be overridden.
     #
@@ -243,6 +262,7 @@ def create_entities_db():
         # Create currencies table:
         #
         # Please note:
+        #
         # The "units" field (where used) indicates measure/value/quantity, and
         # must be consistent with the "dimensions" field (if used). The
         # following list of possibilities for each category is far from
@@ -253,6 +273,7 @@ def create_entities_db():
         #   - "force":              e.g. Newton
         #   - "length":             e.g. m, light-years,
         #   - "lte":                e.g. Euro, Pound, Yen, Dollar, ...
+        #
         # The "dimensions" field (if used) must be consistent with the "units"
         # field (if used) and vice versa:
         #   - "utime":              T
@@ -262,6 +283,10 @@ def create_entities_db():
         #   - "mass":               M
         #   - "speed" | "velocity": LT^-1
         #   - "acceleration":       LT^-2
+        #
+        # Where "type" is "money", the "metrical_equivalence" field (if used)
+        # indicated the legal tender currency for which this substitutes.
+        #
         # The "prefix" or "suffix" field (where used) must be consistent with
         # the "units" (if used) and vice versa.
         #
@@ -278,6 +303,7 @@ def create_entities_db():
             + "type TEXT DEFAULT '', " \
             + "category TEXT DEFAULT '', " \
             + "units TEXT DEFAULT '', " \
+            + "metrical_equivalence '', " \
             + "dimensions TEXT DEFAULT ''" \
             + ");"
         )
@@ -291,6 +317,10 @@ def create_entities_db():
             + "balance INTEGER NOT NULL DEFAULT 0, " \
             + "volume INTEGER NOT NULL DEFAULT 0, " \
             + "account_type TEXT DEFAULT 'money', " \
+            + "category TEXT DEFAULT '', " \
+            + "units TEXT DEFAULT '', " \
+            + "metrical_equivalence '', " \
+            + "dimensions TEXT DEFAULT '', " \
             + "vector BLOB, " \
             + "vector_map BLOB, " \
             + "matrix BLOB, " \
@@ -316,6 +346,9 @@ def create_entities_db():
         conn.commit()
         cursor.close()
 
+    # Added 2025-08-30:
+
+
 #==============================================================================
 # A new identifier is registered by
 # (1) creation of an FPH>HRNS and HRNS>FPH mapping pair; and
@@ -329,6 +362,10 @@ def register_identifier(identifier_hrns):
     identifier_fph, m = hrns_to_fph(identifier_hrns)
     if m:
         delete_fph_from_map(identifier_fph)
+        return ""
+
+    # The parent FPH is registered in the child.parent map:
+    if not record_parent(identifier_fph, parent_fph):
         return ""
 
     # An entry is created for this FPH in the [entities_registered] table if
@@ -1446,6 +1483,7 @@ def new_account(
     if not ("currency" in etypes):
         return "", "", currency_fph + " has no registered currency"
     currency_fph, currency_hrns, active, private, sandbox, \
+    type, category, units, metrical_equivalence, dimensions, \
     prefix, suffix, default_account_name, \
     stewards_list, m = get_currency_properties(currency_fph)
     if not re_slatename.match(account_name): # invalid *account* name provided
@@ -1585,9 +1623,9 @@ def get_currency_properties(currency_id):
         return "", "", False, False, False, "", "", "", [], m
     with sqlite3.connect(ENTITIES_DB) as conn:
         cursor = conn.cursor()
-        # Add the stewarded entity's FPH to the *primid*'s stewardships list:
         cursor.execute(
             "SELECT active, private, sandbox, " \
+            + "type, category, units, metrical_equivalence, dimensions, " \
             + "currency_prefix, currency_suffix, default_account_name, " \
             + "stewards_fph_list FROM currencies WHERE entity_fph = ?",
             (currency_fph,)
@@ -1600,12 +1638,18 @@ def get_currency_properties(currency_id):
     active = bool(result[0])
     private = bool(result[1])
     sandbox = bool(result[2])
-    prefix = result[3]
-    suffix = result[4]
-    default_account_name = result[5]
-    stewards_fph_blob = result[6]
+    type = result[3]
+    category = result[4]
+    units = result[5]
+    metrical_equivalence = result[6]
+    dimensions = result[7]
+    prefix = result[8]
+    suffix = result[9]
+    default_account_name = result[10]
+    stewards_fph_blob = result[11]
     stewards_list = pickle.loads(stewards_fph_blob)
     return currency_fph, currency_hrns, active, private, sandbox, \
+           type, category, units, metrical_equivalence, dimensions, \
            prefix, suffix, default_account_name, stewards_list, ""
 
 #==============================================================================
@@ -2076,6 +2120,16 @@ def get_account_properties(account_id):
             + "balance, " \
             + "volume, " \
             + "active " \
+            + "account_type, " \
+            + "category, " \
+            + "units, " \
+            + "metrical_equivalence, " \
+            + "dimensions, " \
+            + "vector, " \
+            + "vector_map, " \
+            + "matrix, " \
+            + "matrix_map, " \
+            + "ts_pointer " \
             + "FROM accounts WHERE entity_fph = ?",
             (account_fph,)
         )
@@ -2884,6 +2938,36 @@ def is_ancestor(entity_hrns, ancestor_id):
 
 # ... used here primarily to determine whether the parent *namespace* for new
 # entities is the private *namespace* of the importing *primid".
+
+
+# Alternative version ...
+
+#def is_ancestor(entity_id, ancestor_id):
+def _is_ancestor(entity_id, ancestor_id):
+    # This version uses the  get_parent( )  function.
+    e_fph, e_hrns, etypes, m = identify_entity(entity_id)
+    if not e_fph:
+        return False
+    a_fph, a_hrns, etypes, m = identify_entity(ancestor_id)
+#    if not a_fph:
+#        return False
+    # Whether or not it has been registered as an identifier, an empty list is
+    # returned if ancestor_id does not identify a *namespace*:
+    if not ("namespace" in etypes):
+        return False
+    # Every identifier has a parent so this is a sufficient start ...
+    parent_fph = get_parent(e_fph)
+    # ... from which to burrow down into the ancestral depths until ...
+    while parent_fph:
+        parent_fph = get_parent(parent_fph)
+        if parent_fph == a_fph:
+            # ... either the tentative ancestor has been found in the chain or
+            return True
+    else:
+        # ... the tentative ancestor has not been found anywhere in the chain.
+        return False
+
+
 
 def is_in_private_namespace(entity_hrns, pn_id):
     pn_fph, pn_hrns, etype, m = identify_entity(pn_id)
