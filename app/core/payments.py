@@ -74,12 +74,16 @@ def payment(payer_account_fph, payee_account_fph, amount, annotation):
 
     payer_currency_fph, payer_account_owner_fph, \
     payer_account_balance, payer_account_volume, payer_account_active, \
+    account_type, account_category, account_units, \
+    account_metrical_equivalence, account_dimensions, \
     m = get_account_properties(payer_account_fph)
     if not payer_account_active:
         return "Payer account " + payer_account_fph + " is inactive"
 
     payee_currency_fph, payee_account_owner_fph, \
     payee_account_balance, payee_account_volume, payee_account_active, \
+    account_type, account_category, account_units, \
+    account_metrical_equivalence, account_dimensions, \
     m = get_account_properties(payee_account_fph)
     if not payee_account_active:
         return "Payee account " + payee_account_fph + " is inactive"
@@ -230,12 +234,16 @@ def ah_payment(
 
     payer_currency_fph, payer_account_owner_fph, \
     payer_account_balance, payer_account_volume, payer_account_active, \
+    account_type, account_category, account_units, \
+    account_metrical_equivalence, account_dimensions, \
     m = get_account_properties(payer_account_fph)
     if not payer_account_active:
         return "Payer account " + payer_account_fph + " is inactive"
 
     payee_currency_fph, payee_account_owner_fph, \
     payee_account_balance, payee_account_volume, payee_account_active, \
+    account_type, account_category, account_units, \
+    account_metrical_equivalence, account_dimensions, \
     m = get_account_properties(payee_account_fph)
 
     if not payee_account_active:

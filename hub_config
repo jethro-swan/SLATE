@@ -65,6 +65,8 @@ allow_account_to_agent_payment    true
 
 # If the following is true, the user may import a CSV dataset:
 allow_user_dataset_csv_import     true
+show_dataset_csv_import_link      false
+
 
 # If the following is true, vector currency support is enabled:
 enable_vector_currency_support    true

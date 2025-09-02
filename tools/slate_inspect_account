@@ -19,6 +19,8 @@ if not ("account" in etypes):
 
 # fetch *account* properties
 currency_fph, owner_fph, balance, volume, active, \
+account_type, account_category, account_units, \
+account_metrical_equivalence, account_dimensions, \
 m = get_account_properties(identifier_fph)
 # set up table:
 account_table = PrettyTable()
@@ -64,6 +66,31 @@ table_rows.append(table_row)
 table_row = []
 table_row.append("owner type")
 table_row.append(owner_type)
+table_rows.append(table_row)
+# account type:
+table_row = []
+table_row.append("account type")
+table_row.append(account_type)
+table_rows.append(table_row)
+# category:
+table_row = []
+table_row.append("account category")
+table_row.append(account_category)
+table_rows.append(table_row)
+# account units:
+table_row = []
+table_row.append("account units")
+table_row.append(account_units)
+table_rows.append(table_row)
+# metrical equivalence:
+table_row = []
+table_row.append("metrical equivalence")
+table_row.append(account_metrical_equivalence)
+table_rows.append(table_row)
+# dimensions:
+table_row = []
+table_row.append("dimensions")
+table_row.append(account_dimensions)
 table_rows.append(table_row)
 
 account_table.add_rows(table_rows[0:])

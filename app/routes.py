@@ -860,6 +860,7 @@ def new_home():
             group = group,
             hub_mode = hub_mode,
             version = get_version(),
+            show_csv_import_link = get_config("show_dataset_csv_import_link"),
             logged_in = logged_in,
             primid_type = "login identity",
             primid_fph = primid_fph,
@@ -916,6 +917,7 @@ def hold():
         group = group,
         hub_mode = hub_mode,
         version = get_version(),
+        show_csv_import_link = get_config("show_dataset_csv_import_link"),
         logged_in = logged_in,
         primid_type = "login identity",
         primid_fph = primid_fph,
@@ -1001,6 +1003,8 @@ def home_ahc():
 
             account_currency_fph, account_owner_fph, \
             account_balance, account_volume, account_active, \
+            account_type, account_category, account_units, \
+            account_metrical_equivalence, account_dimensions, \
             m = get_account_properties(account_fph)
 
             if fph_to_hrns(account_currency_fph) != currency_hrns:
@@ -1066,6 +1070,7 @@ def home_ahc():
         group = group,
         hub_mode = hub_mode,
         version = get_version(),
+        show_csv_import_link = get_config("show_dataset_csv_import_link"),
         development_mode = development_mode,
         logged_in = logged_in,
         primid_type = "login identity",
@@ -1217,6 +1222,8 @@ def home():
             print("home: account_fph = " + account_fph)
             account_currency_fph, account_owner_fph, \
             account_balance, account_volume, active, \
+            account_type, account_category, account_units, \
+            account_metrical_equivalence, account_dimensions, \
             m = get_account_properties(account_fph)
 
             # Fetch currency details:
@@ -1307,6 +1314,7 @@ def home():
         group = group,
         hub_mode = hub_mode,
         version = get_version(),
+        show_csv_import_link = get_config("show_dataset_csv_import_link"),
         development_mode = development_mode,
         logged_in = logged_in,
         primid_type = "login identity",
@@ -1418,6 +1426,8 @@ def list_accounts():
             print("/list/accounts/ account_fph = " + account_fph)
             account_currency_fph, account_owner_fph, \
             account_balance, account_volume, active, \
+            account_type, account_category, account_units, \
+            account_metrical_equivalence, account_dimensions, \
             m = get_account_properties(account_fph)
 
             # Fetch currency details:
@@ -1489,6 +1499,7 @@ def list_accounts():
         group = group,
         hub_mode = hub_mode,
         version = get_version(),
+        show_csv_import_link = get_config("show_dataset_csv_import_link"),
         development_mode = development_mode,
         logged_in = logged_in,
         primid_type = "login identity",
@@ -1624,6 +1635,8 @@ def payment_options():
             print("/payment_options/ a_fph = " + a_fph)
             # fetch *account* details:
             c_fph, a_owner_fph, a_balance, a_volume, active, \
+            account_type, account_category, account_units, \
+            account_metrical_equivalence, account_dimensions, \
             m = get_account_properties(a_fph)
             a_balance_d = integer_to_money_format(a_balance)
 
@@ -1674,6 +1687,7 @@ def payment_options():
         hub_mode = hub_mode,
         development_mode = development_mode,
         version = get_version(),
+        show_csv_import_link = get_config("show_dataset_csv_import_link"),
         logged_in = logged_in,
         primid_type = "login identity",
         primid_fph = primid_fph,
@@ -1798,6 +1812,8 @@ def currency_options():
             print("/currency/options/  a_fph = " + a_fph)
             # fetch *account* details:
             c_fph, a_owner_fph, a_balance, a_volume, active, \
+            account_type, account_category, account_units, \
+            account_metrical_equivalence, account_dimensions, \
             m = get_account_properties(a_fph)
             a_balance_d = integer_to_money_format(a_balance)
 
@@ -1889,6 +1905,7 @@ def currency_options():
         logged_in = logged_in,
         hub_mode = hub_mode,
         version = get_version(),
+        show_csv_import_link = get_config("show_dataset_csv_import_link"),
         primid_type = "login identity",
         primid_fph = primid_fph,
         primid_hrns = primid_hrns,
@@ -1956,6 +1973,7 @@ def account_options(currency_fph):
         logged_in = logged_in,
         hub_mode = hub_mode,
         version = get_version(),
+        show_csv_import_link = get_config("show_dataset_csv_import_link"),
         primid_type = "login identity",
         primid_fph = primid_fph,
         primid_hrns = primid_hrns,
@@ -2068,6 +2086,8 @@ def account(payer_account_fph, payee_account_fph, owner_fph = None):
 
     print("/account/.../.../... payer_account_fph = " + payer_account_fph)
     payer_currency_fph, payer_owner_fph, payer_balance, volume, active, \
+    account_type, account_category, account_units, \
+    account_metrical_equivalence, account_dimensions, \
     m = get_account_properties(payer_account_fph)
 
     if m:
@@ -2108,6 +2128,8 @@ def account(payer_account_fph, payee_account_fph, owner_fph = None):
 
         print("/account/.../.../... payee_account_fph = " + payee_account_fph)
         payee_currency_fph, payee_owner_fph, payee_balance, volume, active, \
+        account_type, account_category, account_units, \
+        account_metrical_equivalence, account_dimensions, \
         m = get_account_properties(payee_account_fph)
 
         if payee_currency_fph != payer_currency_fph:
@@ -2129,10 +2151,14 @@ def account(payer_account_fph, payee_account_fph, owner_fph = None):
 
         print("/account/.../.../... payer_account_fph = " + payer_account_fph)
         payer_currency_fph, payer_owner_fph, payer_balance, volume, active, \
+        account_type, account_category, account_units, \
+        account_metrical_equivalence, account_dimensions, \
         m = get_account_properties(payer_account_fph)
 
         print("/account/.../.../... payee_account_fph = " + payee_account_fph)
         payee_currency_fph, payee_owner_fph, payee_balance, volume, active, \
+        account_type, account_category, account_units, \
+        account_metrical_equivalence, account_dimensions, \
         m = get_account_properties(payee_account_fph)
 
         flash(
@@ -2151,6 +2177,7 @@ def account(payer_account_fph, payee_account_fph, owner_fph = None):
         group = group,
         hub_mode = hub_mode,
         version = get_version(),
+        show_csv_import_link = get_config("show_dataset_csv_import_link"),
         primid_type = "login identity",
         primid_fph = primid_fph,
         primid_hrns = primid_hrns,
@@ -2254,6 +2281,7 @@ def pay_ahid(payer_ahid_fph, payment_currency_fph):
         logged_in = logged_in,
         hub_mode = hub_mode,
         version = get_version(),
+        show_csv_import_link = get_config("show_dataset_csv_import_link"),,
         primid_type = "login identity",
         primid_fph = primid_fph,
         primid_hrns = primid_hrns,
@@ -2323,6 +2351,7 @@ def pay_account():
         logged_in = logged_in,
         hub_mode = hub_mode,
         version = get_version(),
+        show_csv_import_link = get_config("show_dataset_csv_import_link"),
         primid_type = "login identity",
         primid_fph = primid_fph,
         primid_hrns = primid_hrns,
@@ -2373,7 +2402,9 @@ def journal(ahid_fph, currency_fph):
 
     print("pay_to_ahid/...  account_fph = " + account_fph)
     account_currency_fph, account_owner_fph, account_balance, account_volume, \
-    account_active, m = get_account_properties(account_fph)
+    account_active, account_type, account_category, account_units, \
+    account_metrical_equivalence, account_dimensions, \
+    m = get_account_properties(account_fph)
 
     with sqlite3.connect(PAYMENTS_DB) as conn:
         cursor = conn.cursor()
@@ -2458,6 +2489,7 @@ def journal(ahid_fph, currency_fph):
         logged_in = logged_in,
         hub_mode = hub_mode,
         version = get_version(),
+        show_csv_import_link = get_config("show_dataset_csv_import_link"),
         primid_type = "login identity",
         primid_fph = primid_fph,
         primid_hrns = primid_hrns,
@@ -2523,6 +2555,8 @@ def pay_from_account_to_agent(payer_account_fph = None):
     print("/pay/from/...  payer_account_fph = " + payer_account_fph)
     payment_currency_fph, payer_account_owner_fph, \
     payer_account_balance, volume, active, \
+    account_type, account_category, account_units, \
+    account_metrical_equivalence, account_dimensions, \
     m = get_account_properties(payer_account_fph)
 
     if payer_account_balance < 0:
@@ -2632,6 +2666,7 @@ def pay_from_account_to_agent(payer_account_fph = None):
         logged_in = logged_in,
         hub_mode = hub_mode,
         version = get_version(),
+        show_csv_import_link = get_config("show_dataset_csv_import_link"),
         primid_type = "login identity",
         primid_fph = primid_fph,
         primid_hrns = primid_hrns,
@@ -2799,11 +2834,15 @@ def pay_agent_direct(payer_currency_fph, payer_identity_fph):
 
         print("/pay/agent/direct/... payer_account_fph = " + payer_account_fph)
         payer_currency_fph, payer_owner_fph, payer_balance, payer_volume, \
-        active, m = get_account_properties(payer_account_fph)
+        active, account_type, account_category, account_units, \
+        account_metrical_equivalence, account_dimensions, \
+        m = get_account_properties(payer_account_fph)
 
         print("/pay/agent/direct/... payee_account_fph = " + payee_account_fph)
         payee_currency_fph, payee_owner_fph, payee_balance, payee_volume, \
-        active, m = get_account_properties(payee_account_fph)
+        active, account_type, account_category, account_units, \
+        account_metrical_equivalence, account_dimensions, \
+        m = get_account_properties(payee_account_fph)
 
         flash(
             "Payment submitted: " \
@@ -2837,6 +2876,7 @@ def pay_agent_direct(payer_currency_fph, payer_identity_fph):
         logged_in = logged_in,
         hub_mode = hub_mode,
         version = get_version(),
+        show_csv_import_link = get_config("show_dataset_csv_import_link"),
         primid_type = "login identity",
         primid_fph = primid_fph,
         primid_hrns = primid_hrns,
@@ -3007,6 +3047,7 @@ def pay_agent():
         logged_in = logged_in,
         hub_mode = hub_mode,
         version = get_version(),
+        show_csv_import_link = get_config("show_dataset_csv_import_link"),
         primid_type = "login identity",
         primid_fph = primid_fph,
         primid_hrns = primid_hrns,
@@ -3102,6 +3143,7 @@ def select_payer_account():
         logged_in = logged_in,
         hub_mode = hub_mode,
         version = get_version(),
+        show_csv_import_link = get_config("show_dataset_csv_import_link"),
         primid_type = "login identity",
         primid_fph = primid_fph,
         primid_hrns = primid_hrns,
@@ -3216,6 +3258,7 @@ def select_payee_account(payer_account_fph = None):
         logged_in = logged_in,
         hub_mode = hub_mode,
         version = get_version(),
+        show_csv_import_link = get_config("show_dataset_csv_import_link"),
         primid_type = "login identity",
         primid_fph = primid_fph,
         primid_hrns = primid_hrns,
@@ -3335,11 +3378,15 @@ def make_payment_between_selected_accounts(
 
         print("/pay/agent/payment/... payer_account_fph = " + payer_account_fph)
         payer_currency_fph, payer_owner_fph, payer_balance, payer_volume, \
-        active, m = get_account_properties(payer_account_fph)
+        active, account_type, account_category, account_units, \
+        account_metrical_equivalence, account_dimensions, \
+        m = get_account_properties(payer_account_fph)
 
         print("/pay/agent/payment/... payee_account_fph = " + payee_account_fph)
         payee_currency_fph, payee_owner_fph, payee_balance, payee_volume, \
-        active, m = get_account_properties(payee_account_fph)
+        active, account_type, account_category, account_units, \
+        account_metrical_equivalence, account_dimensions, \
+        m = get_account_properties(payee_account_fph)
 
         flash(
             "Payment submitted: " \
@@ -3372,6 +3419,7 @@ def make_payment_between_selected_accounts(
         group = group,
         hub_mode = hub_mode,
         version = get_version(),
+        show_csv_import_link = get_config("show_dataset_csv_import_link"),
         primid_type = "login identity",
         primid_fph = primid_fph,
         primid_hrns = primid_hrns,
@@ -3512,7 +3560,9 @@ def select_payer_account_(payee_account_fph):
     print("/select_payer_account/... payee_account_fph = " + payee_account_fph)
     payee_account_currency_fph, payee_account_owner_fph, \
     payee_account_balance, payee_account_volume, \
-    active, m = get_account_properties(payee_account_fph)
+    active, account_type, account_category, account_units, \
+    account_metrical_equivalence, account_dimensions, \
+    m = get_account_properties(payee_account_fph)
 
     number_of_payer_accounts = 0
     payer_usable_accounts = []
@@ -3523,7 +3573,9 @@ def select_payer_account_(payee_account_fph):
         print("/select_payer_account/... account_fph = " + account_fph)
         account_currency_fph, account_owner_fph, \
         account_balance, account_volume, \
-        active, m = get_account_properties(account_fph)
+        active, account_type, account_category, account_units, \
+        account_metrical_equivalence, account_dimensions, \
+        m = get_account_properties(account_fph)
 
 #        print("account = " + account_fph + " > " + fph_to_hrns(account_fph))
 #        print(
@@ -3554,6 +3606,7 @@ def select_payer_account_(payee_account_fph):
         logged_in = logged_in,
         hub_mode = hub_mode,
         version = get_version(),
+        show_csv_import_link = get_config("show_dataset_csv_import_link"),
         payee_account_fph = payee_account_fph,
         payee_account_hrns = payee_account_hrns,
         specified_currency_fph = payee_account_currency_fph,
@@ -3621,6 +3674,8 @@ def account_details(account_fph):
 
     print("/account_details/... account_fph = " + account_fph)
     currency_fph, owner_fph, account_balance, account_volume, active, \
+    account_type, account_category, account_units, \
+    account_metrical_equivalence, account_dimensions, \
     m = get_account_properties(account_fph)
     if m:
         flash(m)
@@ -3647,6 +3702,7 @@ def account_details(account_fph):
         group = group,
         hub_mode = hub_mode,
         version = get_version(),
+        show_csv_import_link = get_config("show_dataset_csv_import_link"),
         primid_type = "login identity",
         primid_fph = primid_fph,
         primid_hrns = primid_hrns,
@@ -3715,6 +3771,7 @@ def stewardships(identity_fph):
         group = group,
         hub_mode = hub_mode,
         version = get_version(),
+        show_csv_import_link = get_config("show_dataset_csv_import_link"),
         primid_type = "login identity",
         primid_fph = primid_fph,
         primid_hrns = primid_hrns,
@@ -3786,6 +3843,7 @@ def secids(identity_fph):
         group = group,
         hub_mode = hub_mode,
         version = get_version(),
+        show_csv_import_link = get_config("show_dataset_csv_import_link"),
         primid_type = "login identity",
         primid_fph = primid_fph,
         primid_hrns = primid_hrns,
@@ -3845,6 +3903,7 @@ def manage_secid(secid_fph):
         group = group,
         hub_mode = hub_mode,
         version = get_version(),
+        show_csv_import_link = get_config("show_dataset_csv_import_link"),
         primid_type = "login identity",
         primid_fph = primid_fph,
         primid_hrns = primid_hrns,
@@ -3923,6 +3982,7 @@ def currency(currency_fph):
         group = group,
         hub_mode = hub_mode,
         version = get_version(),
+        show_csv_import_link = get_config("show_dataset_csv_import_link"),
         currency_fph = currency_fph,
         currency_hrns = currency_hrns,
         primid_type = "login identity",
@@ -4000,6 +4060,7 @@ def currency_steward_add(currency_fph):
         group = group,
         hub_mode = hub_mode,
         version = get_version(),
+        show_csv_import_link = get_config("show_dataset_csv_import_link"),
         form = form,
         currency_fph = currency_fph,
         currency_hrns = currency_hrns,
@@ -4109,6 +4170,7 @@ def manage():
         group = group,
         hub_mode = hub_mode,
         version = get_version(),
+        show_csv_import_link = get_config("show_dataset_csv_import_link"),
         primid_type = "login identity",
         primid_fph = primid_fph,
         primid_hrns = primid_hrns,
@@ -4181,7 +4243,12 @@ def create_currency():
                 primid_fph,
                 form.prefix_symbol.data,
                 form.suffix_symbol.data,
-                form.default_account_name.data
+                form.default_account_name.data,
+                account_type="scalar",
+                category="money",
+                units="unspecified",
+                metrical_equivalence="lt",
+                dimensions="unspecified"
             )
         flash(
             "A new currency has been created: " + currency_hrns
@@ -4200,6 +4267,7 @@ def create_currency():
         group = group,
         hub_mode = hub_mode,
         version = get_version(),
+        show_csv_import_link = get_config("show_dataset_csv_import_link"),
         form = form,
         primid_type = "login identity",
         primid_fph = primid_fph,
@@ -4313,6 +4381,7 @@ def create_pairing(owner_fph = ""):
         group = group,
         hub_mode = hub_mode,
         version = get_version(),
+        show_csv_import_link = get_config("show_dataset_csv_import_link"),
         form = form,
         primid_type = "login identity",
         primid_fph = primid_fph,
@@ -4465,6 +4534,7 @@ def create_account(owner_fph):
         group = group,
         hub_mode = hub_mode,
         version = get_version(),
+        show_csv_import_link = get_config("show_dataset_csv_import_link"),
         form = form,
         primid_type = "login identity",
         primid_fph = primid_fph,
@@ -4531,6 +4601,7 @@ def list_identiies():
         group = group,
         hub_mode = hub_mode,
         version = get_version(),
+        show_csv_import_link = get_config("show_dataset_csv_import_link"),
         primid_type = "login identity",
         primid_fph = primid_fph,
         primid_hrns = primid_hrns,
@@ -4649,6 +4720,7 @@ def create_secid():
         group = group,
         hub_mode = hub_mode,
         version = get_version(),
+        show_csv_import_link = get_config("show_dataset_csv_import_link"),
         form = form,
         primid_type = "login identity",
         primid_fph = primid_fph,
@@ -4746,6 +4818,7 @@ def create_namespace():
         group = group,
         hub_mode = hub_mode,
         version = get_version(),
+        show_csv_import_link = get_config("show_dataset_csv_import_link"),
         form = form,
         primid_type = "login identity",
         primid_fph = primid_fph,
@@ -4811,6 +4884,7 @@ def list_namespaces():
         group = group,
         hub_mode = hub_mode,
         version = get_version(),
+        show_csv_import_link = get_config("show_dataset_csv_import_link"),
         primid_type = "login identity",
         primid_fph = primid_fph,
         primid_hrns = primid_hrns,
@@ -4961,6 +5035,8 @@ def export_account_csv(account_fph):
 
     print("/account/export/...  account_fph = " + account_fph)
     currency_fph, owner_fph, balance, volume, active, \
+    account_type, account_category, account_units, \
+    account_metrical_equivalence, account_dimensions, \
     m = get_account_properties(account_fph)
     if m:
         flash(m)
@@ -5017,6 +5093,7 @@ def export_account_csv(account_fph):
         group = group,
         hub_mode = hub_mode,
         version = get_version(),
+        show_csv_import_link = get_config("show_dataset_csv_import_link"),
         primid_type = "login identity",
         primid_fph = primid_fph,
         primid_hrns = primid_hrns,
@@ -5108,6 +5185,7 @@ def export_currency_csv(currency_fph):
         group = group,
         hub_mode = hub_mode,
         version = get_version(),
+        show_csv_import_link = get_config("show_dataset_csv_import_link"),
         primid_type = "login identity",
         primid_fph = primid_fph,
         primid_hrns = primid_hrns,
@@ -5248,6 +5326,7 @@ def import_payment_set():
         group = group,
         hub_mode = hub_mode,
         version = get_version(),
+        show_csv_import_link = get_config("show_dataset_csv_import_link"),
         logged_in = logged_in,
         primid_type = "login identity",
         primid_fph = primid_fph,
@@ -5500,6 +5579,7 @@ def messages():
         group = group,
         hub_mode = hub_mode,
         version = get_version(),
+        show_csv_import_link = get_config("show_dataset_csv_import_link"),
         logged_in = logged_in,
         primid_type = "login identity",
         primid_fph = primid_fph,
@@ -5666,6 +5746,7 @@ def message_send():
         group = group,
         hub_mode = hub_mode,
         version = get_version(),
+        show_csv_import_link = get_config("show_dataset_csv_import_link"),
         logged_in = logged_in,
         primid_type = "login identity",
         primid_fph = primid_fph,
@@ -5769,6 +5850,7 @@ def messages_show(recipient_fph):
         group = group,
         hub_mode = hub_mode,
         version = get_version(),
+        show_csv_import_link = get_config("show_dataset_csv_import_link"),
         logged_in = logged_in,
         primid_type = "login identity",
         primid_fph = primid_fph,
@@ -5949,6 +6031,7 @@ def invitation_generate():
         group = group,
         hub_mode = hub_mode,
         version = get_version(),
+        show_csv_import_link = get_config("show_dataset_csv_import_link"),
         logged_in = logged_in,
         primid_type = "login identity",
         primid_fph = primid_fph,
@@ -6015,6 +6098,7 @@ def invitation_display(qrfilename):
         group = group,
         hub_mode = hub_mode,
         version = get_version(),
+        show_csv_import_link = get_config("show_dataset_csv_import_link"),
         logged_in = logged_in,
         primid_type = "login identity",
         primid_fph = primid_fph,
@@ -6056,6 +6140,7 @@ def help():
         group = group,
         hub_mode = hub_mode,
         version = get_version(),
+        show_csv_import_link = get_config("show_dataset_csv_import_link"),
         development_mode = development_mode,
         namespace_steward = namespace_steward,
         currency_steward = currency_steward

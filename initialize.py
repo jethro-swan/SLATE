@@ -88,7 +88,7 @@ for c in clist:
             steward_fph,
             "",
             "",
-            "cname"
+            cname
         )
     if m:
         print(m)

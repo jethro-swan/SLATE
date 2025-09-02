@@ -41,18 +41,23 @@ from app.core.cctld_list import *
 #
 # The entity dependency rules for both SLATE and the (revised version of) NESTS
 # are essentially as summarized here:
-# (a) there are three classes of agent (*primid*, *ahid* and *secid*);
-# (b) a *primid* is a.k.a. a *login identity* and is the unique identifier
-#     anchoring the agent in the real world; and secid);
-# (c) each *ahid* or *secid* has one *primid*;
-# (d) each *primid* may have any number of *ahid* or *secid*;
-# (e) each *account* has either one *ahid* or one *secid*;
-# (f) each *account* is indexed either indirectly by a unique pairing of a
-#     *secid* identifier and a *currency* identifier or directly by an
-#     *account* identifier; and
-# (g) all *root namespaces* share a nameless ancestor (the substrate) which has
-#     and FPH but an empty HRNS. Uniquely, the substrate id its own ancestor.
-# (see https://nests.lrc.org.uk/entity_dependencies.html
+#
+# Agents: There are three classes of agent (*primid*, *ahid* and *secid*):
+# (1) A *primid* (a.k.a. *login identity*) is the unique identifier
+#     anchoring the agent in the real world. Each *primid* may have any
+#     number of *ahid* or *secid*.
+# (2) An *ahid* (*account-hilder identity*) can be paired with any number of
+#     distinct *currencies*, each such pairing indexing an *account*. Each
+#     *ahid* has one *primid*.
+# (3) A *secid* (where used) can serve as an alias to anchor a *primid* in
+#     any number of *namespaces* (where authorized). A *secid* can hold any
+#     number of *accounts* but, in contrast to an *ahid*, is not itself used
+#     to identify those in a pairing. Each *secid* has one *primid*.
+#
+# All *root namespaces* share a nameless ancestor (the substrate) which has an
+# FPH but an empty HRNS. Uniquely, the substrate id its own ancestor.
+#
+# For details, see https://nests.lrc.org.uk/entity_dependencies.html
 #
 # Every SLATE or NESTS installation must be provided with a minimal set of
 # pre-existing entities:

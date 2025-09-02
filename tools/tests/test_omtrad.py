@@ -51,7 +51,12 @@ for c in clist:
             primid_fph,     # steward of *currency*
             "",             # prefix
             "",             # suffix
-            "cname"         # default *account* name
+            "cname",        # default *account* name
+            account_type="scalar",
+            category="money",
+            units="unspecified",
+            metrical_equivalence="unspecified",
+            dimensions="unspecified"
         )
 
 #    print("currency: " + currency_fph + " > " + currency_hrns)

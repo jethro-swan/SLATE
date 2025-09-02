@@ -470,15 +470,11 @@ def message_count(primid_id, hub_mode):
         )
         return 0, 0
 
-
     if hub_mode == "omtrad":
         recipient_list = list_ahids(primid_fph)
     else:
         recipient_list = list_secids(primid_fph)
     recipient_list.append(primid_fph)
-    #print(recipient_list)
-#    for recipient_fph in recipient_list:
-#        print(fph_to_hrns(recipient_fph))
 
     number_of_messages = 0
     with sqlite3.connect(MESSAGES_DB) as conn:
