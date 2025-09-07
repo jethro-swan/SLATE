@@ -237,7 +237,7 @@ def register():
     mode = "logged_out"
 
     # Hub operational mode (read from environment variable HUB_MODE)
-    hub_mode = get_hub_mode()
+    hub_mode = get_config("user_interface")
 
     #--------------------------------------------------------------------------
     # The following seven variables determine which of the registration form's
@@ -414,7 +414,7 @@ def register():
         logged_in = logged_in,
         page = page,
         mode = mode,
-        hub_mode = hub_mode,
+        hub_mode = get_config("user_interface"),
         version = get_version(),
         development_mode = development_mode,
         initial_namespace_fph = initial_namespace_fph,
@@ -438,7 +438,7 @@ def login():
         return redirect(url_for("home"))
 
     # Hub operational mode (read from environment variable HUB_MODE)
-    hub_mode = get_hub_mode()
+    hub_mode = get_config("user_interface")
 
     form = LoginForm()
     if form.validate_on_submit():
@@ -487,8 +487,6 @@ def login():
 
         password = form.password.data
         password2 = form.password.data.strip()
-#        if password != password2:
-#            print("password corrupted")
 
         pwd = password
         pwd_hash = password_hash
@@ -525,7 +523,7 @@ def login():
         title = "Sign in",
         page = page,
         mode = mode,           # ???
-        hub_mode = hub_mode,
+        hub_mode = get_config("user_interface"),
         version = get_version(),
         logged_in = logged_in, # ???
         form = form,
@@ -565,8 +563,8 @@ def login_recover():
     mode = "logged_out"
 
     # Hub operational mode (read from environment variable HUB_MODE)
-    hub_mode = get_hub_mode()
-    #version = get_version()()
+    hub_mode = get_config("user_interface")
+
 
     form = LoginRecoveryForm()
     if form.validate_on_submit():
@@ -658,7 +656,7 @@ def login_recover():
         form = form,
         page = page,
         mode = mode,
-        hub_mode = hub_mode,
+        hub_mode = get_config("user_interface"),
         version = get_version()
     )
 
@@ -677,21 +675,15 @@ def login_reset(user_id, token):
     mode = "logged_out"
 
     # Hub operational mode (read from environment variable HUB_MODE)
-    hub_mode = get_hub_mode()
+    hub_mode = get_config("user_interface")
 
-    primid_fph, primid_hrns, etypes, \
-    m = identify_entity(user_id) # from slug
+    primid_fph, primid_hrns, etypes, m = identify_entity(user_id) # from slug
 
     password_hash, stored_pin, access_token_hash, \
     m = get_auth_data(user_id) # from URL slug
 
     serializer = URLSafeTimedSerializer(app.config["SECRET_KEY"])
-    reset_token_data = serializer.loads(
-                            token,
-                            #max_age = 900,
-                            #max_age = app.config["RESET_PASS_TOKEN_MAX_AGE"],
-                            salt = password_hash
-                        )
+    reset_token_data = serializer.loads(token, salt = password_hash)
 
     if reset_token_data != primid_fph:
         flash("Login reset token error")
@@ -722,24 +714,20 @@ def login_reset(user_id, token):
         title = "User login reset",
         primid_hrns = primid_hrns,
         form = form,
-        hub_mode = hub_mode,
+        hub_mode = get_config("user_interface"),
         version = get_version()
     )
 
 # ==============================================================================
 # change working identity
-##@app.route("/change_working_identity/<new_identity_fph>",
+
 @app.route("/identity/change/<new_identity_fph>",
            methods = ["GET", "POST"])
 @login_required
 def change_working_identity(new_identity_fph):
 
     # Hub operational mode (read from environment variable HUB_MODE)
-    hub_mode = get_hub_mode()
-    #version = get_version()()
-
-    #version = get_version()()
-
+    hub_mode = get_config("user_interface")
 
     new_identity_fph, new_identity_hrns, etypes, \
     m = identify_entity(new_identity_fph)
@@ -788,23 +776,18 @@ def change_working_identity(new_identity_fph):
 def new_home():
 
     # Hub operational mode (read from environment variable HUB_MODE)
-    hub_mode = get_hub_mode()
-    #version = get_version()()
-
+    hub_mode = get_config("user_interface")
 
     page = "new_home"
     if "previous_page" in session: # already active
         previous_page = session["previous_page"]
     else: # initializing
-#        session["previous_page"] = "home" ### probably not needed
         previous_page = "home"
     session["previous_page"] = page
 
     group = "home" # Used to control top menu behaviour.
 
-    hub_mode = get_hub_mode()
-    #version = get_version()()
- ### New variable added
+    hub_mode = get_config("user_interface")
 
     namespace_steward = False
     currency_steward = False
@@ -850,15 +833,12 @@ def new_home():
     lid_messages = fetch_messages(primid_fph)   # Always display
     wid_messages = fetch_messages(working_identity_fph)
 
-
-
-#
     return render_template(
             "new_home.html",
             title = "Home",
             page = page,
             group = group,
-            hub_mode = hub_mode,
+            hub_mode = get_config("user_interface"),
             version = get_version(),
             show_csv_import_link = get_config("show_dataset_csv_import_link"),
             logged_in = logged_in,
@@ -868,25 +848,24 @@ def new_home():
             working_identity_fph = working_identity_fph,
             working_identity_hrns = working_identity_hrns,
             working_identity_type = working_identity_type,
-
-            lid_messages = lid_messages,
-            wid_messages = wid_messages
-
-            # List of (nested) dictionaries for display in "home.html":
-#            identities = identities,
-#            secids = secids,
-#            stewardships = stewardships
+            lid_messages = lid_messages,    # Still needed?
+            wid_messages = wid_messages     # Still needed?
         )
+
+#==============================================================================
+# Temporary fudge to block access during the tedious process of CSV dataset
+# importing.
 
 @app.route("/hold")
 @login_required
 def hold():
 
     # Hub operational mode (read from environment variable HUB_MODE)
-    hub_mode = get_hub_mode()
-    if hub_mode != "omtrad":
-        flash("Operational mode invalid for this endpoint")
-        return redirect("/home")
+    hub_mode = get_config("user_interface")
+    print("hub_mode = " + hub_mode)
+#    if hub_mode != "omtrad":
+#        flash("Operational mode invalid for this endpoint")
+#        return redirect("/home")
 
     page = "hold"
     if "previous_page" in session: # already active
@@ -915,7 +894,7 @@ def hold():
         title = "Hold",
         page = page,
         group = group,
-        hub_mode = hub_mode,
+        hub_mode = get_config("user_interface"),
         version = get_version(),
         show_csv_import_link = get_config("show_dataset_csv_import_link"),
         logged_in = logged_in,
@@ -941,11 +920,11 @@ def home_ahc():
         return redirect("/hold")
 
     # Hub operational mode (read from environment variable HUB_MODE)
-    hub_mode = get_hub_mode()
-
-    if hub_mode != "omtrad":
-        flash("Operational mode invalid for this endpoint")
-        return redirect("/home")
+    hub_mode = get_config("user_interface")
+    print("hub_mode = " + hub_mode)
+#    if hub_mode != "omtrad":
+#        flash("Operational mode invalid for this endpoint")
+#        return redirect("/home")
 
     page = "home_ahc"
     if "previous_page" in session: # already active
@@ -1068,7 +1047,7 @@ def home_ahc():
         title = "Home",
         page = page,
         group = group,
-        hub_mode = hub_mode,
+        hub_mode = get_config("user_interface"),
         version = get_version(),
         show_csv_import_link = get_config("show_dataset_csv_import_link"),
         development_mode = development_mode,
@@ -1095,7 +1074,7 @@ def home_ahc():
 def home():
 
     # Hub operational mode (read from environment variable HUB_MODE)
-    hub_mode = get_hub_mode()
+    hub_mode = get_config("user_interface")
     if hub_mode == "omtrad":
         return redirect("/home_ahc")
 
@@ -1119,6 +1098,7 @@ def home():
     primid_fph, primid_hrns, etypes, \
     m = identify_entity(current_user.get_id())
 
+    working_identity_type = "primid"
     if "working_identity" in session:
         working_identity_fph, working_identity_hrns, etypes, \
         m = identify_entity(session["working_identity"])
@@ -1126,7 +1106,7 @@ def home():
         working_identity_fph = primid_fph
         session["working_identity"] = working_identity_fph
         working_identity_hrns = primid_hrns
-        working_identity_type = "primid"
+#        working_identity_type = "primid"
     working_identity_type = etype_to_adtype(working_identity_type)
 
 
@@ -1293,8 +1273,9 @@ def home():
             m = identify_entity(nstewardship_fph)
             nstewardship["fph"] = nstewardship_fph
             nstewardship["hrns"] = entity_hrns
-            nstewardship["etype"] = etype
-            nstewardships.append(stewardship)
+            #nstewardship["etype"] = etype
+            nstewardship["etype"] = "namespace"
+            nstewardships.append(nstewardship)
 
     cstewardships = []
     for cstewardship_fph in cstewardships_list:
@@ -1304,15 +1285,16 @@ def home():
             m = identify_entity(cstewardship_fph)
             cstewardship["fph"] = cstewardship_fph
             cstewardship["hrns"] = entity_hrns
-            cstewardship["etype"] = etype
-            cstewardships.append(stewardship)
+            #cstewardship["etype"] = etype
+            cstewardship["etype"] = "currency"
+            cstewardships.append(cstewardship)
 
     return render_template(
         "home.html",
         title = "Home",
         page = page,
         group = group,
-        hub_mode = hub_mode,
+        hub_mode = get_config("user_interface"),
         version = get_version(),
         show_csv_import_link = get_config("show_dataset_csv_import_link"),
         development_mode = development_mode,
@@ -1344,8 +1326,8 @@ def home():
 def list_accounts():
 
     # Hub operational mode (read from environment variable HUB_MODE)
-    hub_mode = get_hub_mode()
-    #version = get_version()()
+    hub_mode = get_config("user_interface")
+
 
 
     page = "list_accounts"
@@ -1365,6 +1347,7 @@ def list_accounts():
     primid_fph, primid_hrns, etypes, \
     m = identify_entity(current_user.get_id())
 
+    working_identity_type = "primid"
     if "working_identity" in session:
         working_identity_fph, working_identity_hrns, etypes, \
         m = identify_entity(session["working_identity"])
@@ -1376,7 +1359,7 @@ def list_accounts():
         working_identity_fph = primid_fph
         session["working_identity"] = working_identity_fph
         working_identity_hrns = primid_hrns
-        working_identity_type = "primid"
+        #working_identity_type = "primid"
     working_identity_type = etype_to_adtype(working_identity_type)
 
     # The user logs in as the *primid*, even if indirectly as one of its
@@ -1478,8 +1461,9 @@ def list_accounts():
             m = identify_entity(nstewardship_fph)
             nstewardship["fph"] = nstewardship_fph
             nstewardship["hrns"] = entity_hrns
-            nstewardship["etype"] = etype
-            nstewardships.append(stewardship)
+            #nstewardship["etype"] = etype
+            nstewardship["etype"] = "namespace"
+            nstewardships.append(nstewardship)
 
     cstewardships = []
     for cstewardship_fph in cstewardships_list:
@@ -1489,15 +1473,16 @@ def list_accounts():
             m = identify_entity(cstewardship_fph)
             cstewardship["fph"] = cstewardship_fph
             cstewardship["hrns"] = entity_hrns
-            cstewardship["etype"] = etype
-            cstewardships.append(stewardship)
+            #cstewardship["etype"] = etype
+            cstewardship["etype"] = "currency"
+            cstewardships.append(cstewardship)
 
     return render_template(
         "list_accounts.html",
         title = "List accounts",
         page = page,
         group = group,
-        hub_mode = hub_mode,
+        hub_mode = get_config("user_interface"),
         version = get_version(),
         show_csv_import_link = get_config("show_dataset_csv_import_link"),
         development_mode = development_mode,
@@ -1542,8 +1527,8 @@ def list_accounts():
 def payment_options():
 
     # Hub operational mode (read from environment variable HUB_MODE)
-    hub_mode = get_hub_mode()
-    #version = get_version()()
+    hub_mode = get_config("user_interface")
+
 
 
     page = "payment_options"
@@ -1684,7 +1669,7 @@ def payment_options():
         title = "payment options",
         page = page,
         group = group,
-        hub_mode = hub_mode,
+        hub_mode = get_config("user_interface"),
         development_mode = development_mode,
         version = get_version(),
         show_csv_import_link = get_config("show_dataset_csv_import_link"),
@@ -1719,8 +1704,8 @@ def payment_options():
 def currency_options():
 
     # Hub operational mode (read from environment variable HUB_MODE)
-    hub_mode = get_hub_mode()
-    #version = get_version()()
+    hub_mode = get_config("user_interface")
+
 
 
     page = "currency_options"
@@ -1903,7 +1888,7 @@ def currency_options():
         group = group,
         development_mode = development_mode,
         logged_in = logged_in,
-        hub_mode = hub_mode,
+        hub_mode = get_config("user_interface"),
         version = get_version(),
         show_csv_import_link = get_config("show_dataset_csv_import_link"),
         primid_type = "login identity",
@@ -1925,8 +1910,8 @@ def currency_options():
 def account_options(currency_fph):
 
     # Hub operational mode (read from environment variable HUB_MODE)
-    hub_mode = get_hub_mode()
-    #version = get_version()()
+    hub_mode = get_config("user_interface")
+
 
 
     page = "payment_options"
@@ -1971,7 +1956,7 @@ def account_options(currency_fph):
         group = group,
         development_mode = development_mode,
         logged_in = logged_in,
-        hub_mode = hub_mode,
+        hub_mode = get_config("user_interface"),
         version = get_version(),
         show_csv_import_link = get_config("show_dataset_csv_import_link"),
         primid_type = "login identity",
@@ -2022,8 +2007,8 @@ def account(payer_account_fph, payee_account_fph, owner_fph = None):
             return redirect("/home")
 
     # Hub operational mode (read from environment variable HUB_MODE)
-    hub_mode = get_hub_mode()
-    #version = get_version()()
+    hub_mode = get_config("user_interface")
+
 
 
     page = "account"
@@ -2175,7 +2160,7 @@ def account(payer_account_fph, payee_account_fph, owner_fph = None):
         form = form,
         page = page,
         group = group,
-        hub_mode = hub_mode,
+        hub_mode = get_config("user_interface"),
         version = get_version(),
         show_csv_import_link = get_config("show_dataset_csv_import_link"),
         primid_type = "login identity",
@@ -2218,7 +2203,7 @@ def pay_ahid(payer_ahid_fph, payment_currency_fph):
     m = identify_entity(payment_currency_fph)
 
     # Hub operational mode (read from environment variable HUB_MODE)
-    hub_mode = get_hub_mode()
+    hub_mode = get_config("user_interface")
 
     page = "pay_ahid"
     group = "home" # Used to control top menu behaviour.
@@ -2232,11 +2217,6 @@ def pay_ahid(payer_ahid_fph, payment_currency_fph):
     working_identity_fph = primid_fph
     working_identity_hrns = primid_hrns
     working_identity_type = "primid"
-
-    number_of_messages, \
-    number_of_indelible_messages = message_count(primid_fph, hub_mode)
-
-
 
     form = SpecifyPayeeAccountHolderForm()
     if form.validate_on_submit():
@@ -2284,7 +2264,7 @@ def pay_ahid(payer_ahid_fph, payment_currency_fph):
         group = group,
         form = form,
         logged_in = logged_in,
-        hub_mode = hub_mode,
+        hub_mode = get_config("user_interface"),
         version = get_version(),
         show_csv_import_link = get_config("show_dataset_csv_import_link"),
         primid_type = "login identity",
@@ -2294,9 +2274,7 @@ def pay_ahid(payer_ahid_fph, payment_currency_fph):
         working_identity_hrns = working_identity_hrns,
         working_identity_type = working_identity_type,
         payer_ahid_hrns = payer_ahid_hrns,
-        currency_hrns = currency_hrns,
-        number_of_indelible_messages = number_of_indelible_messages,
-        number_of_messages = number_of_messages
+        currency_hrns = currency_hrns
     )
 
 
@@ -2309,8 +2287,8 @@ def pay_ahid(payer_ahid_fph, payment_currency_fph):
 def pay_account():
 
     # Hub operational mode (read from environment variable HUB_MODE)
-    hub_mode = get_hub_mode()
-    #version = get_version()()
+    hub_mode = get_config("user_interface")
+
 
 
     page = "pay_account"
@@ -2356,7 +2334,7 @@ def pay_account():
         group = group,
         form = form,
         logged_in = logged_in,
-        hub_mode = hub_mode,
+        hub_mode = get_config("user_interface"),
         version = get_version(),
         show_csv_import_link = get_config("show_dataset_csv_import_link"),
         primid_type = "login identity",
@@ -2388,7 +2366,7 @@ def journal(ahid_fph, currency_fph):
         return redirect("/home_ahc")
 
     # Hub operational mode (read from environment variable HUB_MODE)
-    hub_mode = get_hub_mode()
+    hub_mode = get_config("user_interface")
 
     page = "journal"
     group = "home" # Used to control top menu behaviour.
@@ -2494,7 +2472,7 @@ def journal(ahid_fph, currency_fph):
         page = page,
         group = group,
         logged_in = logged_in,
-        hub_mode = hub_mode,
+        hub_mode = get_config("user_interface"),
         version = get_version(),
         show_csv_import_link = get_config("show_dataset_csv_import_link"),
         primid_type = "login identity",
@@ -2572,8 +2550,8 @@ def pay_from_account_to_agent(payer_account_fph = None):
         payer_account_balance_negative = False
 
     # Hub operational mode (read from environment variable HUB_MODE)
-    hub_mode = get_hub_mode()
-    #version = get_version()()
+    hub_mode = get_config("user_interface")
+
 
 
     page = "payer_currency_known"
@@ -2671,7 +2649,7 @@ def pay_from_account_to_agent(payer_account_fph = None):
         group = group,
         form = form,
         logged_in = logged_in,
-        hub_mode = hub_mode,
+        hub_mode = get_config("user_interface"),
         version = get_version(),
         show_csv_import_link = get_config("show_dataset_csv_import_link"),
         primid_type = "login identity",
@@ -2700,8 +2678,8 @@ def pay_from_account_to_agent(payer_account_fph = None):
 def pay_agent_direct(payer_currency_fph, payer_identity_fph):
 
     # Hub operational mode (read from environment variable HUB_MODE)
-    hub_mode = get_hub_mode()
-    #version = get_version()()
+    hub_mode = get_config("user_interface")
+
 
 
     page = "pay_agent_direct"
@@ -2881,7 +2859,7 @@ def pay_agent_direct(payer_currency_fph, payer_identity_fph):
         group = group,
         form = form,
         logged_in = logged_in,
-        hub_mode = hub_mode,
+        hub_mode = get_config("user_interface"),
         version = get_version(),
         show_csv_import_link = get_config("show_dataset_csv_import_link"),
         primid_type = "login identity",
@@ -2934,8 +2912,8 @@ def pay_agent():
     # and to which *account*.
 
     # Hub operational mode (read from environment variable HUB_MODE)
-    hub_mode = get_hub_mode()
-    #version = get_version()()
+    hub_mode = get_config("user_interface")
+
 
     page = "pay_agent"
     group = "home"
@@ -3052,7 +3030,7 @@ def pay_agent():
         group = group,
         form = form,
         logged_in = logged_in,
-        hub_mode = hub_mode,
+        hub_mode = get_config("user_interface"),
         version = get_version(),
         show_csv_import_link = get_config("show_dataset_csv_import_link"),
         primid_type = "login identity",
@@ -3071,8 +3049,8 @@ def pay_agent():
 def select_payer_account():
 
     # Hub operational mode (read from environment variable HUB_MODE)
-    hub_mode = get_hub_mode()
-    #version = get_version()()
+    hub_mode = get_config("user_interface")
+
 
     group = "home" # Used to control top menu behaviour.
     logged_in = current_user.is_authenticated
@@ -3148,7 +3126,7 @@ def select_payer_account():
         page = page,
         group = group,
         logged_in = logged_in,
-        hub_mode = hub_mode,
+        hub_mode = get_config("user_interface"),
         version = get_version(),
         show_csv_import_link = get_config("show_dataset_csv_import_link"),
         primid_type = "login identity",
@@ -3183,8 +3161,8 @@ def select_payee_account(payer_account_fph = None):
     #session["payer_account_fph"] = payer_account_fph
 
     # Hub operational mode (read from environment variable HUB_MODE)
-    hub_mode = get_hub_mode()
-    #version = get_version()()
+    hub_mode = get_config("user_interface")
+
 
     group = "home" # Used to control top menu behaviour.
     logged_in = current_user.is_authenticated
@@ -3263,7 +3241,7 @@ def select_payee_account(payer_account_fph = None):
         page = page,
         group = group,
         logged_in = logged_in,
-        hub_mode = hub_mode,
+        hub_mode = get_config("user_interface"),
         version = get_version(),
         show_csv_import_link = get_config("show_dataset_csv_import_link"),
         primid_type = "login identity",
@@ -3343,8 +3321,8 @@ def make_payment_between_selected_accounts(
     m = get_currency_properties(payment_currency_fph)
 
     # Hub operational mode (read from environment variable HUB_MODE)
-    hub_mode = get_hub_mode()
-    #version = get_version()()
+    hub_mode = get_config("user_interface")
+
 
     group = "home" # Used to control top menu behaviour.
     logged_in = current_user.is_authenticated
@@ -3424,7 +3402,7 @@ def make_payment_between_selected_accounts(
         form = form,
         page = page,
         group = group,
-        hub_mode = hub_mode,
+        hub_mode = get_config("user_interface"),
         version = get_version(),
         show_csv_import_link = get_config("show_dataset_csv_import_link"),
         primid_type = "login identity",
@@ -3456,8 +3434,8 @@ def make_payment_between_selected_accounts(
 def select_account_combination_in_currency(payee_identity_fph, currency_fph):
 
     # Hub operational mode (read from environment variable HUB_MODE)
-    hub_mode = get_hub_mode()
-    #version = get_version()()
+    hub_mode = get_config("user_interface")
+
 
     page = "select_account_combination_in_currency"
     group = "home" # Used to control top menu behaviour.
@@ -3518,8 +3496,8 @@ def select_account_combination_in_currency(payee_identity_fph, currency_fph):
 def select_payer_account_(payee_account_fph):
 
     # Hub operational mode (read from environment variable HUB_MODE)
-    hub_mode = get_hub_mode()
-    #version = get_version()()
+    hub_mode = get_config("user_interface")
+
 
 
     page = "select_payer_account"
@@ -3611,7 +3589,7 @@ def select_payer_account_(payee_account_fph):
         page = page,
         group = group,
         logged_in = logged_in,
-        hub_mode = hub_mode,
+        hub_mode = get_config("user_interface"),
         version = get_version(),
         show_csv_import_link = get_config("show_dataset_csv_import_link"),
         payee_account_fph = payee_account_fph,
@@ -3635,8 +3613,8 @@ def select_payer_account_(payee_account_fph):
 def account_details(account_fph):
 
     # Hub operational mode (read from environment variable HUB_MODE)
-    hub_mode = get_hub_mode()
-    #version = get_version()()
+    hub_mode = get_config("user_interface")
+
 
 
     page = "account_details"
@@ -3707,7 +3685,7 @@ def account_details(account_fph):
         logged_in = logged_in,
         page = page,
         group = group,
-        hub_mode = hub_mode,
+        hub_mode = get_config("user_interface"),
         version = get_version(),
         show_csv_import_link = get_config("show_dataset_csv_import_link"),
         primid_type = "login identity",
@@ -3733,8 +3711,8 @@ def account_details(account_fph):
 def stewardships(identity_fph):
 
     # Hub operational mode (read from environment variable HUB_MODE)
-    hub_mode = get_hub_mode()
-    #version = get_version()()
+    hub_mode = get_config("user_interface")
+
 
 
     page = "stewardships"
@@ -3776,7 +3754,7 @@ def stewardships(identity_fph):
         title = "Stewardships",
         page = page,
         group = group,
-        hub_mode = hub_mode,
+        hub_mode = get_config("user_interface"),
         version = get_version(),
         show_csv_import_link = get_config("show_dataset_csv_import_link"),
         primid_type = "login identity",
@@ -3807,8 +3785,8 @@ def stewardships_list(primid_fph):
 def secids(identity_fph):
 
     # Hub operational mode (read from environment variable HUB_MODE)
-    hub_mode = get_hub_mode()
-    #version = get_version()()
+    hub_mode = get_config("user_interface")
+
 
 
     page = "secids"
@@ -3848,7 +3826,7 @@ def secids(identity_fph):
         title = "Secondary identities",
         page = page,
         group = group,
-        hub_mode = hub_mode,
+        hub_mode = get_config("user_interface"),
         version = get_version(),
         show_csv_import_link = get_config("show_dataset_csv_import_link"),
         primid_type = "login identity",
@@ -3871,8 +3849,8 @@ def secids(identity_fph):
 def manage_secid(secid_fph):
 
     # Hub operational mode (read from environment variable HUB_MODE)
-    hub_mode = get_hub_mode()
-    #version = get_version()()
+    hub_mode = get_config("user_interface")
+
 
 
     page = "secids"
@@ -3908,7 +3886,7 @@ def manage_secid(secid_fph):
         title = "Manage an alias",
         page = page,
         group = group,
-        hub_mode = hub_mode,
+        hub_mode = get_config("user_interface"),
         version = get_version(),
         show_csv_import_link = get_config("show_dataset_csv_import_link"),
         primid_type = "login identity",
@@ -3933,7 +3911,7 @@ def manage_secid(secid_fph):
 def currency(currency_fph):
 
     # Hub operational mode (read from environment variable HUB_MODE)
-    hub_mode = get_hub_mode()
+    hub_mode = get_config("user_interface")
 
     page = "currency"
     previous_page = session["previous_page"]
@@ -3987,7 +3965,7 @@ def currency(currency_fph):
         title = "Currency",
         page = page,
         group = group,
-        hub_mode = hub_mode,
+        hub_mode = get_config("user_interface"),
         version = get_version(),
         show_csv_import_link = get_config("show_dataset_csv_import_link"),
         currency_fph = currency_fph,
@@ -4012,7 +3990,7 @@ def currency(currency_fph):
 def currency_steward_add(currency_fph):
 
     # Hub operational mode (read from environment variable HUB_MODE)
-    hub_mode = get_hub_mode()
+    hub_mode = get_config("user_interface")
 
     page = "currency_steward_add"
     previous_page = session["previous_page"]
@@ -4065,7 +4043,7 @@ def currency_steward_add(currency_fph):
         title = "Add currency steward",
         page = page,
         group = group,
-        hub_mode = hub_mode,
+        hub_mode = get_config("user_interface"),
         version = get_version(),
         show_csv_import_link = get_config("show_dataset_csv_import_link"),
         form = form,
@@ -4092,7 +4070,7 @@ def currency_steward_add(currency_fph):
 def currency_steward_remove(currency_fph, steward_fph):
 
     # Hub operational mode (read from environment variable HUB_MODE)
-    hub_mode = get_hub_mode()
+    hub_mode = get_config("user_interface")
 
     page = "currency_steward_add"
     previous_page = session["previous_page"]
@@ -4135,8 +4113,8 @@ def currency_steward_remove(currency_fph, steward_fph):
 def manage():
 
     # Hub operational mode (read from environment variable HUB_MODE)
-    hub_mode = get_hub_mode()
-    #version = get_version()()
+    hub_mode = get_config("user_interface")
+
 
 
     page = "manage"
@@ -4175,7 +4153,7 @@ def manage():
         logged_in = logged_in,
         page = page,
         group = group,
-        hub_mode = hub_mode,
+        hub_mode = get_config("user_interface"),
         version = get_version(),
         show_csv_import_link = get_config("show_dataset_csv_import_link"),
         primid_type = "login identity",
@@ -4195,7 +4173,7 @@ def manage():
 def create_currency():
 
     # Hub operational mode (read from environment variable HUB_MODE)
-    hub_mode = get_hub_mode()
+    hub_mode = get_config("user_interface")
 
     page = "create_currency"
     previous_page = session["previous_page"]
@@ -4272,7 +4250,7 @@ def create_currency():
         logged_in = logged_in,
         page = page,
         group = group,
-        hub_mode = hub_mode,
+        hub_mode = get_config("user_interface"),
         version = get_version(),
         show_csv_import_link = get_config("show_dataset_csv_import_link"),
         form = form,
@@ -4296,7 +4274,7 @@ def create_currency():
 def create_pairing(owner_fph = ""):
 
     # Hub operational mode (read from environment variable HUB_MODE)
-    hub_mode = get_hub_mode()
+    hub_mode = get_config("user_interface")
     if hub_mode != "omtrad":
         flash("Invalid opertional mode for this endpoint")
         return redirect("/home")
@@ -4386,7 +4364,7 @@ def create_pairing(owner_fph = ""):
         logged_in = logged_in,
         page = page,
         group = group,
-        hub_mode = hub_mode,
+        hub_mode = get_config("user_interface"),
         version = get_version(),
         show_csv_import_link = get_config("show_dataset_csv_import_link"),
         form = form,
@@ -4410,7 +4388,7 @@ def create_pairing(owner_fph = ""):
 def create_account(owner_fph):
 
     # Hub operational mode (read from environment variable HUB_MODE)
-    hub_mode = get_hub_mode()
+    hub_mode = get_config("user_interface")
 
     page = "create_account"
     previous_page = session["previous_page"]
@@ -4539,7 +4517,7 @@ def create_account(owner_fph):
         logged_in = logged_in,
         page = page,
         group = group,
-        hub_mode = hub_mode,
+        hub_mode = get_config("user_interface"),
         version = get_version(),
         show_csv_import_link = get_config("show_dataset_csv_import_link"),
         form = form,
@@ -4559,8 +4537,8 @@ def create_account(owner_fph):
 def list_identiies():
 
     # Hub operational mode (read from environment variable HUB_MODE)
-    hub_mode = get_hub_mode()
-    #version = get_version()()
+    hub_mode = get_config("user_interface")
+
 
 
     page = "list_identities"
@@ -4606,7 +4584,7 @@ def list_identiies():
         logged_in = logged_in,
         page = page,
         group = group,
-        hub_mode = hub_mode,
+        hub_mode = get_config("user_interface"),
         version = get_version(),
         show_csv_import_link = get_config("show_dataset_csv_import_link"),
         primid_type = "login identity",
@@ -4625,7 +4603,7 @@ def list_identiies():
 def create_secid():
 
     # Hub operational mode (read from environment variable HUB_MODE)
-    hub_mode = get_hub_mode()
+    hub_mode = get_config("user_interface")
 
     group = "home" # Used to control top menu behaviour.
     page = "create_secid"
@@ -4725,7 +4703,7 @@ def create_secid():
         logged_in = logged_in,
         page = page,
         group = group,
-        hub_mode = hub_mode,
+        hub_mode = get_config("user_interface"),
         version = get_version(),
         show_csv_import_link = get_config("show_dataset_csv_import_link"),
         form = form,
@@ -4746,7 +4724,7 @@ def create_secid():
 def create_namespace():
 
     # Hub operational mode (read from environment variable HUB_MODE)
-    hub_mode = get_hub_mode()
+    hub_mode = get_config("user_interface")
 
     page = "create_namespace"
     previous_page = session["previous_page"]
@@ -4823,7 +4801,7 @@ def create_namespace():
         logged_in = logged_in,
         page = page,
         group = group,
-        hub_mode = hub_mode,
+        hub_mode = get_config("user_interface"),
         version = get_version(),
         show_csv_import_link = get_config("show_dataset_csv_import_link"),
         form = form,
@@ -4843,8 +4821,8 @@ def create_namespace():
 def list_namespaces():
 
     # Hub operational mode (read from environment variable HUB_MODE)
-    hub_mode = get_hub_mode()
-    #version = get_version()()
+    hub_mode = get_config("user_interface")
+
 
 
     page = "list_namespaces"
@@ -4889,7 +4867,7 @@ def list_namespaces():
         logged_in = logged_in,
         page = page,
         group = group,
-        hub_mode = hub_mode,
+        hub_mode = get_config("user_interface"),
         version = get_version(),
         show_csv_import_link = get_config("show_dataset_csv_import_link"),
         primid_type = "login identity",
@@ -4904,8 +4882,8 @@ def list_namespaces():
 def add_steward():
 
     # Hub operational mode (read from environment variable HUB_MODE)
-    hub_mode = get_hub_mode()
-    #version = get_version()()
+    hub_mode = get_config("user_interface")
+
 
 
     page = "add_steward"
@@ -4999,7 +4977,7 @@ def export(file):
 def export_account_csv(account_fph):
 
     # Hub operational mode (read from environment variable HUB_MODE)
-    hub_mode = get_hub_mode()
+    hub_mode = get_config("user_interface")
 
     page = "export_account"
     previous_page = session["previous_page"]
@@ -5098,7 +5076,7 @@ def export_account_csv(account_fph):
         logged_in = logged_in,
         page = page,
         group = group,
-        hub_mode = hub_mode,
+        hub_mode = get_config("user_interface"),
         version = get_version(),
         show_csv_import_link = get_config("show_dataset_csv_import_link"),
         primid_type = "login identity",
@@ -5126,7 +5104,7 @@ def export_account_csv(account_fph):
 def export_currency_csv(currency_fph):
 
     # Hub operational mode (read from environment variable HUB_MODE)
-    hub_mode = get_hub_mode()
+    hub_mode = get_config("user_interface")
 
     page = "export_currency"
     previous_page = session["previous_page"]
@@ -5190,7 +5168,7 @@ def export_currency_csv(currency_fph):
         logged_in = logged_in,
         page = page,
         group = group,
-        hub_mode = hub_mode,
+        hub_mode = get_config("user_interface"),
         version = get_version(),
         show_csv_import_link = get_config("show_dataset_csv_import_link"),
         primid_type = "login identity",
@@ -5245,7 +5223,7 @@ def upload():
 )
 def importing(file):
     # Hub operational mode (read from environment variable HUB_MODE)
-    hub_mode = get_hub_mode()
+    hub_mode = get_config("user_interface")
     if hub_mode != "omtrad":
         flash("You are working in the wrong mode to use this import function")
         return redirect("/home_ahc")
@@ -5278,7 +5256,7 @@ def importing(file):
         title = "Processing import of CSV payment set",
         page = page,
         group = group,
-        hub_mode = hub_mode,
+        hub_mode = get_config("user_interface"),
         version = get_version(),
         logged_in = logged_in,
         primid_type = "login identity",
@@ -5293,7 +5271,7 @@ def importing(file):
 @login_required
 def import_payment_set():
     # Hub operational mode (read from environment variable HUB_MODE)
-    hub_mode = get_hub_mode()
+    hub_mode = get_config("user_interface")
     if hub_mode != "omtrad":
         flash("You are working in the wrong mode to use this import function")
         return redirect("/home_ahc")
@@ -5331,7 +5309,7 @@ def import_payment_set():
         form = CSVImportForm(),
         page = page,
         group = group,
-        hub_mode = hub_mode,
+        hub_mode = get_config("user_interface"),
         version = get_version(),
         show_csv_import_link = get_config("show_dataset_csv_import_link"),
         logged_in = logged_in,
@@ -5476,7 +5454,7 @@ def import_create_payments():
 def messages():
 
     # Hub operational mode (read from environment variable HUB_MODE)
-    hub_mode = get_hub_mode()
+    hub_mode = get_config("user_interface")
 
     page = "messages"
     if "previous_page" in session: # already active
@@ -5584,7 +5562,7 @@ def messages():
         title = "Messages",
         page = page,
         group = group,
-        hub_mode = hub_mode,
+        hub_mode = get_config("user_interface"),
         version = get_version(),
         show_csv_import_link = get_config("show_dataset_csv_import_link"),
         logged_in = logged_in,
@@ -5606,7 +5584,7 @@ def messages():
 def message_send():
 
     # Hub operational mode (read from environment variable HUB_MODE)
-    hub_mode = get_hub_mode()
+    hub_mode = get_config("user_interface")
 
     page = "send_message"
     if "previous_page" in session: # already active
@@ -5751,7 +5729,7 @@ def message_send():
         title = "Send user message",
         page = page,
         group = group,
-        hub_mode = hub_mode,
+        hub_mode = get_config("user_interface"),
         version = get_version(),
         show_csv_import_link = get_config("show_dataset_csv_import_link"),
         logged_in = logged_in,
@@ -5777,7 +5755,7 @@ def message_send():
 def messages_show(recipient_fph):
 
     # Hub operational mode (read from environment variable HUB_MODE)
-    hub_mode = get_hub_mode()
+    hub_mode = get_config("user_interface")
 
     page = "show_messages"
     if "previous_page" in session: # already active
@@ -5855,7 +5833,7 @@ def messages_show(recipient_fph):
         title = "Messages",
         page = page,
         group = group,
-        hub_mode = hub_mode,
+        hub_mode = get_config("user_interface"),
         version = get_version(),
         show_csv_import_link = get_config("show_dataset_csv_import_link"),
         logged_in = logged_in,
@@ -5982,7 +5960,7 @@ def messages_clear(recipient_fph):
 def invitation_generate():
 
     # Hub operational mode (read from environment variable HUB_MODE)
-    hub_mode = get_hub_mode()
+    hub_mode = get_config("user_interface")
 
     page = "create_invitation_qr"
     previous_page = session["previous_page"]
@@ -6036,7 +6014,7 @@ def invitation_generate():
         title = "Create invitation QR code",
         page = page,
         group = group,
-        hub_mode = hub_mode,
+        hub_mode = get_config("user_interface"),
         version = get_version(),
         show_csv_import_link = get_config("show_dataset_csv_import_link"),
         logged_in = logged_in,
@@ -6062,6 +6040,9 @@ def invitation_display(qrfilename):
         return redirect("/home")
     else:
         qrc = qrfilename.split("_")
+#        qrcet = qrc[1].split(".")
+#        print()
+#        print(qrc[0])
         if unixtime_int() > int(qrc[0]):      # The QR code has expired so
             os.unlink(QR_CODES + qrfilename)    # the PNG file is deleted.
             flash("The QR code has expired")
@@ -6070,7 +6051,7 @@ def invitation_display(qrfilename):
     qr_png_path = QR_CODES + qrfilename
 
     # Hub operational mode (read from environment variable HUB_MODE)
-    hub_mode = get_hub_mode()
+    hub_mode = get_config("user_interface")
 
     page = "create_currency"
     previous_page = session["previous_page"]
@@ -6083,7 +6064,6 @@ def invitation_display(qrfilename):
     primid_fph, primid_hrns, etypes, \
     m = identify_entity(current_user.get_id())
 
-    working_identity_type = "prinid"
     if (hub_mode != "omtrad") and ("working_identity" in session):
         working_identity_fph, working_identity_hrns, etypes, \
         m = identify_entity(session["working_identity"])
@@ -6101,7 +6081,7 @@ def invitation_display(qrfilename):
         title = "Display invitation QR code",
         page = page,
         group = group,
-        hub_mode = hub_mode,
+        hub_mode = get_config("user_interface"),
         version = get_version(),
         show_csv_import_link = get_config("show_dataset_csv_import_link"),
         logged_in = logged_in,
@@ -6125,8 +6105,12 @@ def invitation_display(qrfilename):
 #
 @app.route("/help")
 def help():
+
     # Hub operational mode (read from environment variable HUB_MODE)
-    hub_mode = get_hub_mode()
+    hub_mode = get_config("user_interface")
+
+
+
     page = "help"
     group = ""
     namespace_steward = True
@@ -6139,7 +6123,7 @@ def help():
         logged_in = logged_in,
         page = page,
         group = group,
-        hub_mode = hub_mode,
+        hub_mode = get_config("user_interface"),
         version = get_version(),
         show_csv_import_link = get_config("show_dataset_csv_import_link"),
         development_mode = development_mode,

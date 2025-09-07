@@ -25,10 +25,6 @@ crossorigin="anonymous"
   rel="stylesheet"
   href="{{ url_for('static', filename='css/default.css') }}"
 >
-<!--
--->
-
-
 <script
   src="{{ url_for('static', filename='js/jquery-3.7.1.min.js') }}"
   type="text/javascript"
@@ -43,7 +39,7 @@ crossorigin="anonymous"
 integrity="sha384-j1CDi7MgGQ12Z7Qab0qlWQ/Qqz24Gc6BM0thvEMVjHnfYGF0rmFCozFSxQBxwHKO"
 crossorigin="anonymous"></script>
 
-
+<!-- This version is used only for the traditional pairings-based interface -->
 
 <div class="clear-both"><!-- menu row 1 -->
 
@@ -85,7 +81,7 @@ crossorigin="anonymous"></script>
 
   {% endif %}
 
-  <!-- The *secids* are listed only of SLATE is not running in slate_minimal
+  <!-- The *secids* are listed only if SLATE is not running in slate_minimal
        or omtrad mode.
   -->
   {% if  (hub_mode != "slate_minimal") and (hub_mode != "omtrad") %}
@@ -136,15 +132,15 @@ crossorigin="anonymous"></script>
 <!--
   [omtrad mode]
 -->
-  [0]
+  [SLATE mode]
 {% elif hub_mode == "slate_minimal" %}
-  [1]
+  [minimal mode]
 {% elif hub_mode == "slate_normal" %}
-  [2]
+  [normal mode]
 {% elif hub_mode == "nests" %}
-  [3]
+  [NESTS mode]
 {% else %}
-  [4]
+  [mode unidentified]
 {% endif %}
 
 <!-- end menu row 1 ------------------------------------------------------- -->

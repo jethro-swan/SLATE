@@ -50,6 +50,7 @@ FPH_TO_HRNS_MAP     = "/var/slate/active/maps/FPH_to_HRNS_map.dbm"
 HRNS_C_FPH_MAP      = "/var/slate/active/maps/FPH_to_HRNS_collision_map.dbm"
 CONFIG_MAP          = "/var/slate/active/maps/config_map.dbm"
 FPH_PARENT_MAP      = "/var/slate/active/maps/FPH_parent_map.dbm"
+PNSR_MAP            = "/var/slate/active/maps/private_namespace_root_map.dbm"
 
 SUBSTRATE_FPH       = nshash("")
 

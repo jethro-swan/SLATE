@@ -12,6 +12,8 @@ from app.core.constants import SUBSTRATE_FPH
 from app.core.constants import VERSION, CONFIG
 from app.core.constants import NSS # NamseSpace Separator character
 
+from app.core.configdb import get_config
+
 from app.core.common import filename_timestamp as timestamp
 from app.core.common import ledger_timestamp
 from app.core.common import nshash
@@ -25,6 +27,8 @@ from app.core.fph_hrns_maps import hrns_to_fph, fph_to_hrns, create_maps
 from app.core.fph_hrns_maps import delete_fph_from_map
 from app.core.fph_hrns_maps import get_parent
 from app.core.fph_hrns_maps import record_parent
+from app.core.fph_hrns_maps import record_private_namespace_root
+from app.core.fph_hrns_maps import get_private_namespace_root
 
 from app.core.dbm_functions import dbm_store, dbm_fetch, dbm_delete, dbm_keys
 from app.core.dbm_functions import dbm_create_map
@@ -84,7 +88,8 @@ def create_hubs_db():
 # The operational mode is stored in an environment variable. Its value
 # determines some aspects of the hub behaviour.
 
-def get_hub_mode():
+def _get_hub_mode():
+#def get_hub_mode():
     hub_mode = os.environ.get("HUB_MODE")
     if hub_mode is None:
         return "omtrad"
@@ -111,21 +116,10 @@ def get_version():
 
 
 #==============================================================================
-# Return site configuration item by key string:
+#
+def get_hub_mode():
+    return get_config("hub_mode")
 
-def get_config():
-    with open(CONFIG, "r") as cfg:
-        c = cfg.readlines()
-    config = {}
-    for row in c:
-        r = row.split()
-        if r[1] == "true":
-            config[r[0]] = True
-        elif r[1] == "false":
-            config[r[0]] = False
-        else:
-            config[r[0]] = r[1]
-    return config
 
 #==============================================================================
 # Global data, flags, etc.
@@ -1613,7 +1607,7 @@ def get_default_currency(namespace_id):
     if not entity_fph:
         return "Entity " + entity_id + " cannot be identified"
     if not ("namespace" in etypes):
-        return namespace_hrns + " is not a namespace type"
+        return entity_hrns + " is not a namespace type"
     with sqlite3.connect(ENTITIES_DB) as conn:
         cursor = conn.cursor()
         cursor.execute(
@@ -1759,9 +1753,33 @@ def list_secid_accounts(secid_fph):
             cursor.close()
             accounts_fph_blob = result[0]
             accounts_fph_list = pickle.loads(accounts_fph_blob)
+        return accounts_fph_list, ""    # list + message
 
-#            print(accounts_fph_list)
+#==============================================================================
+## List the *ahid*'s accounts: #
 
+def list_ahid_accounts(ahid_fph):
+    with sqlite3.connect(ENTITIES_DB) as conn:
+        cursor = conn.cursor()
+        cursor.execute(
+            "SELECT accounts_fph_list FROM ahids WHERE entity_fph = ?",
+            (ahid_fph,)
+        )
+        result = cursor.fetchone()
+        if result is None:
+            accounts_fph_list = []
+            accounts_fph_blob = pickle.dumps(accounts_fph_list)
+            cursor.execute(
+                "UPDATE ahids SET accounts_fph_list = ? WHERE entity_fph = ?",
+                (accounts_fph_blob, ahid_fph)
+            )
+            conn.commit()
+            cursor.close()
+            return [], "The ahid " + ahid_fph + " has no accounts."
+        else:
+            cursor.close()
+            accounts_fph_blob = result[0]
+            accounts_fph_list = pickle.loads(accounts_fph_blob)
         return accounts_fph_list, ""    # list + message
 
 #==============================================================================
@@ -1769,10 +1787,11 @@ def list_secid_accounts(secid_fph):
 #
 # NB  The two functions above may be combined into a single function:
 
-def list_agent_accounts(agent_fph, etype):
+#def list_agent_accounts(agent_fph, etype):
+def list_agent_accounts(agent_fph):
 
-    if entity_type_is_registered(agent_fph, "primid"):
-        accounts_fph_list, m = list_primid_accounts(agent_fph)
+    if entity_type_is_registered(agent_fph, "ahid"):
+        accounts_fph_list, m = list_ahid_accounts(agent_fph)
         if m:
             return [], m
     elif entity_type_is_registered(agent_fph, "secid"):
@@ -1916,6 +1935,9 @@ def list_primid_currencies(primid_fph): # in which an primid has accounts
     for account_fph in accounts_fph_list:
         currencies_fph_list.append(get_account_currency(account_fph))
     return currencies_fph_list
+
+
+
 
 #==============================================================================
 ## List the *secid*'s *account*s' *currencies*:
@@ -2120,9 +2142,11 @@ def list_currencies_in_common_by_hrns(a1_fph, a2_fph):
 def get_account_properties(account_id):
     account_fph, account_hrns, etypes, m = identify_entity(account_id)
     if not account_fph:
-        return "", "", 0, 0, False, "No entity at " + account_id
+        return "", "", 0, 0, False, "", "", "", "", "", \
+               "No entity at " + account_id
     if not ("account" in etypes):
-        return "", "", 0, 0, False, "No account at " + account_hrns
+        return "", "", 0, 0, False, "", "", "", "", "", \
+               "No account at " + account_hrns
     with sqlite3.connect(ENTITIES_DB) as conn:
         cursor = conn.cursor()
         cursor.execute(
@@ -2148,11 +2172,12 @@ def get_account_properties(account_id):
         result = cursor.fetchone()
         cursor.close()
     if result is None:
-        return "", "", 0, 0, False, "Account not found"
+        return "", "", 0, 0, False, "", "", "", "", "", "Account not found"
     # The owner of this *account* may be either an *ahid* or a *secid*.
     owner_fph, owner_hrns, etypes, m = identify_entity(result[0])
     if not (("ahid" in etypes) or ("secid" in etypes)):
-        return "", "", 0, 0, False, "Account  has no owner"
+        return "", "", 0, 0, False, "", "", "", "", "", \
+               "Account  has no owner"
     currency_fph = result[1]
     balance = result[2]
     volume = result[3]
@@ -3098,6 +3123,26 @@ def new_pairing(
         ahid_name, parent_hrns = split_hrns(ahid_hrns)
         ahid_fph, ahid_hrns, \
         m = new_ahid(ahid_name, parent_hrns, primid_fph)
+        # A new *namespace* is created
+        # (a) sharing the parent *namespace* of the new *ahid*
+        # (b) using the default *currency* of the parent as its own
+        #parent_fph, m = hrns_to_fph(parent_hrns)
+        parent_fph, parent_hrns, etypes, m = identify_entity(parent_hrns)
+        if not parent_fph: # (should never happen)
+            print("Panic! " + parent_hrns + " is not a registered identifier")
+        if not ("namespace" in etypes): # (should never happen)
+            print("Panic! " + parent_hrns + " has no registered namespace")
+        # The parent *namespace* details are retrieved:
+        active, sandbox, private, owner_fph, \
+        parent_currency_fph, stewards_list, \
+        m = get_namespace_properties(parent_fph)
+        # Its new child *namespace* is created
+        namespace_fph, namespace_hrns, \
+        m = new_namespace(
+                ahid_name, ahid_fph,
+                parent_currency_fph,    # The default *currency* inherited.
+                primid_fph              # The *primid* is the initial steward.
+        )
     else:
         ahid_fph = r_ahid_fph
         ahid_hrns = r_ahid_hrns

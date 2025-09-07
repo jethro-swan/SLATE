@@ -31,6 +31,10 @@ def create_config_db():
 def get_config(config_key):
     return dbm_fetch(CONFIG_MAP, config_key).strip()
 
+
+#def get_list_config_values():
+
+
 #------------------------------------------------------------------------------
 
 def delete_config_key_from_map(config_key):
@@ -57,7 +61,8 @@ def read_config_file_to_db():
         cfl = cfl.strip()
         if (not cfl) or re_comment.match(cfl):   # comment line or empty line
             continue
-        cf = cfl.split()
+        print(cfl)
+        cf = cfl.split(" = ")
         set_config(cf[0], cf[1])
 
 #------------------------------------------------------------------------------

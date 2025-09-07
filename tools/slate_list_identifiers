@@ -3,7 +3,9 @@
 import sqlite3
 from prettytable import PrettyTable
 from app.core.constants import ENTITIES_DB
-from app.core.fph_hrns_maps import hrns_to_fph, fph_to_hrns, get_parent
+from app.core.fph_hrns_maps import hrns_to_fph, fph_to_hrns
+from app.core.fph_hrns_maps import get_parent
+from app.core.fph_hrns_maps import get_private_namespace_root
 from app.core.slate_core import get_entity_types
 
 with sqlite3.connect(ENTITIES_DB) as conn:
@@ -22,18 +24,21 @@ entity_table.field_names = [
                              "entity HRNS",
                              "entity FPH",
                              "parent FPH",
+                             "private namespace tree root FPH",
                              "N",
                              "C",
                              "A",
                              "H",
-                             "P",
-                             "S"
+                             "P"
+#                             "S",
+#                             "private namespace tree root FPH"
                            ]
 table_rows = []
 for identifier in identifiers_list:
     identifier_fph = identifier[0]
     identifier_hrns = fph_to_hrns(identifier_fph)
     etypes, m = get_entity_types(identifier_fph) # list types registered
+    pnsr = get_private_namespace_root(identifier_fph)
     if m: # (this should never happen)
         print(m)
 
@@ -51,34 +56,32 @@ for identifier in identifiers_list:
     # Column 3: FPH of parent *namespace*
     table_row.append(parent_fph)
 
-    # Column 4:
+    # Column 4: private *namespace* root FPH
+    table_row.append(pnsr)
+
+    # Column 5: *namespace* registered?
     if "namespace" in etypes:
         table_row.append("N")
     else:
         table_row.append("")
-    # Column 5:
+    # Column 6: *currency* registered?
     if "currency" in etypes:
         table_row.append("C")
     else:
         table_row.append("")
-    # Column 6:
+    # Column 7: *account* registered?
     if "account" in etypes:
         table_row.append("A")
     else:
         table_row.append("")
-    # Column 7:
+    # Column 8: *ahid* registered?
     if "ahid" in etypes:
         table_row.append("H")
     else:
         table_row.append("")
-    # Column 8:
+    # Column 9: *primid* registered?
     if "primid" in etypes:
         table_row.append("P")
-    else:
-        table_row.append("")
-    # Column 9:
-    if "secid" in etypes:
-        table_row.append("S")
     else:
         table_row.append("")
 

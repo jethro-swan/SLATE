@@ -5,12 +5,16 @@ from base64 import b64encode
 # Creation and archiving of DBM maps:
 #------------------------------------------------------------------------------
 
+#------------------------------------------------------------------------------
 # Create new empty map:
 def dbm_create_map(dbm_file):
     # map: FPH>HRNS
     with dbm.open(dbm_file, "n", 0o600) as db:
         db.get("")
 
+
+
+#------------------------------------------------------------------------------
 # Add a key:value pair to the specified DBM file:
 def dbm_store(dbm_file, key, value):
 
@@ -29,18 +33,7 @@ def dbm_store(dbm_file, key, value):
         db.close()
         return True
 
-
-
-#    db = dbm.open(dbm_file, 'c')
-#    try:
-#        db.acquire_lock()
-#        db[key.encode("utf-8")] = value.encode("utf-8")
-#        db.release_lock()
-#    finally:
-#        db.close()
-
-
-
+#------------------------------------------------------------------------------
 # Retrieve a value corresponding to the specified key in the DBM file:
 def dbm_fetch(dbm_file, key):
 
@@ -53,25 +46,7 @@ def dbm_fetch(dbm_file, key):
             value = ""
     return value
 
-# 2025-03-03: experimental change
-#    try:
-#        db = dbm.open(dbm_file, 'r')
-#    except:
-#        db.close()
-#        return "", False
-#    finally:
-#        k = key.encode("utf-8")
-#        if k in db:
-#            value = db[k].decode("utf-8")
-#        else:
-#            value = ""
-#    return value, True
-
-
-
-
-
-
+#------------------------------------------------------------------------------
 # Delete a key:value pair from the specified DBM file:
 def dbm_delete(dbm_file, key):
     if key is None:

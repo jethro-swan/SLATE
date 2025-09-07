@@ -2233,11 +2233,6 @@ def pay_ahid(payer_ahid_fph, payment_currency_fph):
     working_identity_hrns = primid_hrns
     working_identity_type = "primid"
 
-    number_of_messages, \
-    number_of_indelible_messages = message_count(primid_fph, hub_mode)
-
-
-
     form = SpecifyPayeeAccountHolderForm()
     if form.validate_on_submit():
         payee_ahid_fph, payee_ahid_hrns, etypes, \
@@ -2294,9 +2289,7 @@ def pay_ahid(payer_ahid_fph, payment_currency_fph):
         working_identity_hrns = working_identity_hrns,
         working_identity_type = working_identity_type,
         payer_ahid_hrns = payer_ahid_hrns,
-        currency_hrns = currency_hrns,
-        number_of_indelible_messages = number_of_indelible_messages,
-        number_of_messages = number_of_messages
+        currency_hrns = currency_hrns
     )
 
 
@@ -6062,6 +6055,9 @@ def invitation_display(qrfilename):
         return redirect("/home")
     else:
         qrc = qrfilename.split("_")
+#        qrcet = qrc[1].split(".")
+#        print()
+#        print(qrc[0])
         if unixtime_int() > int(qrc[0]):      # The QR code has expired so
             os.unlink(QR_CODES + qrfilename)    # the PNG file is deleted.
             flash("The QR code has expired")
@@ -6083,7 +6079,6 @@ def invitation_display(qrfilename):
     primid_fph, primid_hrns, etypes, \
     m = identify_entity(current_user.get_id())
 
-    working_identity_type = "prinid"
     if (hub_mode != "omtrad") and ("working_identity" in session):
         working_identity_fph, working_identity_hrns, etypes, \
         m = identify_entity(session["working_identity"])
@@ -6125,8 +6120,12 @@ def invitation_display(qrfilename):
 #
 @app.route("/help")
 def help():
+
     # Hub operational mode (read from environment variable HUB_MODE)
     hub_mode = get_hub_mode()
+    #version = get_version()()
+
+
     page = "help"
     group = ""
     namespace_steward = True

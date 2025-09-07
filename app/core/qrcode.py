@@ -121,7 +121,7 @@ def qr_code_png(url, qr_png_name):
     # The PNG is saved in the common QR code directory:
     png_path = QR_CODES + random_filename() + ".png"
     qr_url = pyqrcode.create(url)
-    qr_url.png(png_path, scale = 8)
+    qr_url.png(png_path, scale = 6)
     return png_path # for display/deletion
 
 
