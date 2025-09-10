@@ -39,10 +39,9 @@ app/static/qr/*
 _app
 zzz
 fake_*.txt
-whereused2.txt
-whereused.txt
+whereused*
 coredefs.sh
-end_points.txt
+end_points*
 deflist*
 tools/islands31
 others
