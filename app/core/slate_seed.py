@@ -2,7 +2,7 @@ import sqlite3
 import os
 import pickle
 
-from app.core.constants import ENTITIES_DB
+from app.core.constants import IDENTIFIERS_DB, ENTITIES_DB
 from app.core.constants import SUBSTRATE_FPH
 from app.core.common import nshash
 from app.core.regexp_list import *
@@ -89,7 +89,7 @@ def create_substrate():
     # (a) its parent has no HRNS
     # (b) it serves as its own parent *namespace*
     # (c) its identifier has only one registered entity type (*namesapce*)
-    with sqlite3.connect(ENTITIES_DB) as conn:
+    with sqlite3.connect(IDENTIFIERS_DB) as conn:
         cursor = conn.cursor()
         cursor.execute(
             "INSERT INTO entities_registered (" \

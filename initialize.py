@@ -8,6 +8,7 @@ import shutil
 from app.core.fph_hrns_maps import create_maps
 from app.core.fph_hrns_maps import fph_to_hrns
 from app.core.fph_hrns_maps import hrns_to_fph
+from app.core.slate_core import create_identifiers_db
 from app.core.slate_core import create_entities_db
 from app.core.slate_session import create_slate_session_db
 from app.core.slate_core import create_hubs_db
@@ -58,6 +59,8 @@ treecopy(DATA + "/db", TIMESTAMPED_BACKUP_DIR + "/db")
 
 print("creating DBM maps")
 create_maps()
+print("creating identifier entity registration databases (SQLite)")
+create_identifiers_db()
 print("creating entities databases (SQLite)")
 create_entities_db("") # for open/public *namesapce*
 print("creating session databases (SQLite)")

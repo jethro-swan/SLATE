@@ -150,7 +150,7 @@ def select_db_filepath(db_name, owner_fph):
 #==============================================================================
 ## Create the SQLite indeinfiers database
 
-def create_identifier_db():
+def create_identifiers_db():
 
     if os.path.exists(IDENTIFIERS_DB):
         # If the database exists already, it is deleted.
@@ -207,18 +207,18 @@ def create_entities_db(owner_fph):
         # 2025-06-28
         # - Added table to identify types associated with a registered FPH
         #
-        cursor.execute(
-            "CREATE TABLE IF NOT EXISTS entities_registered (" \
-            + "entity_fph TEXT PRIMARY KEY, " \
-            + "parent_fph TEXT, " \
-            + "namespace INTEGER NOT NULL DEFAULT 0, " \
-            + "currency INTEGER NOT NULL DEFAULT 0, " \
-            + "account INTEGER NOT NULL DEFAULT 0, " \
-            + "primid INTEGER NOT NULL DEFAULT 0, " \
-            + "secid INTEGER NOT NULL DEFAULT 0, " \
-            + "ahid INTEGER NOT NULL DEFAULT 0" \
-            + ");"
-        )
+#        cursor.execute(
+#            "CREATE TABLE IF NOT EXISTS entities_registered (" \
+#            + "entity_fph TEXT PRIMARY KEY, " \
+#            + "parent_fph TEXT, " \
+#            + "namespace INTEGER NOT NULL DEFAULT 0, " \
+#            + "currency INTEGER NOT NULL DEFAULT 0, " \
+#            + "account INTEGER NOT NULL DEFAULT 0, " \
+#            + "primid INTEGER NOT NULL DEFAULT 0, " \
+#            + "secid INTEGER NOT NULL DEFAULT 0, " \
+#            + "ahid INTEGER NOT NULL DEFAULT 0" \
+#            + ");"
+#        )
         # Create namespaces table:
         cursor.execute(
             "CREATE TABLE IF NOT EXISTS namespaces (" \
@@ -419,7 +419,7 @@ def register_identifier(identifier_hrns):
 
     # An entry is created for this FPH in the [entities_registered] table if
     # and only if it does not exist already.
-    with sqlite3.connect(ENTITIES_DB) as conn:
+    with sqlite3.connect(IDENTIFIERS_DB) as conn:
         cursor = conn.cursor()
         cursor.execute(
             "SELECT * FROM entities_registered WHERE entity_fph = ?",
@@ -471,7 +471,7 @@ def identifier_unregistered(identifier_id):
         identifier_fph = identifier_id
     else:
         return True
-    with sqlite3.connect(ENTITIES_DB) as conn:
+    with sqlite3.connect(IDENTIFIERS_DB) as conn:
         cursor = conn.cursor()
         cursor.execute(
             "SELECT * FROM entities_registered WHERE entity_fph = ?",
@@ -506,7 +506,7 @@ def get_entity_types(entity_fph):
     if not re_fph.match(entity_fph):
         return [], "Invalid FPH: " + entity_fph
     entity_hrns = fph_to_hrns(entity_fph)
-    with sqlite3.connect(ENTITIES_DB) as conn:
+    with sqlite3.connect(IDENTIFIERS_DB) as conn:
         cursor = conn.cursor()
         cursor.execute(
             "SELECT " \
@@ -550,7 +550,7 @@ def set_entity_type(identifier_fph, entity_type, value):
     vetypes = ["namespace", "currency", "account", "primid", "secid", "ahid"]
     if not (entity_type in vetypes):
         return "Invalid entity type: " + entity_type
-    with sqlite3.connect(ENTITIES_DB) as conn:
+    with sqlite3.connect(IDENTIFIERS_DB) as conn:
         cursor = conn.cursor()
         # Does [entities_registered] table contain an entry for this FPH?
         cursor.execute(
@@ -573,7 +573,7 @@ def set_entity_type(identifier_fph, entity_type, value):
 def register_full_entity_set(identifier_fph):
     if not re_fph.match(identifier_fph):
         return "Invalid FPH: " + identifier_fph
-    with sqlite3.connect(ENTITIES_DB) as conn:
+    with sqlite3.connect(IDENTIFIERS_DB) as conn:
         cursor = conn.cursor()
         # Does [entities_registered] table contain an entry for this FPH?
         cursor.execute(
@@ -601,7 +601,7 @@ def register_primid_entity_set(identifier_fph):
     # This is used when registerind a new *primid*:
     if not re_fph.match(identifier_fph):
         return "Invalid FPH: " + identifier_fph
-    with sqlite3.connect(ENTITIES_DB) as conn:
+    with sqlite3.connect(IDENTIFIERS_DB) as conn:
         cursor = conn.cursor()
         # Does [entities_registered] table contain an entry for this FPH?
         cursor.execute(
@@ -630,7 +630,7 @@ def register_general_entity_set(identifier_fph):
     # This is used when creating a new *namespace* or *currency*
     if not re_fph.match(identifier_fph):
         return "Invalid FPH: " + identifier_fph
-    with sqlite3.connect(ENTITIES_DB) as conn:
+    with sqlite3.connect(IDENTIFIERS_DB) as conn:
         cursor = conn.cursor()
         # Does [entities_registered] table contain an entry for this FPH?
         cursor.execute(
@@ -714,7 +714,7 @@ def get_parent_fph(entity_id):
     entity_fph, entity_hrns, entity_types, m = dentify_entity(entity_id)
     if not entity_fph:
         return ""
-    with sqlite3.connect(ENTITIES_DB) as conn:
+    with sqlite3.connect(IDENTIFIERS_DB) as conn:
         cursor = conn.cursor()
         cursor.execute(
             "SELECT parent_fph FROM entities_registered " \
@@ -1615,7 +1615,7 @@ def set_default_currency(namespace_id, currency_id):
         return "Entity " + entity_id + " cannot be identified"
     if not ("namespace" in etypes):
         return entity_hrns + " has no namespace type"
-    with sqlite3.connect(ENTITIES_DB) as conn:
+    with sqlite3.connect(IDENTIFIERS_DB) as conn:
         cursor = conn.cursor()
         cursor.execute(
             "UPDATE entities_registered SET default_currency_fph = ? " \
@@ -2848,7 +2848,7 @@ def list_active_namespaces(ancestor_namespace_id = ""): # FPH or HRNS
 
     # First the *namespace* trees are selected where the node root *namespace*
     # is active and has the specified ancestor *namespace* as its parent:
-    with sqlite3.connect(ENTITIES_DB) as conn:
+    with sqlite3.connect(IDENTIFIERS_DB) as conn:
         cursor = conn.cursor()
         cursor.execute(
             "SELECT entity_fph FROM entities_registered " \
@@ -2957,7 +2957,7 @@ def list_primids(status = "all"):
 
     return_fph_list = []
 
-    with sqlite3.connect(ENTITIES_DB) as conn:
+    with sqlite3.connect(IDENTIFIERS_DB) as conn:
         cursor = conn.cursor()
         cursor.execute("SELECT entity_fph FROM primids")
         results = cursor.fetchall()
