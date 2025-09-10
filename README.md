@@ -2,11 +2,11 @@
 
 This is an extremely simple _Flask_ application to support nested
 [open money](https://openmoney.github.io/specification) payment networks, each
-able to support multiple currencies.
+able to support multiple currencies. (NB, that specification is overdue for some fairly minor revisions, most notably the replacement of **secids** by **ahids**.)
 
 This is a temporary system to allow networks/islands to form while
 [NESTS](https://nests.lrc.org.uk) is still being developed (its specification
-being still somewhat fluid at this stage). For this reason, the names used to
+being still extremely fluid at this stage). For this reason, the names used to
 identify _entities_ (**namespaces**, **agents**, **currencies** and
 **accounts**) in _SLATE_ are compatible [^1] with (and a subset of) those of
 the fully-nested (and much more ambitious) _NESTS_ software.
@@ -27,11 +27,9 @@ There are four categories of _entity_:
 
 ### Agent categories
 
-There are three main categories of **agent**:
+There are two main categories of **agent**:
   - A general **agent** - the set to which _all_ **agents** belong [^2], each
     identifiable uniquely by a **primary identity** (**primid**).
-  - An arbitrary collection of **secondary identities** (**secids**, a.k.a.
-    **aliases**).
   - An arbitrary collection of **account-holder identities** (**ahid**).
 
 There are two additional categories of **agent**:
@@ -42,20 +40,17 @@ There are two additional categories of **agent**:
     existing _global system administrator_.
 
 Furthermore
-  - A **primid** or **secid** may hold any number of **accounts** in any
-    **currencies** for which its use is authorized.
-  - In contrast to a **primid** or **secid**, an **ahid** may be paired with
-    each **currency** (where authorized by its _stewards_) only once. Such a
-    pairing identifies as **account** the identifier string for which is not
-    generally visible. For the purposes of such pairings, the **primid** to
-    which these **ahid** belong may serve also as an **ahid**.
-  - A **primid** may have any number of **ahid** or **secid**.
-  - Each **ahid** or **secid** has only one **primid**.
+  - An **ahid** may be paired with each  **currency** (where authorized by its _stewards_) only once. Such a
+    pairing identifies an **account** the identifier string for which is not
+    generally visible. For the purposes of such pairings, the identifier of a
+    **primid** may also has an **ahid** registered to it.
+  - A **primid** may have any number of **ahid**.
+  - Each **ahid** has only one **primid**.
 
 ----
 ### Internal representation
 
-For convenience, each _entity_ (**namespace**, **primaid**, **ahid**, **secid**,
+For convenience, each _entity_ (**namespace**, **primid**, **ahid**,
 **currency** or **account**) is identified internally by a unique number (its
 _FPH_) serving as the primary key in an _SQLite_ table. (NB, these numbers have
 now been made fully compatible with the _FPH_ (_Full Path Hash_) used in
@@ -68,8 +63,6 @@ These global mappings are:
   - **currency**: _currency_fph_ &rarr; _currency_hrns_
   - **primid**: _primid_hrns_ &rarr; _primid_fph_
   - **primid**: _primid_fph_ &rarr; _primid_hrns_
-  - **secid**: _secid_hrns_ &rarr; _secid_fph_
-  - **secid**: _secid_fph_ &rarr; _secid_hrns_
   - **ahid**: _ahid_hrns_ &rarr; _ahid_fph_
   - **ahid**: _ahid_fph_ &rarr; _ahid_hrns_
   - **account**: _account_hrns_ &rarr; _account_fph_
@@ -84,8 +77,8 @@ As in _NESTS_, each entity (**namespace**, **currency**, **agent** or
 within a **namespace**.
 
 Each **namespace** contains the names of **namespaces**, **currencies** and
-**primary identities** (**login identities**) and **secondary identities**
-(**aliases**).
+**primary identities** (a.k.k. **primids** or **login identities**) and
+**account-holder identities** (**ahids**).
 
 Upon registration, an initial **account** is created in the **currency**
 specified in the registration form. The name of this **account** is contained
@@ -264,12 +257,11 @@ Therefore the following additional screens are required:
 be any UTF-8 character.
 
 [^2]: An **agent** is identifiable by its **login identity** (**primary
-identity**) or by any of an arbitrary number of **aliases** (**secondary
-identities**).
+identity**) or by any of an arbitrary number of **ahids** (**account-holder identities**).
 
 [^3]: NB, this does not remove the original transaction from the journal.
 Instead, it posts a reversing transaction.
 
 ----
 
-Most recently updated: 2025/01/08 (incompletely)
+Most recently updated: 2025/09/10 (incompletely)
