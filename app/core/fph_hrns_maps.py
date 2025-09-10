@@ -39,37 +39,29 @@ from app.core.dbm_functions import dbm_create_map
 #------------------------------------------------------------------------------
 # Create new empty FPH<>HRNS and entity>parent (FPH>FPH) maps:
 
+# 2025-09-09: Several lines have been removed (prefixed ###) because all maps
+# and other data are backed up by the ~/initsliaze.py script.
+
 def create_maps(): # MDB map
     # If the databases exists already, they are deleted after a time-stamped
     # copy has been saved.
     T = timestamp()
-    ##print(T)
     if os.path.exists(FPH_TO_HRNS_MAP):
-        fcopy(FPH_TO_HRNS_MAP, MAP_BKP_DIR + 'FPH_TO_HRNS_MAP_' + T + '.dbm')
         os.remove(FPH_TO_HRNS_MAP)
     if os.path.exists(HRNS_C_FPH_MAP):
-        fcopy(HRNS_C_FPH_MAP, MAP_BKP_DIR + 'HRNS_C_FPH_MAP_' + T + '.dbm')
         os.remove(HRNS_C_FPH_MAP)
-    # Added 2025-08-30:
     if os.path.exists(FPH_PARENT_MAP):
-        fcopy(FPH_PARENT_MAP, MAP_BKP_DIR + 'FPH_PARENT_MAP_' + T + '.dbm')
         os.remove(FPH_PARENT_MAP)
-    # Added 2025-09-06:
-    if os.path.exists():
-        fcopy(PNSR_MAP, MAP_BKP_DIR + 'PNSR_MAP_' + T + '.dbm')
+    if os.path.exists(PNSR_MAP):
         os.remove(PNSR_MAP)
     # The new empty maps are created:
-    #create_maps()
     dbm_create_map(FPH_TO_HRNS_MAP)     # map: FPH>HRNS
     dbm_create_map(HRNS_C_FPH_MAP)      # map: HRNS>FPH
-    # Added 2025-08-30:
     dbm_create_map(FPH_PARENT_MAP)      # map: FPH>FPH (child>parent)
-    # Added 2025-09-06:
     dbm_create_map(PNSR_MAP)
     # These two DBM maps are created initially to ensure that the DB type can
     # be identified correctly by the first read operation.
     substrate_fph = nshash("")
-    ##print("substrate_fph = " + substrate_fph)
     dbm_store(FPH_TO_HRNS_MAP, substrate_fph, "") # FPH>HRNS map
     # The first "root" entity created (the "cc" namespace) has no named parent
     # namespace, its parent namespace being the nameless "substrate". Although
@@ -205,14 +197,14 @@ def update_mapping(current_hrns, new_hrns):
 #------------------------------------------------------------------------------
 # Record parent FPH:
 
-def record_parent(entity_fph, parent_fph):
-    return dbm_store(FPH_PARENT_MAP, entity_fph, parent_fph)
+def record_parent(id_fph, parent_fph):
+    return dbm_store(FPH_PARENT_MAP, id_fph, parent_fph)
 
 # Retrieve parent FPH from any entity FPH:
 
-def get_parent(entity_fph):
-    if re_fph.match(entity_fph):
-        parent_fph = dbm_fetch(FPH_PARENT_MAP, entity_fph).strip()
+def get_parent(id_fph):
+    if re_fph.match(id_fph):
+        parent_fph = dbm_fetch(FPH_PARENT_MAP, id_fph).strip()
         return parent_fph
     else:
         return ""
@@ -220,15 +212,15 @@ def get_parent(entity_fph):
 #------------------------------------------------------------------------------
 # Record private "namespace* root FPH:
 
-def record_private_namespace_root(entity_fph, private_namespace_root_fph):
+def record_private_namespace_root(id_fph, private_namespace_root_fph):
     # Return True iff stored successfully:
-    return dbm_store(PNSR_MAP, entity_fph, private_namespace_root_fph)
+    return dbm_store(PNSR_MAP, id_fph, private_namespace_root_fph)
 
 # Retrieve private "namespace* root FPH:
 
-def get_private_namespace_root(entity_fph):
-    if re_fph.match(entity_fph):
-        private_namespace_root_fph = dbm_fetch(PNSR_MAP, entity_fph).strip()
+def get_private_namespace_root(id_fph):
+    if re_fph.match(id_fph):
+        private_namespace_root_fph = dbm_fetch(PNSR_MAP, id_fph).strip()
         return private_namespace_root_fph
     else:
         return ""

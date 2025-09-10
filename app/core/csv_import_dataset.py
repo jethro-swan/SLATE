@@ -83,7 +83,8 @@ def import_csv_dataset(fpath, primid_id):
         payer_ahid_hrns = field[1].strip("\"") + NSS + primid_hrns
         payee_ahid_hrns = field[2].strip("\"") + NSS + primid_hrns
         amount = int(100*float(field[3].strip("\"")))
-        annotation = field[4].strip()
+#        annotation = field[4].strip()
+        annotation = field[4].strip("\"")
 
         if currency_hrns_[0] == "@": # absolute identifier path
             currency_hrns_ = currency_hrns_.lstrip("@")

@@ -30,6 +30,7 @@ from app.core.slate_core import list_currencies_in_common_by_hrns
 from app.core.slate_core import identify_entity
 from app.core.slate_core import get_currency_properties
 from app.core.slate_core import retrieve_pairing_account_fph
+from app.core.slate_core import select_db_filepath
 
 from app.core.messaging import send_message
 
@@ -40,13 +41,13 @@ from app import app
 #==============================================================================
 # Create the SQLite transactions database:
 
-def create_payments_db():
+def create_payments_db(owner_fph):
 
     if os.path.exists(PAYMENTS_DB):
-        # If the database exists already, it is deleted after a time-stamped
-        # copy has been saved.
-        fcopy(PAYMENTS_DB, DB_BKP_DIR + '/payments_' + timestamp() + '.db')
+        # If the database exists already, it is deleted.
         os.remove(PAYMENTS_DB)
+
+    ENTITIES_DB = select_db_filepath("payments", owner_fph)
 
     with sqlite3.connect(PAYMENTS_DB) as conn:
         cursor = conn.cursor()

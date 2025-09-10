@@ -35,9 +35,9 @@ from pathlib import Path
 
 
 # Create a directory with mode specified:
-def create_dir(dirname, mode):
-    if not os.path.exists(dirname):
-        os.mkdir(path, mode)
+def create_dir(dirpath, mode):
+    if not os.path.exists(dirpath):
+        os.mkdir(dirpath, mode)
 
 def create_file(filename):
     Path(filename).touch()

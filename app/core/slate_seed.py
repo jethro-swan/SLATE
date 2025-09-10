@@ -6,7 +6,10 @@ from app.core.constants import ENTITIES_DB
 from app.core.constants import SUBSTRATE_FPH
 from app.core.common import nshash
 from app.core.regexp_list import *
-from app.core.slate_core import hrns_to_fph, fph_to_hrns, record_parent
+#from app.core.slate_core import hrns_to_fph, fph_to_hrns, record_parent
+from app.core.fph_hrns_maps import hrns_to_fph, fph_to_hrns
+from app.core.fph_hrns_maps import record_parent
+from app.core.fph_hrns_maps import record_private_namespace_root
 from app.core.slate_core import register_identifier
 from app.core.slate_core import register_entity_type
 from app.core.slate_core import new_account
@@ -101,6 +104,8 @@ def create_substrate():
     record_parent(SUBSTRATE_FPH, SUBSTRATE_FPH)
     print("SUBSTRATE_FPH = " + SUBSTRATE_FPH)
 
+    record_private_namespace_root(SUBSTRATE_FPH, "")
+
 
 def create_seed_entities():
 
@@ -158,7 +163,15 @@ def create_seed_entities():
     print("Registering " + seed_entity_hrns)
     seed_entity_fph = register_identifier(seed_entity_hrns)
     print(seed_entity_fph)
+
+    #record_private_namespace_root(seed_entity_fph, "")
+
+
     m = register_entity_type(seed_entity_fph, "primid")
+
+    # Although a *primid* is registered for the seed entity identifier, the
+    # corresponding *namespace* is treated as public (an exception)>
+    record_private_namespace_root(seed_entity_fph, "")
     if m:
         print(m)
     m = register_entity_type(seed_entity_fph, "ahid")
@@ -392,6 +405,8 @@ def create_quasitld_set(full = False):
             )
         if m:
             print(m)
+        # These root *namespaces* are all public so return no PNSR.
+        record_private_namespace_root(namespace_fph, "")
         errors += m + "\n"
         tld_fph_list.append(namespace_fph)
 

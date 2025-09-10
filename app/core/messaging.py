@@ -62,7 +62,7 @@ def create_messages_db():
     if os.path.exists(MESSAGES_DB):
         # If the database exists already, it is deleted after a time-stamped
         # copy has been saved.
-        fcopy(MESSAGES_DB, DB_BKP_DIR + '/messages_' + timestamp() + '.db')
+#        fcopy(MESSAGES_DB, DB_BKP_DIR + '/messages_' + timestamp() + '.db')
         os.remove(MESSAGES_DB)
 
     with sqlite3.connect(MESSAGES_DB) as conn:

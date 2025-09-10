@@ -1,5 +1,7 @@
 #!/home/slate/SLATE/venv/bin/python3
 
+import shutil
+
 # This script can be run to (re)initialize the SLATE installation at any time.
 # Any existing DBM maps and SQLite databases will be backed up first.
 
@@ -22,6 +24,15 @@ from app.core.constants import AUTH_LOG
 from app.core.constants import ACTIVITY_LOG
 from app.core.constants import CONFIG_MAP
 from app.core.constants import FPH_PARENT_MAP
+from app.core.constants import DATA
+from app.core.constants import BACKUPS
+
+from app.core.unix_functions import create_dir
+from app.core.unix_functions import treecopy
+from app.core.unix_functions import fcopy
+#from app.core.unix_functions import fcopysl
+
+from app.core.common import filename_timestamp
 
 from app.core.slate_core import new_namespace
 from app.core.slate_core import new_currency
@@ -37,19 +48,24 @@ create_config_db()
 read_config_file_to_db()
 # The configuration values are displayed:
 for k in dbm_keys(CONFIG_MAP):
-    print(k + " : " + get_config(k))
+    print(k + " : " + str(get_config(k)))
 
+# The SQLite and DBM files are backed up:
+TIMESTAMPED_BACKUP_DIR = BACKUPS + filename_timestamp()
+create_dir(TIMESTAMPED_BACKUP_DIR, 0o777)
+treecopy(DATA + "/maps", TIMESTAMPED_BACKUP_DIR + "/maps")
+treecopy(DATA + "/db", TIMESTAMPED_BACKUP_DIR + "/db")
 
 print("creating DBM maps")
 create_maps()
 print("creating entities databases (SQLite)")
-create_entities_db()
+create_entities_db("") # for open/public *namesapce*
 print("creating session databases (SQLite)")
 create_slate_session_db()
 print("creating seed entities")
 create_seed_entities()
 print("creating payments databases (SQLite)")
-create_payments_db()
+create_payments_db("") # for open/public *namesapce*
 print("creating hubs databases (SQLite)")
 create_hubs_db()
 print("creating messages databases (SQLite)")

@@ -2407,7 +2407,7 @@ def journal(ahid_fph, currency_fph):
     account_fph, primid_fph, \
     m = retrieve_pairing_account_fph(ahid_hrns, currency_fph)
 
-    print("pay_to_ahid/...  account_fph = " + account_fph)
+#    print("pay_to_ahid/...  account_fph = " + account_fph)
     account_currency_fph, account_owner_fph, account_balance, account_volume, \
     account_active, account_type, account_category, account_units, \
     account_metrical_equivalence, account_dimensions, \

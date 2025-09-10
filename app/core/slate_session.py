@@ -39,10 +39,10 @@ def create_slate_session_db():
     if os.path.exists(SLATE_SESSION_DB):
         # If the database exists already, it is deleted after a time-stamped
         # copy has been saved.
-        fcopy(
-            SLATE_SESSION_DB, DB_BKP_DIR + '/slate_session_' \
-            + timestamp() + '.db'
-        )
+#        fcopy(
+#            SLATE_SESSION_DB, DB_BKP_DIR + '/slate_session_' \
+#            + timestamp() + '.db'
+#        )
         os.remove(SLATE_SESSION_DB)
 
     with sqlite3.connect(SLATE_SESSION_DB) as conn:

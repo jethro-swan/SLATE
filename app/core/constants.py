@@ -32,12 +32,15 @@ FNAME_DATETIME_FMT  = "%Y-%m-%d_%H%M%S%f"
 LOG_DATETIME_FMT    = "%Y-%m-%d %H:%M:%S:%f"
 LEDGER_DATETIME_FMT = "%Y-%m-%d %H:%M:%S"
 
-# Database directory (SQLite and DBM):
+# Database directory (SQLite):
 DB_DIR              = "/var/slate/active/db/"
 DB_BKP_DIR          = "/var/slate/active/db/backups/"
+DATA                = "/var/slate/active/"
+BACKUPS             = "/var/slate/active/backups/"
 
 # SQLite database files:
 HUBS_DB             = "/var/slate/active/db/hubs.db"
+IDENTIFIERS_DB      = "/var/slate/active/db/identifiers.db"
 ENTITIES_DB         = "/var/slate/active/db/entities.db"
 PAYMENTS_DB         = "/var/slate/active/db/payments.db"
 SLATE_SESSION_DB    = "/var/slate/active/db/slate_session.db"

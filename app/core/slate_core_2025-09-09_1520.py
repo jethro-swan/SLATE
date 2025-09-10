@@ -5,8 +5,7 @@ import pickle
 from pathlib import Path
 from string import ascii_lowercase
 
-from app.core.constants import DB_DIR, DB_BKP_DIR
-from app.core.constants import IDENTIFIERS_DB, ENTITIES_DB, PAYMENTS_DB
+from app.core.constants import ENTITIES_DB, PAYMENTS_DB, DB_DIR, DB_BKP_DIR
 from app.core.constants import HUBS_DB
 from app.core.constants import FPH_TO_HRNS_MAP, HRNS_C_FPH_MAP
 from app.core.constants import SUBSTRATE_FPH
@@ -61,7 +60,7 @@ def create_hubs_db():
     if os.path.exists(HUBS_DB):
         # If the database exists already, it is deleted after a time-stamped
         # copy has been saved.
-#        fcopy(HUBS_DB, DB_BKP_DIR + '/entities_' + timestamp() + '.db')
+        fcopy(HUBS_DB, DB_BKP_DIR + '/entities_' + timestamp() + '.db')
         os.remove(HUBS_DB)
     #
     with sqlite3.connect(HUBS_DB) as conn:
@@ -134,61 +133,63 @@ def get_hub_mode():
 
 
 #==============================================================================
-## Choose the working database file for the *namespace*:
-
-def select_db_filepath(db_name, owner_fph):
-    # Is the database name valid?
-    if not (db_name in ["entities", "payments"]):
-        return ""
-    # If the PNSR (FPH) has been provided, assume public namespace.
-    if isinstance(owner_fph, str) and re_fph.match(owner_fph):
-        DB = DB_DIR + owner_fph + "_" + db_name + ".db"
-    else:
-        DB = DB_DIR + db_name + ".db"
-    return DB
-
-#==============================================================================
-## Create the SQLite indeinfiers database
-
-def create_identifier_db():
-
-    if os.path.exists(IDENTIFIERS_DB):
-        # If the database exists already, it is deleted.
-        os.remove(IDENTIFIERS_DB)
-
-    with sqlite3.connect(IDENTIFIERS_DB) as conn:
-        cursor = conn.cursor()
-        # 2025-06-28
-        # - Added table to identify types associated with a registered FPH
-        #
-        cursor.execute(
-            "CREATE TABLE IF NOT EXISTS entities_registered (" \
-            + "entity_fph TEXT PRIMARY KEY, " \
-            + "parent_fph TEXT, " \
-            + "namespace INTEGER NOT NULL DEFAULT 0, " \
-            + "currency INTEGER NOT NULL DEFAULT 0, " \
-            + "account INTEGER NOT NULL DEFAULT 0, " \
-            + "primid INTEGER NOT NULL DEFAULT 0, " \
-            + "secid INTEGER NOT NULL DEFAULT 0, " \
-            + "ahid INTEGER NOT NULL DEFAULT 0" \
-            + ");"
-        )
-        conn.commit()
-        cursor.close()
-
-
-
-#==============================================================================
 ## Create the SQLite entities database
 
-def create_entities_db(owner_fph):
+# 2025-08-30: Extending to allow creation od a new entities database file for
+# each private *namespace* using the owner's FPH as its filename.
 
-    ENTITIES_DB = select_db_filepath("entities", owner_fph)
+#def create_entities_db():
+#
+#    if os.path.exists(ENTITIES_DB):
+#        # If the database exists already, it is deleted after a time-stamped
+#        # copy has been saved.
+#        fcopy(ENTITIES_DB, DB_BKP_DIR + '/entities_' + timestamp() + '.db')
+#        os.remove(ENTITIES_DB)
 
-    print("ENTITIES_DB_ = " + ENTITIES_DB)
+# Choose the working database file for the *namespace*:
+def select_db_filepath(db_name, *owner_fph):
+    if not (db_name in ["entities", "payments"]):
+        return ""
+    if (owner_fph is None) or (owner_fph == ""):
+        print("Using public namespace")
+        DB = DB_DIR + "/" + db_name + ".db"
+    elif isinstance(owner_fph, str) and re_fph.match(owner_fph):
+        print("Using private namespace root = " + owner_fph)
+        DB = DB_DIR + "/" + owner_fph + "_" + db_name + ".db"
+    else:
+        return ""
+    return DB
+
+#
+def select_db_backup_filepath(db_name, *owner_fph):
+    if not (db_name in ["entities", "payments"]):
+        return ""
+    if (owner_fph is None) or (owner_fph == ""):
+        print("Using public namespace")
+        BKP_DB = DB_BKP_DIR + "/" + db_name + "_" \
+               + timestamp() + ".db"
+    elif isinstance(owner_fph, str) and  re_fph.match(owner_fph):
+        print("Using private namespace root = " + owner_fph)
+        BKP_DB = DB_BKP_DIR + "/" + owner_fph + "_" + db_name + "_" \
+               + timestamp() + ".db"
+    else:
+        return ""
+    return BKP_DB
+
+
+def create_entities_db(*owner_fph):
+
+#    ENTITIES_DB = select_db_filepath("entities", owner_fph)
+#    ENTITIES_DB_BKP = select_db_backup_filepath("entities", owner_fph)
+
+#    print("ENTITIES_DB = " + ENTITIES_DB)
+#    print("ENTITIES_DB_BKP = " + ENTITIES_DB_BKP)
 
     if os.path.exists(ENTITIES_DB):
-        # If the database exists already, it is deleted.
+        # If the database exists already, it is deleted after a time-stamped
+        # copy has been saved.
+        fcopy(ENTITIES_DB, DB_BKP_DIR + '/entities_' + timestamp() + '.db')
+#        fcopy(ENTITIES_DB, ENTITIES_DB_BKP)
         os.remove(ENTITIES_DB)
 
     # If this entity is a *private namespace* (one that has ramified from a
@@ -458,10 +459,6 @@ def register_identifier(identifier_hrns):
 #==============================================================================
 ## Is the identifier registered?
 
-## NB: This will require a separate database given that the ENTITIES_DB is
-##     now going to be divided such that private *namespace*s sit alongside the
-##     public *namespace*.
-
 def identifier_unregistered(identifier_id):
     if re_hrns.match(identifier_id):
         # nshash( ) is used here because using  hrns_to_fph( ) would add to the
@@ -540,7 +537,21 @@ def get_entity_types(entity_fph):
     else:
         return [], "No entities registered for " + entity_fph
 
-#=============================================================================
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+#==============================================================================
 # Set, register or deregister an *entity* type for a specified identifier FPH:
 
 def set_entity_type(identifier_fph, entity_type, value):

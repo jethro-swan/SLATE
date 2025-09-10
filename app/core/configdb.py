@@ -20,7 +20,7 @@ def create_config_db():
     # copy has been saved.
     T = timestamp()
     if os.path.exists(CONFIG_MAP):
-        fcopy(CONFIG_MAP, MAP_BKP_DIR + 'CONFIG_MAP_' + T + '.dbm')
+###        fcopy(CONFIG_MAP, MAP_BKP_DIR + 'CONFIG_MAP_' + T + '.dbm')
         os.remove(CONFIG_MAP)
     dbm_create_map(CONFIG_MAP)
     return
@@ -29,7 +29,17 @@ def create_config_db():
 # Retrieve constant from configuration key:
 
 def get_config(config_key):
-    return dbm_fetch(CONFIG_MAP, config_key).strip()
+    config_value = dbm_fetch(CONFIG_MAP, config_key).strip()
+    if config_value == "FALSE":
+        return False
+    elif config_value == "TRUE":
+        return True;
+    else:
+        return config_value
+
+
+
+#    return dbm_fetch(CONFIG_MAP, config_key).strip()
 
 
 #def get_list_config_values():
@@ -61,7 +71,7 @@ def read_config_file_to_db():
         cfl = cfl.strip()
         if (not cfl) or re_comment.match(cfl):   # comment line or empty line
             continue
-        print(cfl)
+        #print(cfl)
         cf = cfl.split(" = ")
         set_config(cf[0], cf[1])
 

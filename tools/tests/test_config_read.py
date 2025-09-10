@@ -15,7 +15,12 @@ create_config_db()
 read_config_file_to_db()
 
 for k in dbm_keys(CONFIG_MAP):
-    print(k + " : " + get_config(k))
+    print(k + " : " + str(get_config(k)))
+
+print()
+
+    #get_config("show_dataset_csv_import_link")
+
 
 
 #delete_config_key_from_map(config_key)
