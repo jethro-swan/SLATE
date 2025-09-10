@@ -39,7 +39,6 @@ app/static/qr/*
 _app
 zzz
 fake_*.txt
-whereused*
 coredefs.sh
 end_points*
 deflist*
