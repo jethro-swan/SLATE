@@ -107,14 +107,23 @@ def payment(payer_account_fph, payee_account_fph, amount, annotation):
     payer_volume += volume_increase
     payee_volume += volume_increase
     #
+    # CHANGE: This will have to be separated into two parts, using possibly
+    # different ENTITIES_DB files for payer and payee ...
+
     with sqlite3.connect(ENTITIES_DB) as conn:
         cursor = conn.cursor()
-        # First the balances are adjusted:
+        # The payer balances are adjusted:
         cursor.execute(
             "UPDATE accounts SET account_balance = ?, volume = ? " \
             + "WHERE entity_fph = ?",
             (payer_account_balance, payer_volume, payer_account_fph)
         )
+        conn.commit()
+        cursor.close()
+
+    with sqlite3.connect(ENTITIES_DB) as conn:
+        cursor = conn.cursor()
+        # The payee balances is adjusted:
         cursor.execute(
             "UPDATE accounts SET account_balance = ?, volume = ? " \
             + "WHERE entity_fph = ?",
@@ -185,11 +194,11 @@ def payment(payer_account_fph, payee_account_fph, amount, annotation):
             "",                         # stewardship_id (n/a)
             0,                          # longevity (indefinite)
             "",                         # expiry_datetime (no expiry)
-            payer_account_fph,      # string
-            payee_account_fph,      # string
-            "",             # payer_ahid_fph unused in this mode
-            "",             # payee_ahid_fph unused in this mode
-            "",             # currency_fph unused in this mode
+            payer_account_fph,          # string
+            payee_account_fph,          # string
+            "",                         # payer_ahid_fph unused in this mode
+            "",                         # payee_ahid_fph unused in this mode
+            "",                         # currency_fph unused in this mode
             amount,                     # integer
             message_body,               #
             False                       # indelibility

@@ -79,21 +79,6 @@ create_substrate()
 print("creating quasi-TLD root namespace set")
 tld_fph_list, errors = create_quasitld_set(False)
 
-print("\n\nThe following seed entities have been created (HRNS):")
-print("\tseed namespace  = \"cc\"")
-print("\tseed currency   = \"cc\"")
-print("\tseed primid     = \"cc\"")
-print("\tseed account    = \"cc.adm.cc\"")
-print()
-print(
-    "You will be able to log in as the initial administrator (the seed " \
-    + "identity) using the following details:"
-)
-print("\tusername = adm.cc")
-print("\tpassword = Gl0balM3ltd0wn")
-print("\tPIN      = 123456")
-print()
-
 # Create the following seed *currencies* with  "cc"  as the initial steward.
 steward_fph, m = hrns_to_fph("cc")
 clist = ["kwh.cc", "hrs.cc"]

@@ -63,9 +63,9 @@ max_n_currencies        = 15
 default_n_agents        = 100
 max_n_agents            = 300
 default_user            = "su.s"
-default_email           = "slate@lrc.org.uk"
-default_password        = "pA55"
-default_pin             = "123456"
+default_email           = ""    # edit
+default_password        = ""    # edit
+default_pin             = ""    # edit
 
 # Set command line options:
 

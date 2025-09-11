@@ -116,9 +116,9 @@ def create_seed_entities():
     seed_primid_realname        = "Gaia"
     seed_primid_email_1         = "gaia@lrc.org.uk"
     seed_primid_email_2         = ""
-    seed_primid_password        = "Gl0balM3ltd0wn"
-    seed_primid_pin             = "123456"
-    seed_primid_access_token    = "1a1b2c3d5e8f13e21f34d55c89b144ff"
+    seed_primid_password        = ""    # EDIT
+    seed_primid_pin             = ""    # EDIT
+    seed_primid_access_token    = ""    # EDIT
 
     # Override values if defined:
     fname = os.getcwd() + "/seed_primid_details.txt"

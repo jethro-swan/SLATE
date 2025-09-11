@@ -147,6 +147,39 @@ def select_db_filepath(db_name, owner_fph):
         DB = DB_DIR + db_name + ".db"
     return DB
 
+# REPLACE the above with ...
+
+def select_entities_db_filepath(entity_fph):
+    pnsr = get_private_namespace_root(entity_fph)
+    # If the PNSR (FPH) has been provided, assume public *namespace*.
+    if isinstance(pnsr_fph, str) and re_fph.match(pnsr_fph):
+        DB = DB_DIR + owner_fph + "_entities.db"
+    else:
+        DB = DB_DIR + "_entities.db"
+    return DB
+
+# The following presents a problem.
+# During a bulk import, this may help to prevent lockout for other users when
+# adjusting the balances, but payments.db is probably best kept as a shared
+# journal. However, the bulk import payments recorded can be fed initially into
+# a private PAYMENTS_DB before being drip-fed to the journal.
+
+def select_payments_db_filepath(entity_fph):
+    pnsr = get_private_namespace_root(entity_fph)
+    # If the PNSR (FPH) has been provided, assume public *namespace*.
+    if isinstance(pnsr_fph, str) and re_fph.match(pnsr_fph):
+        DB = DB_DIR + owner_fph + "_payments.db"
+    else:
+        DB = DB_DIR + "_psyments.db"
+    return DB
+
+#==============================================================================
+
+
+
+
+
+
 #==============================================================================
 ## Create the SQLite indeinfiers database
 
