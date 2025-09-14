@@ -52,7 +52,12 @@ hidden.
       {{ p_row.balance }}
     </td>
     <td>
+      <!--
       <a href="/journal/{{ p_row.ahid_fph }}/{{ p_row.currency_fph }}">*</a>
+      -->
+      <a href="/journal/{{ p_row.ahid_fph }}/{{ p_row.currency_fph }}">
+        <div style="font-size:1.0em">&#x025FC;</div>
+      </a>
     </td>
   </tr>
   {% endfor %}
