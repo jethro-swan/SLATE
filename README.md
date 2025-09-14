@@ -1,5 +1,8 @@
 ## SLATE (Simple Ledger Application: a Temporary Expedient)
 
+NB: This summary is lagging behind the (still far from complete) description
+given at [[https://slate.lrc.org.uk/]].
+
 This is an extremely simple _Flask_ application to support nested
 [open money](https://openmoney.github.io/specification) payment networks, each
 able to support multiple currencies. (NB, that specification is overdue for some fairly minor revisions, most notably the replacement of **secids** by **ahids**.)
@@ -15,13 +18,13 @@ the fully-nested (and much more ambitious) _NESTS_ software.
 ### Entity categories
 
 There are four categories of _entity_:
-  - **namespaces** (a.k.a. _network_ or _island_) in which _names_ of all
-    entities (including other **namespaces**) are contained.
-  - **login identities** (a.k.a. **primary identities**) and **aliases**
-    (a.k.a. **secondary identities**) both of which are _identifiers_ of an
+  - **namespace** (a.k.a. _network_ or _island_) in which _names_ of all
+    entities (including other **namespace**s) are contained.
+  - **login identity** (a.k.a. **primary identity**) and **ahid**
+    (**account-holder identity**) both of which are _identifiers_ of an
     **agent** (whether a human, an organization, a robot or a device).
-  - **currencies** (limited to scalar values of type _money_, in contrast to
-    those supported by _NESTS_) - a set of **accounts**.
+  - **currencies** (currently limited to scalar values of type _money_, in
+    contrast to those supported by _NESTS_) - a set of **accounts**.
   - **accounts** (_variables_) each of which is a member of one **currency**
     (set).
 

@@ -8,7 +8,8 @@
 #   hub_url = get_config("hub_url")
 #------------------------------------------------------------------------------
 
-# This is the URL of the host, needed for the creation of QR-coded invitations:
+# This is the URL of the host, needed for the creation of QR-coded invitations
+# and must be changed to match the specific installation:
 hub_url = https://locus01.lrc.org.uk
 
 # This is the default lifespan of a QR-coded invitation (in seconds):
