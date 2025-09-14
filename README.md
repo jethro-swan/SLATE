@@ -1,7 +1,7 @@
 ## SLATE (Simple Ledger Application: a Temporary Expedient)
 
 NB: This summary is lagging behind the (still far from complete) description
-given at [[https://slate.lrc.org.uk/]].
+given at https://slate.lrc.org.uk/.
 
 This is an extremely simple _Flask_ application to support nested
 [open money](https://openmoney.github.io/specification) payment networks, each
