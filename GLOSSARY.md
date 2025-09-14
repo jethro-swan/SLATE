@@ -1,6 +1,6 @@
 ## Glossary
 
-NB, the following applies to both SLATE and NESTS.
+NB, the following applies to both SLATE and NESTS but needs to be updated in the light of recent changes.
 
 Over time, the use of terms has gradually drifted from the [open money
 specification](https://openmoney.github.io/specification) via those introduced
