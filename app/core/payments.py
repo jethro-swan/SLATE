@@ -7,6 +7,7 @@ from prettytable import PrettyTable
 # see https://learnpython.com/blog/print-table-in-python/
 
 from app.core.constants import ENTITIES_DB, PAYMENTS_DB, DB_DIR, DB_BKP_DIR
+from app.core.constants import ROBOTS_DB
 
 from app.core.common import filename_timestamp as timestamp
 from app.core.common import ledger_timestamp
@@ -30,7 +31,11 @@ from app.core.slate_core import list_currencies_in_common_by_hrns
 from app.core.slate_core import identify_entity
 from app.core.slate_core import get_currency_properties
 from app.core.slate_core import retrieve_pairing_account_fph
+from app.core.slate_core import new_pairing
 from app.core.slate_core import select_db_filepath
+from app.core.slate_core import ahid_is_robot
+
+#from app.core.robots import ahid_is_robot
 
 from app.core.messaging import send_message
 
@@ -222,15 +227,43 @@ def payment(payer_account_fph, payee_account_fph, amount, annotation):
 # Make payment from one account to another (specified by FPH):
 
 def ah_payment(
-        payer_ahid_hrns,
-        payee_ahid_hrns,
-        currency_hrns,
+        payer_ahid_id,
+        payee_ahid_id,
+        currency_id,
+        #payer_ahid_hrns,
+        #payee_ahid_hrns,
+        #currency_hrns,
         amount,
         annotation
     ):
 
-    if payer_ahid_hrns == payee_ahid_hrns:
+    payer_ahid_fph, payer_ahid_hrns, etypes, \
+    m = identify_entity(payer_ahid_id)
+
+    payee_ahid_fph, payee_ahid_hrns, etypes, \
+    m = identify_entity(payee_ahid_id)
+
+    if payer_ahid_fph == payee_ahid_fph:
         return "An account cannot pay to itself"
+
+    currency_fph, currency_hrns, etypes, \
+    m = identify_entity(currency_id)
+
+    # If the robot *ahid* has not yet been paired with the *currency*, this
+    # must be done before a payment can be made:
+    if ahid_is_robot(payee_ahid_fph):
+        with sqlite3.connect(ROBOTS_DB) as conn:
+            cursor = conn.cursor()
+            cursor.execute(
+                "SELECT pairing_id FROM known_pairings " \
+                + "WHERE ahid_fph = ? AND currency_fph = ?",
+                (payee_ahid_fph, currency_fph)
+            )
+            result = cursor.fetchone()
+            cursor.close()
+        if result is None: # the pairing does not yet exist
+            account_fph, account_hrns, \
+            m = new_pairing("cc", payee_ahid_fph, currency_fph)
 
     payer_account_fph, payer_primid_fph, \
     m = retrieve_pairing_account_fph(payer_ahid_hrns, currency_hrns)
@@ -363,6 +396,23 @@ def ah_payment(
 #    if m:
 #        print("Problem in  send_message( )  function")
 #        print(m)
+
+
+    if ahid_is_robot(payee_ahid_fph):
+        # The payment can now be recorded:
+        with sqlite3.connect(ROBOTS_DB) as conn:
+            cursor = conn.cursor()
+            # Each payment received by a robot *ahid* is added here.
+            cursor.execute(
+                "INSERT INTO payments_received (" \
+                + "robot_fph, " \
+                + "payer_ahid_fph, " \
+                + "currency_fph" \
+                + ") VALUES (?, ?, ?)",
+                (payer_ahid_fph, payee_ahid_fph, currency_fph)
+            )
+            conn.commit()
+            cursor.close()
 
     return ""
 

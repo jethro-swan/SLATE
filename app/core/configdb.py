@@ -33,7 +33,7 @@ def get_config(config_key):
     if config_value == "FALSE":
         return False
     elif config_value == "TRUE":
-        return True;
+        return True
     else:
         return config_value
 

@@ -319,6 +319,7 @@ def create_entities_db(owner_fph):
             + "entity_fph TEXT, " \
             + "primid_fph TEXT, " \
             + "accounts_fph_list BLOB, " \
+            + "robot INTEGER NOT NULL DEFAULT 0, " \
             + "active INTEGER NOT NULL DEFAULT 1" \
             + ");"
         )
@@ -446,7 +447,7 @@ def register_identifier(identifier_hrns):
     # identifier, its PNSR is overwritten with the FPH of its identifier.
 
     inherited_pnsr_fph = get_private_namespace_root(parent_fph)
-    print("inherited_pnsr_fph = " + inherited_pnsr_fph)
+#    print("inherited_pnsr_fph = " + inherited_pnsr_fph)
     if not record_private_namespace_root(identifier_fph, inherited_pnsr_fph):
         return ""
 
@@ -1293,23 +1294,24 @@ def new_secid(
 def new_ahid(
         ahidname,
         parent_id,
-#        initial_account_fph, # the first *account* assigned to this *ahid*
-        primid_fph
+        primid_id,
+        robot=False     # If newly created, the *ahid* is made a robot.
     ):
     if not re_slatename.match(ahidname):
-#        print("new ahid: invalid name provided")
         return "", "", "Invalid name provided"
+    primid_fph, primid_hrns, etypes, m = identify_entity(primid_id)
+    if not primid_fph:
+        return "", "", "The dentifer " + primid_id + " is invalid"
+    if not ("primid" in etypes):
+        return "", "", "The dentifer " + primid_hrns + " has no primid"
     parent_fph, parent_hrns, etypes, m = identify_entity(parent_id)
     if not parent_fph:
-#        print("new ahid: invalid parent " + parent_id)
         return "", "", m # parent is invalid
     if not ("namespace" in etypes):
-#        print("new ahid: parent " + parent_id + " is not registered")
         return "", "", "Parent namespace not registered"
     ahid_hrns = ahidname + NSS + parent_hrns
     # Does this *ahid*'s identifier exist already?
     if identifier_unregistered(ahid_hrns):
-#        print("new ahid: identifier " + ahid_hrns + " not yet registered")
         ahid_fph = register_identifier(ahid_hrns)
     ahid_fph, ahid_hrns, etypes, m = identify_entity(ahid_hrns)
     if not ("ahid" in etypes):
@@ -1321,9 +1323,10 @@ def new_ahid(
                 + "entity_fph, " \
                 + "primid_fph, " \
                 + "accounts_fph_list, " \
+                + "robot, " \
                 + "active" \
-                + ") VALUES (?, ?, ?, ?)",
-                (ahid_fph, primid_fph, pickle.dumps([]), 1)
+                + ") VALUES (?, ?, ?, ?, ?)",
+                (ahid_fph, primid_fph, pickle.dumps([]), robot, 1)
             )
             conn.commit()
             cursor.close()
@@ -1352,6 +1355,34 @@ def new_ahid(
             conn.commit()
             cursor.close()
     return ahid_fph, ahid_hrns, ""
+
+
+def ahid_is_robot(ahid_id):
+    ahid_fph, ahid_hrns, etypes, m = identify_entity(ahid_id)
+    if not ahid_fph:
+        return False
+    if not ("ahid" in etypes):
+        return False
+    with sqlite3.connect(ENTITIES_DB) as conn:
+        cursor = conn.cursor()
+        cursor.execute(
+            "SELECT robot FROM ahids WHERE entity_fph = ? ",
+            (ahid_fph,)
+        )
+        result = cursor.fetchone()
+        cursor.close()
+    if result is None:
+        return False
+    if result[0]:
+        return True
+    else:
+        return False
+
+
+
+
+
+
 
 #==============================================================================
 ## A new *namespace* is created:
@@ -3265,15 +3296,6 @@ def new_pairing(
             conn.commit()
         cursor.close()
 
-
-
-
-
-
-
-
-
-
     return account_fph, account_hrns, ""
 
 #=============================================================================
@@ -3330,11 +3352,13 @@ def retrieve_pairing_account_fph(ahid_id, currency_id):
 # missing intermediate *namespace* must be created (and assigned the importing
 # *primid* as their initial steward).
 
-def complete_parent_namespace(identifier_hrns, primid_fph):
-    if primid_fph == "":
+def complete_parent_namespace(identifier_hrns, primid_id):
+#def complete_parent_namespace(identifier_hrns, primid_fph):
+    if primid_id == "":
         s_fph, m = hrns_to_fph("adm.cc")
     else:
-        s_fph, s_hrns, etype, m = identify_entity(primid_fph)
+        s_fph, s_hrns, etype, m = identify_entity(primid_id)
+        #s_fph, s_hrns, etype, m = identify_entity(primid_fph)
     c_fph, m = hrns_to_fph("cc")
     entity_fph, entity_hrns, etype, m = identify_entity(identifier_hrns)
     if entity_fph: # the entity exists already

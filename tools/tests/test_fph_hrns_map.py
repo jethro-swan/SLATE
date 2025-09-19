@@ -1,5 +1,4 @@
 #!/home/john/NESTS/SLATE/venv/bin/python3
-#!/usr/bin/env python3
 
 # This is a temporary test file for the FPH<>HRNS mapping.
 # It has shown almost all of the functions below to be working as expected ...
@@ -8,22 +7,22 @@ import random
 import string
 from faker import Faker
 
-from core.constants import ENTITIES_DB, PAYMENTS_DB, DB_DIR
-from core.constants import FPH_TO_HRNS_MAP, HRNS_C_FPH_MAP
-from core.constants import FNAME_DATETIME_FMT
+from app.core.constants import ENTITIES_DB, PAYMENTS_DB, DB_DIR
+from app.core.constants import FPH_TO_HRNS_MAP, HRNS_C_FPH_MAP
+from app.core.constants import FNAME_DATETIME_FMT
 #from common import hrns_to_fph, fph_to_hrns
 #from fph_hrns_maps import create_maps, hrns_to_fph, fph_to_hrns
 #from common import dbm_fetch, dbm_store
-from core.fph_hrns_maps import hrns_to_fph, fph_to_hrns, create_maps
-from core.fph_hrns_maps import update_mapping
-from core.common import nshash
-from core.common import filename_timestamp as timestamp
+from app.core.fph_hrns_maps import hrns_to_fph, fph_to_hrns, create_maps
+from app.core.fph_hrns_maps import update_mapping
+from app.core.common import nshash
+from app.core.common import filename_timestamp as timestamp
 #from slate_core import create_maps
-from core.regexp_list import re_fph, re_hrns
+from app.core.regexp_list import re_fph, re_hrns
 #from test import random_hrns, fake_hrns
 
-from core.display import thin_line, thick_line, title_line, thin_title_line
-from core.display import yN, Yn, get_cli_number_input, pause
+from app.core.display import thin_line, thick_line, title_line, thin_title_line
+from app.core.display import yN, Yn, get_cli_number_input, pause
 
 
 # ... but, for reasons not yet identified at 2024-08-25, importing from test.py

@@ -14,7 +14,9 @@ from app.core.slate_core import register_identifier
 from app.core.slate_core import register_entity_type
 from app.core.slate_core import new_account
 from app.core.slate_core import new_namespace
+from app.core.slate_core import new_currency
 from app.core.slate_core import identify_entity
+from app.core.slate_core import complete_parent_namespace
 from app.core.auth import auth_hash
 from app.core.cctld_list import *
 
@@ -437,5 +439,42 @@ def create_sandbox_root_set():
     return fph_of, errors
 
 
+
+#==============================================================================
+
+def create_sandbox_space():
+
+    # The sandbox/demo *namespaces* "sand.box.cc" is created:
+    sandox_fph = complete_parent_namespace("sand.box.cc", "cc")
+    print("sandox_fph = " + sandox_fph)
+
+    cc_fph, m = hrns_to_fph("cc")
+    print("cc_fph = " + cc_fph)
+
+    # Some sandbox/demo *currencies* are created:
+    #
+    # hrs.box.cc
+    currency_fph, currency_hrns, \
+    m = new_currency(
+            "hrs", sandox_fph, cc_fph, "", "h", "hrs",
+            account_type="scalar", category="money", units="unspecified",
+            metrical_equivalence="lt", dimensions="unspecified"
+        )
+    #
+    # g£.box.cc
+    currency_fph, currency_hrns, \
+    m = new_currency(
+            "g£", sandox_fph, cc_fph, "£", "", "hrs",
+            account_type="scalar", category="money", units="unspecified",
+            metrical_equivalence="lt", dimensions="unspecified"
+        )
+    #
+    # cc.sand.box.cc
+    currency_fph, currency_hrns, \
+    m = new_currency(
+            "cc", sandox_fph, cc_fph, "", "", "",
+            account_type="scalar", category="money", units="unspecified",
+            metrical_equivalence="lt", dimensions="unspecified"
+        )
 
 #==============================================================================

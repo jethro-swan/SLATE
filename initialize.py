@@ -8,15 +8,25 @@ import shutil
 from app.core.fph_hrns_maps import create_maps
 from app.core.fph_hrns_maps import fph_to_hrns
 from app.core.fph_hrns_maps import hrns_to_fph
+
 from app.core.slate_core import create_identifiers_db
 from app.core.slate_core import create_entities_db
-from app.core.slate_session import create_slate_session_db
 from app.core.slate_core import create_hubs_db
+from app.core.slate_core import new_namespace
+from app.core.slate_core import new_currency
+from app.core.slate_core import split_hrns
+
+from app.core.slate_session import create_slate_session_db
+
 from app.core.payments import create_payments_db
+
 from app.core.messaging import create_messages_db
+
 from app.core.slate_seed import create_seed_entities
 from app.core.slate_seed import create_quasitld_set
 from app.core.slate_seed import create_substrate
+from app.core.slate_seed import create_sandbox_space
+
 from app.core.constants import SLATE_LOGS
 from app.core.constants import SLATE_LOGS_BKP_DIR
 from app.core.constants import DEBUG_LOG
@@ -35,14 +45,17 @@ from app.core.unix_functions import fcopy
 
 from app.core.common import filename_timestamp
 
-from app.core.slate_core import new_namespace
-from app.core.slate_core import new_currency
-from app.core.slate_core import split_hrns
-
 from app.core.dbm_functions import dbm_keys
+
 from app.core.configdb import create_config_db
 from app.core.configdb import read_config_file_to_db
 from app.core.configdb import get_config
+
+from app.core.flags import create_flag_db
+
+from app.core.robots import create_robots_db
+from app.core.robots import create_robots
+
 
 # The hub configuration map is populated from the ~/hub_config file.
 create_config_db()
@@ -59,6 +72,8 @@ treecopy(DATA + "/db", TIMESTAMPED_BACKUP_DIR + "/db")
 
 print("creating DBM maps")
 create_maps()
+print("creating flags map (DBM)")
+create_flag_db()
 print("creating identifier entity registration databases (SQLite)")
 create_identifiers_db()
 print("creating entities databases (SQLite)")
@@ -73,8 +88,11 @@ print("creating hubs databases (SQLite)")
 create_hubs_db()
 print("creating messages databases (SQLite)")
 create_messages_db()
-
 create_substrate()
+print("creating robot agents database (SQLite)")
+create_robots_db()
+print("creating robot agents")
+create_robots()
 
 print("creating quasi-TLD root namespace set")
 tld_fph_list, errors = create_quasitld_set(False)
@@ -96,3 +114,7 @@ for c in clist:
         )
     if m:
         print(m)
+
+
+
+create_sandbox_space()

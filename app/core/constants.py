@@ -16,6 +16,10 @@ GRAPHS              = "/home/slate/SLATE/app/static/graphs/"
 SLATE_MAPS          = SLATE_DATA + "/maps/"      #
 QR_CODES            = "/home/slate/SLATE/app/static/qr/" # QR codes generated
                                                 # (both cleared out regularly)
+ROBOTS_LIST         = "/home/slate/SLATE/app/static/robots"
+
+
+
 # logging files
 SLATE_LOGS          = SLATE_DATA + "/logs/"
 DEBUG_LOG           = SLATE_LOGS + "debug.log"
@@ -46,6 +50,7 @@ PAYMENTS_DB         = "/var/slate/active/db/payments.db"
 SLATE_SESSION_DB    = "/var/slate/active/db/slate_session.db"
 MESSAGES_DB         = "/var/slate/active/db/messages.db"
 HUBS_DB             = "/var/slate/active/db/hubs.db"
+ROBOTS_DB           = "/var/slate/active/db/robots.db"
 
 # DBM maps:
 MAP_BKP_DIR         = "/var/slate/active/maps/backups/"
@@ -54,6 +59,7 @@ HRNS_C_FPH_MAP      = "/var/slate/active/maps/FPH_to_HRNS_collision_map.dbm"
 CONFIG_MAP          = "/var/slate/active/maps/config_map.dbm"
 FPH_PARENT_MAP      = "/var/slate/active/maps/FPH_parent_map.dbm"
 PNSR_MAP            = "/var/slate/active/maps/private_namespace_root_map.dbm"
+FLAG_MAP            = "/var/slate/active/maps/flags.dbm"
 
 SUBSTRATE_FPH       = nshash("")
 
