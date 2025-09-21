@@ -124,19 +124,17 @@ def create_robots(number_of_robots=10, robot_parent="sand.box.cc"):
         return False
 
     robots_list = []
-
-    for i in range(number_of_robots):
-        name = "r" + str(i).zfill(d)
-        print(name, end="")
-        ahid_fph, ahid_hrns, m = new_ahid(name, robot_parent, "cc", robot=True)
-        if m:
-            print(m)
-            continue
-        print(" :: " + ahid_fph + " <> " + ahid_hrns)
-        robots_list.append(ahid_hrns)
-
     with open(ROBOTS_LIST, "w") as rl:
-        rl.writelines(ahid_hrns)
+        for i in range(number_of_robots):
+            name = "r" + str(i).zfill(d)
+            print(name, end="")
+            ahid_fph, ahid_hrns, \
+            m = new_ahid(name, robot_parent, "cc", robot=True)
+            if m:
+                print(m)
+                continue
+            print(" :: " + ahid_fph + " <> " + ahid_hrns)
+            rl.write(ahid_hrns + "\n")
 
     return True
 
@@ -157,7 +155,8 @@ def get_next_robot_receipt():
         else:
             next_in_queue = min(result[0])
         still_in_queue = len(result) - 1
-        #print("next_in_queue = " + str(next_in_queue))
+        print("next_in_queue = " + str(next_in_queue))
+        print("still_in_queue = " + str(still_in_queue))
         cursor.execute(
             "SELECT robot_fph, payer_ahid_fph, currency_fph " \
             + "FROM payments_received WHERE payment_id = ?",
@@ -249,6 +248,14 @@ def send_next_robot_response():
                 amount, message
             )
 
+    return still_in_queue
+
+
+def robots_respond():
+
+    while send_next_robot_response():
+        time.sleep(1.0) # seconds
+        continue # back to start of loop
 
 
 

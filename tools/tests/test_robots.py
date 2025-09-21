@@ -9,6 +9,7 @@ from app.core.robots import create_robots
 #from app.core.robots import robots_loop
 from app.core.robots import get_next_robot_receipt
 from app.core.robots import send_next_robot_response
+from app.core.robots import robots_respond
 
 from app.core.flags import set_flag, unset_flag
 
@@ -43,7 +44,8 @@ set_flag("run_robots")
 #payee_robot_fph, payer_ahid_fph, \
 #currency_fph = get_next_robot_receipt()
 
-send_next_robot_response()
+still_in_queue = send_next_robot_response()
+print("still_in_queue = " + str(still_in_queue))
 
 #if payer_ahid_fph:
 #    print(
