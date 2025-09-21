@@ -47,6 +47,8 @@ set_flag("run_robots")
 still_in_queue = send_next_robot_response()
 print("still_in_queue = " + str(still_in_queue))
 
+
+
 #if payer_ahid_fph:
 #    print(
 #        "robot " + fph_to_hrns(payee_robot_fph) + " was sent a payment of " \

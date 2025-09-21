@@ -232,9 +232,13 @@ def send_next_robot_response():
 
         amount = random.randint(0, 999)
         message = "This payment has been sent by a robot selected at random " \
-                + "among the robots currently using one of the currencies " \
-                + "in which you have an account. You, the payee, have been " \
-                + "selected at random from among the users of that currency."
+                + "from among the robots currently using one of the " \
+                + "currencies in which you have an account. You, the payee, " \
+                + "have been selected at random from among the users of " \
+                + "that currency because you have already sent at least one " \
+                + "payment to one of the robots. The number of payments you " \
+                + "receive from robots will not exceed the number of " \
+                + "payments you send to robots."
 
         print(
             "robot " + fph_to_hrns(responding_robot_fph) + " has sent a " \
