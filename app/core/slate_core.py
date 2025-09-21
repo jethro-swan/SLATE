@@ -1615,8 +1615,9 @@ def new_account(
             (owner_fph,)
         )
         result = cursor.fetchone()
-        accounts_fph_blob = result[0]
-        accounts_fph_list = pickle.loads(accounts_fph_blob)
+#        accounts_fph_blob = result[0]
+#        accounts_fph_list = pickle.loads(accounts_fph_blob)
+        accounts_fph_list = pickle.loads(result[0])
         accounts_fph_list.append(account_fph)
         accounts_fph_blob = pickle.dumps(accounts_fph_list)
         cursor.execute(
@@ -1779,8 +1780,9 @@ def list_accounts(identity_id, identity_etype):
         )
         result = cursor.fetchone()
         if result is None:
-            accounts_fph_list = []
-            accounts_fph_blob = pickle.dumps(accounts_fph_list)
+#            accounts_fph_list = []
+#            accounts_fph_blob = pickle.dumps(accounts_fph_list)
+            accounts_fph_blob = pickle.dumps([])
             cursor.execute(
                 "UPDATE " + identity_etype + "s SET accounts_fph_list = ? " \
                 + "WHERE entity_fph = ?", (accounts_fph_blob, identity_fph)
@@ -1790,8 +1792,9 @@ def list_accounts(identity_id, identity_etype):
             return [], identity_hrns + " has no accounts."
         else:
             cursor.close()
-            accounts_fph_blob = result[0]
-            accounts_fph_list = pickle.loads(accounts_fph_blob)
+#            accounts_fph_blob = result[0]
+#            accounts_fph_list = pickle.loads(accounts_fph_blob)
+            accounts_fph_list = pickle.loads(result[0])
     return accounts_fph_list, ""
 
 #==============================================================================
@@ -1830,8 +1833,9 @@ def list_secid_accounts(secid_fph):
         )
         result = cursor.fetchone()
         if result is None:
-            accounts_fph_list = []
-            accounts_fph_blob = pickle.dumps(accounts_fph_list)
+#            accounts_fph_list = []
+#            accounts_fph_blob = pickle.dumps(accounts_fph_list)
+            accounts_fph_blob = pickle.dumps([])
             cursor.execute(
                 "UPDATE secids SET accounts_fph_list = ? WHERE entity_fph = ?",
                 (accounts_fph_blob, secid_fph)
@@ -1841,14 +1845,20 @@ def list_secid_accounts(secid_fph):
             return [], "The secid " + secid_fph + " has no accounts."
         else:
             cursor.close()
-            accounts_fph_blob = result[0]
-            accounts_fph_list = pickle.loads(accounts_fph_blob)
+#            accounts_fph_blob = result[0]
+#            accounts_fph_list = pickle.loads(accounts_fph_blob)
+            accounts_fph_list = pickle.loads(result[0])
         return accounts_fph_list, ""    # list + message
 
 #==============================================================================
 ## List the *ahid*'s accounts: #
 
 def list_ahid_accounts(ahid_fph):
+    ahid_fph, ahid_hrns, etypes, m = identify_entity(ahid_fph)
+    if not ahid_fph:
+        return [], ahid_fph + " is not a registered identifier"
+    if not ("ahid" in etypes):
+        return [], "Ientifier " + ahid_hrns + " has no ahid registered"
     with sqlite3.connect(ENTITIES_DB) as conn:
         cursor = conn.cursor()
         cursor.execute(
@@ -1857,8 +1867,9 @@ def list_ahid_accounts(ahid_fph):
         )
         result = cursor.fetchone()
         if result is None:
-            accounts_fph_list = []
-            accounts_fph_blob = pickle.dumps(accounts_fph_list)
+#            accounts_fph_list = []
+#            accounts_fph_blob = pickle.dumps(accounts_fph_list)
+            accounts_fph_blob = pickle.dumps([])
             cursor.execute(
                 "UPDATE ahids SET accounts_fph_list = ? WHERE entity_fph = ?",
                 (accounts_fph_blob, ahid_fph)
@@ -1868,8 +1879,9 @@ def list_ahid_accounts(ahid_fph):
             return [], "The ahid " + ahid_fph + " has no accounts."
         else:
             cursor.close()
-            accounts_fph_blob = result[0]
-            accounts_fph_list = pickle.loads(accounts_fph_blob)
+#            accounts_fph_blob = result[0]
+#            accounts_fph_list = pickle.loads(accounts_fph_blob)
+            accounts_fph_list = pickle.loads(result[0])
         return accounts_fph_list, ""    # list + message
 
 #==============================================================================
@@ -3300,12 +3312,21 @@ def new_pairing(
 
 #=============================================================================
 
-def list_primid_ahids(primid_fph):
-
-
-
-
-
+def list_primid_ahids(primid_id):
+    primid_fph, primid_hrns, etypes, m = identify_entity(primid_id)
+    if m:
+        return []
+    with sqlite3.connect(ENTITIES_DB) as conn:
+        cursor = conn.cursor()
+        cursor.execute(
+            "SELECT ahids_fph_list FROM primids WHERE entity_fph = ?",
+            (primid_fph,)
+        )
+        result = cursor.fetchone()
+        if result is not None:
+            ahids_list = pickle.loads(result[0])
+        else:
+            ahids_list = []
     return ahids_list
 
 

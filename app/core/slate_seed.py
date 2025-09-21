@@ -352,7 +352,7 @@ def create_seed_entities():
             (
                 seed_ahid_fph,
                 seed_primid_fph,
-                seed_account_fph
+                pickle.dumps([seed_account_fph])
             )
         )
 

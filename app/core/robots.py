@@ -1,5 +1,5 @@
 import sqlite3
-#import random
+import random
 import os
 import time
 import threading
@@ -9,8 +9,16 @@ import multiprocessing
 from app.core.constants import ROBOTS_DB
 from app.core.constants import ROBOTS_LIST
 
+from app.core.fph_hrns_maps import hrns_to_fph, fph_to_hrns
+
 from app.core.slate_core import identify_entity
 from app.core.slate_core import new_ahid
+from app.core.slate_core import get_primid
+from app.core.slate_core import list_primid_ahids
+from app.core.slate_core import list_ahid_accounts
+from app.core.slate_core import get_account_currency
+
+from app.core.display import integer_to_money_format
 
 from app.core.flags import get_flag
 from app.core.flags import delete_flag_key_from_map
@@ -121,39 +129,19 @@ def create_robots(number_of_robots=10, robot_parent="sand.box.cc"):
         name = "r" + str(i).zfill(d)
         print(name, end="")
         ahid_fph, ahid_hrns, m = new_ahid(name, robot_parent, "cc", robot=True)
+        if m:
+            print(m)
+            continue
         print(" :: " + ahid_fph + " <> " + ahid_hrns)
         robots_list.append(ahid_hrns)
 
     with open(ROBOTS_LIST, "w") as rl:
-        for ahid_hrns in robots_list:
-            rl.write(ahid_hrns)
+        rl.writelines(ahid_hrns)
 
     return True
 
-# Each time a new *currency* is created it will paired with each of the robots.
-# Therefore the number of robots is kept low.
 
-#def create_robot_pairing(ahid_fph, currency_fph):
-#
-#    with sqlite3.connect(ROBOTS_DB) as conn:
-#        cursor = conn.cursor()
-#        cursor.execute(
-#            "SELECT ahid_fph, currency_fph FROM known_pairings",
-#            (ahid_fph, currency_fph)
-#        )
-#        result = cursor.fetchone()
-#        cursor.close()
-#    if result is None: # the pairing does not yest exist
-#        account_fph, account_hrns, \
-#        m = new_pairing("cc", ahid_fph, currency_fph)
-
-
-
-
-
-# When the "run_robots" flag is true, a number of
-
-def get_next_received_payment_pairing():
+def get_next_robot_receipt():
     with sqlite3.connect(ROBOTS_DB) as conn:
         cursor = conn.cursor()
         cursor.execute("SELECT payment_id FROM payments_received")
@@ -161,13 +149,23 @@ def get_next_received_payment_pairing():
         if result is None: # no entries to process?
             cursor.close()
             return "", "", ""
-        next_in_queue = min(result[0])
+        elif len(result) == 0:
+            cursor.close()
+            return "", "", ""
+        elif len(result) == 1:
+            next_in_queue = result[0][0]
+        else:
+            next_in_queue = min(result[0])
+        #print("next_in_queue = " + str(next_in_queue))
         cursor.execute(
-            "SELECT payment_id, robot_fph, payer_ahid_fph " \
+            "SELECT robot_fph, payer_ahid_fph, currency_fph " \
             + "FROM payments_received WHERE payment_id = ?",
             (next_in_queue,)
         )
         result = cursor.fetchone()
+        if result is None: # no entries to process?
+            cursor.close()
+            return "", "", ""
         payee_robot_fph = result[0]
         payer_ahid_fph = result[1]
         currency_fph = result[2]
@@ -176,45 +174,95 @@ def get_next_received_payment_pairing():
             (next_in_queue,)
         )
         cursor.close()
-    return robot_fph, ahid_fph, currency_fph
+    return payee_robot_fph, payer_ahid_fph, currency_fph
 
 
+def send_next_robot_response():
+    # Get the oldest message in the robot receipt queue. The following is the
+    # robot to which a payment was sent:
+    payer_ahid_fph, payee_robot_fph, currency_fph = get_next_robot_receipt()
+    print(
+        "robot " + fph_to_hrns(payee_robot_fph) + " was sent a payment in " \
+        + fph_to_hrns(currency_fph) + " by " + fph_to_hrns(payer_ahid_fph)
+    )
 
-def robots_loop():
+    # Choose a robot from which to send a response payment:
+    robots_list = []
+    with open(ROBOTS_LIST, "r") as rl:
+        robots = rl.readlines()
+    for robot in robots:
+        print(robot)
+        robots_list.append(robot.strip())
+    responding_robot_hrns = random.choice(robots_list)
+    print("responding robot HRNS = " + responding_robot_hrns)
+    responding_robot_fph, m = hrns_to_fph(responding_robot_hrns)
+    print("responding robot FPH = " + responding_robot_fph)
 
-    while get_flag("run_robots"):
-        time.sleep(1.0) # seconds
+    # Now get the full list of *ahid*s to which a reply payment might be sent,
+    # i.e. all the *ahid* belonging to the same *primid* as that from which the
+    # robot was paid:
+    payer_primid_fph, m = get_primid(payer_ahid_fph)
+    print("payer_primid_fph = " + payer_primid_fph)
+    payer_primid_ahids = list_primid_ahids(payer_primid_fph) # list
+    #print("payer_primid_ahids = ", end="")
+    #print(payer_primid_ahids)
 
-        payee_robot_fph, \
-        payer_ahid_fph, \
-        currency_fph = get_next_received_payment_pairing()
-        if not robot_fph:
-            continue # back to start of loop
+    pairing = {}
+    # For each of the possible payee *ahid*s, identify the *currencies* with
+    # which it is paired:
+    for payee_ahid_fph in payer_primid_ahids:
+        ahid_accounts_list, m = list_ahid_accounts(payee_ahid_fph)
+        if m:
+            print(m)
+            continue
+        print("payee ahid FPH = " + payee_ahid_fph)
+        currencies_list = []
+        for account_fph in ahid_accounts_list:
+            currency_fph, m = get_account_currency(account_fph)
+            currencies_list.append(currency_fph)
+        pairing[payee_ahid_fph] = currencies_list
+        #print("payee pairings available = ", end="")
+        #print(pairing)
+    if len(payer_primid_ahids) > 0:
+        reply_ahid_fph = random.choice(payer_primid_ahids)
+        print("reply ahid HRNS = " + fph_to_hrns(reply_ahid_fph))
+        reply_currency_fph = random.choice(pairing[payee_ahid_fph])
+        print("reply currency HRNS = " + fph_to_hrns(reply_currency_fph))
 
-        # Now get the full list of *ahid*s to which a "reply" payment might be
-        # sent:
-        payer_primid_fph = get_primid(payer_ahid_fph)
-        payer_primid_ahids = get_ahids(payer_primid_fph) # list
-        pairing = {}
-        for payee_ahid in payer_primid_ahids:
-            pairing[payee_ahid] = get_currencies(payee_ahid)
-        reply_ahid = fph_to_hrns(random.choice(payer_primid_ahids))
-        reply_currency = fph_to_hrns(random.choice(pairing[payee_ahid]))
+        amount = random.randint(0, 999)
+        msg = "This payment has been sent by a robot selected at random " \
+            + "among the robots currently using one of the currencies in " \
+            + "which you have an account. You, the payee, have been " \
+            + "selected at random from among the users of that currency."
 
-        amount = random.randint()
-        message = "The medium is the massage"
+        print(
+            "robot " + fph_to_hrns(responding_robot_fph) + " has sent a " \
+            + "payment of " + integer_to_money_format(amount) + " in " \
+            + fph_to_hrns(currency_fph) + " to " + fph_to_hrns(payee_ahid_fph)
+        )
 
         m = ah_payment(
-                payer_ahid_hrns,
-                payee_ahid_hrns,
-                currency_hrns,
-                amount,
-                message
+                responding_robot_fph, payee_ahid_fph, currency_fph, amount, msg
             )
 
 
 
 
 
-#thread = threading.Thread(target=worker)
+# When the "run_robots" flag is true, a number of
+
+
+#def robots_loop():
+#    while get_flag("run_robots"):
+#        time.sleep(1.0) # seconds
+
+#    if not payee_robot_fph:
+#        continue # back to start of loop
+
+
+
+
+#set_flag("run_robots")
+
+#thread = threading.Thread(target=robots_loop)
 #thread.start()

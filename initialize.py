@@ -91,6 +91,8 @@ create_messages_db()
 create_substrate()
 print("creating robot agents database (SQLite)")
 create_robots_db()
+print("creating sandbox space")
+create_sandbox_space()
 print("creating robot agents")
 create_robots()
 
@@ -117,4 +119,4 @@ for c in clist:
 
 
 
-create_sandbox_space()
+#create_sandbox_space()
