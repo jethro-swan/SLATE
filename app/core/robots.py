@@ -18,7 +18,7 @@ from app.core.slate_core import list_primid_ahids
 from app.core.slate_core import list_ahid_accounts
 from app.core.slate_core import get_account_currency
 
-from app.core.display import integer_to_money_format
+from app.core.display import integer_to_money_format, integer_to_money_s_format
 
 from app.core.flags import get_flag
 from app.core.flags import delete_flag_key_from_map
@@ -148,14 +148,15 @@ def get_next_robot_receipt():
         result = cursor.fetchall()
         if result is None: # no entries to process?
             cursor.close()
-            return "", "", ""
+            return "", "", "", 0
         elif len(result) == 0:
             cursor.close()
-            return "", "", ""
+            return "", "", "", 0
         elif len(result) == 1:
             next_in_queue = result[0][0]
         else:
             next_in_queue = min(result[0])
+        still_in_queue = len(result) - 1
         #print("next_in_queue = " + str(next_in_queue))
         cursor.execute(
             "SELECT robot_fph, payer_ahid_fph, currency_fph " \
@@ -165,7 +166,7 @@ def get_next_robot_receipt():
         result = cursor.fetchone()
         if result is None: # no entries to process?
             cursor.close()
-            return "", "", ""
+            return "", "", "", still_in_queue
         payee_robot_fph = result[0]
         payer_ahid_fph = result[1]
         currency_fph = result[2]
@@ -174,18 +175,19 @@ def get_next_robot_receipt():
             (next_in_queue,)
         )
         cursor.close()
-    return payee_robot_fph, payer_ahid_fph, currency_fph
+    return payee_robot_fph, payer_ahid_fph, currency_fph, still_in_queue
 
 
 def send_next_robot_response():
     # Get the oldest message in the robot receipt queue. The following is the
     # robot to which a payment was sent:
-    payer_ahid_fph, payee_robot_fph, currency_fph = get_next_robot_receipt()
+    payer_ahid_fph, payee_robot_fph, currency_fph, \
+    still_in_queue = get_next_robot_receipt()
     print(
         "robot " + fph_to_hrns(payee_robot_fph) + " was sent a payment in " \
         + fph_to_hrns(currency_fph) + " by " + fph_to_hrns(payer_ahid_fph)
     )
-
+    print("still_in_queue = " + str(still_in_queue))
     # Choose a robot from which to send a response payment:
     robots_list = []
     with open(ROBOTS_LIST, "r") as rl:
@@ -215,7 +217,7 @@ def send_next_robot_response():
         if m:
             print(m)
             continue
-        print("payee ahid HRNS = " + fph_to_hrns(payee_ahid_fph))
+#        print("payee ahid HRNS = " + fph_to_hrns(payee_ahid_fph))
         currencies_list = []
         for account_fph in ahid_accounts_list:
             currency_fph, m = get_account_currency(account_fph)
@@ -225,26 +227,26 @@ def send_next_robot_response():
         #print(pairing)
     if len(payer_primid_ahids) > 0:
         reply_ahid_fph = random.choice(payer_primid_ahids)
-        print("reply ahid HRNS = " + fph_to_hrns(reply_ahid_fph))
+#        print("reply ahid HRNS = " + fph_to_hrns(reply_ahid_fph))
         reply_currency_fph = random.choice(pairing[payee_ahid_fph])
-        print("reply currency HRNS = " + fph_to_hrns(reply_currency_fph))
+#        print("reply currency HRNS = " + fph_to_hrns(reply_currency_fph))
 
         amount = random.randint(0, 999)
-        msg = "This payment has been sent by a robot selected at random " \
-            + "among the robots currently using one of the currencies in " \
-            + "which you have an account. You, the payee, have been " \
-            + "selected at random from among the users of that currency."
+        message = "This payment has been sent by a robot selected at random " \
+                + "among the robots currently using one of the currencies " \
+                + "in which you have an account. You, the payee, have been " \
+                + "selected at random from among the users of that currency."
 
         print(
             "robot " + fph_to_hrns(responding_robot_fph) + " has sent a " \
-            + "payment of " + integer_to_money_format(amount) + " in " \
+            + "payment of " + integer_to_money_s_format(amount) + " in " \
             + fph_to_hrns(reply_currency_fph) + " to " \
             + fph_to_hrns(reply_ahid_fph)
         )
 
         m = ah_payment(
                 responding_robot_fph, reply_ahid_fph, reply_currency_fph,
-                amount, msg
+                amount, message
             )
 
 
