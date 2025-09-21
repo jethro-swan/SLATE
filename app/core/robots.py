@@ -191,18 +191,18 @@ def send_next_robot_response():
     with open(ROBOTS_LIST, "r") as rl:
         robots = rl.readlines()
     for robot in robots:
-        print(robot)
+#        print(robot)
         robots_list.append(robot.strip())
     responding_robot_hrns = random.choice(robots_list)
-    print("responding robot HRNS = " + responding_robot_hrns)
+#    print("responding robot HRNS = " + responding_robot_hrns)
     responding_robot_fph, m = hrns_to_fph(responding_robot_hrns)
-    print("responding robot FPH = " + responding_robot_fph)
+#    print("responding robot FPH = " + responding_robot_fph)
 
     # Now get the full list of *ahid*s to which a reply payment might be sent,
     # i.e. all the *ahid* belonging to the same *primid* as that from which the
     # robot was paid:
     payer_primid_fph, m = get_primid(payer_ahid_fph)
-    print("payer_primid_fph = " + payer_primid_fph)
+#    print("payer_primid_fph = " + payer_primid_fph)
     payer_primid_ahids = list_primid_ahids(payer_primid_fph) # list
     #print("payer_primid_ahids = ", end="")
     #print(payer_primid_ahids)
@@ -215,7 +215,7 @@ def send_next_robot_response():
         if m:
             print(m)
             continue
-        print("payee ahid FPH = " + payee_ahid_fph)
+        print("payee ahid HRNS = " + fph_to_hrns(payee_ahid_fph))
         currencies_list = []
         for account_fph in ahid_accounts_list:
             currency_fph, m = get_account_currency(account_fph)
@@ -238,11 +238,13 @@ def send_next_robot_response():
         print(
             "robot " + fph_to_hrns(responding_robot_fph) + " has sent a " \
             + "payment of " + integer_to_money_format(amount) + " in " \
-            + fph_to_hrns(currency_fph) + " to " + fph_to_hrns(payee_ahid_fph)
+            + fph_to_hrns(reply_currency_fph) + " to " \
+            + fph_to_hrns(reply_ahid_fph)
         )
 
         m = ah_payment(
-                responding_robot_fph, payee_ahid_fph, currency_fph, amount, msg
+                responding_robot_fph, reply_ahid_fph, reply_currency_fph,
+                amount, msg
             )
 
 
