@@ -29,17 +29,9 @@ my_ahids_hrns_list = []
 for name in ["ah1", "ah2", "ah3", "ah4"]:
     my_ahids_hrns_list.append(name + ".bb.cc")
 
-for ahid_hrns in my_ahids_hrns_list:
-    print(ahid_hrns)
-
 currency_hrns_list = ["cc", "hrs.cc", "kwh.cc", "bb.cc"]
 
 for n in range(100):
-    #payer_ahid_hrns = random.choice(my_ahids_hrns_list)
-    #payee_ahid_hrns = random.choice(robots_hrns_list)
-    #currency_hrns = random.choice(currency_hrns_list)
-    #amount = random.randint(0, 100000)
-    #msg = "test R" + str(n)
     m = ah_payment(
             random.choice(my_ahids_hrns_list),
             random.choice(robots_hrns_list),
@@ -47,5 +39,5 @@ for n in range(100):
             random.randint(0, 100000),
             "test R" + str(n)
         )
-    if m:
-        print(m)
+#    if m:
+#        print(m)

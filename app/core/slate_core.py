@@ -2966,7 +2966,7 @@ def get_primid(id_id): # *secid* or *ahid*
     #     belongs to that *primid*.
     id_fph, id_hrns, etypes, m = identify_entity(id_id)
     if not id_fph:
-        return "", d_id + " is not a registered identifier"
+        return "", id_id + " is not a registered identifier"
     if ("ahid" in etypes):
         table = "ahids"
     elif ("secid" in etypes):

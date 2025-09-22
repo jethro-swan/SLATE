@@ -155,8 +155,6 @@ def get_next_robot_receipt():
         else:
             next_in_queue = min(result[0])
         still_in_queue = len(result) - 1
-        print("next_in_queue = " + str(next_in_queue))
-        print("still_in_queue = " + str(still_in_queue))
         cursor.execute(
             "SELECT robot_fph, payer_ahid_fph, currency_fph " \
             + "FROM payments_received WHERE payment_id = ?",
@@ -182,32 +180,19 @@ def send_next_robot_response():
     # robot to which a payment was sent:
     payer_ahid_fph, payee_robot_fph, currency_fph, \
     still_in_queue = get_next_robot_receipt()
-    print(
-        "robot " + fph_to_hrns(payee_robot_fph) + " was sent a payment in " \
-        + fph_to_hrns(currency_fph) + " by " + fph_to_hrns(payer_ahid_fph)
-    )
-    print("still_in_queue = " + str(still_in_queue))
     # Choose a robot from which to send a response payment:
     robots_list = []
     with open(ROBOTS_LIST, "r") as rl:
         robots = rl.readlines()
     for robot in robots:
-#        print(robot)
         robots_list.append(robot.strip())
     responding_robot_hrns = random.choice(robots_list)
-#    print("responding robot HRNS = " + responding_robot_hrns)
     responding_robot_fph, m = hrns_to_fph(responding_robot_hrns)
-#    print("responding robot FPH = " + responding_robot_fph)
-
     # Now get the full list of *ahid*s to which a reply payment might be sent,
     # i.e. all the *ahid* belonging to the same *primid* as that from which the
     # robot was paid:
     payer_primid_fph, m = get_primid(payer_ahid_fph)
-#    print("payer_primid_fph = " + payer_primid_fph)
     payer_primid_ahids = list_primid_ahids(payer_primid_fph) # list
-    #print("payer_primid_ahids = ", end="")
-    #print(payer_primid_ahids)
-
     pairing = {}
     # For each of the possible payee *ahid*s, identify the *currencies* with
     # which it is paired:
@@ -216,20 +201,14 @@ def send_next_robot_response():
         if m:
             print(m)
             continue
-#        print("payee ahid HRNS = " + fph_to_hrns(payee_ahid_fph))
         currencies_list = []
         for account_fph in ahid_accounts_list:
             currency_fph, m = get_account_currency(account_fph)
             currencies_list.append(currency_fph)
         pairing[payee_ahid_fph] = currencies_list
-        #print("payee pairings available = ", end="")
-        #print(pairing)
     if len(payer_primid_ahids) > 0:
         reply_ahid_fph = random.choice(payer_primid_ahids)
-#        print("reply ahid HRNS = " + fph_to_hrns(reply_ahid_fph))
         reply_currency_fph = random.choice(pairing[payee_ahid_fph])
-#        print("reply currency HRNS = " + fph_to_hrns(reply_currency_fph))
-
         amount = random.randint(0, 999)
         message = "This payment has been sent by a robot selected at random " \
                 + "from among the robots currently using one of the " \
@@ -239,45 +218,25 @@ def send_next_robot_response():
                 + "payment to one of the robots. The number of payments you " \
                 + "receive from robots will not exceed the number of " \
                 + "payments you send to robots."
-
-        print(
-            "robot " + fph_to_hrns(responding_robot_fph) + " has sent a " \
-            + "payment of " + integer_to_money_s_format(amount) + " in " \
-            + fph_to_hrns(reply_currency_fph) + " to " \
-            + fph_to_hrns(reply_ahid_fph)
-        )
-
         m = ah_payment(
                 responding_robot_fph, reply_ahid_fph, reply_currency_fph,
                 amount, message
             )
-
     return still_in_queue
 
 
 def robots_respond():
-
+    #print("cronned")
     while send_next_robot_response():
-        time.sleep(1.0) # seconds
-        continue # back to start of loop
-
-
-
+        time.sleep(0.2) # seconds
+        if get_flag("run_robots"):
+            continue # back to start of loop
+        else:
+            break
 
 # When the "run_robots" flag is true, a number of
 
-
-#def robots_loop():
-#    while get_flag("run_robots"):
-#        time.sleep(1.0) # seconds
-
-#    if not payee_robot_fph:
-#        continue # back to start of loop
-
-
-
-
 #set_flag("run_robots")
 
-#thread = threading.Thread(target=robots_loop)
+#thread = threading.Thread(target=robots_respond)
 #thread.start()

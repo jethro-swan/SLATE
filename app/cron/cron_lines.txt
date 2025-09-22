@@ -3,3 +3,6 @@
 
 # Run the SLATE CSV import script every 10 seconds
 * * * * * /home/slate/SLATE/app/cron/qimport10cron.sh
+
+# Run the SLATE robots script every 5 seconds
+* * * * * /home/slate/SLATE/app/cron/robots5cron.sh
