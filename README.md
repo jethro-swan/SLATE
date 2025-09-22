@@ -60,16 +60,11 @@ now been made fully compatible with the _FPH_ (_Full Path Hash_) used in
 _NESTS_.
 
 These global mappings are:
-  - **namespace**: _namespace_hrns_ &rarr; _namespace_fph_
-  - **namespace**: _namespace_fph_ &rarr; _namespace_hrns_
-  - **currency**: _currency_hrns_ &rarr; _currency_fph_
-  - **currency**: _currency_fph_ &rarr; _currency_hrns_
-  - **primid**: _primid_hrns_ &rarr; _primid_fph_
-  - **primid**: _primid_fph_ &rarr; _primid_hrns_
-  - **ahid**: _ahid_hrns_ &rarr; _ahid_fph_
-  - **ahid**: _ahid_fph_ &rarr; _ahid_hrns_
-  - **account**: _account_hrns_ &rarr; _account_fph_
-  - **account**: _account_fph_ &rarr; _account_hrns_
+  - **namespace**: _namespace_hrns_ &harr; _namespace_fph_
+  - **currency**: _currency_hrns_ &harr; _currency_fph_
+  - **primid**: _primid_hrns_ &harr; _primid_fph_
+  - **ahid**: _ahid_hrns_ &harr; _ahid_fph_
+  - **account**: _account_hrns_ &harr; _account_fph_
 
 Furthermore, the unique **currency**|**ahid** pairings each map to one
 **account**, the name of which is usually hidden.
