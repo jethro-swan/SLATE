@@ -31,7 +31,7 @@ for name in ["ah1", "ah2", "ah3", "ah4"]:
 
 currency_hrns_list = ["cc", "hrs.cc", "kwh.cc", "bb.cc"]
 
-for n in range(100):
+for n in range(100): # random payments to robot *ahid*s
     m = ah_payment(
             random.choice(my_ahids_hrns_list),
             random.choice(robots_hrns_list),

@@ -206,7 +206,8 @@ def payment(payer_account_fph, payee_account_fph, amount, annotation):
             "",                         # currency_fph unused in this mode
             amount,                     # integer
             message_body,               #
-            False                       # indelibility
+            False,                      # indelibility
+            False                       # broadcast
         )
 #    if m:
 #        print("Problem in  send_message( )  function")
@@ -391,7 +392,8 @@ def ah_payment(
             currency_fph,       # string
             amount,             # integer
             message_body,       #
-            False               # indelibility
+            False,              # indelibility
+            False               # broadcast
         )
 #    if m:
 #        print("Problem in  send_message( )  function")

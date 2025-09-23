@@ -53,8 +53,10 @@ class UserMessageForm(FlaskForm):
                                     ("offer", "offer"),
                                     ("request", "request"),
                                     ("payment_request", "payment request"),
-                                    ("event", "event")
-                                  ]
+                                    ("event", "event"),
+                                    ("other", "other")
+                                  ],
+                        default = "other"
                       )
 
     subject         = StringField(

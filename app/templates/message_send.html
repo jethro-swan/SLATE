@@ -17,6 +17,7 @@
   <em>request</em> or an <em>event</em>.
 </p>
 
+<div class="form-box-2">
 <form action="" method="post" autocomplete="off" novalidate>
 {{ form.hidden_tag() }}
 <table class="msg">
@@ -62,6 +63,7 @@
     <td class="msg" colspan="2">{{ form.submit() }}</td>
   </tr>
 </table>
+</div>
 
 {% for error in form.recipient.errors %}
 <span style="color: red;">[{{ error }}]</span><br />
@@ -86,5 +88,21 @@
 {% endfor %}
 
 </form>
+<div class="clear-both">
+
+
+</div>
+<div class="footnote">
+
+<p>The sender must be an <b>ahid</b>.</p>
+
+<p>The recipient may be either an <b>ahid</b> or a <b>currency</b>. If the
+recipient is a <b>currency</b> <em>and</em> the "Broadcast" box is checked, the
+message will be sent to all users of that <b>currency</b> is their number falls
+below a configured threshold (usually quite low).</p>
+</div>
+
+</div>
+
 
 {% endblock %}

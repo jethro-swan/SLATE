@@ -5599,8 +5599,6 @@ def messages():
         number_of_indelible_messages = number_of_indelible_messages
     )
 
-
-
 @app.route("/message/send", methods = ["GET", "POST"])
 @login_required
 def message_send():
@@ -5645,45 +5643,31 @@ def message_send():
     form = UserMessageForm()
     if form.validate_on_submit():
 
-        if hub_mode == "omtrad":
-            # This section is used only if sent as an *ahid*.
-            sender_fph, sender_hrns, sender_type, \
-            m = identify_entity(form.sender.data)
-            if sender_type not in ["ahid", "primid"]:
-                flash("The specified sender is not an ahid")
-                return redirect("/message/send")
-            if not sender_fph:
-                flash("The specified sender does not exist")
-                return redirect("/message/send")
-            if get_ahid_primid(sender_fph) != primid_fph:
-                flash(sender_hrns + " is not one of your ahid")
-                return redirect("/message/send")
-        else:
-            sender_fph = working_identity_fph
+        sender_fph, sender_hrns, sender_etypes, \
+        m = identify_entity(form.sender.data)
+        if not ("ahid" in sender_etypes):
+            flash("The specified sender is not an ahid")
+            return redirect("/message/send")
+        if not sender_fph:
+            flash("The specified sender does not exist")
+            return redirect("/message/send")
+        if get_ahid_primid(sender_fph) != primid_fph:
+            flash(sender_hrns + " is not one of your ahid")
+            return redirect("/message/send")
 
-        recipient_fph, recipient_hrns, recipient_types, \
+        # An *ahid* and a *currency* may share the same identifier, so the
+        # "Broadcast" checkbox is used to force interpretation as a *currency*.
+        recipient_fph, recipient_hrns, r_etypes, \
         m = identify_entity(form.recipient.data)
         if m:
             flash(m)
-            return redirect("/home")
-        if recipient_fph == "":
-            flash("Recipient cannot be identified")
-            return redirect("/home")
-
-        # THIS MAKES NO SENSE ...
-
-        if set(recipient_types) >= set(["ahid", "primid", "secid", "currency"]):
-            flash("Invalid recipient type")
-            return redirect("/home")
-
-        if "currency" in ecipient_types:
-            if form.broadcast.data:
-                #broadcast_to_currency_users(recipient_fph)
-                flash("broadcast_to_currency_users( )  not yet implemented")
-                return redirect("/home")
-            else:
-                flash("Cannot broadcast to currency users if box unticked")
-                return redirect("/home")
+            return redirect("/message/send")
+        broadcast_to_currency = False
+        if form.broadcast.data and ("currency" in r_etypes):
+            broadcast_to_currency = True
+        elif not ("ahid" in r_etypes):
+            flash("Recipient is not a valid ahid")
+            return redirect("/messages/send")
 
         now = datetime.now()
         message_timestamp = now.strftime("%Y-%m-%d_%H:%M:%S")
@@ -5700,9 +5684,6 @@ def message_send():
 
         expiry_datetime = expiry_date.strftime("%Y-%m-%d_%H:%M:%S")
 
-
-
-
         if expiry_date_ < date_today:
             flash("The expiry date cannot be in the past.")
 
@@ -5711,7 +5692,6 @@ def message_send():
         #unixtime = unixtime_int()
 
         message_body = form.message_body.data
-
 
 #        print("To: " + recipient_hrns)
 #        print("Category: " + category)
@@ -5737,14 +5717,14 @@ def message_send():
                 "",                     # currency_fph
                 "",                     # amount
                 message_body,           # string
-                False                   # boolean
+                False,                  # boolean
+                broadcast_to_currency   # boolean
             )
         if em:
             flash(em)
             return redirect("/home")
         else:
             return redirect("/message/list")
-
 
     return render_template(
         "message_send.html",
@@ -5765,11 +5745,6 @@ def message_send():
         number_of_messages = number_of_messages,
         number_of_indelible_messages = number_of_indelible_messages
     )
-
-
-
-
-
 
 
 @app.route("/message/show/<recipient_fph>", methods = ["GET", "POST"])

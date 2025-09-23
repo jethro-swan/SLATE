@@ -133,6 +133,21 @@ div.form-box {
   width: 100%;
 }
 
+div.form-box-2 {
+  display: block;
+  border-width: 5px;
+  border-style: solid;
+  border-color: #ffffff;
+  padding-left: 0px;
+  padding-right: 0px;
+  padding-top: 0px;
+  padding-bottom: 0px;
+  margin-left: 5px;
+  margin-right: 15px;
+  margin-top: 5px;
+  margin-bottom: 5px;
+  float: left;
+}
 
 
 
@@ -275,12 +290,12 @@ div.mb2a { /* menu button active - lower row */
 .clear-both { clear: both; }
 
 table.msg {
-  border: 0px solid #ffffff;
+  border: 2px solid #ffffff;
   border-spacing: 0;
 }
 td.msg {
   font-size: 1.0em; background: #ffffff;
-  padding-top: 0px; padding-left: 4px; padding-right: 4px; padding-bottom: 0px;
+  padding-top: 1px; padding-left: 4px; padding-right: 4px; padding-bottom: 1px;
   border: 0px solid #ffffff;
 }
 td.msg-box {

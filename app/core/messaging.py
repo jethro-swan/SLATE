@@ -36,6 +36,7 @@ def category_display_colour(subject_prefix):
     category_colour["request"] = "#408040"
     category_colour["payment"] = "#400000"
     category_colour["payment_request"] = "#400000"
+    category_colour["other"] = "#000000"
     category_colour["event"] = "#FF8080"
     category_colour["please respond"] = "#4040F0"
     category_colour["urgent"] = "#800000"
@@ -162,7 +163,8 @@ def send_message(
         currency_fph,           # string
         amount,                 # integer
         message_body,           # string
-        indelible = False       # boolean
+        indelible = False,      # boolean
+        broadcast = False       # boolean: broadcast to users of *curremcy*
     ):
 
 #    print()
