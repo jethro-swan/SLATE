@@ -2236,8 +2236,6 @@ def pay_ahid(payer_ahid_fph, payment_currency_fph):
     number_of_messages, \
     number_of_indelible_messages = message_count(primid_fph, hub_mode)
 
-
-
     form = SpecifyPayeeAccountHolderForm()
     if form.validate_on_submit():
         payee_ahid_fph, payee_ahid_hrns, etypes, \
@@ -2269,8 +2267,8 @@ def pay_ahid(payer_ahid_fph, payment_currency_fph):
                 annotation
             )
         if m:
-            print(m)
-
+            flash(m)
+            #print(m)
 
         if hub_mode == "omtrad":
             return redirect("/home_ahc")

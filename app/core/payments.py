@@ -35,6 +35,8 @@ from app.core.slate_core import new_pairing
 from app.core.slate_core import select_db_filepath
 from app.core.slate_core import ahid_is_robot
 
+from app.core.logging import log_event
+
 #from app.core.robots import ahid_is_robot
 
 from app.core.messaging import send_message
@@ -231,9 +233,6 @@ def ah_payment(
         payer_ahid_id,
         payee_ahid_id,
         currency_id,
-        #payer_ahid_hrns,
-        #payee_ahid_hrns,
-        #currency_hrns,
         amount,
         annotation
     ):
@@ -244,11 +243,35 @@ def ah_payment(
     payee_ahid_fph, payee_ahid_hrns, etypes, \
     m = identify_entity(payee_ahid_id)
 
+    if not payer_ahid_fph:
+        log_event(
+            "tests", "non-existent payer",
+            "Payer " + payer_ahid_id + " does not exist."
+        )
+        return "Payer ahid does not exist"
+
+    if not payee_ahid_fph:
+        log_event(
+            "tests", "non-existent payee",
+            "Payee " + payee_ahid_id + " does not exist."
+        )
+        return "Payee ahid does not exist"
+
     if payer_ahid_fph == payee_ahid_fph:
-        return "An account cannot pay to itself"
+        log_event(
+            "tests", "self-payment error",
+            payer_ahid_hrns + " has attempted to make a payment to itself."
+        )
+        return "An ahid cannot pay to itself"
 
     currency_fph, currency_hrns, etypes, \
     m = identify_entity(currency_id)
+
+    log_event(
+        "tests", "payment made",
+        "Payment of " + integer_to_money_s_format(amount) + " made by " \
+        + payer_ahid_hrns + " to " + payee_ahid_hrns + " in " + currency_hrns
+    )
 
     # If the robot *ahid* has not yet been paired with the *currency*, this
     # must be done before a payment can be made:

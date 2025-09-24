@@ -15,14 +15,14 @@ def log_event(category, summary, details):
                             "activity",
                             "auth",
                             "debug",
-                            "entity_history",
                             "error",
                             "tests"
                            ]):
         return False
     timestamp = datetime.datetime.now().strftime(LOG_DATETIME_FMT)
     with open(SLATE_LOGS + category + ".log", "a") as log_file:
-        log_file.write(timestamp + "\t" + summary + "\n")
+        log_file.write(timestamp + "   " + summary + " \t")
         log_file.write(details + "\n")
+    return True
 
 #------------------------------------------------------------------------------

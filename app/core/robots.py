@@ -209,7 +209,7 @@ def send_next_robot_response():
     if len(payer_primid_ahids) > 0:
         reply_ahid_fph = random.choice(payer_primid_ahids)
         reply_currency_fph = random.choice(pairing[payee_ahid_fph])
-        amount = random.randint(0, 999)
+        amount = random.randint(0, 999) * 100
         message = "This payment has been sent by a robot selected at random " \
                 + "from among the robots currently using one of the " \
                 + "currencies in which you have an account. You, the payee, " \
