@@ -2578,15 +2578,15 @@ def add_namespace_stewardship(entity_fph, steward_fph):
     return errors
 
 #
-def add_currency_stewardship(entity_fph, steward_fph):
+def add_currency_stewardship(currency_fph, steward_fph):
     if not re_fph.match(steward_fph):
         return steward_fph + " is not an FPH"
-    if not re_fph.match(entity_fph):
-        return entity_fph + " is not an FPH"
+    if not re_fph.match(currency_fph):
+        return currency_fph + " is not an FPH"
     if not entity_type_is_registered(steward_fph, "primid"):
         return steward_fph + " is not a primid."
-    if not entity_type_is_registered(entity_fph, "currency"):
-        return "currency not registered for " + entity_fph
+    if not entity_type_is_registered(currency_fph, "currency"):
+        return "currency not registered for " + currency_fph
     errors = ""
     with sqlite3.connect(ENTITIES_DB) as conn:
         cursor = conn.cursor()
@@ -2601,9 +2601,9 @@ def add_currency_stewardship(entity_fph, steward_fph):
             cstewardships_fph_list = []
         else:
             cstewardships_fph_list = pickle.loads(result[0])
-            if entity_fph in cstewardships_fph_list:
+            if currency_fph in cstewardships_fph_list:
                 stewardship_has_been_registered_already = True
-        cstewardships_fph_list.append(entity_fph)
+        cstewardships_fph_list.append(currency_fph)
         cstewardships_fph_blob = pickle.dumps(cstewardships_fph_list)
         cursor.execute(
             "UPDATE primids SET cstewardships_fph_list = ? " \
@@ -2611,8 +2611,11 @@ def add_currency_stewardship(entity_fph, steward_fph):
             (cstewardships_fph_blob, steward_fph)
         )
 
-        # Add the steward's FPH to the *namespace*:
-        cursor.execute(stewards_select_str, (entity_fph,))
+        # Add the steward's FPH to the *currency*:
+        cursor.execute(
+            "SELECT stewards_fph_list FROM currencies WHERE  entity_fph = ?",
+            (currency_fph,)
+        )
         result = cursor.fetchone()
         if result is None:
             stewards_fph_list = []
@@ -2621,7 +2624,7 @@ def add_currency_stewardship(entity_fph, steward_fph):
             if steward_fph in stewards_fph_list:
                 if not stewardship_has_been_registered_already:
                     # Remove the inconsistent steward from entity:
-                    nstewardships_fph_list.remove(entity_fph)
+                    cstewardships_fph_list.remove(currency_fph)
                     cursor.execute(
                         "UPDATE primids SET cstewardships_fph_list = ? " \
                         + "WHERE entity_fph = ?",
@@ -2630,24 +2633,28 @@ def add_currency_stewardship(entity_fph, steward_fph):
                     errors += "Inconsistency found:\n" \
                            + "Steward " + steward_fph + " (" \
                            + fph_to_hrns(steward_fph) + ") has already been " \
-                           + "registered for entity " + entity_fph + " (" \
-                           + fph_to_hrns(entity_fph) + ") but stewardship " \
-                           + "of entity " + entity_fph + " has not been " \
+                           + "registered for currency " + currency_fph + " (" \
+                           + fph_to_hrns(currency_fph) + ") but stewardship " \
+                           + "of currency " + currency_fph + " has not been " \
                            + "registered for steward " + steward_fph + "."
             else:
                 if stewardship_has_been_registered_already:
                     # Remove the inconsistent stewardship from steward:
                     stewards_fph_list.remove(steward_fph)
                     errors += "Inconsistency found:\n" \
-                           + "Stewardship of entity " + entity_fph + " (" \
-                           + fph_to_hrns(entity_fph) + ") has already been " \
+                           + "Stewardship of currency " + currency_fph + " (" \
+                           + fph_to_hrns(currency_fph) + ") has already been " \
                            + "registered for steward " + steward_fph + " (" \
                            + fph_to_hrns(steward_fph) + ") but steward " \
                            + steward_fph + " has not already been " \
-                           + "registered for entity " + entity_fph + "."
+                           + "registered for currencyy " + currency_fph + "."
         stewards_fph_list.append(steward_fph)
         stewards_fph_blob = pickle.dumps(stewards_fph_list)
-        cursor.execute(stewards_update_str, (stewards_fph_blob, entity_fph))
+        cursor.execute(
+            "UPDATE currencies SET stewards_fph_list = ? " \
+            + "WHERE entity_fph = ?",
+            (stewards_fph_blob, currency_fph)
+        )
         conn.commit()
         cursor.close()
     return errors

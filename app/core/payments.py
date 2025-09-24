@@ -259,7 +259,7 @@ def ah_payment(
 
     if payer_ahid_fph == payee_ahid_fph:
         log_event(
-            "tests", "self-payment error",
+            "tests", "self-pay error",
             payer_ahid_hrns + " has attempted to make a payment to itself."
         )
         return "An ahid cannot pay to itself"

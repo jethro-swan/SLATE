@@ -57,8 +57,11 @@ from app.core.slate_core import authenticate_primid_email
 from app.core.slate_core import get_hub_mode
 from app.core.slate_core import get_version
 #from app.core.slate_core import add_stewardship, remove_steward
+from app.core.slate_core import add_currency_stewardship
+from app.core.slate_core import add_namespace_stewardship
 from app.core.slate_core import random_filename
 #from app.core.slate_core import get_config
+
 from app.core.configdb import get_config
 from app.core.qrcode import qrencode_invitation
 
@@ -487,8 +490,6 @@ def login():
 
         password = form.password.data
         password2 = form.password.data.strip()
-#        if password != password2:
-#            print("password corrupted")
 
         pwd = password
         pwd_hash = password_hash
@@ -536,24 +537,9 @@ def login():
 @app.route("/logout")
 @login_required
 def logout():
-
     user = current_user.get_id()
-#    print("current_user.get_id() = " + user + " = " + fph_to_hrns(user))
-#    deregistered, m = current_user.mark_unauthenticated()
-#    if deregistered:
-#        logout_user() # a Flask function
-#        return redirect(url_for("login"))
-#    else:
-#        if m:
-#            flash(m)
-#        flash("Unable to log out (see error log)")
-#        log_event("errors", "logout problem", user + " unable to log out")
-#        return redirect(url_for("home"))
-
     logout_user() # a Flask function
     return redirect(url_for("login"))
-
-
 
 # login recovery request ------------------------------------------------------
 @app.route("/login/recover", methods = ["GET", "POST"])
@@ -566,7 +552,6 @@ def login_recover():
 
     # Hub operational mode (read from environment variable HUB_MODE)
     hub_mode = get_hub_mode()
-    #version = get_version()()
 
     form = LoginRecoveryForm()
     if form.validate_on_submit():
@@ -624,11 +609,6 @@ def login_recover():
                               token = login_reset_token,
                               _external = True
                           )
-#        login_reset_url = url_for("login_reset") \
-#                        + "/" + agent_primid_fph + "/" + login_reset_token
-
-#        print(login_reset_token)
-#        print(login_reset_url)
 
         message_body = "You have received this message because a login " \
                      + " recovery link has been requested.\n" \
@@ -638,7 +618,6 @@ def login_recover():
                      + "\nIf you have not requested a login recovery " \
                      + "link, you can ignore this message.\n\n"
 
-        #config = get_config()
         temp_mail_send(
             get_config("hub_email"),
             agent_email,
@@ -1137,10 +1116,6 @@ def home():
     for secid_fph in secids_list:
         identity_list.append(secid_fph)
 
-#    print("Indentities listed:")
-#    for identity_fph in identity_list:
-#        print("\t" + fph_to_hrns(identity_fph))
-
     total_number_of_messages = 0
     total_number_of_indelible_messages = 0
     # List identities for which messages are available:
@@ -1148,12 +1123,6 @@ def home():
     for identity_fph in identity_list:
         number_of_messages, \
         number_of_indelible_messages = messages_available(identity_fph)
-
-#        print("number_of_messages = " + str(number_of_messages))
-#        print(
-#            "number_of_indelible_messages = " \
-#            + str(number_of_indelible_messages)
-#        )
         total_number_of_messages += number_of_messages
         total_number_of_indelible_messages += number_of_indelible_messages
 
@@ -1219,7 +1188,6 @@ def home():
         accounts = [] # (second-level dictionary for iteration in template)
         for account_fph in accounts_list:
             # Fetch account details:
-            print("home: account_fph = " + account_fph)
             account_currency_fph, account_owner_fph, \
             account_balance, account_volume, active, \
             account_type, account_category, account_units, \
@@ -1423,7 +1391,6 @@ def list_accounts():
         accounts = [] # (second-level dictionary for iteration in template)
         for account_fph in accounts_list:
             # Fetch account details:
-            print("/list/accounts/ account_fph = " + account_fph)
             account_currency_fph, account_owner_fph, \
             account_balance, account_volume, active, \
             account_type, account_category, account_units, \
@@ -1632,7 +1599,6 @@ def payment_options():
             return redirect("/home")
         accounts_list.sort()
         for a_fph in accounts_list:
-            print("/payment_options/ a_fph = " + a_fph)
             # fetch *account* details:
             c_fph, a_owner_fph, a_balance, a_volume, active, \
             account_type, account_category, account_units, \
@@ -1809,7 +1775,6 @@ def currency_options():
             return redirect("/home")
         accounts_list.sort()
         for a_fph in accounts_list:
-            print("/currency/options/  a_fph = " + a_fph)
             # fetch *account* details:
             c_fph, a_owner_fph, a_balance, a_volume, active, \
             account_type, account_category, account_units, \
@@ -1866,11 +1831,6 @@ def currency_options():
 
             payment_options.append(p)
 
-            #print("currency available: " + fph_to_hrns(c_fph))
-
-            #print("payment option: ", end="")
-            #print(p)
-
     # We now have a list of *currencies* (each as a dictionary to be passed to
     # the "/currency/options" view).
     #
@@ -1883,9 +1843,6 @@ def currency_options():
     # to use the Flask  session[ ]  dictionary.
     session_save_currencies_available(currencies_available, payment_options)
     #session["payment_options"] = pickle.dumps(payment_options)
-
-    #print("session_save_currencies_available( ) done")
-
 
     # Although the *currency* selected is passed via the URL slug, we must
     # still be able to check that it is a valid option for the *agent* in this
@@ -2084,7 +2041,6 @@ def account(payer_account_fph, payee_account_fph, owner_fph = None):
         payee_account_fph = ""
         payee_account_hrns = ""
 
-    print("/account/.../.../... payer_account_fph = " + payer_account_fph)
     payer_currency_fph, payer_owner_fph, payer_balance, volume, active, \
     account_type, account_category, account_units, \
     account_metrical_equivalence, account_dimensions, \
@@ -2096,7 +2052,6 @@ def account(payer_account_fph, payee_account_fph, owner_fph = None):
 
     account_balance_is_negative = (payer_balance < 0)
 
-    #currency_hrns = fph_to_hrns(payer_currency_fph)
     currency_fph, currency_hrns, active, private, sandbox, \
     type, category, units, metrical_equivalence, dimensions, \
     currency_prefix, currency_suffix, default_account_name, stewards_list, \
@@ -2126,7 +2081,6 @@ def account(payer_account_fph, payee_account_fph, owner_fph = None):
             flash("An account cannot pay to itself")
             return redirect("/account/" + payer_account_fph)
 
-        print("/account/.../.../... payee_account_fph = " + payee_account_fph)
         payee_currency_fph, payee_owner_fph, payee_balance, volume, active, \
         account_type, account_category, account_units, \
         account_metrical_equivalence, account_dimensions, \
@@ -2149,13 +2103,11 @@ def account(payer_account_fph, payee_account_fph, owner_fph = None):
             flash(m)
             return redirect("/home")
 
-        print("/account/.../.../... payer_account_fph = " + payer_account_fph)
         payer_currency_fph, payer_owner_fph, payer_balance, volume, active, \
         account_type, account_category, account_units, \
         account_metrical_equivalence, account_dimensions, \
         m = get_account_properties(payer_account_fph)
 
-        print("/account/.../.../... payee_account_fph = " + payee_account_fph)
         payee_currency_fph, payee_owner_fph, payee_balance, volume, active, \
         account_type, account_category, account_units, \
         account_metrical_equivalence, account_dimensions, \
@@ -2268,7 +2220,6 @@ def pay_ahid(payer_ahid_fph, payment_currency_fph):
             )
         if m:
             flash(m)
-            #print(m)
 
         if hub_mode == "omtrad":
             return redirect("/home_ahc")
@@ -2405,7 +2356,6 @@ def journal(ahid_fph, currency_fph):
     account_fph, primid_fph, \
     m = retrieve_pairing_account_fph(ahid_hrns, currency_fph)
 
-#    print("pay_to_ahid/...  account_fph = " + account_fph)
     account_currency_fph, account_owner_fph, account_balance, account_volume, \
     account_active, account_type, account_category, account_units, \
     account_metrical_equivalence, account_dimensions, \
@@ -2556,8 +2506,6 @@ def pay_from_account_to_agent(payer_account_fph = None):
         flash("Entity type of FPH in URL is not account")
         return redirect("/home")
 
-    #payment_currency_fph = get_account_currency(payer_account_fph)
-    print("/pay/from/...  payer_account_fph = " + payer_account_fph)
     payment_currency_fph, payer_account_owner_fph, \
     payer_account_balance, volume, active, \
     account_type, account_category, account_units, \
@@ -2571,8 +2519,6 @@ def pay_from_account_to_agent(payer_account_fph = None):
 
     # Hub operational mode (read from environment variable HUB_MODE)
     hub_mode = get_hub_mode()
-    #version = get_version()()
-
 
     page = "payer_currency_known"
     group = "home"
@@ -2580,8 +2526,6 @@ def pay_from_account_to_agent(payer_account_fph = None):
 
     previous_page = session["previous_page"] # Ensure correct page sequence
     session["previous_page"] = page
-
-    #print("previous_page = " + previous_page)
 
     if (previous_page != "home") and (previous_page != "payer_currency_known"):
         flash("Incorrect page succession")
@@ -2761,9 +2705,6 @@ def pay_agent_direct(payer_currency_fph, payer_identity_fph):
     # Now we need to acquire the payee *identity* and *amount* form data:
     form = PayeeCurrencyAmountPaymentForm()
     if form.validate_on_submit():
-
-        #print("form validated")
-
         payee_identity_fph, payee_identity_hrns, etypes, \
         m = identify_entity(form.to_identity_id.data) # HRNS or FPH
         if m:
@@ -2773,9 +2714,6 @@ def pay_agent_direct(payer_currency_fph, payer_identity_fph):
             flash("The identity is invalid")
             return redirect("/pay/agent")
         session["payee_identity_fph"] = payee_identity_fph
-
-        #print("payee = " + payee_identity_hrns)
-
         # First we need to find the payer *accounts* in the specified
         # *currency*:
         payer_accounts, m = list_agent_accounts(working_identity_fph)
@@ -2784,7 +2722,6 @@ def pay_agent_direct(payer_currency_fph, payer_identity_fph):
             account_currency_fph = get_account_currency(payer_account_fph)
             if account_currency_fph == currency_fph:
                 payer_options.append(payer_account_fph)
-
         # Next we need to find the payee *accounts* in the specified
         # *currency*:
         payee_accounts, m = list_agent_accounts(payee_identity_fph)
@@ -2806,14 +2743,6 @@ def pay_agent_direct(payer_currency_fph, payer_identity_fph):
         if len(payee_options) == 0:
             flash("The payee has no accounts in the specified currency")
             return redirect("/pay/agent")
-
-#        if len(payer_options) == 1:
-#            print("The payer has one account in this currency")
-#        if len(payee_options) == 1:
-#            print("The payee has one account in this currency")
-
-
-
         # If both the payer and the payee have only one *account* in this
         # *currency*, the payment can be made immediately.
 
@@ -2821,8 +2750,6 @@ def pay_agent_direct(payer_currency_fph, payer_identity_fph):
         # *currency* a selection must be made. Therefore the list of options
         # must be passed to one or both intermediate form/endpoint to allow the
         # selection of *accounts*.
-#        return redirect("/home") # next page
-        #return redirect("/pay/select/payer") # next page
 
         amount_entered = form.amount.data
         annotation = form.annotation.data
@@ -2832,18 +2759,13 @@ def pay_agent_direct(payer_currency_fph, payer_identity_fph):
         m = payment(payer_account_fph, payee_account_fph, amount, annotation)
         if m:
             flash(m)
-            #print(m)
             return redirect("/home")
 
-#        print("Payment made")
-
-        print("/pay/agent/direct/... payer_account_fph = " + payer_account_fph)
         payer_currency_fph, payer_owner_fph, payer_balance, payer_volume, \
         active, account_type, account_category, account_units, \
         account_metrical_equivalence, account_dimensions, \
         m = get_account_properties(payer_account_fph)
 
-        print("/pay/agent/direct/... payee_account_fph = " + payee_account_fph)
         payee_currency_fph, payee_owner_fph, payee_balance, payee_volume, \
         active, account_type, account_category, account_units, \
         account_metrical_equivalence, account_dimensions, \
@@ -3290,8 +3212,6 @@ def make_payment_between_selected_accounts(
         payee_account_fph = None
     ):
 
-#    print_payments_session_variables() ### TESTSTUFF
-
     if payer_account_fph is None:
         flash("Invalid payer account in URL string")
         return redirect("/home")
@@ -3299,13 +3219,10 @@ def make_payment_between_selected_accounts(
         flash("Invalid payee account in URL string")
         return redirect("/home")
 
-    #print(">>> payer_account_fph = " + payer_account_fph)
     payer_account_fph, payer_account_hrns, etypes, \
     m = identify_entity(payer_account_fph)
-    #print("<<< payer_account_fph = " + payer_account_fph)
     if m:
         flash(m)
-        #print(m)
         return redirect("/home")
     if payer_account_fph == "":
         flash("No payer account in URL string")
@@ -3315,7 +3232,6 @@ def make_payment_between_selected_accounts(
     m = identify_entity(payee_account_fph)
     if m:
         flash(m)
-        #print(m)
         return redirect("/home")
     if payee_account_fph == "":
         flash("No payee account in URL string")
@@ -3378,16 +3294,13 @@ def make_payment_between_selected_accounts(
         m = payment(payer_account_fph, payee_account_fph, amount, annotation)
         if m:
             flash(m)
-            #print(m)
             return redirect("/home")
 
-        print("/pay/agent/payment/... payer_account_fph = " + payer_account_fph)
         payer_currency_fph, payer_owner_fph, payer_balance, payer_volume, \
         active, account_type, account_category, account_units, \
         account_metrical_equivalence, account_dimensions, \
         m = get_account_properties(payer_account_fph)
 
-        print("/pay/agent/payment/... payee_account_fph = " + payee_account_fph)
         payee_currency_fph, payee_owner_fph, payee_balance, payee_volume, \
         active, account_type, account_category, account_units, \
         account_metrical_equivalence, account_dimensions, \
@@ -3562,7 +3475,6 @@ def select_payer_account_(payee_account_fph):
         flash("No payee account specified in URL slug")
         return redirect("/pay_to_account")
 
-    print("/select_payer_account/... payee_account_fph = " + payee_account_fph)
     payee_account_currency_fph, payee_account_owner_fph, \
     payee_account_balance, payee_account_volume, \
     active, account_type, account_category, account_units, \
@@ -3575,21 +3487,13 @@ def select_payer_account_(payee_account_fph):
 
     for account_fph in payer_accounts_list:
 
-        print("/select_payer_account/... account_fph = " + account_fph)
         account_currency_fph, account_owner_fph, \
         account_balance, account_volume, \
         active, account_type, account_category, account_units, \
         account_metrical_equivalence, account_dimensions, \
         m = get_account_properties(account_fph)
 
-#        print("account = " + account_fph + " > " + fph_to_hrns(account_fph))
-#        print(
-#            "currency = " + account_currency_fph + " > " \
-#            + fph_to_hrns(account_currency_fph)
-#        )
-
         if account_currency_fph == payee_account_currency_fph:
-#            print(account_fph)
             a = {}
             a["fph"] = account_fph
             a["hrns"] = fph_to_hrns(account_fph)
@@ -3600,8 +3504,6 @@ def select_payer_account_(payee_account_fph):
             number_of_payer_accounts += 1
 
     payer_has_accounts_available = (number_of_payer_accounts > 0)
-#    print("payer_has_accounts_available = ", end = "")
-#    print(payer_has_accounts_available)
 
     return render_template(
         "select_payer_account.html",
@@ -3665,8 +3567,6 @@ def account_details(account_fph):
         working_identity_type = etype_to_adtype(working_identity_type)
 
     # If an *account* has been specified (by FPH) in the URL slug
-#    print("Account " + account_fph)
-
     account_fph, account_hrns, etypes, \
     m = identify_entity(account_fph)
 
@@ -3677,7 +3577,6 @@ def account_details(account_fph):
         flash("The FPH in the URL does not identify an account.")
         return redirect("/account")
 
-    print("/account_details/... account_fph = " + account_fph)
     currency_fph, owner_fph, account_balance, account_volume, active, \
     account_type, account_category, account_units, \
     account_metrical_equivalence, account_dimensions, \
@@ -4049,7 +3948,7 @@ def currency_steward_add(currency_fph):
         new_steward_fph, new_steward_hrns, etypes, \
         m = identify_entity(form.new_steward.data)
         if new_steward_fph:
-            m = add_stewardship(currency_fph, new_steward_fph)
+            m = add_currency_stewardship(currency_fph, new_steward_fph)
         else:
             flash(form.new_steward.data + " is not a registered identity")
 
@@ -5024,10 +4923,6 @@ def export_account_csv(account_fph):
 
     account_fph, account_hrns, etypes, \
     m = identify_entity(account_fph) # slug
-#    print("\nexport journal: account_hrns = " + account_hrns)
-#    print("export journal: account_fph = " + account_fph)
-#    print("export journal: etypes = ", end="")
-#    print(etypes)
     if m:
         flash(m)
         return redirect("/home")
@@ -5038,7 +4933,6 @@ def export_account_csv(account_fph):
         flash(account_hrns + " has no registered account")
         return redirect("/home")
 
-    print("/account/export/...  account_fph = " + account_fph)
     currency_fph, owner_fph, balance, volume, active, \
     account_type, account_category, account_units, \
     account_metrical_equivalence, account_dimensions, \
@@ -5048,15 +4942,6 @@ def export_account_csv(account_fph):
         return redirect("/home")
     ahid_hrns = fph_to_hrns(owner_fph)
 
-#    print()
-#    print("currency_fph: " + currency_fph)
-#    print("owner_fph: " + owner_fph)
-#    print("ahid_fph: " + ahid_fph)
-#    print("balance: " + str(balance))
-#    print("volume: " + str(volume))
-#    print("account: " + account_fph + " > " + account_hrns)
-#    print("ahid: " + ahid_fph + " > " + ahid_hrns)
-
     owner_fph, owner_hrns, etypes, \
     m = identify_entity(owner_fph)
     if m:
@@ -5065,10 +4950,6 @@ def export_account_csv(account_fph):
     if ("ahid" in etypes) or ("secid" in etypes):
         owner_primid_fph, m = get_primid(owner_fph)
     else:
-#        owner_primid_fph =  primid_fph
-    # This may appear a little convoluted, but simplifying it is not an urgent
-    # priority.
-#    if owner_primid_fph != primid_fph:
         flash("None of your identities owns this account")
         return redirect("/home")
 
@@ -5083,7 +4964,6 @@ def export_account_csv(account_fph):
 
     csv_file, m = dump_account_payments_csv(account_fph, True)
     if m:
-        print("export journal: dump_account_payments_csv( )")
         flash(m)
         return redirect("/home")
 
@@ -5257,7 +5137,6 @@ def importing(file):
     working_identity_hrns = primid_hrns
     session["working_identity"] = working_identity_fph
     logged_in = current_user.is_authenticated
-#    print(file)
     if file:
         tfpath = SLATE_TEMP + "/" + file
         if os.path.exists(tfpath):
@@ -5538,10 +5417,6 @@ def messages():
                     m["some_indelible"] = False
                 message_recipients_list.append(m)
 
-#        print(ahid_list)
-#        print(message_recipients_list)
-
-
     else: # List all *identities*:
         identity_list = []
         identity_list.append(primid_fph)
@@ -5690,13 +5565,6 @@ def message_send():
         #unixtime = unixtime_int()
 
         message_body = form.message_body.data
-
-#        print("To: " + recipient_hrns)
-#        print("Category: " + category)
-#        print("Subject: " + subject)
-#        print("Expiry date: ", end="")
-#        print(expiry_date)
-#        print("Message body: " + message_body)
 
         em = send_message(
                 message_timestamp,
