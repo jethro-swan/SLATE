@@ -119,9 +119,7 @@ def get_version():
 #==============================================================================
 #
 def get_hub_mode():
-    # TEMPORARY FUDGE!
-    return "omtrad"
-    #return get_config("hub_mode")
+    return get_config("hub_mode")
 
 
 #==============================================================================
@@ -1105,7 +1103,7 @@ def new_primid(
     if identifier_unregistered(primid_hrns):
         primid_fph = register_identifier(primid_hrns)
     primid_fph, primid_hrns, etypes, m = identify_entity(primid_hrns)
-#    print("new_primid: " + primid_fph + " > " + primid_hrns)
+    print("new_primid: " + primid_fph + " > " + primid_hrns)
     # If a *primid* is already registered to this identifier, it cannot be
     # be re-used for another.
     if ("primid" in etypes):
@@ -1316,6 +1314,9 @@ def new_ahid(
     if identifier_unregistered(ahid_hrns):
         ahid_fph = register_identifier(ahid_hrns)
     ahid_fph, ahid_hrns, etypes, m = identify_entity(ahid_hrns)
+    print("ahid_hrns = " + ahid_hrns)
+    print("etypes: ", end="")
+    print(etypes)
     if not ("ahid" in etypes):
         register_entity_type(ahid_fph, "ahid")
         with sqlite3.connect(ENTITIES_DB) as conn:
@@ -1340,21 +1341,29 @@ def new_ahid(
         stewards_fph_list.append(primid_fph)
         active, sandbox, private, owner_fph, currency_fph, stewards_list, \
         m = get_namespace_properties(parent_fph)
+        print("ahid_fph: " + ahid_fph + " <> " + fph_to_hrns(ahid_fph))
         with sqlite3.connect(ENTITIES_DB) as conn:
             cursor = conn.cursor()
             cursor.execute(
-                "INSERT INTO namespaces (" \
-                + "entity_fph, " \
-                + "stewards_fph_list, " \
-                + "default_currency_fph" \
-                + ") VALUES (?, ?, ?)",
-                (
-                    ahid_fph, # same identifier
-                    pickle.dumps(stewards_fph_list),
-                    currency_fph
-                )
+                "SELECT * FROM namespaces WHERE entity_fph = ?",
+                (ahid_fph,)
             )
-            conn.commit()
+            result = cursor.fetchone()
+            if result is None:
+                print("Groucho")
+                cursor.execute(
+                    "INSERT INTO namespaces (" \
+                    + "entity_fph, " \
+                    + "stewards_fph_list, " \
+                    + "default_currency_fph" \
+                    + ") VALUES (?, ?, ?)",
+                    (
+                        ahid_fph, # same identifier
+                        pickle.dumps(stewards_fph_list),
+                        currency_fph
+                    )
+                )
+                conn.commit()
             cursor.close()
     return ahid_fph, ahid_hrns, ""
 
@@ -1452,6 +1461,49 @@ def new_namespace(
         cursor.close()
     return namespace_fph, namespace_hrns, ""
 
+
+# A reduced version of the preceding function is used to add a *namesapce*
+# registration to the identifier of a newly-created entity of another type.
+#
+# This differs greatly from the above in that most of the validation has been
+# completed already.
+
+def add_namespace(
+        namespace_fph,
+        default_currency_fph,
+        steward_fph
+    ):
+#    inherited_pnsr = get_private_namespace_root(parent_fph)
+#    record_private_namespace_root(namespace_fph, inherited_pnsr)
+    with sqlite3.connect(ENTITIES_DB) as conn:
+        cursor = conn.cursor()
+        cursor.execute(
+            "INSERT INTO namespaces (" \
+            + "entity_fph, " \
+            + "stewards_fph_list, " \
+            + "default_currency_fph" \
+            + ") VALUES (?, ?, ?)",
+            (
+                namespace_fph,
+                pickle.dumps([steward_fph]),
+                default_currency_fph
+            )
+        )
+        conn.commit()
+        cursor.close()
+    return
+
+
+
+
+
+
+
+
+
+
+
+
 #==============================================================================
 ## A new currency is added:
 
@@ -1489,13 +1541,19 @@ def new_currency(
     # If it does not exist, a new *namespace* is created with the same
     # identifier as the new *currency* (which is assigned as its default
     # *currency*) and having the same initial steward.
+#    if not ("namespace" in etypes):
+#        namespace_fph, namespace_hrns, \
+#        m = new_namespace(
+#                currency_name, parent_fph,  # identifier
+#                currency_fph,               # default *currency* for
+#                initial_steward_fph         # initial steward
+#            )
+# Added 2025-09-26:
     if not ("namespace" in etypes):
-        namespace_fph, namespace_hrns, \
-        m = new_namespace(
-                currency_name, parent_fph,  # identifier
-                currency_fph,               # default *currency* for
-                initial_steward_fph         # initial steward
-            )
+        add_namespace(currency_fph, currency_fph, initial_steward_fph)
+
+
+
     register_entity_type(currency_fph, "currency")
     # Now add *currency* specific properties:
     with sqlite3.connect(ENTITIES_DB) as conn:
@@ -2987,18 +3045,19 @@ def random_filename():
 
 # The is a temporary fudge ...
 
-def is_ancestor(entity_hrns, ancestor_id):
+def _is_ancestor(entity_hrns, ancestor_id):
     # This version works only within the same constraints as "omtrad" mode
     # (i.e. UTF-8 Latin character set for HRNS).
     ancestor_fph, ancestor_hrns, etype, m = identify_entity(ancestor_id)
     a = ancestor_hrns.split(NSS)
     e = entity_hrns.split(NSS)
+    if len(a) >= len(e):
+        return False
     is_an_ancestor = True
     while len(a) > 0:
-#        e_ = e.pop()
-#        a_ = a.pop()
-#        if e_ != a_:
-        if e.pop() != a.pop():
+        e_ = e.pop()
+        a_ = a.pop()
+        if e_ != a_:
             is_an_ancestor = False
             break
     return is_an_ancestor
@@ -3008,29 +3067,31 @@ def is_ancestor(entity_hrns, ancestor_id):
 
 
 # Alternative version ...
+#
 
 #def is_ancestor(entity_id, ancestor_id):
-def _is_ancestor(entity_id, ancestor_id):
+def is_ancestor(entity_id, ancestor_id):
     # This version uses the  get_parent( )  function.
-    e_fph, e_hrns, etypes, m = identify_entity(entity_id)
-    if not e_fph:
+    entity_fph, entity_hrns, etypes, m = identify_entity(entity_id)
+    if not entity_fph:
         return False
-    a_fph, a_hrns, etypes, m = identify_entity(ancestor_id)
+    ancestor_fph, ancestor_hrns, etypes, m = identify_entity(ancestor_id)
     # Whether or not it has been registered as an identifier, an empty list is
     # returned if ancestor_id does not identify a *namespace*:
     if not ("namespace" in etypes):
         return False
     # Every identifier has a parent so this is a sufficient start ...
-    parent_fph = get_parent(e_fph)
+    parent_fph = get_parent(entity_fph)
     # ... from which to burrow down into the ancestral depths until ...
+    is_an_ancestor = False
     while parent_fph:
         parent_fph = get_parent(parent_fph)
-        if parent_fph == a_fph:
+        if parent_fph == ancestor_fph:
             # ... either the tentative ancestor has been found in the chain or
-            return True
-    else:
-        # ... the tentative ancestor has not been found anywhere in the chain.
-        return False
+            is_an_ancestor = True
+            break
+    print("is_an_ancestor = " + str(is_an_ancestor))
+    return is_an_ancestor
 
 def is_in_private_namespace(entity_hrns, pn_id):
     pn_fph, pn_hrns, etype, m = identify_entity(pn_id)

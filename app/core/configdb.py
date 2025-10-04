@@ -72,7 +72,7 @@ def read_config_file_to_db():
         if (not cfl) or re_comment.match(cfl):   # comment line or empty line
             continue
         #print(cfl)
-        cf = cfl.split(" = ")
+        cf = cfl.split()
         set_config(cf[0], cf[1])
 
 #------------------------------------------------------------------------------

@@ -17,6 +17,7 @@ SLATE_MAPS          = SLATE_DATA + "/maps/"      #
 QR_CODES            = "/home/slate/SLATE/app/static/qr/" # QR codes generated
                                                 # (both cleared out regularly)
 ROBOTS_LIST         = "/home/slate/SLATE/app/static/robots"
+WWW_DATA            = "/home/slate/SLATE/app/static/www/"
 
 
 

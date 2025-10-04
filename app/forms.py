@@ -501,7 +501,12 @@ class LoginForm(FlaskForm):
     ##pin_prompt = pin_prompt_message(pro_a)
 
     pin_prompt, pin_subset_indices = pin_subset_prompt()
-    pro             = HiddenField(pin_subset_indices)
+#    print("A: pin_subset_indices = ", end="")
+#    print(pin_subset_indices)
+#    print("Z: " + str(type(pin_subset_indices)))
+
+    pro             = HiddenField(default=pin_subset_indices)
+#    pro             = HiddenField(pin_subset_indices)
     #pro             = HiddenField(default=pro_a)
 ##    pse             = PasswordField(
     pse             = StringField(

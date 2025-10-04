@@ -128,34 +128,38 @@ def generate_access_token():
 def pin_subset_prompt(): # used in app/forms.py
 
     # Generate an array of three random digits, increasing and non-repeating:
-    pin_subset_indices = [] # list of digit positions
-    pin_subset_indices.append(random.randrange(0,3))
-    pin_subset_indices.append(random.randrange(pin_subset_indices[0]+1,4))
-    pin_subset_indices.append(random.randrange(pin_subset_indices[1]+1,5))
+    psi = [] # list of digit positions
+    psi.append(random.randrange(1,4))
+    psi.append(random.randrange(psi[0]+1,5))
+    psi.append(random.randrange(psi[1]+1,6))
+
+    pin_subset_indices = ""
+    pin_subset_indices += str(psi[0] + 1)
+    pin_subset_indices += str(psi[1] + 1)
+    pin_subset_indices += str(psi[2] + 1)
 
     # Then generate a prompt message for PIN subset entry:
     message = "Please enter digits "
-    message += str(pin_subset_indices[0] + 1) + ", "
-    message += str(pin_subset_indices[1] + 1) + " and "
-    message += str(pin_subset_indices[2] + 1) + " of your PIN."
+    message += pin_subset_indices[0] + ", "
+    message += pin_subset_indices[1] + " and "
+    message += pin_subset_indices[2] + " of your PIN."
 
-    return message, pin_subset_indices # list
+    return message, pin_subset_indices # strings
 
 def authenticate_pin( # used in app/routes.py
-        pin_from_db,        # PIN retrived from database
-        pin_subset_entered, # Subset of pin digits entered in login form
-        pin_subset_indices  # The positions of the digits in the PIN subset
+        pin_from_db,        # string: PIN retrived from database
+        pin_subset_entered, # string: subset of pin digits entered in login form
+        pin_subset_indices  # list: positions of the digits in the PIN subset
     ):
-
-    pin_a = pin_from_db.split()
-    pse_a = pin_subset_entered.split()
-
-    validated = True
-    for p in range(len(pin_subset_indices)): # the subset digit positions
-        i = int(p)
-        if pse_a[i] != pin_a[int(pin_subset_indices[i])]:
-            validated = False
-            break
+    pin_stored = pin_from_db
+    pin_subset_entered = pin_subset_entered
+    pin_subset_indices = pin_subset_indices
+    pin_subset_used = ""
+    for d in range(len(pin_subset_indices)): # the subset digit positions
+        pin_subset_used += pin_stored[int(pin_subset_indices[int(d)])-1]
+    validated = False
+    if pin_subset_used.strip() == pin_subset_entered.strip():
+        validated = True
     return validated
 
 #==============================================================================

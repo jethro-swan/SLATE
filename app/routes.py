@@ -59,6 +59,8 @@ from app.core.slate_core import get_version
 #from app.core.slate_core import add_stewardship, remove_steward
 from app.core.slate_core import add_currency_stewardship
 from app.core.slate_core import add_namespace_stewardship
+from app.core.slate_core import remove_currency_stewardship
+#from app.core.slate_core import remove_namespace_stewardship
 from app.core.slate_core import random_filename
 #from app.core.slate_core import get_config
 
@@ -496,6 +498,11 @@ def login():
         if not bcrypt.checkpw(pwd.encode("utf-8"), pwd_hash.encode("utf-8")):
             return redirect(url_for("login"))
 
+#        print("\nform.pse.data = ", end="")
+#        print(form.pse.data)
+#        print("form.pro.data = ", end="")
+#        print(form.pro.data)
+
         if not authenticate_pin(stored_pin, form.pse.data, form.pro.data):
             flash("Incorrect PIN digits")
             return redirect(url_for("login"))
@@ -517,7 +524,7 @@ def login():
         else:
 
             session["previous_page"] = "home"       # (This one subsequently
-                                                    # serves as shift register).
+                                                    # serves as shift register)
             return redirect(url_for("home"))
 
 
@@ -1106,7 +1113,8 @@ def home():
         session["working_identity"] = working_identity_fph
         working_identity_hrns = primid_hrns
         working_identity_type = "primid"
-    working_identity_type = etype_to_adtype(working_identity_type)
+#    working_identity_type = etype_to_adtype(working_identity_type)
+    working_identity_type = "primid"
 
 
     # List all identities:
@@ -1224,9 +1232,6 @@ def home():
             # The following dictionary is used in template only if
             # HUB_MODE = "omtrad")
 
-
-
-
             # The following dictionary is used in template only if
             # HUB_MODE = "slate_simple")
             #account_hrns = fph_to_hrns(account_fph)
@@ -1261,8 +1266,8 @@ def home():
             m = identify_entity(nstewardship_fph)
             nstewardship["fph"] = nstewardship_fph
             nstewardship["hrns"] = entity_hrns
-            nstewardship["etype"] = etype
-            nstewardships.append(stewardship)
+            nstewardship["etype"] = "namespace"
+            nstewardships.append(nstewardship)
 
     cstewardships = []
     for cstewardship_fph in cstewardships_list:
@@ -1272,8 +1277,8 @@ def home():
             m = identify_entity(cstewardship_fph)
             cstewardship["fph"] = cstewardship_fph
             cstewardship["hrns"] = entity_hrns
-            cstewardship["etype"] = etype
-            cstewardships.append(stewardship)
+            cstewardship["etype"] = "currency"
+            cstewardships.append(cstewardship)
 
     return render_template(
         "home.html",
@@ -1299,9 +1304,6 @@ def home():
         number_of_indelible_messages = number_of_indelible_messages,
         number_of_messages = number_of_messages
     )
-
-
-
 
 #==============================================================================
 # This variant of the /home endpoint prioritizes *accounts* over *identities*
@@ -1483,13 +1485,6 @@ def list_accounts():
         cstewardships = cstewardships
      )
 
-
-
-
-
-
-
-
 #==============================================================================
 # Payment optionspage (first version).
 #
@@ -1518,8 +1513,8 @@ def payment_options():
     session["previous_page"] = page             # endpoint handlers. Some (but
                                                 # but by no means all) screens
                                                 # should be able to follow only
-                                                # from a limited set of previous
-                                                # screens.
+                                                # from a limited set of
+                                                # previous screens.
     group = "home" # Used to control top menu behaviour.
 
     namespace_steward = False
@@ -3945,10 +3940,10 @@ def currency_steward_add(currency_fph):
 
     form = StewardAddForm()
     if form.validate_on_submit():
-        new_steward_fph, new_steward_hrns, etypes, \
+        steward_fph, steward_hrns, etypes, \
         m = identify_entity(form.new_steward.data)
-        if new_steward_fph:
-            m = add_currency_stewardship(currency_fph, new_steward_fph)
+        if steward_fph:
+            m = add_currency_stewardship(currency_fph, steward_fph, primid_fph)
         else:
             flash(form.new_steward.data + " is not a registered identity")
 
@@ -3982,8 +3977,8 @@ def currency_steward_add(currency_fph):
 
 #
 @app.route("/currency/steward/remove/<currency_fph>/<steward_fph>",
-#           methods = ["GET", "POST"]
-           methods = ["GET"]
+           methods = ["GET", "POST"]
+#           methods = ["GET"]
           )
 @login_required
 def currency_steward_remove(currency_fph, steward_fph):
@@ -3999,8 +3994,19 @@ def currency_steward_remove(currency_fph, steward_fph):
 
     logged_in = current_user.is_authenticated
 
-    primid_fph, primid_hrns, etypes, \
-    m = identify_entity(current_user.get_id())
+    currency_fph, currency_hrns, etypes, m = identify_entity(currency_fph)
+    steward_fph, steward_hrns, etypes, m = identify_entity(steward_fph)
+    primid_fph, primid_hrns, etypes, m = identify_entity(current_user.get_id())
+
+    if not steward_fph:
+        flash("Steward does not exist - cannot remove")
+        return redirect("/home_ahc")
+    if not currency_fph:
+        flash("Currency does not exist - cannot remove steward")
+        return redirect("/home_ahc")
+    if steward_fph == primid_fph:
+        flash("Cannot remove this primid from stewardship")
+        return redirect("/home_ahc")
 
     if "working_identity" in session:
         working_identity_fph, working_identity_hrns, etypes, \
@@ -4016,8 +4022,8 @@ def currency_steward_remove(currency_fph, steward_fph):
     prefix, suffix, default_account_name, stewards_list, \
     m = get_currency_properties(currency_fph)
 
-    if primid_fph in stewards_list:
-        m = remove_steward(currency_fph, primid_fph, steward_fph)
+    if steward_fph in stewards_list:
+        m = remove_currency_stewardship(currency_fph, steward_fph, primid_fph)
 
     if hub_mode == "omtrad":
         return redirect("/home_ahc")
@@ -4237,7 +4243,7 @@ def create_pairing(owner_fph = ""):
     form = PairingCreateForm()
     if form.validate_on_submit():
 
-        ahid_hrns = form.ahid_hrns.data
+        ahid_hrns = form.ahid_hrns.data.strip()
         if not re_hrns.match(ahid_hrns):
             flash(ahid_hrns + " is not a valid identifier string")
             return redirect("/create_pairing/" + owner_fph)

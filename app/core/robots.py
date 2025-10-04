@@ -127,13 +127,12 @@ def create_robots(number_of_robots=10, robot_parent="sand.box.cc"):
     with open(ROBOTS_LIST, "w") as rl:
         for i in range(number_of_robots):
             name = "r" + str(i).zfill(d)
-            print(name, end="")
             ahid_fph, ahid_hrns, \
             m = new_ahid(name, robot_parent, "cc", robot=True)
             if m:
                 print(m)
                 continue
-            print(" :: " + ahid_fph + " <> " + ahid_hrns)
+            print(name + " :: " + ahid_fph + " <> " + ahid_hrns)
             rl.write(ahid_hrns + "\n")
 
     return True
@@ -210,14 +209,15 @@ def send_next_robot_response():
         reply_ahid_fph = random.choice(payer_primid_ahids)
         reply_currency_fph = random.choice(pairing[payee_ahid_fph])
         amount = random.randint(0, 999) * 100
-        message = "This payment has been sent by a robot selected at random " \
-                + "from among the robots currently using one of the " \
-                + "currencies in which you have an account. You, the payee, " \
-                + "have been selected at random from among the users of " \
-                + "that currency because you have already sent at least one " \
-                + "payment to one of the robots. The number of payments you " \
-                + "receive from robots will not exceed the number of " \
-                + "payments you send to robots."
+#        message = "This payment has been sent by a robot selected at random " \
+#                + "from among the robots currently using one of the " \
+#                + "currencies in which you have an account. You, the payee, " \
+#                + "have been selected at random from among the users of " \
+#                + "that currency because you have already sent at least one " \
+#                + "payment to one of the robots. The number of payments you " \
+#                + "receive from robots will not exceed the number of " \
+#                + "payments you send to robots."
+        message = "From randomly-selected robot in randomly-selected currency."
         m = ah_payment(
                 responding_robot_fph, reply_ahid_fph, reply_currency_fph,
                 amount, message
