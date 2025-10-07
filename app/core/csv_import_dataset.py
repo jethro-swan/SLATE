@@ -71,6 +71,7 @@ def import_csv_dataset(fpath, primid_id):
         if len(field) == 5:
             SC = c
             break
+#    SC = ":"
 
     row_count = 0
     for row in rows:
@@ -86,6 +87,7 @@ def import_csv_dataset(fpath, primid_id):
 #        annotation = field[4].strip()
         annotation = field[4].strip("\"")
 
+        # Column 1: *currency*
         if currency_hrns_[0] == "@": # absolute identifier path
             currency_hrns_ = currency_hrns_.lstrip("@")
         else: # relative identifier path

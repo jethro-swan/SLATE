@@ -2993,18 +2993,17 @@ def is_ancestor(entity_hrns, ancestor_id):
     ancestor_fph, ancestor_hrns, etype, m = identify_entity(ancestor_id)
     a = ancestor_hrns.split(NSS)
     e = entity_hrns.split(NSS)
+    if len(e) <= len(a):
+        return False
     is_an_ancestor = True
     while len(a) > 0:
-#        e_ = e.pop()
-#        a_ = a.pop()
-#        if e_ != a_:
         if e.pop() != a.pop():
             is_an_ancestor = False
             break
     return is_an_ancestor
 
 # ... used here primarily to determine whether the parent *namespace* for new
-# entities is the private *namespace* of the importing *primid".
+# entities is the private *namespace* of the importing *primid*.
 
 
 # Alternative version ...
@@ -3036,7 +3035,12 @@ def is_in_private_namespace(entity_hrns, pn_id):
     pn_fph, pn_hrns, etype, m = identify_entity(pn_id)
     return is_ancestor(entity_hrns, pn_hrns) or (entity_hrns == pn_hrns)
 
-#=============================================================================
+#==============================================================================
+# The pmap maps each *ahid*|*currency* pairs to an *account*. The pmap includes
+# only *ahid*s belonging to the owner (*primid*).
+#
+# Currently, the *ahid* and *currency* are identified by their HRNS while the
+# *account* is identified by its FPH.
 
 def retrieve_pmap(owner_id):
     owner_fph, owner_hrns, etypes, m = identify_entity(owner_id)
@@ -3059,10 +3063,11 @@ def retrieve_pmap(owner_id):
         return {}, ""
     else:
         pmap = pickle.loads(result[0])
-        return pmap, ""     # dictionary of  ahid_hrns:currency_hrns
-                            # pairs for display in table.
+        return pmap, "" # dictionary of *ahid*|*currency* pairs for display in
+                        # the home page table.
 
-#=============================================================================
+#==============================================================================
+# A new *ahid*|*currency* pairing is created:
 
 def new_pairing(
         primid_id,      # *primid* (HRNS or FPH, and must exist already)

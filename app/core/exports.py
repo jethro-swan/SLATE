@@ -112,7 +112,10 @@ def list_payments_for_account(account_id):
         return [], m
     if not account_fph:
         [], account_id + " is not a registered identifier"
+
     currency_fph, owner_fph, balance, volume, active, \
+    account_type, account_category, account_units, \
+    account_metrical_equivalence, account_dimensions, \
     m = get_account_properties(account_fph)
 
     owner_fph, owner_hrns, etypes, m = identify_entity(owner_fph)

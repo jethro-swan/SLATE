@@ -93,3 +93,24 @@ hub_mode = omtrad
 # balances will be plotted on a parabolic canvas similar to that used in the
 # LETSplay game:
 parabola_plotting = TRUE
+
+# Allow new registrant to enter/store address details:
+address_details_included = FALSE
+
+# Allow new registrant to enter/store location details (grid reference):
+location_details_included = FALSE
+
+# Allow new registrant to enter/store a contact phone number:
+phone_details_included = FALSE
+
+# Add a recovery question:
+recovery_questions_included = FALSE
+
+# Include a notification option:
+notification_option_included = FALSE
+
+# Record the country:
+country_included = FALSE
+
+# Allow the user include an SSH public key for command line access:
+ssh_public_key_allowed = False

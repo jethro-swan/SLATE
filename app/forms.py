@@ -487,35 +487,22 @@ class StewardAddForm(FlaskForm):
 
 class LoginForm(FlaskForm):
 
-    identity        = StringField(
-                        "identity"
-    #                    "identity",
-    #                    validators=[DataRequired("required")]
-                      )
+    identity        = StringField("identity")
 
-    email           = StringField(
-                        "email address"
-                      )
-
-    ##pro_a = pin_random_ord()
-    ##pin_prompt = pin_prompt_message(pro_a)
+    email           = StringField("email address")
 
     pin_prompt, pin_subset_indices = pin_subset_prompt()
-#    print("A: pin_subset_indices = ", end="")
-#    print(pin_subset_indices)
-#    print("Z: " + str(type(pin_subset_indices)))
 
     pro             = HiddenField(default=pin_subset_indices)
-#    pro             = HiddenField(pin_subset_indices)
-    #pro             = HiddenField(default=pro_a)
-##    pse             = PasswordField(
+#    pro             = HiddenField()
+
     pse             = StringField(
                          pin_prompt,
-                         #render_kw={"autocomplete": "off"},
+#                         "PIN: ",
                          render_kw={"autocomplete": "new-password"},
                          validators=[DataRequired("required")]
                       )
-    #
+
     password        = PasswordField(
                           "password",
                           render_kw={"autocomplete": "on"},

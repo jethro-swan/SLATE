@@ -10,6 +10,11 @@ from app.core.slate_core import identify_entity
 from app.core.slate_core import new_primid
 from app.core.slate_core import new_account
 from app.core.slate_core import new_pairing
+from app.core.slate_core import new_namespace
+from app.core.slate_core import complete_parent_namespace
+from app.core.slate_core import is_ancestor
+from app.core.slate_core import _is_ancestor
+
 from app.core.fph_hrns_maps import hrns_to_fph, fph_to_hrns
 
 def list_etypes(e_fph):
@@ -121,3 +126,13 @@ m = new_pairing(
 
 print("account_fph = " + account_fph)
 print("account_hrns = " + account_hrns)
+
+ns = []
+ns_hrns = "bb.cc"
+for n in ["zz", "yy", "xx", "ww", "vv", "uu"]:
+    ns_fph, ns_hrns, m = new_namespace(n, ns_hrns, "cc", "bb.cc")
+    ns.append(ns_hrns)
+for i in range(len(ns)):
+    print(ns[i])
+print(bool(is_ancestor(ns[4], ns[0])))
+print(bool(_is_ancestor(ns[4], ns[0])))

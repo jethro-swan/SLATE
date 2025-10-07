@@ -35,6 +35,10 @@ ap.add_argument(
     dest = "field_separator", action = "store",
     default = "comma"
 )
+ap.add_argument(
+    "-r", "--display-report", help = "Display report of entities created",
+    dest = "show_report", action = "store_true"
+)
 args = ap.parse_args()
 
 tfpath = SLATE_TEMP + "/" + random_filename()
@@ -67,8 +71,9 @@ report, errors = import_csv_dataset(tfpath, primid_fph)
 
 os.unlink(tfpath)
 
-for line in report:
-    print(report)
+if args.show_report:
+    for line in report:
+        print(line)
 
 for line in errors:
     print(line)
