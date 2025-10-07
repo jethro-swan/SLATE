@@ -15,7 +15,7 @@ from app.core.dbm_functions import dbm_create_map
 #------------------------------------------------------------------------------
 # Create new empty configuration key:value map (run from ~/initialize.py)
 
-def create_config_db():
+def create_config_map():
     # If the databases exists already, this is deleted after a time-stamped
     # copy has been saved.
     T = timestamp()
@@ -63,7 +63,7 @@ def set_config(config_key, config_value):
 
 #------------------------------------------------------------------------------
 
-def read_config_file_to_db():
+def read_config_file_to_map():
     re_comment = re.compile(r"^#.*$")
     with open(CONFIG, "r") as cf:
         cflines = cf.readlines()

@@ -47,8 +47,8 @@ from app.core.common import filename_timestamp
 
 from app.core.dbm_functions import dbm_keys
 
-from app.core.configdb import create_config_db
-from app.core.configdb import read_config_file_to_db
+from app.core.configdb import create_config_map
+from app.core.configdb import read_config_file_to_map
 from app.core.configdb import get_config
 
 from app.core.flags import create_flag_db
@@ -58,8 +58,8 @@ from app.core.robots import create_robots
 
 
 # The hub configuration map is populated from the ~/hub_config file.
-create_config_db()
-read_config_file_to_db()
+create_config_map()
+read_config_file_to_map()
 # The configuration values are displayed:
 for k in dbm_keys(CONFIG_MAP):
     print(k + " : " + str(get_config(k)))
