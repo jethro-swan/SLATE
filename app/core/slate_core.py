@@ -26,10 +26,10 @@ from app.core.display import integer_to_money_format
 
 from app.core.fph_hrns_maps import hrns_to_fph, fph_to_hrns, create_maps
 from app.core.fph_hrns_maps import delete_fph_from_map
-from app.core.fph_hrns_maps import get_parent
-from app.core.fph_hrns_maps import record_parent
-from app.core.fph_hrns_maps import record_private_namespace_root
-from app.core.fph_hrns_maps import get_private_namespace_root
+#from app.core.fph_hrns_maps import get_parent
+#from app.core.fph_hrns_maps import record_parent
+#from app.core.fph_hrns_maps import record_private_namespace_root
+#from app.core.fph_hrns_maps import get_private_namespace_root
 
 from app.core.dbm_functions import dbm_store, dbm_fetch, dbm_delete, dbm_keys
 from app.core.dbm_functions import dbm_create_map
@@ -125,12 +125,63 @@ def get_hub_mode():
 
 
 #==============================================================================
-# Global data, flags, etc.
+
+def get_parent(entity_fph):
+    with sqlite3.connect(IDENTIFIERS_DB) as conn:
+        cursor = conn.cursor()
+        cursor.execute(
+            "SELECT parent_fph FROM entities_registered WHERE entity_fph = ?",
+            (entity_fph,)
+        )
+        result = cursor.fetchone()
+        cursor.close()
+    if result is None: # assume "public" *namespace* (FPH = "")
+        return ""
+    elif result[0] is None:
+        return ""
+    else:
+        return result[0]
+
+
+def record_parent(id_fph, parent_fph):
+    with sqlite3.connect(IDENTIFIERS_DB) as conn:
+        cursor = conn.cursor()
+        cursor.execute(
+            "UPDATE entities_registered SET parent_fph = ? WHERE entity_fph = ?",
+            (parent_fph, id_fph)
+        )
+        conn.commit()
+        cursor.close()
 
 
 
 
+def get_private_namespace_root(entity_fph):
+    with sqlite3.connect(IDENTIFIERS_DB) as conn:
+        cursor = conn.cursor()
+        cursor.execute(
+            "SELECT pnsr_fph FROM entities_registered WHERE entity_fph = ?",
+            (entity_fph,)
+        )
+        result = cursor.fetchone()
+        cursor.close()
+    if result is None: # assume "public" *namespace* (FPH = "")
+        return ""
+    elif result[0] is None:
+        return ""
+    else:
+        return result[0]
 
+
+def record_private_namespace_root(id_fph, private_namespace_root_fph):
+    with sqlite3.connect(IDENTIFIERS_DB) as conn:
+        cursor = conn.cursor()
+        cursor.execute(
+            "UPDATE entities_registered SET pnsr_fph = ? WHERE entity_fph = ?",
+            (private_namespace_root_fph, id_fph)
+        )
+        conn.commit()
+        cursor.close()
 
 
 
@@ -193,13 +244,13 @@ def create_identifiers_db():
 
     with sqlite3.connect(IDENTIFIERS_DB) as conn:
         cursor = conn.cursor()
-        # 2025-06-28
-        # - Added table to identify types associated with a registered FPH
+        # 2025-10-08: Added PNSR (Private Namespace Root) field
         #
         cursor.execute(
             "CREATE TABLE IF NOT EXISTS entities_registered (" \
             + "entity_fph TEXT PRIMARY KEY, " \
             + "parent_fph TEXT, " \
+            + "pnsr_fph TEXT, " \
             + "namespace INTEGER NOT NULL DEFAULT 0, " \
             + "currency INTEGER NOT NULL DEFAULT 0, " \
             + "account INTEGER NOT NULL DEFAULT 0, " \
@@ -431,8 +482,8 @@ def register_identifier(identifier_hrns):
         return ""
 
     # The parent *namespace* FPH is registered in the child.parent map:
-    if not record_parent(identifier_fph, parent_fph):
-        return ""
+#    if not record_parent(identifier_fph, parent_fph):
+#        return ""
 
     # Every identifier has both a parent *namespace* (its immediate ancestor)
     # and a private *namespace* root (PNSR), the most recent ancestral
@@ -448,15 +499,28 @@ def register_identifier(identifier_hrns):
     # parent *namespace*. If a *primid* is subsequntly registered to that
     # identifier, its PNSR is overwritten with the FPH of its identifier.
 
-    inherited_pnsr_fph = get_private_namespace_root(parent_fph)
+#    inherited_pnsr_fph = get_private_namespace_root(parent_fph)
 #    print("inherited_pnsr_fph = " + inherited_pnsr_fph)
-    if not record_private_namespace_root(identifier_fph, inherited_pnsr_fph):
-        return ""
+#    if not record_private_namespace_root(identifier_fph, inherited_pnsr_fph):
+#        return ""
 
     # An entry is created for this FPH in the [entities_registered] table if
     # and only if it does not exist already.
     with sqlite3.connect(IDENTIFIERS_DB) as conn:
         cursor = conn.cursor()
+        cursor.execute(
+            "SELECT pnsr_fph FROM entities_registered WHERE entity_fph = ?",
+            (parent_fph,)
+        )
+        result = cursor.fetchone()
+        if result is None: # assume "public" *namespace* (FPH = "")
+            pnsr_fph = ""
+        elif result[0] is None:
+            pnsr_fph = ""
+        else:
+            pnsr_fph = result[0]
+
+
         cursor.execute(
             "SELECT * FROM entities_registered WHERE entity_fph = ?",
             (identifier_fph,)
@@ -466,17 +530,20 @@ def register_identifier(identifier_hrns):
             insert_str = "INSERT INTO entities_registered (" \
                        + "entity_fph, " \
                        + "parent_fph, " \
+                       + "pnsr_fph, " \
                        + "namespace, " \
                        + "currency, " \
                        + "account, " \
                        + "primid, " \
                        + "secid, " \
                        + "ahid" \
-                       + ") VALUES (?, ?, ?, ?, ?, ?, ?, ?)"
+                       + ") VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)"
             # Initially, no entity type is registered for this identifier:
             cursor.execute(
-                insert_str, (identifier_fph, parent_fph, 0, 0, 0, 0, 0, 0)
+                insert_str,
+                (identifier_fph, parent_fph, pnsr_fph, 0, 0, 0, 0, 0, 0)
             )
+            # NB: The PNSR will be recorded subsequently.
             conn.commit()
         cursor.close()
 
@@ -634,7 +701,7 @@ def register_full_entity_set(identifier_fph):
     return ""
 
 def register_primid_entity_set(identifier_fph):
-    # This is used when registerind a new *primid*:
+    # This is used when registering a new *primid*:
     if not re_fph.match(identifier_fph):
         return "Invalid FPH: " + identifier_fph
     with sqlite3.connect(IDENTIFIERS_DB) as conn:
@@ -648,15 +715,17 @@ def register_primid_entity_set(identifier_fph):
         if result is None:
             cursor.close()
             return "Identifier " + identifier_fph + " is not registered"
+        # NB: Since this is registering a *primid*, its PNSR is also recorded.
         u = "UPDATE entities_registered SET " \
           + "namespace = 1, " \
           + "currency = 1, " \
           + "account = 1, " \
           + "primid = 1, " \
           + "ahid = 1 " \
+          + "pnsr_fph, " \
           + "WHERE entity_fph = ?"
         cursor.execute(
-            u, (identifier_fph,)
+            u, (identifier_fph,identifier_fph)
         )
         conn.commit()
         cursor.close()
@@ -1118,10 +1187,12 @@ def new_primid(
     # The PNSR of this identifier is overwritten with its FPH because it has a
     # *primid* registered to it, making it the root of a private *namespace*
     # tree.
-    if not record_private_namespace_root(primid_fph, primid_fph):
-        print("Unable to record primid FPH as PNSR")
-        errors += "Unable to record primid FPH as PNSR\n"
-        return "", "", "", errors
+#    if not record_private_namespace_root(primid_fph, primid_fph):
+#        print("Unable to record primid FPH as PNSR")
+#        errors += "Unable to record primid FPH as PNSR\n"
+#        return "", "", "", errors
+    record_private_namespace_root(primid_fph, primid_fph)
+
 
     # At the point of its creation, a *primid* has no *secids", so an empty
     # list is created:

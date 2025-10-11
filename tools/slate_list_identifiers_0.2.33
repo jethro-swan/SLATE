@@ -4,10 +4,8 @@ import sqlite3
 from prettytable import PrettyTable
 from app.core.constants import IDENTIFIERS_DB, ENTITIES_DB
 from app.core.fph_hrns_maps import hrns_to_fph, fph_to_hrns
-#from app.core.fph_hrns_maps import get_parent
-from app.core.slate_core import get_parent
-#from app.core.fph_hrns_maps import get_private_namespace_root
-from app.core.slate_core import get_private_namespace_root
+from app.core.fph_hrns_maps import get_parent
+from app.core.fph_hrns_maps import get_private_namespace_root
 from app.core.slate_core import get_entity_types
 
 with sqlite3.connect(IDENTIFIERS_DB) as conn:

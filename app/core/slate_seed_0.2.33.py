@@ -8,10 +8,8 @@ from app.core.common import nshash
 from app.core.regexp_list import *
 #from app.core.slate_core import hrns_to_fph, fph_to_hrns, record_parent
 from app.core.fph_hrns_maps import hrns_to_fph, fph_to_hrns
-#from app.core.fph_hrns_maps import record_parent
-from app.core.slate_core import record_parent
-#from app.core.fph_hrns_maps import record_private_namespace_root
-from app.core.slate_core import record_private_namespace_root
+from app.core.fph_hrns_maps import record_parent
+from app.core.fph_hrns_maps import record_private_namespace_root
 from app.core.slate_core import register_identifier
 from app.core.slate_core import register_entity_type
 from app.core.slate_core import new_account

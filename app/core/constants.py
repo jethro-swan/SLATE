@@ -52,6 +52,8 @@ SLATE_SESSION_DB    = "/var/slate/active/db/slate_session.db"
 MESSAGES_DB         = "/var/slate/active/db/messages.db"
 HUBS_DB             = "/var/slate/active/db/hubs.db"
 ROBOTS_DB           = "/var/slate/active/db/robots.db"
+FPH_HRNS_MAP        = "/var/slate/active/maps/fph_hrns_map.db"
+MAP_DB              = "/var/slate/active/maps/map.db"
 
 # DBM maps:
 MAP_BKP_DIR         = "/var/slate/active/maps/backups/"

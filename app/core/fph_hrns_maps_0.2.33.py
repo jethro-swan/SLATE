@@ -1,15 +1,10 @@
 import os
-import sqlite3
 
 from app.core.unix_functions import fcopy
 from app.core.regexp_list import re_fph, re_hrns
 from app.core.constants import DB_DIR
-from app.core.constants import MAP_BKP_DIR
-from app.core.constants import FPH_TO_HRNS_MAP, HRNS_C_FPH_MAP
+from app.core.constants import MAP_BKP_DIR, FPH_TO_HRNS_MAP, HRNS_C_FPH_MAP
 from app.core.constants import FPH_PARENT_MAP
-from app.core.constants import FPH_HRNS_MAP
-from app.core.constants import MAP_DB
-
 from app.core.constants import PNSR_MAP
 from app.core.constants import SUBSTRATE_FPH
 from app.core.common import filename_timestamp as timestamp
@@ -40,256 +35,14 @@ from app.core.dbm_functions import dbm_create_map
 #   payments.db
 
 
-# 2025-10-08: Moving FPH<>HRNS mapping from DBM to SQLite3
-
 
 #------------------------------------------------------------------------------
 # Create new empty FPH<>HRNS and entity>parent (FPH>FPH) maps:
 
-# 2025-10-08: A collection of DBM maps is replace by a single SQLite3 database.
-# Replace create_maps() with create_map() later.
+# 2025-09-09: Several lines have been removed (prefixed ###) because all maps
+# and other data are backed up by the ~/initsliaze.py script.
 
-def create_maps(): # SQLite
-    # If the databases exists already, they are deleted. (A time-stamped
-    # copy will have been saved by ~/initialize.py.)
-    T = timestamp()
-    if os.path.exists(FPH_HRNS_MAP):
-        os.remove(FPH_HRNS_MAP)
-
-    substrate_fph = nshash("")
-
-    with sqlite3.connect(MAP_DB) as conn:
-        cursor = conn.cursor()
-        cursor.execute(
-            "CREATE TABLE IF NOT EXISTS fph_hrns_map (" \
-            + "fph TEXT PRIMARY KEY NOT NULL, " \
-            + "hrns TEXT DEFAULT ''" \
-            + ");"
-        )
-        cursor.execute(
-            "CREATE TABLE IF NOT EXISTS hrns_fph_map (" \
-            + "hrns TEXT PRIMARY KEY NOT NULL, " \
-            + "fph TEXT DEFAULT ''" \
-            + ");"
-        )
-        cursor.execute(
-            "CREATE TABLE IF NOT EXISTS hrns_c_fph_map (" \
-            + "hrns TEXT PRIMARY KEY NOT NULL, " \
-            + "fph TEXT DEFAULT ''" \
-            + ");"
-        )
-        conn.commit()
-        cursor.close()
-
-    return
-
-
-#------------------------------------------------------------------------------
-# Retrieve HRNS from FPH:
-
-def fph_to_hrns(fph):
-    if not re_fph.match(fph):
-        return ""
-    with sqlite3.connect(MAP_DB) as conn:
-        cursor = conn.cursor()
-        cursor.execute("SELECT hrns FROM fph_hrns_map WHERE fph = ?", (fph,))
-        result = cursor.fetchone()
-    if (result is None) or (result[0] is None):
-        #return ""
-        hrns = ""
-    else:
-        #return result[0]
-        hrns = result[0]
-#    print("fph_to_hrns: " + fph + " > " + hrns)
-    return hrns
-
-fph_exists = fph_to_hrns # function alias
-
-def hrns_exists_already(hrns):
-    fph = nshash(hrns)
-    return (fph_to_hrns(fph) == hrns)
-
-
-def hrns_to_fph(hrns): # returns FPH and message
-    if hrns == "":
-        return SUBSTRATE_FPH, ""
-    elif not re_hrns.match(hrns):
-        return "", "Invalid HRNS"
-    # Most frequently (when mapping a known HRNS to its FPH), this function
-    # will not add anything to the HRNS>FPH and FPH>HRNS map. Only when an
-    # unknown HRNS is passed will the map be extended.
-    with sqlite3.connect(MAP_DB) as conn:
-        cursor = conn.cursor()
-        cursor.execute("SELECT fph FROM hrns_fph_map WHERE hrns = ?", (hrns,))
-        result = cursor.fetchone()
-        if (result is not None) and (result[0] != ""):
-            cursor.close()
-            return result[0], "" # known FPH returned
-        else:
-            # In the vast majority of cases, the FPH will be a simple hash of
-            # the HRNS.
-            fph = nshash(hrns)
-            # If the FPH is already in the FPH>HRNS map, it will be rehashed
-            # repeatedly until no collision is found. (Although this will be an
-            # exceedingly rare event, it will not be impossible.)
-#            tcount = 0 # TESTSTUFF
-            while fph_to_hrns(fph):
-#                tcount += 1 # TESTSTUFF
-                fph = nshash(fph)
-#            if tcount > 0: # TESTSTUFF
-#                print("Rehash required: " + str(tcount)) # TESTSTUFF
-            cursor.execute(
-                "INSERT INTO fph_hrns_map (fph, hrns) VALUES (?, ?)",
-                (fph, hrns)
-            )
-            cursor.execute(
-                "INSERT INTO hrns_fph_map (hrns, fph) VALUES (?, ?)",
-                (hrns, fph)
-            )
-            conn.commit()
-            cursor.close()
-            return fph, ""
-
-def __hrns_to_fph(hrns): # returns FPH and message
-    if hrns == "":
-        return SUBSTRATE_FPH, ""
-    fph = dbm_fetch(HRNS_C_FPH_MAP, hrns) # (Expecting "")
-    if fph: # (exceedingly improbable)
-        return fph, ""
-
-
-    fph = nshash(hrns)
-    hrns_ = fph_to_hrns(fph)
-    if hrns_:
-        if hrns == hrns_:
-            return fph, ""
-        else:
-            return "", "inconsistent FPH>HRNS mapping" # should NEVER happen.
-    else:
-        while fph_to_hrns(fph):
-            fph = nshash(fph)
-        while not dbm_store(HRNS_C_FPH_MAP, hrns, fph):
-            continue
-    while not dbm_store(FPH_TO_HRNS_MAP, fph, hrns):
-        continue
-
-    return fph, ""
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-save_fph_to_map = hrns_to_fph # alias
-
-#------------------------------------------------------------------------------
-
-def delete_fph_from_map(fph):
-    if not re_fph.match(fph):
-        return "Invalid FPH"
-    with sqlite3.connect(MAP_DB) as conn:
-        cursor = conn.cursor()
-        cursor.execute(
-            "SELECT * FROM fph_hrns_map WHERE fph = ?",
-            (fph,)
-        )
-        result = cursor.fetchone()
-        if (result is None) or (result[0] is None):
-            return "FPH not registered"
-        else:
-            cursor.execute(
-                "DELETE FROM fph_hrns_map WHERE fph = ?",
-                (fph,)
-            )
-            conn.commit()
-        cursor.close()
-    return ""
-
-#------------------------------------------------------------------------------
-
-
-
-#==============================================================================
-# When any entity is moved to a new *namespace*, the HRNS>FPH and FPH>HRNS
-# mappings must be updated.
-
-def update_mapping(current_hrns, new_hrns):
-
-    if not re_hrns.match(current_hrns):
-        return current_hrns + " is not a valid HRNS", ""
-
-    current_fph, m = hrns_to_fph(current_hrns)
-    if not current_fph:
-        return "HRNS " + current_hrns + " has not been registered"
-    if m:
-        return m # error message
-
-    # The entity's HRNS is updated but its FPH must remain the same. Therefore,
-    # whereas the original FPH is a simple hash of the HRNS when first mapped,
-    # any subsequent update to the HRNS must be mapped to the original FPH (and
-    # vice versa).
-    #
-    # (1) HRNS>FPH map must be updated
-    #dbm_delete(HRNS_C_FPH_MAP, current_hrns)
-    dbm_store(HRNS_C_FPH_MAP, new_hrns, current_fph)
-
-    # (2) FPH>HRNS map must be updated
-    #dbm_delete(FPH_TO_HRNS_MAP, current_fph)
-    dbm_store(FPH_TO_HRNS_MAP, current_fph, new_hrns)
-
-    return ""
-
-#==============================================================================
-##
-# Added 2025-08-30:
-
-#------------------------------------------------------------------------------
-# Record parent FPH:
-
-#def record_parent(id_fph, parent_fph):
-#    return dbm_store(FPH_PARENT_MAP, id_fph, parent_fph)
-
-# Retrieve parent FPH from any entity FPH:
-
-#def get_parent(id_fph):
-#    if re_fph.match(id_fph):
-#        parent_fph = dbm_fetch(FPH_PARENT_MAP, id_fph).strip()
-#        return parent_fph
-#    else:
-#        return ""
-
-#------------------------------------------------------------------------------
-# Record private "namespace* root FPH:
-
-#def record_private_namespace_root(id_fph, private_namespace_root_fph):
-#    # Return True iff stored successfully:
-#    return dbm_store(PNSR_MAP, id_fph, private_namespace_root_fph)
-
-# Retrieve private "namespace* root FPH:
-
-#def get_private_namespace_root(id_fph):
-#    if re_fph.match(id_fph):
-#        private_namespace_root_fph = dbm_fetch(PNSR_MAP, id_fph).strip()
-#        return private_namespace_root_fph
-#    else:
-#        return ""
-
-
-
-
-
-###############################################################################
-
-def _create_maps(): # DBM map
+def create_maps(): # MDB map
     # If the databases exists already, they are deleted after a time-stamped
     # copy has been saved.
     T = timestamp()
@@ -323,7 +76,7 @@ def _create_maps(): # DBM map
 #------------------------------------------------------------------------------
 # Retrieve HRNS from FPH:
 
-def _fph_to_hrns(fph):
+def fph_to_hrns(fph):
     if re_fph.match(fph):
         hrns = dbm_fetch(FPH_TO_HRNS_MAP, fph).strip()
         return hrns
@@ -332,7 +85,7 @@ def _fph_to_hrns(fph):
 
 fph_exists = fph_to_hrns # function alias
 
-def _hrns_exists_already(hrns):
+def hrns_exists_already(hrns):
     fph = nshash(hrns)
     return (fph_to_hrns(fph) == hrns)
 
@@ -340,7 +93,7 @@ def _hrns_exists_already(hrns):
 # will not add anything to the FPH>HRNS map. Only when an unknown HRNS is
 # passed will the FPH>HRNS map be affected.
 
-def _hrns_to_fph(hrns): # returns FPH and message
+def hrns_to_fph(hrns): # returns FPH and message
 
     if hrns == "":
         return SUBSTRATE_FPH, ""
@@ -390,11 +143,11 @@ def _hrns_to_fph(hrns): # returns FPH and message
 
     return fph, ""
 
-#save_fph_to_map = hrns_to_fph # alias
+save_fph_to_map = hrns_to_fph # alias
 
 #------------------------------------------------------------------------------
 
-def _delete_fph_from_map(fph):
+def delete_fph_from_map(fph):
 
     if fph is None: ## 2025-01-212
         fph = ""
@@ -411,7 +164,7 @@ def _delete_fph_from_map(fph):
 # When any entity is moved to a new *namespace*, the HRNS>FPH and FPH>HRNS
 # mappings must be updated.
 
-def _update_mapping(current_hrns, new_hrns):
+def update_mapping(current_hrns, new_hrns):
 
     if not re_hrns.match(current_hrns):
         return current_hrns + " is not a valid HRNS", ""
@@ -444,12 +197,12 @@ def _update_mapping(current_hrns, new_hrns):
 #------------------------------------------------------------------------------
 # Record parent FPH:
 
-def _record_parent(id_fph, parent_fph):
+def record_parent(id_fph, parent_fph):
     return dbm_store(FPH_PARENT_MAP, id_fph, parent_fph)
 
 # Retrieve parent FPH from any entity FPH:
 
-def _get_parent(id_fph):
+def get_parent(id_fph):
     if re_fph.match(id_fph):
         parent_fph = dbm_fetch(FPH_PARENT_MAP, id_fph).strip()
         return parent_fph
@@ -459,13 +212,13 @@ def _get_parent(id_fph):
 #------------------------------------------------------------------------------
 # Record private "namespace* root FPH:
 
-def _record_private_namespace_root(id_fph, private_namespace_root_fph):
+def record_private_namespace_root(id_fph, private_namespace_root_fph):
     # Return True iff stored successfully:
     return dbm_store(PNSR_MAP, id_fph, private_namespace_root_fph)
 
 # Retrieve private "namespace* root FPH:
 
-def _get_private_namespace_root(id_fph):
+def get_private_namespace_root(id_fph):
     if re_fph.match(id_fph):
         private_namespace_root_fph = dbm_fetch(PNSR_MAP, id_fph).strip()
         return private_namespace_root_fph
