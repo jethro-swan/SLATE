@@ -13,6 +13,7 @@ from app.core.slate_core import get_account_currency
 from app.core.slate_core import get_account_properties
 from app.core.slate_core import identify_entity
 from app.core.slate_core import list_currency_accounts
+from app.core.slate_core import get_ahid_primid
 from app.core.slate_core import retrieve_pairing_account_fph as pairing_account
 
 from app.core.exports import list_payments_in_currency
@@ -112,16 +113,16 @@ def _plot_accounts_circle(currency_id):
     #
     with open(GRAPHS + "ahid_circle.svg", "w") as ac:
         ac.write(
-            "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
+            '<?xml version="1.0" encoding="UTF-8"?>\n'
         )
         ac.write(
-            "<svg width=\"" + str(h_len) + "\" height=\"" + str(v_len) + "\"" \
-            + " viewbox=\"0 0 400 400\" xmlns=\"http://www.w3.org/2000/svg\">"
+            '<svg width="' + str(h_len) + '" height="' + str(v_len) + '"' \
+            + ' viewbox="0 0 400 400" xmlns="http://www.w3.org/2000/svg">'
         )
         # First the dots are drawn:
         for ahid_fph in A:
             ac.write(
-                "\n<circle cx=\"" + str(A[ahid_fph]["x"]) \
+                "<circle cx=\"" + str(A[ahid_fph]["x"]) \
                 + "\" cy=\"" + str(A[ahid_fph]["y"]) \
                 + "\" r=\"" + str(4) + "\" " \
                 + "style=\"stroke-width:1;stroke:black;fill:black;\" " \
@@ -151,28 +152,38 @@ def _plot_accounts_circle(currency_id):
 #            )
 
             ac.write(
-                '\n<line ' \
+                '<line ' \
                 + 'x1="' + str(x1) + '" y1="' + str(y1) + '" ' \
                 + 'x2="' + str(x2) + '" y2="' + str(y2) + '" ' \
                 + 'style="stroke:green;stroke-width:3;" ' \
-                + 'transform="translate(200,200)"/>'
+                + 'transform="translate(200,200)"/>\n'
             )
 
-        ac.write("\n</svg>")
+        ac.write("</svg>")
 
 
-def accounts_circle(currency_id):
+def accounts_circle(currency_id, primid_id):
+    primid_fph, primid_hrns, etypes, m = identify_entity(primid_id)
     currency_fph, currency_hrns, etypes, m = identify_entity(currency_id)
     if not currency_fph:
-        return "Identifier " + currency_id + " is not registered"
+        return [], "Identifier " + currency_id + " is not registered"
     if not ("currency" in etypes):
-        return "Identifier " + currency_hrns + " has no currency registered"
+        return [], "Identifier " + currency_hrns + " has no currency registered"
     payments_list, m = list_payments_in_currency(currency_id)
     ahids_fph_list = []
     for row in payments_list:
-        payer_ahid_fph = row[2]
-        payee_ahid_fph = row[3]
-        print("from " + row[2] + " to " + row[3] + " in " + row[4])
+#        timestamp = row[0]
+#        payment_id = row[1]
+#        payer_ahid_hrns = row[2]
+        payer_ahid_fph, m = hrns_to_fph(row[2])
+#        payee_ahid_hrns = row[3]
+        payee_ahid_fph, m = hrns_to_fph(row[3])
+#        currency_hrns = row[4]
+#        amount = row[5]
+#        payer_balance = row[6]
+#        payee_balance = row[7]
+#        annotation = row[8]
+#        print("from " + row[2] + " to " + row[3] + " in " + row[4])
         if not (payer_ahid_fph in ahids_fph_list):
             ahids_fph_list.append(payer_ahid_fph)
         if not (payee_ahid_fph in ahids_fph_list):
@@ -183,9 +194,11 @@ def accounts_circle(currency_id):
     # *ahid* FPH as a key.
     A = {}
     N = len(ahids_fph_list)
+    print("N = " + str(N))
     circ = math.pi * 2
+    circumference = circ * 190
     arc = circ/N
-    r = 190 # radius within 400x400 square
+    r = 190 # radius within 400x400 square (10-pixel margin)
     n = 0
     for ahid_fph in ahids_fph_list: # N *ahids*
         p = {}
@@ -193,7 +206,13 @@ def accounts_circle(currency_id):
         a = n * arc
         p["x"] = r * math.sin(a)
         p["y"] = r * math.cos(a)
+        p["primid_fph"] = get_ahid_primid(ahid_fph)
+        A[ahid_fph] = p
         n += 1
+
+    blobradius = circumference/n/4
+    if blobradius > 5:
+        blobradius = 5
 
     # Each dot in the plot represents an *account*. Since each *account* is
     # identified by a *currency*|*ahid* pairing and the *currency* has been
@@ -206,56 +225,97 @@ def accounts_circle(currency_id):
     v_shift = str(v_len/2)
     #
     # (2) The list of payments in this *currency* is retrieved.
-    for row in payments_list:
-        print("from " + row[2] + " to " + row[3] + " in " + row[4])
-    #
     with open(GRAPHS + "ahid_circle.svg", "w") as ac:
+        ac.write('<?xml version="1.0" encoding="UTF-8"?>\n')
         ac.write(
-            "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
-        )
-        ac.write(
-            "<svg width=\"" + str(h_len) + "\" height=\"" + str(v_len) + "\"" \
-            + " viewbox=\"0 0 400 400\" xmlns=\"http://www.w3.org/2000/svg\">"
+            '<svg width="' + str(h_len) + '" height="' + str(v_len) \
+            + '" viewbox="0 0 400 400" ' \
+            + ' version="1.1" xmlns="http://www.w3.org/2000/svg">\n'
         )
         # First the dots are drawn:
         for ahid_fph in A:
+            if A[ahid_fph]["primid_fph"] == primid_fph:
+                fill = "red"
+            else:
+                fill = "black"
             ac.write(
-                "\n<circle cx=\"" + str(A[ahid_fph]["x"]) \
-                + "\" cy=\"" + str(A[ahid_fph]["y"]) \
-                + "\" r=\"" + str(4) + "\" " \
-                + "style=\"stroke-width:1;stroke:black;fill:black;\" " \
-                + "transform=\"translate(200,200)\"/>"
+                '<circle cx="' + str(A[ahid_fph]["x"]) + '" cy="' \
+                + str(A[ahid_fph]["y"]) + '" r="' + str(blobradius) + '"' \
+                + ' style="stroke-width:1;'
+                + 'stroke:' + fill + ';fill:' + fill + ';"' \
+                + ' transform="translate(200,200)" />\n'
             )
         # Then the payments between *accounts* are drawn in:
         for p in payments_list:
-            payer_ahid_fph, m = hrns_to_fph(p[2])
-            payee_ahid_fph, m = hrns_to_fph(p[3])
-            payer_account_fph, primid_fph, \
-            m = pairing_account(payer_ahid_fph, currency_id)
-            payee_account_fph, primid_fph, \
-            m = pairing_account(payer_ahid_fph, currency_id)
+            payer_fph, m = hrns_to_fph(p[2]) # ahid
+            payee_fph, m = hrns_to_fph(p[3]) # ahid
 
-            x1 = A[payer_ahid_fph]["x"]
-            y1 = A[payer_ahid_fph]["y"]
-            x2 = A[payee_ahid_fph]["x"]
-            y2 = A[payee_ahid_fph]["y"]
+            payer_account_fph, primid_fph, \
+            m = pairing_account(payer_fph, currency_fph)
+
+            payee_account_fph, primid_fph, \
+            m = pairing_account(payee_fph, currency_fph)
+
+            if not ((payer_fph in A.keys()) and (payee_fph in A.keys())):
+                continue
+
+            x1 = A[payer_fph]["x"]
+            y1 = A[payer_fph]["y"]
+            x2 = A[payee_fph]["x"]
+            y2 = A[payee_fph]["y"]
 
             ac.write(
-                '\n<line ' \
+                '<line ' \
                 + 'x1="' + str(x1) + '" y1="' + str(y1) + '" ' \
                 + 'x2="' + str(x2) + '" y2="' + str(y2) + '" ' \
-                + 'style="stroke:green;stroke-width:3;" ' \
-                + 'transform="translate(200,200)"/>'
+                + ' style="stroke:green;stroke-width:1;" ' \
+                + ' transform="translate(200,200)"/>\n'
             )
+        ac.write('</svg>\n')
 
-        ac.write("\n</svg>")
+    with open(GRAPHS + "ahid_circle.html", "w") as ac:
+        ac.write(
+            '<!DOCTYPE html>\n' \
+            + '<html>\n' \
+            + '<head>\n' \
+            + '<title>payments graph</title>\n' \
+            + '<style type="text/css">\n' \
+            + '.hover - text {position: relative; cursor: pointer;}\n' \
+            + '.popup {position: absolute; top: 100%; left: 0;\n' \
+            + 'display: none; background-color: #f9f9f9;\n' \
+            + 'border: 1px solid #ccc; padding: 10px; z - index: 1;}\n' \
+            + '.hover - text:hover .popup {display: block;}\n' \
+            + '</style>\n' \
+            + '</head>\n' \
+            + '<body>\n'
+        )
+        ac.write(
+            '<img src="' + GRAPHS + 'ahid_circle.svg' + '" ' \
+            + 'id="ahid_circle" ' \
+            + 'alt="payments graph" usemap="#pgraph" />\n' \
+            + '<map name="pgraph" id="pgraph">'
+        )
+        hs = float(h_shift)
+        vs = float(v_shift)
+        for ahid_fph in A.keys():
+            x = A[ahid_fph]["x"]
+            y = A[ahid_fph]["y"]
+            ac.write(
+                '<span class="hover - text">\n' \
+                + '<area shape="circle" ' \
+                + 'coords="' + str(x + hs) + ',' + str(y + vs) \
+                + ',' + str(blobradius) + '" ' \
+                + 'id="' + fph_to_hrns(ahid_fph) + '" ' \
+                + 'title="' + fph_to_hrns(ahid_fph) + '" ' \
+                + 'alt="' + fph_to_hrns(ahid_fph) + '" ' \
+                + 'href="http://localhost:8000">\n' \
+                + '<span class="popup">' + fph_to_hrns(ahid_fph) + '</span>\n' \
+                + '</span>\n'
+            )
+        ac.write('</map>\n')
+        ac.write('</body>\n</html>\n')
 
-    return ""
-
-
-
-
-
+    return A, ""
 
 # The following information is gathered:
 # (1) all the *ahid*s to/from which one of this *primid*'s *ahid*s can
