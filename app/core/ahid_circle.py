@@ -162,6 +162,8 @@ def _plot_accounts_circle(currency_id):
         ac.write("</svg>")
 
 
+
+
 def accounts_circle(currency_id, primid_id):
     primid_fph, primid_hrns, etypes, m = identify_entity(primid_id)
     currency_fph, currency_hrns, etypes, m = identify_entity(currency_id)
@@ -210,9 +212,10 @@ def accounts_circle(currency_id, primid_id):
         A[ahid_fph] = p
         n += 1
 
-    blobradius = circumference/n/4
-    if blobradius > 5:
-        blobradius = 5
+    # The *ahid* blobs may need to be squeezed a little if there are too many.
+    dot_radius = circumference/n/4
+    if dot_radius > 5:
+        dot_radius = 5
 
     # Each dot in the plot represents an *account*. Since each *account* is
     # identified by a *currency*|*ahid* pairing and the *currency* has been
@@ -232,20 +235,19 @@ def accounts_circle(currency_id, primid_id):
             + '" viewbox="0 0 400 400" ' \
             + ' version="1.1" xmlns="http://www.w3.org/2000/svg">\n'
         )
-        # First the dots are drawn:
-        for ahid_fph in A:
-            if A[ahid_fph]["primid_fph"] == primid_fph:
-                fill = "red"
-            else:
-                fill = "black"
-            ac.write(
-                '<circle cx="' + str(A[ahid_fph]["x"]) + '" cy="' \
-                + str(A[ahid_fph]["y"]) + '" r="' + str(blobradius) + '"' \
-                + ' style="stroke-width:1;'
-                + 'stroke:' + fill + ';fill:' + fill + ';"' \
-                + ' transform="translate(200,200)" />\n'
-            )
-        # Then the payments between *accounts* are drawn in:
+#        # First the dots are drawn:
+#        for ahid_fph in A:
+#            blob_colour = "black"
+#            if A[ahid_fph]["primid_fph"] == primid_fph:
+#                blob_colour = "red"
+#            ac.write(
+#                '<circle cx="' + str(A[ahid_fph]["x"]) + '" cy="' \
+#                + str(A[ahid_fph]["y"]) + '" r="' + str(dot_radius) + '"' \
+#                + ' style="stroke-width:1;'
+#                + 'stroke:' + blob_colour + ';fill:' + blob_colour + ';"' \
+#                + ' transform="translate(200,200)" />\n'
+#            )
+        # First the payments between *accounts* are drawn in:
         for p in payments_list:
             payer_fph, m = hrns_to_fph(p[2]) # ahid
             payee_fph, m = hrns_to_fph(p[3]) # ahid
@@ -270,6 +272,19 @@ def accounts_circle(currency_id, primid_id):
                 + 'x2="' + str(x2) + '" y2="' + str(y2) + '" ' \
                 + ' style="stroke:green;stroke-width:1;" ' \
                 + ' transform="translate(200,200)"/>\n'
+            )
+
+        # Then the dots are drawn:
+        for ahid_fph in A:
+            blob_colour = "black"
+            if A[ahid_fph]["primid_fph"] == primid_fph:
+                blob_colour = "red"
+            ac.write(
+                '<circle cx="' + str(A[ahid_fph]["x"]) + '" cy="' \
+                + str(A[ahid_fph]["y"]) + '" r="' + str(dot_radius) + '"' \
+                + ' style="stroke-width:1;'
+                + 'stroke:' + blob_colour + ';fill:' + blob_colour + ';"' \
+                + ' transform="translate(200,200)" />\n'
             )
         ac.write('</svg>\n')
 
@@ -304,7 +319,7 @@ def accounts_circle(currency_id, primid_id):
                 '<span class="hover - text">\n' \
                 + '<area shape="circle" ' \
                 + 'coords="' + str(x + hs) + ',' + str(y + vs) \
-                + ',' + str(blobradius) + '" ' \
+                + ',' + str(dot_radius) + '" ' \
                 + 'id="' + fph_to_hrns(ahid_fph) + '" ' \
                 + 'title="' + fph_to_hrns(ahid_fph) + '" ' \
                 + 'alt="' + fph_to_hrns(ahid_fph) + '" ' \

@@ -1,0 +1,120 @@
+#!/home/slate/SLATE/venv/bin/python3
+
+import sys
+import argparse
+
+from app.core.regexp_list import re_realname, re_slatename, re_email
+from app.core.regexp_list import re_password, re_pin
+from app.core.fph_hrns_maps import hrns_to_fph
+from app.core.slate_core import identify_entity
+#from app.core.fph_hrns_maps import record_private_namespace_root
+from app.core.slate_core import record_private_namespace_root
+from app.core.slate_core import new_primid
+from app.core.slate_core import get_hub_mode
+from app.core.slate_core import new_pairing
+
+
+ap = argparse.ArgumentParser(description = "Create a login identity")
+ap.add_argument(
+    "-u", "--login-name", dest = "login_name", action = "store",
+    help = "Login name"
+)
+ap.add_argument(
+    "-s", "--registration_namespace", dest = "namespace", action = "store",
+    help = "Registration namespace"
+)
+ap.add_argument(
+    "-R", "--real-name", dest = "real_name", action = "store",
+    help = "Real name (optional)"
+)
+ap.add_argument(
+    "-e1", "--primary-email-address", dest = "email_1", action = "store",
+    help = "Recovery email primary address"
+)
+ap.add_argument(
+    "-e2", "--secondary-email-address", dest = "email_2", action = "store",
+    help = "Secondary recovery email primary address (optional)"
+)
+ap.add_argument(
+    "-c", "--currency", dest = "currency", action = "store",
+    help = "Initial currency"
+)
+ap.add_argument(
+    "-p", "--password", dest = "password", action = "store",
+    help = "Password"
+)
+ap.add_argument(
+    "-N", "--pin", dest = "pin", action = "store",
+    help = "PIN"
+)
+args = ap.parse_args()
+login_name = args.login_name
+parent_namespace_hrns = args.namespace
+real_name = args.real_name
+currency_hrns = args.currency
+primary_email_address = args.email_1
+secondary_email_address = args.email_2
+password = args.password
+pin = args.pin
+
+
+if not re_slatename.match(login_name):
+    print(login_name + " is not a valid username")
+    sys.exit()
+
+parent_namespace_fph, parent_namespace_hrns, etypes, \
+m = identify_entity(parent_namespace_hrns)
+if not parent_namespace_fph:
+    print("Parent namespace not registered")
+    sys.exit()
+if not ("namespace" in etypes):
+    print("Namespace not registered at " + parent_namespace_hrns)
+    sys.exit()
+
+if real_name is None:
+    real_name = ""
+
+currency_fph, currency_hrns, etypes, \
+m = identify_entity(currency_hrns)
+if not currency_fph:
+    print("Currency is not registered")
+    sys.exit()
+if not ("currency" in etypes):
+    print("Currency not registered at " + currency_hrns)
+    sys.exit()
+
+if not re_email.match(primary_email_address):
+    print("Invalid primary email address")
+    sys.exit()
+
+if secondary_email_address is None:
+    secondary_email_address = ""
+elif not re_email.match(secondary_email_address):
+    secondary_email_address = ""
+
+#if not re_password.match(password):
+#    print("Invalid password")
+#    sys.exit()
+
+if not re_pin.match(pin):
+    print("Invalid PIN")
+    sys.exit()
+
+primid_fph, primid_hrns, access_token, \
+m = new_primid(
+        login_name,
+        parent_namespace_fph,
+        real_name,
+        primary_email_address,
+        secondary_email_address,
+        password,
+        pin,
+        currency_hrns
+    )
+record_private_namespace_root(primid_fph, primid_fph)
+if m:
+    print(m)
+
+print("New login identity: " + primid_fph + " <> " + primid_hrns)
+print("Private namespace root: " + primid_hrns)
+print("using currency: " + currency_hrns)
