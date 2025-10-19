@@ -2,11 +2,11 @@
 
 {% block content %}
 
-  <p class="error">Access not authorized</p>
+<p class="error">
+Access not authorized:
+<b><a href="{{ url_for('login') }}">please log in</a></b>
+</p>
 
-  <p>You must be logged in to access this page.</p>
-
-  <p><b><a href="{{ url_for('login') }}">please log in</a></b></p>
-
+<p>You must be logged in to access this page.</p>
 
 {% endblock %}

@@ -57,8 +57,7 @@ secondary_email_address = args.email_2
 password = args.password
 pin = args.pin
 
-
-if not re_slatename.match(login_name):
+if (login_name is None) or (not re_slatename.match(login_name)):
     print(login_name + " is not a valid username")
     sys.exit()
 

@@ -125,7 +125,7 @@ def list_payments_for_account(account_id):
         # or payee is displayed as the *ahid*'s identifier.
         pair_indexed_account = True
         payer_fph = payee_fph = ahid_fph = owner_fph
-        print("paired: " + owner_fph + " > " + fph_to_hrns(owner_fph))
+#        print("paired: " + owner_fph + " > " + fph_to_hrns(owner_fph))
     elif ("account" in etypes):
         # This is a directly-addressed *account* so the payer or payee is
         # displayed as the *account*'s own identifier.
@@ -136,7 +136,7 @@ def list_payments_for_account(account_id):
         return [], "Identifier " + account_hrns + " has no registered account"
     # Hub operational mode (read from environment variable HUB_MODE)
 #    hub_mode = get_hub_mode()
-    print("list_payments_for_account(" + account_hrns + ")")
+#    print("list_payments_for_account(" + account_hrns + ")")
 
 #    currency_fph, owner_fph, balance, volume, active, \
 #    m = get_account_properties(account_fph)
@@ -300,8 +300,9 @@ def dump_account_payments_csv(account_id, show_header_row = False):
 
     if hub_mode == "omtrad":
         currency_fph, owner_fph, balance, volume, active, \
+        account_type, account_category, account_units, \
+        account_metrical_equivalence, account_dimensions, \
         m = get_account_properties(account_fph)
-
         csv_filename = "account_" + fph_to_hrns(currency_fph) + "_"\
                      + fph_to_hrns(owner_fph) + "_journal_" \
                      + timestamp() + ".csv"

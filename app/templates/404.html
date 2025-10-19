@@ -2,8 +2,9 @@
 
 {% block content %}
 
-  <p class="error">Page not found</p>
-
-  <p><b><a href="{{ url_for('home') }}">please return to home page</a></b></p>
+<p class="error">
+Page not found:
+<b><a href="{{ url_for('home') }}">please return to home page</a></b>
+</p>
 
 {% endblock %}

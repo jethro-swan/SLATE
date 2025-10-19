@@ -1,0 +1,122 @@
+#!/home/slate/SLATE/venv/bin/python3
+
+import sys
+import random
+import argparse
+from math import log10, ceil
+
+from app.core.fph_hrns_maps import fph_to_hrns, hrns_to_fph
+
+from app.core.slate_core import new_pairing
+from app.core.slate_core import identify_entity
+from app.core.payments import ah_payment
+
+ap = argparse.ArgumentParser(description = "Create a payment set")
+ap.add_argument(
+    "-I", "--login-identity", dest = "login_identity", action = "store",
+    help = "The login identity to which any newly created AHIDs will belong."
+)
+ap.add_argument(
+    "-N", "--namespace", dest = "namespace", action = "store",
+    help = "The parent namespace for newly created AHIDs. If not specified, " \
+         + "the root private namespace of the login identity is used."
+)
+ap.add_argument(
+    "-n", "--number-of-ahid", dest = "number_of_ahid", default = 10,
+    action = "store",
+    help = "The number of AHID to be created (default = 10)."
+)
+ap.add_argument(
+    "-b", "--ahid-number-start", dest = "first_ahid", default = 0,
+    action = "store",
+    help = "The start of the AHID numbering sequence"
+)
+ap.add_argument(
+    "-C", "--currency", dest = "currency", action = "store",
+    help = "The currency with which the AHIDs will be paired."
+)
+ap.add_argument(
+    "-t", "--number-of-payments", dest = "n_payments", default = 100,
+    action = "store",
+    help = "The number of random payments to be made (default = 100)."
+)
+ap.add_argument(
+    "-V", "--max-payment", dest = "max_payment", default = 1000,
+    action = "store",
+    help = "The maximum value of any payment (default = 1000)."
+)
+ap.add_argument(
+    "-a", "--ahid-prefix", dest = "ahid_prefix", default = "h",
+    action = "store",
+    help = "The prefix of the sequentially-numbered AHIDs (default = 'h')"
+)
+args = ap.parse_args()
+login_identity = args.login_identity
+namespace = args.namespace
+n_ahid = int(args.number_of_ahid)
+first_ahid = int(args.first_ahid)
+currency = args.currency
+n_payments = args.n_payments
+max_payment = args.max_payment
+ahid_prefix = args.ahid_prefix
+
+if n_ahid > 30:
+    print("Too many AHIDs (max 30)")
+    sys.exit()
+ndp = ceil(log10(float(n_ahid)))
+
+primid_fph, primid_hrns, etypes, m = identify_entity(login_identity)
+if not primid_fph:
+    print("The login identity " + login_identity + " does not exist")
+    sys.exit()
+if not ("primid" in etypes):
+    print(primid_hrns + " has no registered primid")
+    sys.exit()
+
+if (namespace is None) or (namespace == ""):
+    namespace = primid_hrns
+namespace_fph, namespace_hrns, etypes, m = identify_entity(namespace)
+if not namespace_fph:
+    print("The namespace " + namespace + " does not exist")
+    sys.exit()
+if not ("namespace" in etypes):
+    print(namespace_hrns + " has no registered namespace")
+    sys.exit()
+
+currency_fph, currency_hrns, etypes, m = identify_entity(currency)
+if not currency_fph:
+    print("The currency " + currency + " does not exist")
+    sys.exit()
+if not ("currency" in etypes):
+    print(currency_hrns + " has no registered currency.")
+    sys.exit()
+
+print("login_identity = " + login_identity)
+print("namespace = " + namespace)
+print("n_ahid = " + str(n_ahid))
+print("currency = " + currency)
+print("n_payments = " + str(n_payments))
+print("max_payment = " + str(max_payment))
+print("ahid_prefix = " + ahid_prefix)
+
+ahid_hrns_list = []
+for n in range(n_ahid):
+    ahid_hrns = ahid_prefix + str(n).zfill(ndp) + "." + namespace_hrns
+    ahid_hrns_list.append(ahid_hrns)
+    acct_fph, acct_hrns, m = new_pairing(primid_fph, ahid_hrns, currency_fph)
+
+for n in range(n_payments):
+    payer_ahid_hrns = random.choice(ahid_hrns_list)
+    payee_ahid_hrns = random.choice(ahid_hrns_list)
+    amount = random.randint(0, int(max_payment))
+    annotation = str(n).zfill(8)
+    if payer_ahid_hrns != payee_ahid_hrns:
+        m = ah_payment(
+                payer_ahid_hrns,
+                payee_ahid_hrns,
+                currency_hrns,
+                amount,
+                annotation
+            )
+        if m:
+            print(m)
