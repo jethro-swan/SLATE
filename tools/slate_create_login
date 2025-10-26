@@ -61,6 +61,13 @@ if (login_name is None) or (not re_slatename.match(login_name)):
     print(login_name + " is not a valid username")
     sys.exit()
 
+if real_name is None:
+    real_name = ""
+
+if currency_hrns is None:
+    print("No currency specified")
+    sys.exit()
+
 parent_namespace_fph, parent_namespace_hrns, etypes, \
 m = identify_entity(parent_namespace_hrns)
 if not parent_namespace_fph:

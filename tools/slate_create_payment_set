@@ -56,14 +56,14 @@ namespace = args.namespace
 n_ahid = int(args.number_of_ahid)
 first_ahid = int(args.first_ahid)
 currency = args.currency
-n_payments = args.n_payments
-max_payment = args.max_payment
+n_payments = int(args.n_payments)
+max_payment = int(args.max_payment)
 ahid_prefix = args.ahid_prefix
 
 if n_ahid > 30:
     print("Too many AHIDs (max 30)")
     sys.exit()
-ndp = ceil(log10(float(n_ahid)))
+#ndp = ceil(log10(float(n_ahid)))
 
 primid_fph, primid_hrns, etypes, m = identify_entity(login_identity)
 if not primid_fph:
@@ -101,7 +101,10 @@ print("ahid_prefix = " + ahid_prefix)
 
 ahid_hrns_list = []
 for n in range(n_ahid):
-    ahid_hrns = ahid_prefix + str(n).zfill(ndp) + "." + namespace_hrns
+    ahid_number = str(n + first_ahid).zfill(3)
+#   ahid_hrns = ahid_prefix + str(n + first_ahid) + "." + namespace_hrns
+#    ahid_hrns = ahid_prefix + str(n).zfill(ndp) + "." + namespace_hrns
+    ahid_hrns = ahid_prefix + ahid_number + "." + namespace_hrns
     ahid_hrns_list.append(ahid_hrns)
     acct_fph, acct_hrns, m = new_pairing(primid_fph, ahid_hrns, currency_fph)
 

@@ -10,6 +10,8 @@ from itsdangerous import URLSafeTimedSerializer
 
 from datetime import datetime, date
 
+import urllib.parse
+
 ## SLATE components: -----------------------------------------------------------
 
 from app.core.constants import NSS
@@ -86,7 +88,7 @@ from app.core.slate_session import session_retrieve_payment_options
 from app.core.slate_session import remove_slate_session_data
 
 from app.core.regexp_list import re_fph, re_hrns, re_email
-from app.core.regexp_list import re_pvalue
+from app.core.regexp_list import re_pvalue, re_bvalue
 from app.core.regexp_list import re_qrfilename
 
 from app.core.slate_login import get_auth_data
@@ -125,6 +127,8 @@ from app.core.mail_temp import temp_mail_send
 
 from app.core.display import yesno
 from app.core.display import integer_to_money_format
+from app.core.display import integer_to_money_s_format
+from app.core.display import integer_to_money_url_format
 from app.core.display import etype_to_adtype
 
 from app.core.csv_import import import_minimal_payment_set_as_csv
@@ -925,11 +929,63 @@ def hold():
     )
 
 
+# 2025-10-25: Modified to move *ahid* payment form from  /pay_to_ahid  endpoint
+# in order to place the form above the table on the home page. This requires
+# additional modifications to  app/templates/home_ahc.html
+#
+# The unmodified versions of  app/routes.py  and  app/templates/home_ahc.html
+# have been preserved in ~/SLATE_0.2.38
 
-
+@app.route("/home_ahp/<payer_ahid_fph>/<p_currency_fph>/<payer_balance>",
+           methods=["GET", "POST"])
 @app.route("/home_ahc", methods=["GET", "POST"])
 @login_required
-def home_ahc():
+def home_ahc(payer_ahid_fph=None, p_currency_fph=None, payer_balance=None):
+
+    page = "home_ahc"
+
+#    show_payment_form = False
+    show_payment_form = True
+
+    if (payer_ahid_fph is None):
+        payer_ahid_fph = ""
+        payer_ahid_hrns = ""
+        p_etypes = []
+    else:
+        payer_ahid_fph, payer_ahid_hrns, p_etypes, \
+        m = identify_entity(payer_ahid_fph)
+        if not ("ahid" in p_etypes):
+            flash("Invalid payer: " + p_currency_hrns)
+            show_payment_form = False
+
+    if (p_currency_fph is None):
+        p_currency_fph = ""
+        p_currency_hrns = ""
+        c_etypes = []
+    else:
+        p_currency_fph, p_currency_hrns, c_etypes, \
+        m = identify_entity(p_currency_fph)
+        if not ("currency" in c_etypes):
+            flash("Invalid currency: " + p_currency_hrns)
+            show_payment_form = False
+
+    if not (payer_balance is None):
+        #if not payer_balance.isnumeric():
+        if not re_bvalue.match(payer_balance):
+            flash("Invalid balance value: " + payer_balance)
+            show_payment_form = False
+    else:
+        show_payment_form = False
+
+
+
+#    print("show_payment_form = " + str(show_payment_form))
+#    print("page = " + page)
+#    print("payer_ahid_hrns = " + payer_ahid_hrns)
+#    print("p_currency_hrns = " + p_currency_hrns)
+#    print("payer_balance = " + str(payer_balance))
+
+    #payer_balance = "0.00" # TEMPORARY
 
     # If a dataset import if in progress, do not allow any FPH>HRNS or
     # HRNS>FPH mapping operations to be initiated by a browser refresh.
@@ -944,7 +1000,11 @@ def home_ahc():
         flash("Operational mode invalid for this endpoint")
         return redirect("/home")
 
-    page = "home_ahc"
+    if show_payment_form:
+        page = "home_ahp"
+    else:
+        page = "home_ahc"
+
     if "previous_page" in session: # already active
         previous_page = session["previous_page"]
     else: # initializing
@@ -1020,6 +1080,7 @@ def home_ahc():
             p_row["account_owner_fph"] = account_owner_fph
             p_row["account_owner_hrns"] = fph_to_hrns(account_owner_fph)
             p_row["balance"] = integer_to_money_format(account_balance)
+            p_row["p_balance"] = integer_to_money_s_format(account_balance)
             p_row["isneg"] = (account_balance < 0)
             p_row["prefix"] = prefix
             p_row["suffix"] = suffix
@@ -1060,6 +1121,55 @@ def home_ahc():
                         currency_displayed_already[currency] = True
                     p_rows2.append(row)
 
+#    print("2paying = " + str(show_payment_form))
+    form = SpecifyPayeeAccountHolderForm()
+    if form.validate_on_submit():
+        payee_ahid_fph, payee_ahid_hrns, etypes, \
+        m = identify_entity(form.payee_ahid.data) # HRNS or FPH
+        if m:
+            flash(m)
+            return redirect(
+                       "/pay_to_ahid/" + payer_ahid_fph + "/" + currency_fph
+                   )
+        if payee_ahid_fph == "":
+            flash("The specified account-holder does not exist")
+            return redirect(
+                       "/pay_to_ahid/" + payer_ahid_fph + "/" + currency_fph
+                   )
+        if not get_ahid_primid(payee_ahid_hrns):
+            flash("The payee specified is not an account-holder")
+            return redirect(
+                       "/pay_to_ahid/" + payer_ahid_fph + "/" + currency_fph
+                   )
+
+        amount = int(round(float(form.amount.data)*100))
+        annotation = form.annotation.data
+
+        m = ah_payment(
+                payer_ahid_hrns,
+                payee_ahid_hrns,
+                p_currency_hrns,
+                amount,
+                annotation
+            )
+        if m:
+            flash(m)
+
+        flash(
+            integer_to_money_s_format(amount) \
+            + " paid from " + payer_ahid_hrns \
+            + " to " + payee_ahid_hrns \
+            + " in " + p_currency_hrns
+        )
+        if annotation:
+            flash("(" + annotation + ")")
+
+        if hub_mode == "omtrad":
+            return redirect("/home_ahc")
+        else:
+            return redirect("/home")
+
+
     return render_template(
         "home_ahc.html",
         title = "Home",
@@ -1078,6 +1188,11 @@ def home_ahc():
         working_identity_type = working_identity_type,
         p_rows = p_rows2,
         pmap_t = pmap_t,
+        form = form,
+        show_payment_form = show_payment_form,
+        p_currency_hrns = p_currency_hrns,
+        payer_ahid_hrns = payer_ahid_hrns,
+        payer_balance = payer_balance,
         number_of_messages = number_of_messages,
         number_of_indelible_messages = number_of_indelible_messages
     )

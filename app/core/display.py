@@ -1,3 +1,4 @@
+import urllib.parse
 
 # Account balances are stored as integers, assuming cents (euros or dollars) or
 # pence (sterling) to be the smallest value.
@@ -10,6 +11,8 @@ def integer_to_money_format(amount):
 def integer_to_money_s_format(amount):
     return "{:1.2f}".format(amount/100)
 
+def integer_to_money_url_format(amount):
+    return urllib.parse.quote("{:+1.2f}".format(amount/100))
 
 def thick_line():
     print("\n" + "="*160 + "\n")

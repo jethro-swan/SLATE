@@ -94,6 +94,10 @@ re_pvalue = re.compile(r"^\d{1,}$")
 # It is assumed that any number input with "," thousands separators will have
 # these stripped out before being tested against the RE.
 #------------------------------------------------------------------------------
+# Balance value passed in slug:
+
+re_bvalue = re.compile(r"^\-?\d{1,}\.\d{2}$")
+
 
 #------------------------------------------------------------------------------
 # Transaction ID:

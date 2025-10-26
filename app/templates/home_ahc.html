@@ -12,6 +12,91 @@ no more than one *account* in any *currency*. This enable the *accounts* to be
 hidden.
 --------------------------------------------------------------------------- -->
 
+{% if show_payment_form %}
+
+<!--
+<b>Make a payment</b><br />
+-->
+<form action="" method="post" novalidate>
+{{ form.hidden_tag() }}
+<!--
+<table style="border:0">
+  <tr>
+    <td class="h"><b>currency</b></td>
+    <td class="h"><b>from</b></td>
+    <td class="h"><b>to</b></td>
+    <td class="h"><b>amount</b></td>
+    <td class="h"><b>balance</b></td>
+  </tr>
+  <tr>
+    <td>{{ p_currency_hrns}}</td>
+    <td>{{ payer_ahid_hrns }}</td>
+    <td>{{ form.payee_ahid(size=20) }}</td>
+    <td>
+      <input
+        type="currency"
+        name="amount"
+        value="0.00"
+        id="pence"
+        min="0.00"
+        max="9999.99"
+        step="0.01"
+        size="10"
+        placeholder="Enter a payment value here"
+      />
+    </td>
+    <td>{{ payer_balance }}</td>
+  </tr>
+  <tr>
+    <td colspan="4">{{ form.annotation(size=500) }}</td>
+    <td><input type="submit" value="PAY"></td>
+  </tr>
+</table>
+-->
+<!--
+In <b>{{ p_currency_hrns}}</b>
+(currently {{ payer_balance }})<br />
+from <b>{{ payer_ahid_hrns }}</b>
+to {{ form.payee_ahid(size=6) }} <input type="submit" value="PAY">
+<input
+  type="currency"
+  name="amount"
+  value="0.00"
+  id="pence"
+  min="0.00"
+  max="9999.99"
+  step="0.01"
+  size="6"
+  placeholder="Enter a payment value here"
+/>
+<br /><br />
+{{ form.annotation(size=500) }}
+-->
+
+<input type="submit" value="PAY">
+<input
+  type="currency"
+  name="amount"
+  value="0.00"
+  id="pence"
+  min="0.00"
+  max="9999.99"
+  step="0.01"
+  size="6"
+  placeholder="Enter a payment value here"
+/>
+from <b>{{ payer_ahid_hrns }}</b> to {{ form.payee_ahid(size=10) }}
+in <b>{{ p_currency_hrns}}</b>
+<br /><br />
+{{ form.annotation(size=500) }} Optional note
+
+
+
+</form>
+<hr size="1" />
+
+{% endif %}
+
 <p>Your <b>currency</b>|<b>account-holder</b> pairings:</p>
 
 <table>
@@ -35,7 +120,15 @@ hidden.
     </td>
     {% endif %}
     <td align="left">
+      <!-- 2025-10-25: Modified (see app/routes.py  for explanation) -->
+      <!--
       <a href="/pay_to_ahid/{{ p_row.ahid_fph }}/{{ p_row.currency_fph }}">
+        {{ p_row.ahid_hrns }}
+      </a>
+      -->
+      <a href="/home_ahp/{{
+        p_row.ahid_fph }}/{{ p_row.currency_fph }}/{{
+        p_row.p_balance }}">
         {{ p_row.ahid_hrns }}
       </a>
     </td>
