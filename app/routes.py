@@ -39,6 +39,7 @@ from app.core.slate_core import new_namespace
 from app.core.slate_core import new_currency
 from app.core.slate_core import new_account
 from app.core.slate_core import account_status
+#from app.core.slate_core import entity_is_active
 from app.core.slate_core import list_namespace_stewardships
 from app.core.slate_core import list_currency_stewardships
 #from app.core.slate_core import list_namespace_stewards
@@ -944,7 +945,6 @@ def home_ahc(payer_ahid_fph=None, p_currency_fph=None, payer_balance=None):
 
     page = "home_ahc"
 
-#    show_payment_form = False
     show_payment_form = True
 
     if (payer_ahid_fph is None):
@@ -1045,6 +1045,17 @@ def home_ahc(payer_ahid_fph=None, p_currency_fph=None, payer_balance=None):
     currency_count = {}
     for ahid_hrns in pmap_t.keys():
         for currency_hrns in pmap_t[ahid_hrns].keys():
+
+            # 2025-10-26: To hide inactive *currencies* from table:
+            #active, m = entity_is_active(currency_hrns, "currency")
+#            currency_fph, currency_hrns, active, private, sandbox, \
+#            type, category, units, metrical_equivalence, dimensions, \
+#            prefix, suffix, default_account_name, stewards_list, \
+#            m = get_currency_properties(currency_hrns)
+#            if not active:
+#                continue
+
+
             if currency_hrns in currency_count.keys():
                 currency_count[currency_hrns] += 1
             else:
@@ -1067,30 +1078,52 @@ def home_ahc(payer_ahid_fph=None, p_currency_fph=None, payer_balance=None):
             if fph_to_hrns(account_currency_fph) != currency_hrns:
                 continue # (This should never happen)
 
-            currency_fph, currency_hrns, active, private, sandbox, \
+            currency_fph, currency_hrns, currency_active, private, sandbox, \
             type, category, units, metrical_equivalence, dimensions, \
             prefix, suffix, default_account_name, stewards_list, \
             m = get_currency_properties(account_currency_fph)
 
-            p_row = {}
-            p_row["currency_hrns"] = currency_hrns
-            p_row["ahid_hrns"] = ahid_hrns
-            p_row["ahid_fph"], m = hrns_to_fph(ahid_hrns)
-            p_row["account_fph"] = account_fph
-            p_row["account_owner_fph"] = account_owner_fph
-            p_row["account_owner_hrns"] = fph_to_hrns(account_owner_fph)
-            p_row["balance"] = integer_to_money_format(account_balance)
-            p_row["p_balance"] = integer_to_money_s_format(account_balance)
-            p_row["isneg"] = (account_balance < 0)
-            p_row["prefix"] = prefix
-            p_row["suffix"] = suffix
-            #p_row["volume"] = integer_to_money_format(account_volume)
-            if currency_fph in cstewardships_list:
-                p_row["primid_currency_steward"] = True
-            else:
-                p_row["primid_currency_steward"] = False
-            p_row["currency_fph"] = currency_fph
-            p_rows.append(p_row)
+# 2025-10-26:
+#            p_row = {}
+#            p_row["currency_hrns"] = currency_hrns
+#            p_row["ahid_hrns"] = ahid_hrns
+#            p_row["ahid_fph"], m = hrns_to_fph(ahid_hrns)
+#            p_row["account_fph"] = account_fph
+#            p_row["account_owner_fph"] = account_owner_fph
+#            p_row["account_owner_hrns"] = fph_to_hrns(account_owner_fph)
+#            p_row["balance"] = integer_to_money_format(account_balance)
+#            p_row["p_balance"] = integer_to_money_s_format(account_balance)
+#            p_row["isneg"] = (account_balance < 0)
+#            p_row["prefix"] = prefix
+#            p_row["suffix"] = suffix
+#            #p_row["volume"] = integer_to_money_format(account_volume)
+#            if currency_fph in cstewardships_list:
+#                p_row["primid_currency_steward"] = True
+#            else:
+#                p_row["primid_currency_steward"] = False
+#            p_row["currency_fph"] = currency_fph
+#            p_rows.append(p_row)
+
+            if currency_active:
+                p_row = {}
+                p_row["currency_hrns"] = currency_hrns
+                p_row["ahid_hrns"] = ahid_hrns
+                p_row["ahid_fph"], m = hrns_to_fph(ahid_hrns)
+                p_row["account_fph"] = account_fph
+                p_row["account_owner_fph"] = account_owner_fph
+                p_row["account_owner_hrns"] = fph_to_hrns(account_owner_fph)
+                p_row["balance"] = integer_to_money_format(account_balance)
+                p_row["p_balance"] = integer_to_money_s_format(account_balance)
+                p_row["isneg"] = (account_balance < 0)
+                p_row["prefix"] = prefix
+                p_row["suffix"] = suffix
+                #p_row["volume"] = integer_to_money_format(account_volume)
+                if currency_fph in cstewardships_list:
+                    p_row["primid_currency_steward"] = True
+                else:
+                    p_row["primid_currency_steward"] = False
+                p_row["currency_fph"] = currency_fph
+                p_rows.append(p_row)
 
     # Sorting by *currency* and *ahid* (quick and dirty method)
     currencies_list = []

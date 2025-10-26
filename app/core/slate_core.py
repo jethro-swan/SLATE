@@ -917,6 +917,10 @@ def entity_is_active(entity_id, entity_type):
         return False, "Entity " + entity_fph + " not found"
     return bool(result[0]), ""
 
+
+
+
+
 #==============================================================================
 ## Check whether a *namespace* or *currency* is private:
 
@@ -1264,6 +1268,10 @@ def new_primid(
             metrical_equivalence="lt",
             dimensions="unspecified"
         )
+    # Although the *currency* has been created in order to prevent another
+    # user from creating one with the same identifier, it is deactivated at
+    # this point to prevent its display in the home page table:
+    m = deactivate_currency(currency_hrns, primid_hrns)
 
     # The new *ahid*|*currency* pairing-indexed *account* is created with this
     # *primid* as its owner, where the *ahid* shares the same identifier as the
@@ -3343,6 +3351,69 @@ def complete_parent_namespace(identifier_hrns, primid_id):
     return ns_fph
 
 #==============================================================================
+
+
+def set_activity_status_flag(entity_id, entity_type, active, primid_id):
+
+    if entity_type == "namespace":
+        table = "namespaces"
+    elif entity_type == "currency":
+        table = "currencies"
+    else:
+        return "Invalid type specified: must be a namespace or currency"
+
+    if active:
+        active_state = 1
+    else:
+        active_state = 0
+
+    primid_fph, primid_hrns, p_etypes, m = identify_entity(primid_id)
+    if not primid_fph:
+        return primid_id + " is not a registered identifier"
+    if not ("primid" in p_etypes):
+        return "Identifier " + primid_id + " has no login identity"
+
+    entity_fph, entity_hrns, etypes, m = identify_entity(entity_id)
+    if not entity_fph:
+        return entity_id + " is not a registered identifier"
+    if not (entity_type in etypes):
+        return "Identifier " + entity_hrns + " has no " + entity_type
+
+    with sqlite3.connect(ENTITIES_DB) as conn:
+        cursor = conn.cursor()
+        cursor.execute(
+            "SELECT stewards_fph_list FROM " + table + " WHERE entity_fph = ?",
+            (entity_fph,)
+        )
+        result = cursor.fetchone()
+        if result is None: # (should never happen)
+            cursor.close()
+            return "The entity " + entity_hrns + " has no stewardships"
+        stewards_fph_list = pickle.loads(result[0])
+        if not (primid_fph in stewards_fph_list):
+            cursor.close()
+            return primid_hrns + " is not a steward of " + entity_hrns
+
+        cursor.execute(
+            "UPDATE " + table + " SET active = ? WHERE entity_fph = ?",
+            (active_state, entity_fph)
+        )
+        conn.commit()
+        cursor.close()
+
+def activate_currency(entity_id, primid_id):
+    return set_activity_status_flag(entity_id, "currency", True, primid_id)
+
+def deactivate_currency(entity_id, primid_id):
+    return set_activity_status_flag(entity_id, "currency", False, primid_id)
+
+def activate_namespace(entity_id, primid_id):
+    return set_activity_status_flag(entity_id, "namespace", True, primid_id)
+
+def deactivate_namespace(entity_id, primid_id):
+    return set_activity_status_flag(entity_id, "namespace", False, primid_id)
+
+
 
 
 

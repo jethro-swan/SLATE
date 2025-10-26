@@ -73,6 +73,9 @@ to {{ form.payee_ahid(size=6) }} <input type="submit" value="PAY">
 {{ form.annotation(size=500) }}
 -->
 
+<!--
+Using currency <b>{{ p_currency_hrns}}</b>
+-->
 <input type="submit" value="PAY">
 <input
   type="currency"
@@ -82,11 +85,12 @@ to {{ form.payee_ahid(size=6) }} <input type="submit" value="PAY">
   min="0.00"
   max="9999.99"
   step="0.01"
-  size="6"
+  size="5"
   placeholder="Enter a payment value here"
 />
-from <b>{{ payer_ahid_hrns }}</b> to {{ form.payee_ahid(size=10) }}
-in <b>{{ p_currency_hrns}}</b>
+<b>{{ p_currency_hrns}}</b>
+<em>from</em> <b>{{ payer_ahid_hrns }}</b>
+<em>to</em> {{ form.payee_ahid(size=10) }}
 <br /><br />
 {{ form.annotation(size=500) }} Optional note
 
