@@ -146,7 +146,7 @@ crossorigin="anonymous"></script>
   [3]
 {% else %}
   [4]
-{% endif %}    
+{% endif %}
 </div>
 
 <!-- end menu row 1 ------------------------------------------------------- -->
@@ -165,31 +165,21 @@ crossorigin="anonymous"></script>
         <a href="/invitation/generate">invite user</a>
       </div>
       <div>
-        Login identity =
-        {{ primid_hrns }} |
-        <a href="/create_pairing/{{ working_identity_fph }}">
-          join currency
-        </a>
+        Login identity = {{ primid_hrns }} |
+        <a href="/create_pairing/{{ primid_fph }}">join currency</a>
       </div>
       <hr class="dashed" />
     {% elif hub_mode == "slate_minimal" %}
-      <b>Login identity</b> =
-      <b>{{ primid_hrns }}</b> |
-      <a href="/create_account/{{ working_identity_fph }}">
-        <b>join currency</b>
-      </a>
+      Login identity = {{ primid_hrns }} |
+      <a href="/create_account/{{ working_identity_fph }}">join currency</a>
       <hr class="dashed" />
     {% else %}
-      <b>Login identity</b> =
-      <b>{{ primid_hrns }}</b> ({{ primid_type }}) |
-      <b><a href="/create_secid">add alias</a></b>
+      Login identity = {{ primid_hrns }} ({{ primid_type }}) |
+      <a href="/create_secid">add alias</a>
       <hr class="dashed" />
       Working <b>identity</b> =
-      <b>{{ working_identity_hrns }}</b>
-      ({{ working_identity_type }}) |
-      <a href="/create_account/{{ working_identity_fph }}">
-        <b>join currency</b>
-      </a>
+      {{ working_identity_hrns }} ({{ working_identity_type }}) |
+      <a href="/create_account/{{ working_identity_fph }}">join currency</a>
       <hr class="dashed" />
     {% endif %}
   {% endif %}

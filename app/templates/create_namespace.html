@@ -9,20 +9,22 @@
   <div>
     <div style="float:left; margin:2px;">
       {{ form.namespace_name.label }}<br />
-      {{ form.namespace_name(size=10, placeholder="name") }} <b>.</b>
+      {{ form.namespace_name(size=6, placeholder="name") }} <b>.</b>
     </div>
     <div style="float:left; margin:2px;">
       {{ form.parent_namespace_id.label }}<br />
-      {{ form.parent_namespace_id(size=20,
+      {{ form.parent_namespace_id(size=12,
       placeholder="parent namespace identifier") }}
     </div>
   </div>
+  <!--
   <div class="clear-both"></div>
   <div style="float:left; margin:2px;">
     {{ form.default_currency_id.label }}<br />
     {{ form.default_currency_id(size=20,
     placeholder="default currency identifier") }}
   </div>
+  -->
   <p>
     {% for error in form.namespace_name.errors %}
       <span style="color: red;">[{{ error }}]</span>

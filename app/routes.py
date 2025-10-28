@@ -233,7 +233,8 @@ def register():
 
     # The following variables are used to determine which menu subsets are
     # displayed:
-    page = "registration"
+    page = "register"
+    session["previous_page"] = page
     namespace_steward = False
     currency_steward = False
     paying = False
@@ -447,6 +448,7 @@ def register():
 @app.route("/login", methods = ["GET", "POST"])
 def login():
     page = "login" # Variable used to identify which menu items to display.
+    session["previous_page"] = page
     mode = "logged_out"
     logged_in = False
     if current_user.is_authenticated: # user is already logged in
@@ -527,19 +529,19 @@ def login():
 
         login_user(user, remember = form.remember_me.data)
 
-        session["login_identity"] = identity_fph    # Initial values upon login
-        session["working_identity"] = identity_fph  #
+        session["login_identity"] = identity_fph   # Initial values upon login
+        session["working_identity"] = identity_fph #
 
         if hub_mode == "omtrad":
 
-            session["previous_page"] = "home_ahc"   # (This one subsequently
-                                                    # serves as shift register).
+            session["previous_page"] = "home_ahc"  # (This one subsequently
+                                                   # serves as shift register).
             return redirect(url_for("home_ahc"))
 
         else:
 
-            session["previous_page"] = "home"       # (This one subsequently
-                                                    # serves as shift register)
+            session["previous_page"] = "home"      # (This one subsequently
+                                                   # serves as shift register)
             return redirect(url_for("home"))
 
 
@@ -571,6 +573,7 @@ def login_recover():
         return redirect(url_for("login"))
 
     page = "login_recovery"
+    session["previous_page"] = page
     mode = "logged_out"
 
     # Hub operational mode (read from environment variable HUB_MODE)
@@ -676,6 +679,7 @@ def login_reset(user_id, token):
         return redirect(url_for("login"))
 
     page = "login_reset"
+    session["previous_page"] = page
     mode = "logged_out"
 
     # Hub operational mode (read from environment variable HUB_MODE)
@@ -944,6 +948,7 @@ def hold():
 def home_ahc(payer_ahid_fph=None, p_currency_fph=None, payer_balance=None):
 
     page = "home_ahc"
+    session["previous_page"] = page
 
     show_payment_form = True
 
@@ -951,6 +956,7 @@ def home_ahc(payer_ahid_fph=None, p_currency_fph=None, payer_balance=None):
         payer_ahid_fph = ""
         payer_ahid_hrns = ""
         p_etypes = []
+        show_payment_form = False
     else:
         payer_ahid_fph, payer_ahid_hrns, p_etypes, \
         m = identify_entity(payer_ahid_fph)
@@ -962,10 +968,14 @@ def home_ahc(payer_ahid_fph=None, p_currency_fph=None, payer_balance=None):
         p_currency_fph = ""
         p_currency_hrns = ""
         c_etypes = []
+        show_payment_form = False
     else:
         p_currency_fph, p_currency_hrns, c_etypes, \
         m = identify_entity(p_currency_fph)
-        if not ("currency" in c_etypes):
+        if not p_currency_fph:
+            flash("Unregistered currency identifier")
+            show_payment_form = False
+        elif not ("currency" in c_etypes):
             flash("Invalid currency: " + p_currency_hrns)
             show_payment_form = False
 
@@ -1123,7 +1133,17 @@ def home_ahc(payer_ahid_fph=None, p_currency_fph=None, payer_balance=None):
                 else:
                     p_row["primid_currency_steward"] = False
                 p_row["currency_fph"] = currency_fph
+
+                p_row["pairing_selected"] = False
+                if (currency_hrns == p_currency_hrns):
+                    if (ahid_hrns == payer_ahid_hrns):
+                        p_row["pairing_selected"] = True
+
+
                 p_rows.append(p_row)
+
+                if p_row["pairing_selected"]:
+                    print(currency_hrns + " & " + ahid_hrns + " selected")
 
     # Sorting by *currency* and *ahid* (quick and dirty method)
     currencies_list = []
@@ -1162,18 +1182,24 @@ def home_ahc(payer_ahid_fph=None, p_currency_fph=None, payer_balance=None):
         if m:
             flash(m)
             return redirect(
-                       "/pay_to_ahid/" + payer_ahid_fph + "/" + currency_fph
-                   )
+                #"/pay_to_ahid/" + payer_ahid_fph + "/" + currency_fph
+                "/home_ahp/" + payer_ahid_fph + "/" + currency_fph + "/" \
+                + payer_balance
+            )
         if payee_ahid_fph == "":
             flash("The specified account-holder does not exist")
             return redirect(
-                       "/pay_to_ahid/" + payer_ahid_fph + "/" + currency_fph
-                   )
+                #"/pay_to_ahid/" + payer_ahid_fph + "/" + currency_fph
+                "/home_ahp/" + payer_ahid_fph + "/" + currency_fph + "/" \
+                + payer_balance
+            )
         if not get_ahid_primid(payee_ahid_hrns):
             flash("The payee specified is not an account-holder")
             return redirect(
-                       "/pay_to_ahid/" + payer_ahid_fph + "/" + currency_fph
-                   )
+                #"/pay_to_ahid/" + payer_ahid_fph + "/" + currency_fph
+                "/home_ahp/" + payer_ahid_fph + "/" + currency_fph + "/" \
+                + payer_balance
+            )
 
         amount = int(round(float(form.amount.data)*100))
         annotation = form.annotation.data
@@ -1187,15 +1213,15 @@ def home_ahc(payer_ahid_fph=None, p_currency_fph=None, payer_balance=None):
             )
         if m:
             flash(m)
-
-        flash(
-            integer_to_money_s_format(amount) \
-            + " paid from " + payer_ahid_hrns \
-            + " to " + payee_ahid_hrns \
-            + " in " + p_currency_hrns
-        )
-        if annotation:
-            flash("(" + annotation + ")")
+        else:
+            flash(
+                integer_to_money_s_format(amount) \
+                + " paid from " + payer_ahid_hrns \
+                + " to " + payee_ahid_hrns \
+                + " in " + p_currency_hrns
+            )
+            if annotation:
+                flash("(" + annotation + ")")
 
         if hub_mode == "omtrad":
             return redirect("/home_ahc")
@@ -1222,6 +1248,7 @@ def home_ahc(payer_ahid_fph=None, p_currency_fph=None, payer_balance=None):
         p_rows = p_rows2,
         pmap_t = pmap_t,
         form = form,
+        display_in_from_lines = False,
         show_payment_form = show_payment_form,
         p_currency_hrns = p_currency_hrns,
         payer_ahid_hrns = payer_ahid_hrns,
@@ -4852,11 +4879,11 @@ def create_namespace():
 
         inh_default_currency_fph = get_default_currency(parent_fph)
 
-        default_currency_fph, default_currency_hrns, etypes, \
-        m = identify_entity(form.default_currency_id.data.strip().lstrip("."))
-        if default_currency_fph == "":
-            default_currency_fph = inh_default_currency_fph
-            default_currency_hrns = fph_to_hrns(default_currency_fph)
+#        default_currency_fph, default_currency_hrns, etypes, \
+#        m = identify_entity(form.default_currency_id.data.strip().lstrip("."))
+#        if default_currency_fph == "":
+#            default_currency_fph = inh_default_currency_fph
+#            default_currency_hrns = fph_to_hrns(default_currency_fph)
 
 
         namespace_name = form.namespace_name.data
@@ -4870,7 +4897,8 @@ def create_namespace():
         m = new_namespace(
                 namespace_name,
                 parent_fph,
-                default_currency_fph,
+                "cc", # TEMPORARY
+                #default_currency_fph,
                 primid_fph
             )
         flash(
@@ -6089,7 +6117,7 @@ def invitation_display(qrfilename):
     primid_fph, primid_hrns, etypes, \
     m = identify_entity(current_user.get_id())
 
-    working_identity_type = "prinid"
+    working_identity_type = "primid"
     if (hub_mode != "omtrad") and ("working_identity" in session):
         working_identity_fph, working_identity_hrns, etypes, \
         m = identify_entity(session["working_identity"])
@@ -6129,8 +6157,8 @@ def invitation_display(qrfilename):
 
 # help ========================================================================
 #
-@app.route("/help")
-def help():
+@app.route("/help_")
+def help_():
     # Hub operational mode (read from environment variable HUB_MODE)
     hub_mode = get_hub_mode()
     page = "help"
@@ -6152,3 +6180,84 @@ def help():
         namespace_steward = namespace_steward,
         currency_steward = currency_steward
     )
+
+@app.route("/help")
+def help():
+    # Hub operational mode (read from environment variable HUB_MODE)
+    hub_mode = get_hub_mode()
+    page = "help"
+    group = "help"
+    namespace_steward = True
+    currency_steward = True
+    paying = False
+
+    logged_in = current_user.is_authenticated
+
+    # If the user is not logged in, a basic summary is shown.
+    if not logged_in:
+        help_page = "unspecific"
+    elif "previous_page" in session:
+        help_page = session["previous_page"]
+
+
+
+
+    # Otherwise, contextual help is shown detemined by the previous page (from
+    # which help was requested). That previous page is also where control must
+    # be returned after the help page has been read.
+    #
+    # If help is invoked from one of the contextual help pages, control is
+    # returned to the previous page.
+
+
+
+
+
+
+
+
+
+    return render_template(
+        "help.html",
+        title = "help",
+        help_page = help_page,  # Determines which template section to use.
+        logged_in = logged_in,
+        page = page,
+        group = group,
+        hub_mode = "omtrad",
+        version = get_version(),
+        show_csv_import_link = get_config("show_dataset_csv_import_link"),
+        development_mode = development_mode,
+        namespace_steward = namespace_steward,
+        currency_steward = currency_steward
+    )
+
+@app.route("/back")
+def back():
+    # Hub operational mode (read from environment variable HUB_MODE)
+    hub_mode = get_hub_mode()
+    page = "back"
+    group = "help"
+    logged_in = current_user.is_authenticated
+    # If the user is not logged in, a basic summary is shown.
+    if not logged_in:
+        return redirect("/")
+    elif "previous_page" in session:
+        primid_fph, primid_hrns, etypes, \
+        m = identify_entity(current_user.get_id())
+
+        help_page = session["previous_page"]
+        if help_page == "home_ahc":
+            return redirect("/home_ahc")
+        elif help_page == "create_namespace":
+            return redirect("/create_namespace")
+        elif help_page == "create_currency":
+            return redirect("/create_currency")
+        elif help_page == "create_pairing":
+            return redirect("/create_pairing/" + primid_fph)
+        elif help_page == "import_dataset":
+            return redirect("/import/dataset")
+        elif help_page == "invitation_generate":
+            return redirect("/invitation/generate")
+        else:
+            return redirect("/home_ahc")

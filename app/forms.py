@@ -289,6 +289,7 @@ class PaymentAccountPairForm(FlaskForm):
 class SpecifyPayeeAccountHolderForm(FlaskForm):
     payee_ahid      = StringField(
                           "account-holder identity",
+                          render_kw={"placeholder": "payee"},
                           validators=[DataRequired("required")]
                       )
     currency_id     = StringField("currency identifier")
@@ -297,7 +298,10 @@ class SpecifyPayeeAccountHolderForm(FlaskForm):
 #                        "amount",
 #                        validators=[DataRequired("required")]
 #                      )
-    annotation      = TextAreaField("annotation")
+    annotation      = TextAreaField(
+                        "annotation",
+                        render_kw={"placeholder": "optional note"}
+                      )
     submit          = SubmitField("pay")
 
 
@@ -453,8 +457,9 @@ class NamespaceCreateForm(FlaskForm):
                           )
     default_currency_id = StringField(
                             "default currency",
-                            render_kw={"placeholder": "test"},
-                            validators=[DataRequired("required")]
+                            render_kw={"placeholder": "currency"}
+#                            render_kw={"placeholder": "currency"},
+#                            validators=[DataRequired("required")]
                           )
     create_namespace    = SubmitField("create namespace")
 
@@ -496,9 +501,11 @@ class LoginForm(FlaskForm):
     pro             = HiddenField(default=pin_subset_indices)
 #    pro             = HiddenField()
 
+#    pse             = PasswordField(
     pse             = StringField(
                          pin_prompt,
 #                         "PIN: ",
+                         #render_kw={"autocomplete": "off"},
                          render_kw={"autocomplete": "new-password"},
                          validators=[DataRequired("required")]
                       )
@@ -723,13 +730,14 @@ class RegistrationForm(FlaskForm):
                           )
     password_repeat     = PasswordField("repeat password")
 
-##    pin                 = PasswordField(
-    pin                 = StringField(
+    pin                 = PasswordField(
+#    pin                 = StringField(
                             "PIN",
                             validators=[
                                 DataRequired(),
                                 Length(min=6, max=6)
-                            ]
+                            ],
+                            render_kw={"autocomplete": "off"}
                           )
 #    ssh_pubkey          = StringField(
 #                            "SSH public key"

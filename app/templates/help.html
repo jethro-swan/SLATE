@@ -2,8 +2,162 @@
 
 {% block content %}
 
-<h2>Help</h2>
+<h3>Help</h3>
 
+<p><a href="/back">go back</a></p>
+
+{% if help_page == "home_ahc" %}
+<p>
+  <ul>
+    <li class="compact">
+      Click on any entry in the <b>account-holder</b> column to make a payment.
+    </li>
+    <li class="compact">
+      Click on <a href="">&#x025FC;</a> in any row to display the transaction
+      history.
+    </li>
+    <li class="compact">
+      If you are a steward of a <b>currency</b> it will be shown as a
+      <a href="">link</a> on which you can click to manage it.
+    </li>
+  </ul>
+</p>
+{% elif help_page == "create_namespace" %}
+<p>
+  Use this form to create a new <b>currency</b>.
+  <ul>
+    <li class="compact">
+      The parent <b>namespace</b> must exist already.
+    </li>
+    <li class="compact">
+      The parent <b>namespace</b> must be one in which you are authorized to
+      create new <em>entities</em>. This will be the default behaviour in most
+      <em>public</em> <b>namespaces</b> but will generally not be allowed in
+      most <em>private</em> <b>namespaces</b>.
+    </li>
+    <li class="compact">
+      The <em>name</em> (the part preceding the parent <b>namespace</b> string)
+      must not contain any name-separator characters (usually "." when using
+      the Latin alphabet).
+    </li>
+    <li>
+      The <b>login identity</b> (<b>primid</b>) creating this <b>currency</b>
+      will be its initial <em>steward</em>.
+    </li>
+  </ul>
+</p>
+{% elif help_page == "create_currency" %}
+<p>
+  Use this form to create a new <b>currency</b>.
+  <ul>
+    <li class="compact">
+      The parent <b>namespace</b> must exist already.
+    </li>
+    <li class="compact">
+      The parent <b>namespace</b> must be one in which you are authorized to
+      create new <em>entities</em>. This will be the default behaviour in most
+      <em>public</em> <b>namespaces</b> but will generally not be allowed in
+      most <em>private</em> <b>namespaces</b>.
+    </li>
+    <li class="compact">
+      The <em>name</em> (the part preceding the parent <b>namespace</b> string)
+      must not contain any name-separator characters (usually "." when using
+      the Latin alphabet).
+    </li>
+    <li>
+      The <b>login identity</b> (<b>primid</b>) creating this <b>namespace</b>
+      will be its initial <em>steward</em>.
+    </li>
+  </ul>
+</p>
+{% elif help_page == "create_pairing" %}
+<p>
+  Use this form to pair a <b>currency</b> with a, <b>account-holder
+  identity</b> (<b>ahid</b>) creating a new <b>account</b>.
+</p>
+  <ul>
+    <li class="compact">
+      The <b>ahid</b> will be created automatically if it does not exist
+      already.
+    </li>
+    <li class="compact">
+      If the <b>currency</b> does not exist already, nothing will happen.
+    </li>
+  </ul>
+</p>
+
+{% elif help_page == "import_dataset" %}
+<p>
+  <ul>
+    <li class="compact">
+
+    </li>
+    <li class="compact">
+
+    </li>
+    <li class="compact">
+
+    </li>
+  </ul>
+</p>
+{% elif help_page == "create_invitation_qr" %}
+<p>
+  Use this screen to generate a QR code others can scan in order to pre-fill
+  the registration form with a <b>namespace</b> (registry) and an initial
+  <b>currency</b>.
+</p>
+<p>
+  This is particularly convenient for quickly inducting a small group of users
+  with whom you can interact within a pre-specified <b>namespace</b> and using
+  a pre-specified <b>currency</b>.
+</p>
+{% elif help_page == "export_currency_journal" %}
+<p>
+  <ul>
+    <li class="compact">
+
+    </li>
+    <li class="compact">
+
+    </li>
+    <li class="compact">
+
+    </li>
+  </ul>
+</p>
+
+{% elif help_page == "register" %}
+<p>
+  <ul>
+    <li class="compact">
+
+    </li>
+    <li class="compact">
+
+    </li>
+    <li class="compact">
+
+    </li>
+  </ul>
+</p>
+
+{% elif help_page == "recover" %}
+<p>
+  <ul>
+    <li class="compact">
+
+    </li>
+    <li class="compact">
+
+    </li>
+    <li class="compact">
+
+    </li>
+  </ul>
+</p>
+
+
+{% else %}
 <p>
   This is an experimental prototype intended to meet the following needs:
   <ul>
@@ -29,5 +183,8 @@
   </ul>
 </p>
 
+
+
+{% endif %}
 
 {% endblock %}

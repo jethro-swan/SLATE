@@ -2,7 +2,6 @@
 
 {% block content %}
 
-{% if hub_mode == "omtrad" %}
 <!-- --------------------------------------------------------------------------
 This interface implements the more tradional behaviour of previous open money
 implementations, identifying *accounts* as a single intersection on a notional
@@ -11,109 +10,21 @@ grid, each column identifying a *currency* and each rows identifing an *ahid*
 no more than one *account* in any *currency*. This enable the *accounts* to be
 hidden.
 --------------------------------------------------------------------------- -->
-
-{% if show_payment_form %}
-
 <!--
-<b>Make a payment</b><br />
--->
-<form action="" method="post" novalidate>
-{{ form.hidden_tag() }}
-<!--
-<table style="border:0">
-  <tr>
-    <td class="h"><b>currency</b></td>
-    <td class="h"><b>from</b></td>
-    <td class="h"><b>to</b></td>
-    <td class="h"><b>amount</b></td>
-    <td class="h"><b>balance</b></td>
-  </tr>
-  <tr>
-    <td>{{ p_currency_hrns}}</td>
-    <td>{{ payer_ahid_hrns }}</td>
-    <td>{{ form.payee_ahid(size=20) }}</td>
-    <td>
-      <input
-        type="currency"
-        name="amount"
-        value="0.00"
-        id="pence"
-        min="0.00"
-        max="9999.99"
-        step="0.01"
-        size="10"
-        placeholder="Enter a payment value here"
-      />
-    </td>
-    <td>{{ payer_balance }}</td>
-  </tr>
-  <tr>
-    <td colspan="4">{{ form.annotation(size=500) }}</td>
-    <td><input type="submit" value="PAY"></td>
-  </tr>
-</table>
--->
-<!--
-In <b>{{ p_currency_hrns}}</b>
-(currently {{ payer_balance }})<br />
-from <b>{{ payer_ahid_hrns }}</b>
-to {{ form.payee_ahid(size=6) }} <input type="submit" value="PAY">
-<input
-  type="currency"
-  name="amount"
-  value="0.00"
-  id="pence"
-  min="0.00"
-  max="9999.99"
-  step="0.01"
-  size="6"
-  placeholder="Enter a payment value here"
-/>
-<br /><br />
-{{ form.annotation(size=500) }}
--->
-
-<!--
-Using currency <b>{{ p_currency_hrns}}</b>
--->
-<input type="submit" value="PAY">
-<input
-  type="currency"
-  name="amount"
-  value="0.00"
-  id="pence"
-  min="0.00"
-  max="9999.99"
-  step="0.01"
-  size="5"
-  placeholder="Enter a payment value here"
-/>
-<b>{{ p_currency_hrns}}</b>
-<em>from</em> <b>{{ payer_ahid_hrns }}</b>
-<em>to</em> {{ form.payee_ahid(size=10) }}
-<br /><br />
-{{ form.annotation(size=500) }} Optional note
-
-
-
-</form>
-<hr size="1" />
-
-{% endif %}
-
 <p>Your <b>currency</b>|<b>account-holder</b> pairings:</p>
+-->
 
 <table>
   <tr>
-    <td class="h"><b>currency</b></td>
+    <td class="h" colspan="2"><b>currency</b></td>
     <td class="h"><b>account-holder</b></td>
     <td class="h"><b>balance</b></td>
-    <td class="h"></td>
+    <td class="h"><b>+</b></td>
   </tr>
   {% for p_row in p_rows %}<!-- list of dictionaries -->
   <tr>
     {% if not p_row.blank_currency_cell %}
-    <td align="left" rowspan="{{ p_row.currency_count }}">
+    <td align="left" rowspan="{{ p_row.currency_count }}" colspan="2">
       {% if p_row.primid_currency_steward %}
       <a href="/currency/{{ p_row.currency_fph }}">
         {{ p_row.currency_hrns }}
@@ -149,17 +60,84 @@ Using currency <b>{{ p_currency_hrns}}</b>
       {{ p_row.balance }}
     </td>
     <td>
-      <!--
-      <a href="/journal/{{ p_row.ahid_fph }}/{{ p_row.currency_fph }}">*</a>
-      -->
       <a href="/journal/{{ p_row.ahid_fph }}/{{ p_row.currency_fph }}">
-        <div style="font-size:1.0em">&#x025FC;</div>
+        {% if p_row.pairing_selected %}
+        <div style="font-size:1.0em">&#9745;</div>
+        {% else %}
+        <div style="font-size:1.0em">&#9724;</div>
+        {% endif %}
+        <!--&#x025FC; -->
+        <!-- See https://html-css-js.com/html/character-codes/ -->
       </a>
     </td>
   </tr>
   {% endfor %}
+<!--
 </table>
+-->
+<!-- payment form -->
+{% if show_payment_form %}
+<form action="" method="post" novalidate>
+{{ form.hidden_tag() }}
+<!--
+<table class="pform">
+-->
+  <tr class="pform">
+    <td colspan="5"></td>
+  </tr>
+  <!--
+  <tr class="pform">
+    <td class="pform">using currency</td>
+    <td class="pform"></td>
+    <td class="pform">make a payment</td>
+    <td class="pform"></td>
+    <td class="pform"></td>
+  </tr>
+  -->
+  {% if display_in_from_lines %}
+  <tr class="pform">
+    <td class="pform" colspan="2" align="right">Paying in</td>
+    <td class="pform" colspan="3"><b>{{ p_currency_hrns}}</b></td>
+  </tr>
+  <tr class="pform">
+    <td class="pform" colspan="2" align="right"><em>from</em></td>
+    <td class="pform"><b>{{ payer_ahid_hrns }}</b></td>
+    <td class="pform"></td>
+    <td class="pform"></td>
+  </tr>
+  {% endif %}
+  <tr class="pform">
+    <td class="pform" colspan="2" align="right"> <em>to</em></td>
+    <td class="pform">{{ form.payee_ahid(size=10) }}</td>
+    <td class="pform" colspan="2">
+      <input
+        type="currency"
+        name="amount"
+        id="pence"
+        min="0.00"
+        max="9999.99"
+        step="0.01"
+        size="5"
+        placeholder="amount"
+      />
+      <input type="submit" value="PAY">
+    </td>
+  </tr>
+  <tr class="pform" valign="top">
+    <td colspan="5" class="pform"></td>
+  </tr>
+  <tr class="pform" valign="top">
+    <td class="pform" colspan="2" align="right"></td>
+    <td colspan="3" class="pform">{{ form.annotation(size=800) }}</td>
+  </tr>
+</table>
+</form>
+{% else %}
+</table>
+{% endif %}
 
+
+<!--
 <ul>
   <li class="compact">
     <p class="footnote">
@@ -180,15 +158,6 @@ Using currency <b>{{ p_currency_hrns}}</b>
   </li>
 </ul>
 <hr />
-
-{% else %}
-
-<a href="/create_namespace">new namespace</a>
-|
-<a href="/create_currency">new currency</a>
-|
-<a href="/import/dataset">import dataset</a>
-
-{% endif %}<!-- hub_mode == "omtrad" -->
+-->
 
 {% endblock %}

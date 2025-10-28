@@ -333,6 +333,21 @@ th {
   border: 1px solid #c0c0c0;
 }
 
+table.pform {
+  border: 0px;
+}
+tr.pform {
+  border: 0px;
+}
+td.pform {
+  border: 0px;
+  padding-top: 1px; padding-left: 4px; padding-right: 4px; padding-bottom: 1px;
+  background: #f0f0f0;
+}
+
+
+
+
 .dark-green-bold { color: #008000; font-weight: bold; }
 .dark-red-bold { color: #800000; font-weight: bold; }
 

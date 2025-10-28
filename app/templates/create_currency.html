@@ -9,11 +9,11 @@
   <div>
     <div style="float:left; margin:2px;">
     {{ form.currency_name.label }}<br />
-    {{ form.currency_name(size=10, placeholder="name") }} <b>.</b>
+    {{ form.currency_name(size=6, placeholder="name") }} <b>.</b>
     </div>
     <div style="float:left; margin:2px;">
       {{ form.namespace_id.label }}<br />
-      {{ form.namespace_id(size=20, placeholder="parent namespace") }}
+      {{ form.namespace_id(size=12, placeholder="parent namespace") }}
     </div>
   </div>
   {% if hub_mode != "omtrad" %}
