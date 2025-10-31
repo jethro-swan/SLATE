@@ -47,6 +47,8 @@ others
 obsolete
 tools/obsolete
 tools/tests/obsolete
+seed_primid_details_test.py
+seed_primid_details.txt 
 
 
 __pycache__

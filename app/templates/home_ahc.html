@@ -19,7 +19,7 @@ hidden.
     <td class="h" colspan="2"><b>currency</b></td>
     <td class="h"><b>account-holder</b></td>
     <td class="h"><b>balance</b></td>
-    <td class="h"><b>+</b></td>
+    <td class="h"><a href="/toggle_menu"><b>+</b></a></td>
   </tr>
   {% for p_row in p_rows %}<!-- list of dictionaries -->
   <tr>
@@ -62,7 +62,7 @@ hidden.
     <td>
       <a href="/journal/{{ p_row.ahid_fph }}/{{ p_row.currency_fph }}">
         {% if p_row.pairing_selected %}
-        <div style="font-size:1.0em">&#9745;</div>
+        <div style="font-size:1.0em">&#9744;</div>
         {% else %}
         <div style="font-size:1.0em">&#9724;</div>
         {% endif %}
@@ -107,7 +107,11 @@ hidden.
   </tr>
   {% endif %}
   <tr class="pform">
+    {% if display_in_from_lines %}
     <td class="pform" colspan="2" align="right"> <em>to</em></td>
+    {% else %}
+    <td class="pform" colspan="2" align="right"></td>
+    {% endif %}
     <td class="pform">{{ form.payee_ahid(size=10) }}</td>
     <td class="pform" colspan="2">
       <input

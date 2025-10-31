@@ -43,9 +43,11 @@ crossorigin="anonymous"
 integrity="sha384-j1CDi7MgGQ12Z7Qab0qlWQ/Qqz24Gc6BM0thvEMVjHnfYGF0rmFCozFSxQBxwHKO"
 crossorigin="anonymous"></script>
 
+
+
 <div class="clear-both"><!-- menu row 1 -->
 
-{% if not logged_in %}
+{% if not current_user.is_authenticated %}
 
   {% if page == "login" %}
     <div class="mba">log in</div>
@@ -83,7 +85,18 @@ crossorigin="anonymous"></script>
 
   {% endif %}
 
-  {% if page != "help" %}
+  <!-- The *secids* are listed only of SLATE is not running in slate_minimal
+       or omtrad mode.
+  -->
+  {% if  (hub_mode != "slate_minimal") and (hub_mode != "omtrad") %}
+    {% if page == "identities" %}
+      <div class="mba">list identities</div>
+    {% else %}
+      <div class="mb"><a class="mb" href="/identity/list">identities</a></div>
+    {% endif %}
+  {% endif %}
+
+  {% if (hub_mode == "slate_minimal") or (hub_mode == "omtrad") %}
     {% if number_of_indelible_messages %}
       <div class="mbp">
         <a class="mbp" href="/message/list">messages</a>
@@ -118,6 +131,22 @@ crossorigin="anonymous"></script>
   <!-- Test/development stuff -->
 <div class="footnote">
 &nbsp;&nbsp;v{{ version }}
+{% if hub_mode == "slate_simple" %}
+  [simple mode]
+{% elif hub_mode == "omtrad" %}
+<!--
+  [omtrad mode]
+-->
+  [0]
+{% elif hub_mode == "slate_minimal" %}
+  [1]
+{% elif hub_mode == "slate_normal" %}
+  [2]
+{% elif hub_mode == "nests" %}
+  [3]
+{% else %}
+  [4]
+{% endif %}
 </div>
 
 <!-- end menu row 1 ------------------------------------------------------- -->
@@ -150,7 +179,9 @@ crossorigin="anonymous"></script>
   </div>
 {% endif %}<!-- logged_in -->
 
-<div class="clear-both" /><br /></div>
+<div class="clear-both" /></div>
+
+<hr />
 
 {% with messages = get_flashed_messages() %}
   {% if messages %}

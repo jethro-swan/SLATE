@@ -2,7 +2,7 @@
 
 {% block content %}
 
-<h3>Help</h3>
+<h2>Help</h2>
 
 <p><a href="/back">go back</a></p>
 
@@ -10,18 +10,67 @@
 <p>
   <ul>
     <li class="compact">
-      Click on any entry in the <b>account-holder</b> column to make a payment.
+      Click on <a href="">&#9724;</a> in any row to display the transaction
+      history.
     </li>
     <li class="compact">
-      Click on <a href="">&#x025FC;</a> in any row to display the transaction
-      history.
+      Click on any entry in the <b>account-holder</b> column to make a payment.
+      The <a href="">&#9724;</a> will change to <a href="">&#9745;</a> to
+      confirm the selection.
     </li>
     <li class="compact">
       If you are a steward of a <b>currency</b> it will be shown as a
       <a href="">link</a> on which you can click to manage it.
     </li>
+    <li class="compact">
+      Click on the <a href="">+</a> in the top right hand corner of the table
+      to reveal links to further functions:
+      <ul>
+        <li class="compact">
+          Clicking on <a href="">new namespace</a> will allow you to create a
+          new <b>namespace</b> of which you will be the initial
+          <em>steward</em>. The <em>parent</em> <b>namespace</b> must exist
+          already and must be one in which you are authorized to create new
+          <em>entities</em> (which will generally be the case with
+          <em>open</em> <b>namespaces</b> but will generally not be the case
+          with <em>private</em> <b>namespaces</b>).
+        </li>
+        <li class="compact">
+          Clicking on <a href="">new currency</a> will allow you to create a
+          new <b>currency</b> of which you will be the initial
+          <em>steward</em>. The <em>parent</em> <b>namespace</b> must exist
+          already and must be one in which you are authorized to create new
+          <em>entities</em>.
+        </li>
+        <li class="compact">
+          Clicking on <a href="">invite user</a> will allow you to create a QR
+          code encoding
+          <ul>
+            <li class="compact">
+              The URL of this instance of <em>SLATE</em>.
+            </li>
+            <li class="compact">
+              The initial <b>currency</b> to be used by the new user.
+            </li>
+            <li class="compact">
+              The initial <b>namespace</b> to be used by the new user.
+            </li>
+          </ul>
+          This enables the rapid reccuitment of others with whom you can begin
+          immediate interaction.
+        </li>
+        <li class="compact">
+          Clicking on <a href="">new currency</a> will allow you to create a
+          new <b>currency</b> of which you will be the initial
+          <em>steward</em>. The <em>parent</em> <b>namespace</b> must exist
+          already and must be one in which you are authorized to create new
+          <em>entities</em>.
+        </li>
+      </ul>
+    </li>
   </ul>
 </p>
+
 {% elif help_page == "create_namespace" %}
 <p>
   Use this form to create a new <b>currency</b>.
@@ -46,6 +95,7 @@
     </li>
   </ul>
 </p>
+
 {% elif help_page == "create_currency" %}
 <p>
   Use this form to create a new <b>currency</b>.
@@ -70,11 +120,13 @@
     </li>
   </ul>
 </p>
+
 {% elif help_page == "create_pairing" %}
 <p>
   Use this form to pair a <b>currency</b> with a, <b>account-holder
   identity</b> (<b>ahid</b>) creating a new <b>account</b>.
 </p>
+<p>
   <ul>
     <li class="compact">
       The <b>ahid</b> will be created automatically if it does not exist
@@ -126,38 +178,54 @@
   </ul>
 </p>
 
-{% elif help_page == "register" %}
-<p>
-  <ul>
-    <li class="compact">
-
-    </li>
-    <li class="compact">
-
-    </li>
-    <li class="compact">
-
-    </li>
-  </ul>
-</p>
-
-{% elif help_page == "recover" %}
-<p>
-  <ul>
-    <li class="compact">
-
-    </li>
-    <li class="compact">
-
-    </li>
-    <li class="compact">
-
-    </li>
-  </ul>
-</p>
-
-
 {% else %}
+<h3>Registration</h3>
+<p>
+  To register, enter the following details:
+</p>
+<p>
+  <ul>
+    <li class="compact">
+      A short <em>username</em> comprising alphanumeric characters. The first
+      character must be a letter.
+    </li>
+    <li class="compact">
+      The <em>identifier</em> of an existing <b>namespace</b>.
+    </li>
+    <li class="compact">
+      The <em>identifier</em> of an existing <b>currency</b>.
+    </li>
+    <li class="compact">
+      At least one email address to allow recovery of login credentials. A
+      cryptographic hash of the email address(es) will be saved to allow
+      validation of the address provide in the password/PIN reset request, but
+      the address itself will not be stored.
+    </li>
+    <li class="compact">
+      A password (something random-looking and unguessable).
+    </li>
+    <li class="compact">
+      A 6-digit PIN.
+    </li>
+  </ul>
+  If you have reached this form by following an invitation link (typically by
+  scanning a QR code), the <b>namespace</b> or <b>currency</b> field, usually
+  both, will have been replaced by their <em>identifiers</em>.
+</p>
+
+<h3>Login recovery</h3>
+<p>
+  If you have forgotten your password or PIN, you can create new login
+  credentials by clicking on <a href="">Forgotten password or PIN?</a> and
+  entering your <b>login identity</b> (as created when you registered) along
+  with one of the email addresses you provided for recovery purposes. If that
+  address is valid, you will be sent a one-time recovery link taking you to a
+  form in which you can enter a new passsword and PIN.
+</p>
+
+<hr />
+
+<h3>General</h3>
 <p>
   This is an experimental prototype intended to meet the following needs:
   <ul>

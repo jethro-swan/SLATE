@@ -557,7 +557,8 @@ class LoginResetForm(FlaskForm):
                           )
     password_repeat     = PasswordField("repeat password")
 
-    pin                 = PasswordField(
+#    pin                 = PasswordField(
+    pin                 = StringField(
                             "PIN",
                             validators=[
                                 DataRequired(),
@@ -730,8 +731,8 @@ class RegistrationForm(FlaskForm):
                           )
     password_repeat     = PasswordField("repeat password")
 
-    pin                 = PasswordField(
-#    pin                 = StringField(
+#    pin                 = PasswordField(
+    pin                 = StringField(
                             "PIN",
                             validators=[
                                 DataRequired(),
