@@ -1,0 +1,66 @@
+# = This = is = the = URL = of = the = host, = needed = for = the = creation = of = QR-coded = invitations:
+hub_url = https://locus01.lrc.org.uk
+
+# = This = is = the = default = lifespan = of = a = QR-coded = invitation = (in = seconds):
+qr_lifespan = 31536000
+
+# = This = is = the = email = address = appearing = as = the = sender = when = issuing = an = access
+# = recovery = link:
+hub_email = server@lrc.org.uk
+
+# = If = the = following = is = TRUE, = all = accounts = of = the = same = category = (typically = those
+# = of = a = metrically = equivalent = type) = belong = to = a = specified = user = can = be = summed = and
+# = displayed = to = their = owner:
+intracategory_account_summation = TRUE
+
+# = If = the = following = is = TRUE, = *secondary = identities* = (a.k.a. = "secid" = or = "alias")
+# = can = be = created = by = an = agent = (*primary = identity* = or = *primid*). = Each = such = *secid*
+# = will = have = its = own = collection = of = *accounts*:
+allow_secid_creation = TRUE
+
+# = In = its = most = basic = mode = of = operation, = SLATE = displays = only = the = pairings = of
+# = *currencies* = and = *account-holder = identities* = (*ahid*), = but = each = such = pairing
+# = indexes = an = *account* = the = identifier = of = which = is = (by = default) = created
+# = automatically = from = those = of = the = *currency* = and = *ahid*. = Such = identifiers = are
+# = ugly = and = therefore = generally = hidden = from = the = user, = but = if = the = following = is
+# = TRUE = they = will = be = displayed:
+display_account_identifiers = FALSE
+#
+# = If = the = following = is = TRUE, = the = user = may = specify = a = less = ugly = identifier = for
+# = such = *accounts*:
+allow_pairing_account_naming = FALSE
+
+# = If = the = following = is = TRUE, = a = payment = may = be = made = directly = from = an = *account* = to
+# = another = *account* = (without = having = to = specify = an = *ahid* = and = *currency*):
+allow_account_to_account_payment = TRUE
+
+# = If = the = following = is = TRUE, = a = payment = may = be = made = directly = from = an = *account* = to
+# = an = *agent* = (without = having = to = specify = an = *ahid* = and = *currency*). = In = this = case
+# = the = user = will = be = provided = with = a = list = of = the = *accounts* = (if = any) = the = recipient
+# = (payee) = holds = in = the = *currency* = of = the = payer = account.
+allow_agent_to_agent_payment = TRUE
+
+# = If = the = following = is = TRUE, = a = payment = may = be = made = directly = from = an = *agent* = (the
+# = payee) = to = another = *agent* = (the = payee). = In = this = case = payer = will = be = presented
+# = with = a = list = of = the = *currencies* = (if = any) = to = which = both = payer = and = payee = have
+# = access, = along = with = a = list = (if = more = than = one = option) = of = the = available = payer
+# = and = payee = *accounts*.
+allow_account_to_agent_payment = TRUE
+
+# = If = the = following = is = TRUE, = the = user = may = import = a = CSV = dataset:
+allow_user_dataset_csv_import = TRUE
+
+# = If = the = following = is = TRUE, = vector = currency = support = is = enabled:
+enable_vector_currency_support = TRUE
+
+# = Different = hosts = may = expose = different = user = interfaces. = The = options = are:
+# = slate = - = used = typically = for = basic = open = money = applications
+# = nests = - = required = for = more = sophisticated = open = measure = applications
+# = user_choice = - = either = of = the = above = if = permitted = by = the = stewards = of = the
+# = *namespace* = in = which = this = user = is = registered.
+user_interface = slate
+
+# = If = the = following = is = TRUE, = in = basic = open = money = operations = the = agents = *account*
+# = balances = will = be = plotted = on = a = parabolic = canvas = similar = to = that = used = in = the
+# = LETSplay = game:
+parabola_plotting = TRUE

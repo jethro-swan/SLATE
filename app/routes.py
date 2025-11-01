@@ -4863,6 +4863,7 @@ def create_namespace():
         # Check whether an entity with the proposed HRNS exists already.
         proposed_hrns = namespace_name + "." + parent_hrns
         if hrns_exists_already(proposed_hrns):
+            print("Groucho")
             flash(proposed_hrns + " is already registered")
             return redirect("/create_namespace")
 

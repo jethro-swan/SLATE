@@ -53,8 +53,8 @@ def create_maps(): # SQLite
     # If the databases exists already, they are deleted. (A time-stamped
     # copy will have been saved by ~/initialize.py.)
     T = timestamp()
-    if os.path.exists(FPH_HRNS_MAP):
-        os.remove(FPH_HRNS_MAP)
+    if os.path.exists(MAP_DB):
+        os.remove(MAP_DB)
 
     substrate_fph = nshash("")
 
@@ -105,9 +105,24 @@ def fph_to_hrns(fph):
 
 fph_exists = fph_to_hrns # function alias
 
+#def hrns_exists_already(hrns):
+#    fph = nshash(hrns)
+#    return (fph_to_hrns(fph) == hrns)
+
 def hrns_exists_already(hrns):
-    fph = nshash(hrns)
-    return (fph_to_hrns(fph) == hrns)
+    with sqlite3.connect(MAP_DB) as conn:
+        cursor = conn.cursor()
+        cursor.execute(
+            "SELECT fph FROM hrns_fph_map WHERE hrns = ?",
+            (hrns,)
+        )
+        result = cursor.fetchone()
+        if result is not None:
+            return True
+        else:
+            return False
+
+
 
 
 def hrns_to_fph(hrns): # returns FPH and message

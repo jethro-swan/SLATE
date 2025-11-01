@@ -1509,25 +1509,30 @@ def new_namespace(
         return "", "", steward_hrns + " has no registered primid"
     # We can now register a *namespace* for this identifier:
 #    register_entity_type(namespace_fph, "namespace")
-
 #    inherited_pnsr = get_private_namespace_root(parent_fph)
 #    record_private_namespace_root(namespace_fph, inherited_pnsr)
 
     with sqlite3.connect(ENTITIES_DB) as conn:
         cursor = conn.cursor()
         cursor.execute(
-            "INSERT INTO namespaces (" \
-            + "entity_fph, " \
-            + "stewards_fph_list, " \
-            + "default_currency_fph" \
-            + ") VALUES (?, ?, ?)",
-            (
-                namespace_fph,
-                pickle.dumps([steward_fph]),
-                currency_fph
-            )
+            "SELECT * FROM namespaces WHERE entity_fph = ?",
+            (namespace_fph,)
         )
-        conn.commit()
+        result = cursor.fetchone()
+        if result is None:
+            cursor.execute(
+                "INSERT INTO namespaces (" \
+                + "entity_fph, " \
+                + "stewards_fph_list, " \
+                + "default_currency_fph" \
+                + ") VALUES (?, ?, ?)",
+                (
+                    namespace_fph,
+                    pickle.dumps([steward_fph]),
+                    currency_fph
+                )
+            )
+            conn.commit()
         cursor.close()
     return namespace_fph, namespace_hrns, ""
 
@@ -3167,32 +3172,40 @@ def new_pairing(
     if not ("primid" in petypes):
         return "", "", primid_hrns + " is not a primid"
     # If the *ahid* does not exist already it must be created:
+#    r_ahid_fph, r_ahid_hrns, etypes, m = identify_entity(ahid_hrns)
     r_ahid_fph, r_ahid_hrns, etypes, m = identify_entity(ahid_hrns)
     if not ("ahid" in etypes):
         # A new *ahid* is created:
+#        if not r_ahid_fph: # ahid_hrns is not a registered identifier
+#            identifier_fph = register_identifier(ahid_hrns)
         ahid_name, parent_hrns = split_hrns(ahid_hrns)
+#        print("ahid_name = " + ahid_name)
+#        print("parent_hrns = " + parent_hrns)
         ahid_fph, ahid_hrns, \
         m = new_ahid(ahid_name, parent_hrns, primid_fph)
-        # A new *namespace* is created
-        # (a) sharing the parent *namespace* of the new *ahid*
-        # (b) using the default *currency* of the parent as its own
-        #parent_fph, m = hrns_to_fph(parent_hrns)
-        parent_fph, parent_hrns, etypes, m = identify_entity(parent_hrns)
-        if not parent_fph: # (should never happen)
-            print("Panic! " + parent_hrns + " is not a registered identifier")
-        if not ("namespace" in etypes): # (should never happen)
-            print("Panic! " + parent_hrns + " has no registered namespace")
-        # The parent *namespace* details are retrieved:
-        active, sandbox, private, owner_fph, \
-        parent_currency_fph, stewards_list, \
-        m = get_namespace_properties(parent_fph)
-        # Its new child *namespace* is created
-        namespace_fph, namespace_hrns, \
-        m = new_namespace(
-                ahid_name, get_parent(ahid_fph),
-                parent_currency_fph,    # The default *currency* inherited.
-                primid_fph              # The *primid* is the initial steward.
-        )
+#        print("ahid_hrns = " + ahid_hrns)
+        if not ("namespace" in etypes):
+            # A new *namespace* is created
+            # (a) sharing the parent *namespace* of the new *ahid*
+            # (b) using the default *currency* of the parent as its own
+            #parent_fph, m = hrns_to_fph(parent_hrns)
+            parent_fph, parent_hrns, etypes, m = identify_entity(parent_hrns)
+            if not parent_fph: # (should never happen)
+                print("Panic! " + parent_hrns + " not a registered identifier")
+            if not ("namespace" in etypes): # (should never happen)
+                print("Panic! " + parent_hrns + " has no registered namespace")
+            # The parent *namespace* details are retrieved:
+            active, sandbox, private, owner_fph, \
+            parent_currency_fph, stewards_list, \
+            m = get_namespace_properties(parent_fph)
+            # Its new child *namespace* is created
+            namespace_fph, namespace_hrns, \
+            m = new_namespace(
+                    ahid_name,
+                    get_parent(ahid_fph),
+                    parent_currency_fph,    # The default *currency* inherited.
+                    primid_fph              # The *primid* is initial steward.
+                )
     else:
         ahid_fph = r_ahid_fph
         ahid_hrns = r_ahid_hrns
