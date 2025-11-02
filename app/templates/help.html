@@ -7,75 +7,114 @@
 <h2>Help</h2>
 
 {% if help_page == "home_ahc" %}
-<p>
-  <ul>
-    <li class="compact">
-      Click on <span style="color:#008000;">&#9724;</span> in any row to
-      display the transaction history.
-    </li>
-    <li class="compact">
-      Click on any entry in the <b>account-holder</b> column to make a payment.
-      The <span style="color:#008000;">&#9724;</span> will change to
-      <span style="color:#008000;">&#9744;</span> to confirm the selection.
-    </li>
-    <li class="compact">
-      If you are a steward of a <b>currency</b> it will be shown as a
-      <span style="color:#008000;">link</span> on which you can click to manage
-      it.
-    </li>
-    <li class="compact">
-      Click on the <span style="color:#008000;font-weight:bold;">+</span> in
-      the top right hand corner of the table to reveal links to further
-      functions:
-      <ul>
-        <li class="compact">
-          Clicking on <span style="color:#008000;font-weight:bold;">new
-          namespace</span> will allow you to create a new <b>namespace</b> of
-          which you will be the initial <em>steward</em>. The <em>parent</em>
-          <b>namespace</b> must exist already and must be one in which you are
-          authorized to create new <em>entities</em> (which will generally be
-          the case with <em>open</em> <b>namespaces</b> but will generally not
-          be the case with <em>private</em> <b>namespaces</b>).
-        </li>
-        <li class="compact">
-          Clicking on <span style="color:#008000;font-weight:bold;">new
-          currency</span> will allow you to create a new <b>currency</b> of
-          which you will be the initial <em>steward</em>. The <em>parent</em>
-          <b>namespace</b> must exist already and must be one in which you are
-          authorized to create new <em>entities</em>.
-        </li>
-        <li class="compact">
-          Clicking on <span style="color:#008000;font-weight:bold;">invite
-          user</span> will allow you to create a QR code encoding
-          <ul>
-            <li class="compact">
-              The URL of this instance of <em>SLATE</em>.
-            </li>
-            <li class="compact">
-              The initial <b>currency</b> to be used by the new user.
-            </li>
-            <li class="compact">
-              The initial <b>namespace</b> to be used by the new user.
-            </li>
-          </ul>
-          This enables the rapid reccuitment of others with whom you can begin
-          immediate interaction.
-        </li>
-        <li class="compact">
-          Clicking on <span style="color:#008000;font-weight:bold;">new currency</span> will
-          allow you to create a new <b>currency</b> of which you will be the
-          initial <em>steward</em>. The <em>parent</em> <b>namespace</b> must
-          exist already and must be one in which you are authorized to create
-          new <em>entities</em>.
-        </li>
-      </ul>
-    </li>
-  </ul>
+<div class="boxed">
+
+<h4>Payments</h4>
+
+<p>Click on any entry in the <b>account-holder</b> column to make a payment.
+The <span style="color:#008000;">&#9724;</span> will change to
+<span style="color:#008000;">&#9744;</span> to confirm the selection.</p>
+
+</div>
+<div class="boxed">
+
+<h4>Transaction history</h4>
+
+<p>Click on <span style="color:#008000;">&#9724;</span> in any row to display
+the transaction history for that <b>currency</b>:<b>account-holder</b> pairing
+or to export (as CSV) a more complete version.</p>
+
+</div>
+<div class="boxed">
+
+<h4>Currency stewardship</h4>
+
+<p>If you are a steward of a <b>currency</b> it will be shown as a
+<span style="color:#008000;">link</span> on which you can click to manage it.
 </p>
+
+<p>Here you can:
+<ul>
+  <li class="compact">
+    Access the complete transaction history (all payments and receipts made in
+    this <b>currency</b>) and to export it as a CSV.
+  </li>
+  <li class="compact">
+    Add additional <em>stewards</em>.
+  </li>
+  <li class="compact">
+    Propose the removal of a <em>steward</em>.
+  </li>
+  <li class="compact">
+    De-activate the <b>currency</b>. This is generally an action of last
+    resort, taken only when misuse of the <b>currency</b> has been reported to
+    its <em>stewards</em>.
+  </li>
+  <li class="compact">
+    Re-activate the <b>currency</b>.
+  </li>
+</ul>
+
+</p>
+
+</div>
+
+<h4>Accessing additional functions</h4>
+
+Click on the <span style="color:#008000;font-weight:bold;">+</span> in the top
+right hand corner of the table to reveal links to further functions:
+
+<div class="boxed">
+
+<h4>Creating a new namespace</h4>
+
+Click on <span style="color:#008000;font-weight:bold;">new namespace</span> and
+enter a <em>name</em> along with a valid <em>parent</em> <b>namespace</b>
+(which must exist already and must be one in which you are authorized to create
+new <em>entities</em> - which will generally be the case with <em>open</em>
+<b>namespaces</b> but will generally not be the case with <em>private</em>
+<b>namespaces</b>). You will be the initial <em>steward</em> of this new
+<b>namespace</b> but can add others.
+
+</div>
+<div class="boxed">
+
+<h4>Creating a new currency</h4>
+
+Click on <span style="color:#008000;font-weight:bold;">new currency</span> and
+enter a <em>name</em> along with a valid <em>parent</em> <b>namespace</b>
+(which must exist already and must be one in which you are authorized to create
+new <em>entities</em> - which will generally be the case with <em>open</em>
+<b>namespaces</b> but will generally not be the case with <em>private</em>
+<b>namespaces</b>). You will be the initial <em>steward</em> of this new
+<b>currency</b> but can add others.<br />
+
+</div>
+<div class="boxed">
+
+<h4>Creating a QR code invitation</h4>
+
+Clicking on <span style="color:#008000;font-weight:bold;">invite user</span>
+will allow you to create a QR code encoding
+<ul>
+  <li class="compact">
+    The URL of this instance of <em>SLATE</em>.
+  </li>
+  <li class="compact">
+    The initial <b>currency</b> to be used by the new user.
+  </li>
+  <li class="compact">
+    The initial <b>namespace</b> to be used by the new user.
+  </li>
+</ul>
+This enables the rapid reccuitment of others with whom you can begin immediate
+interaction.
+
+</div>
 
 {% elif help_page == "create_namespace" %}
 <p>
-  Use this form to create a new <b>currency</b>.
+  Use this form to create a new <b>namespace</b>.
   <ul>
     <li class="compact">
       The parent <b>namespace</b> must exist already.
@@ -91,8 +130,8 @@
       must not contain any name-separator characters (usually "." when using
       the Latin alphabet).
     </li>
-    <li>
-      The <b>login identity</b> (<b>primid</b>) creating this <b>currency</b>
+    <li class="compact">
+      The <b>login identity</b> (<b>primid</b>) creating this <b>namespace</b>
       will be its initial <em>steward</em>.
     </li>
   </ul>
@@ -116,7 +155,7 @@
       must not contain any name-separator characters (usually "." when using
       the Latin alphabet).
     </li>
-    <li>
+    <li class="compact">
       The <b>login identity</b> (<b>primid</b>) creating this <b>namespace</b>
       will be its initial <em>steward</em>.
     </li>

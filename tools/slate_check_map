@@ -16,23 +16,23 @@ fph_hrns_d = {}
 hrns_fph_d = {}
 with sqlite3.connect(MAP_DB) as conn:
     cursor = conn.cursor()
-    s = "HRNS > FPH reverse mapping check"
-    print(s + " " + "="*(79 - len(s)) + "\n")
+#    s = "HRNS > FPH reverse mapping check"
+#    print(s + " " + "="*(79 - len(s)) + "\n")
     cursor.execute("SELECT fph, hrns FROM fph_hrns_map")
     result = cursor.fetchall()
     if result is None:
-        print("\tNo FPH>HRNS mapping listed")
+        print("No FPH>HRNS mapping listed")
         cursor.close()
         sys.exit()
     fph_hrns_mapping_list = result
     n_fph_hrns_mappings = len(fph_hrns_mapping_list)
-    print("\t" + str(n_fph_hrns_mappings) + " FPH > HRNS mappings found")
+    print(str(n_fph_hrns_mappings) + " FPH > HRNS mappings found")
     for fph_hrns_mapping in fph_hrns_mapping_list:
         fph_hrns_d[fph_hrns_mapping[0]] = fph_hrns_mapping[1]
     if show_mappings:
         print()
         for fph in fph_hrns_d.keys():
-            print("\t" + fph + " > " + fph_hrns_d[fph])
+            print(fph + " > " + fph_hrns_d[fph])
         print()
     fph_duplicates = []
     fph_clean_list = []
@@ -42,11 +42,11 @@ with sqlite3.connect(MAP_DB) as conn:
         else:
             fph_duplicates.append(fph)
     if len(fph_duplicates) == 0:
-        print("\tNo FPH duplicates found")
+        print("No FPH duplicates found")
     else:
-        print("\tFPH duplicates found:")
+        print("FPH duplicates found:")
         for fph in fph_duplicates:
-            print("\t" + fph)
+            print(fph)
     fph_list = fph_clean_list # no duplicates
     hrns_fph_omissions = []
     for fph in fph_hrns_d.keys():
@@ -54,36 +54,36 @@ with sqlite3.connect(MAP_DB) as conn:
         cursor.execute("SELECT fph FROM hrns_fph_map WHERE hrns = ?", (hrns,))
         result = cursor.fetchone()
         if result is None:
-            print("\t" + fph + " > " + hrns + " has no reverse mapping")
+            print(fph + " > " + hrns + " has no reverse mapping")
             hrns_fph_omissions.append(fph + " > " + hrns)
     if len(hrns_fph_omissions) == 0:
-        print("\tNo HRNS>FPH omissions found")
+        print("No HRNS>FPH omissions found")
     else:
         for hrns_fph_omission in hrns_fph_omissions:
-            print("\t" + hrns_fph_omission)
-    print()
-    s = "HRNS > FPH reverse mapping check"
-    print(s + " " + "="*(79 - len(s)) + "\n")
+            print(hrns_fph_omission)
+#    print()
+#    s = "HRNS > FPH reverse mapping check"
+#    print(s + " " + "="*(79 - len(s)) + "\n")
     cursor.execute("SELECT hrns, fph FROM hrns_fph_map")
     result = cursor.fetchall()
     if result is None:
-        print("\tNo HRNS>FPH mapping listed")
+        print("No HRNS>FPH mapping listed")
         cursor.close()
         sys.exit()
     else:
         hrns_fph_mapping_list = result
     n_hrns_fph_mappings = len(hrns_fph_mapping_list)
-    print("\t" + str(n_hrns_fph_mappings) + " HRNS > FPH mappings found")
+    print(str(n_hrns_fph_mappings) + " HRNS > FPH mappings found")
     if n_hrns_fph_mappings != n_fph_hrns_mappings:
-        print("\tMapping tables length mismatch found")
+        print("Mapping tables length mismatch found")
     else:
-        print("\tMapping tables match in length")
+        print("Mapping tables match in length")
     for hrns_fph_mapping in hrns_fph_mapping_list:
         hrns_fph_d[hrns_fph_mapping[0]] = hrns_fph_mapping[1]
     if show_mappings:
         print()
         for hrns in hrns_fph_d.keys():
-            print("\t" + hrns + " > " + hrns_fph_d[hrns])
+            print(hrns + " > " + hrns_fph_d[hrns])
         print()
     hrns_duplicates = []
     hrns_clean_list = []
@@ -93,22 +93,22 @@ with sqlite3.connect(MAP_DB) as conn:
         else:
             hrns_duplicates.append(hrns)
     if len(hrns_duplicates) == 0:
-        print("\tNo HRNS duplicates found")
+        print("No HRNS duplicates found")
     else:
-        print("\tHRNS duplicates found:")
+        print("HRNS duplicates found:")
         for hrns in hrns_duplicates:
-            print("\t" + hrns)
+            print(hrns)
     fph_hrns_omissions = []
     for hrns in hrns_fph_d.keys():
         cursor.execute("SELECT hrns FROM fph_hrns_map WHERE fph = ?", (fph,))
         result = cursor.fetchone()
         if result is None:
-            print("\t" + hrns + " > " + fph + " has no reverse mapping")
+            print(hrns + " > " + fph + " has no reverse mapping")
             fph_hrns_omissions.append(hrns + " > " + fph)
     if len(fph_hrns_omissions) == 0:
-        print("\tNo FPH>HRNS omissions")
+        print("No FPH>HRNS omissions")
     else:
         for fph_hrns_omission in fph_hrns_omissions:
-            print("\t" + fph_hrns_omission)
+            print(fph_hrns_omission)
     print()
     cursor.close()

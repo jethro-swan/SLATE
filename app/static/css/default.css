@@ -73,6 +73,22 @@ li.compact {
 li.compact2 {
   margin-left: -15px; margin-top: 1px; margin-bottom: 1px;
 }
+li.compact-boxed {
+  margin-left: -10px; margin: 5px; border: 1px;
+}
+
+div.boxed {
+  padding:4px;
+  margin-top:4px;
+  margin-bottom:4px;
+  margin-left:0;
+  margin-right:4px;
+  border-width:1px;
+  border-color:#008000;
+  border-style:solid;
+}
+
+
 li.compact-footnote {
   margin-left: -20px; margin-top: 0px; margin-bottom: -0px;
   font-size: 11px;
