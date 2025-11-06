@@ -112,7 +112,12 @@ for c in clist:
             steward_fph,
             "",
             "",
-            cname
+            cname,
+            "scalar",
+            "money",
+            "unspecified",
+            "lt",
+            "unspecified"
         )
     if m:
         print(m)

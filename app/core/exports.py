@@ -90,7 +90,7 @@ def list_payments_in_currency(currency_id):
         payment_row.append(payment_id)          # payment number
         payment_row.append(payer_hrns)          # payer *ahid* HRNS
         payment_row.append(payee_hrns)          # payee  *ahid* HRNS
-        if hub_mode == "omtrad":
+        if hub_mode == "slate":
             payment_row.append(currency_hrns)   # currency HRNS
         payment_row.append(amount)              # amount paid
         payment_row.append(payer_balance)       # payer balance
@@ -247,7 +247,7 @@ def dump_currency_payments_csv(currency_id, show_header_row = True):
     csv_export_filepath = os.path.join(app.root_path, "export", csv_filename)
     with open(csv_export_filepath, "w") as csv_f:
         if show_header_row:
-            if hub_mode == "omtrad":
+            if hub_mode == "slate":
                 csv_f.write(
                     "date and time" + SC \
                     + "payment number" + SC \
@@ -298,7 +298,7 @@ def dump_account_payments_csv(account_id, show_header_row = False):
     for row in payment_rows:
         print(row)
 
-    if hub_mode == "omtrad":
+    if hub_mode == "slate":
         currency_fph, owner_fph, balance, volume, active, \
         account_type, account_category, account_units, \
         account_metrical_equivalence, account_dimensions, \

@@ -393,9 +393,9 @@ def register():
             flash("The currency specified does not exist.")
             return redirect("/register")
 
-        # If in omtrad mode, an initial *currency*|*ahid* pairing is created
+        # If in slate mode, an initial *currency*|*ahid* pairing is created
         # using the new *login identity* (*primid*) as the *ahid*:
-        if hub_mode == "omtrad":
+        if hub_mode == "slate":
             a_fph = new_pairing(primid_fph, primid_hrns, currency_hrns)
             return redirect("/")
 
@@ -432,7 +432,7 @@ def register():
         logged_in = logged_in,
         page = page,
         mode = mode,
-        hub_mode = "omtrad",
+        hub_mode = "slate",
         version = get_version(),
         development_mode = development_mode,
         initial_namespace_fph = initial_namespace_fph,
@@ -534,7 +534,7 @@ def login():
         session["login_identity"] = identity_fph   # Initial values upon login
         session["working_identity"] = identity_fph #
 
-        if hub_mode == "omtrad":
+        if hub_mode == "slate":
 
             session["previous_page"] = "home_ahc"  # (This one subsequently
                                                    # serves as shift register).
@@ -552,7 +552,7 @@ def login():
         title = "Sign in",
         page = page,
         mode = mode,
-        hub_mode = "omtrad",
+        hub_mode = "slate",
         version = get_version(),
         logged_in = logged_in,
         form = form,
@@ -665,7 +665,7 @@ def login_recover():
         form = form,
         page = page,
         mode = mode,
-        hub_mode = "omtrad",
+        hub_mode = "slate",
         version = get_version()
     )
 
@@ -730,7 +730,7 @@ def login_reset(user_id, token):
         title = "User login reset",
         primid_hrns = primid_hrns,
         form = form,
-        hub_mode = "omtrad",
+        hub_mode = "slate",
         version = get_version()
     )
 
@@ -866,7 +866,7 @@ def new_home():
             title = "Home",
             page = page,
             group = group,
-            hub_mode = "omtrad",
+            hub_mode = "slate",
             version = get_version(),
             show_csv_import_link = get_config("show_dataset_csv_import_link"),
             logged_in = logged_in,
@@ -892,7 +892,7 @@ def hold():
 
     # Hub operational mode (read from environment variable HUB_MODE)
     hub_mode = get_hub_mode()
-    if hub_mode != "omtrad":
+    if hub_mode != "slate":
         flash("Operational mode invalid for this endpoint")
         return redirect("/home")
 
@@ -913,7 +913,7 @@ def hold():
     primid_fph, primid_hrns, etypes, \
     m = identify_entity(current_user.get_id())
 
-    # In omtrad mode, the working *identity* is always the *primid*.
+    # In slate mode, the working *identity* is always the *primid*.
     working_identity_fph = primid_fph
     working_identity_hrns = primid_hrns
     working_identity_type = "primid"
@@ -923,7 +923,7 @@ def hold():
         title = "Hold",
         page = page,
         group = group,
-        hub_mode = "omtrad",
+        hub_mode = "slate",
         version = get_version(),
         show_csv_import_link = get_config("show_dataset_csv_import_link"),
         logged_in = logged_in,
@@ -1012,7 +1012,7 @@ def home_ahc(payer_ahid_fph=None, p_currency_fph=None, payer_balance=None):
     # Hub operational mode (read from environment variable HUB_MODE)
     hub_mode = get_hub_mode()
 
-    if hub_mode != "omtrad":
+    if hub_mode != "slate":
         flash("Operational mode invalid for this endpoint")
         return redirect("/home")
 
@@ -1037,7 +1037,7 @@ def home_ahc(payer_ahid_fph=None, p_currency_fph=None, payer_balance=None):
     primid_fph, primid_hrns, etypes, \
     m = identify_entity(current_user.get_id())
 
-    # In omtrad mode, the working *identity* is always the *primid*.
+    # In slate mode, the working *identity* is always the *primid*.
     working_identity_fph = primid_fph
     working_identity_hrns = primid_hrns
     working_identity_type = "primid"
@@ -1196,7 +1196,7 @@ def home_ahc(payer_ahid_fph=None, p_currency_fph=None, payer_balance=None):
             if annotation:
                 flash("(" + annotation + ")")
 
-        if hub_mode == "omtrad":
+        if hub_mode == "slate":
             return redirect("/home_ahc")
         else:
             return redirect("/home")
@@ -1206,7 +1206,7 @@ def home_ahc(payer_ahid_fph=None, p_currency_fph=None, payer_balance=None):
         title = "Home",
         page = page,
         group = group,
-        hub_mode = "omtrad",
+        hub_mode = "slate",
         version = get_version(),
         show_csv_import_link = get_config("show_dataset_csv_import_link"),
         development_mode = development_mode,
@@ -1241,13 +1241,13 @@ def home():
 
     # Hub operational mode (read from environment variable HUB_MODE)
     hub_mode = get_hub_mode()
-    if hub_mode == "omtrad":
+    if hub_mode == "slate":
         return redirect("/home_ahc")
 
     page = "home"
     if "previous_page" in session: # already active
         previous_page = session["previous_page"]
-    elif hub_mode == "omtrad":
+    elif hub_mode == "slate":
         previous_page = "home_ahc"
         return redirect("/home_ahc")
     else:
@@ -1389,7 +1389,7 @@ def home():
             accounts.append(a)
 
             # The following dictionary is used in template only if
-            # HUB_MODE = "omtrad")
+            # HUB_MODE = "slate")
 
             # The following dictionary is used in template only if
             # HUB_MODE = "slate_simple")
@@ -1444,7 +1444,7 @@ def home():
         title = "Home",
         page = page,
         group = group,
-        hub_mode = "omtrad",
+        hub_mode = "slate",
         version = get_version(),
         show_csv_import_link = get_config("show_dataset_csv_import_link"),
         development_mode = development_mode,
@@ -1625,7 +1625,7 @@ def list_accounts():
         title = "List accounts",
         page = page,
         group = group,
-        hub_mode = "omtrad",
+        hub_mode = "slate",
         version = get_version(),
         show_csv_import_link = get_config("show_dataset_csv_import_link"),
         development_mode = development_mode,
@@ -1804,7 +1804,7 @@ def payment_options():
         title = "payment options",
         page = page,
         group = group,
-        hub_mode = "omtrad",
+        hub_mode = "slate",
         development_mode = development_mode,
         version = get_version(),
         show_csv_import_link = get_config("show_dataset_csv_import_link"),
@@ -2014,7 +2014,7 @@ def currency_options():
         group = group,
         development_mode = development_mode,
         logged_in = logged_in,
-        hub_mode = "omtrad",
+        hub_mode = "slate",
         version = get_version(),
         show_csv_import_link = get_config("show_dataset_csv_import_link"),
         primid_type = "login identity",
@@ -2082,7 +2082,7 @@ def account_options(currency_fph):
         group = group,
         development_mode = development_mode,
         logged_in = logged_in,
-        hub_mode = "omtrad",
+        hub_mode = "slate",
         version = get_version(),
         show_csv_import_link = get_config("show_dataset_csv_import_link"),
         primid_type = "login identity",
@@ -2281,7 +2281,7 @@ def account(payer_account_fph, payee_account_fph, owner_fph = None):
         form = form,
         page = page,
         group = group,
-        hub_mode = "omtrad",
+        hub_mode = "slate",
         version = get_version(),
         show_csv_import_link = get_config("show_dataset_csv_import_link"),
         primid_type = "login identity",
@@ -2375,7 +2375,7 @@ def pay_ahid(payer_ahid_fph, payment_currency_fph):
         if m:
             flash(m)
 
-        if hub_mode == "omtrad":
+        if hub_mode == "slate":
             return redirect("/home_ahc")
         else:
             return redirect("/home")
@@ -2387,7 +2387,7 @@ def pay_ahid(payer_ahid_fph, payment_currency_fph):
         group = group,
         form = form,
         logged_in = logged_in,
-        hub_mode = "omtrad",
+        hub_mode = "slate",
         version = get_version(),
         show_csv_import_link = get_config("show_dataset_csv_import_link"),
         primid_type = "login identity",
@@ -2459,7 +2459,7 @@ def pay_account():
         group = group,
         form = form,
         logged_in = logged_in,
-        hub_mode = "omtrad",
+        hub_mode = "slate",
         version = get_version(),
         show_csv_import_link = get_config("show_dataset_csv_import_link"),
         primid_type = "login identity",
@@ -2596,7 +2596,7 @@ def journal(ahid_fph, currency_fph):
         page = page,
         group = group,
         logged_in = logged_in,
-        hub_mode = "omtrad",
+        hub_mode = "slate",
         version = get_version(),
         show_csv_import_link = get_config("show_dataset_csv_import_link"),
         primid_type = "login identity",
@@ -2767,7 +2767,7 @@ def pay_from_account_to_agent(payer_account_fph = None):
         group = group,
         form = form,
         logged_in = logged_in,
-        hub_mode = "omtrad",
+        hub_mode = "slate",
         version = get_version(),
         show_csv_import_link = get_config("show_dataset_csv_import_link"),
         primid_type = "login identity",
@@ -2955,7 +2955,7 @@ def pay_agent_direct(payer_currency_fph, payer_identity_fph):
         group = group,
         form = form,
         logged_in = logged_in,
-        hub_mode = "omtrad",
+        hub_mode = "slate",
         version = get_version(),
         show_csv_import_link = get_config("show_dataset_csv_import_link"),
         primid_type = "login identity",
@@ -3126,7 +3126,7 @@ def pay_agent():
         group = group,
         form = form,
         logged_in = logged_in,
-        hub_mode = "omtrad",
+        hub_mode = "slate",
         version = get_version(),
         show_csv_import_link = get_config("show_dataset_csv_import_link"),
         primid_type = "login identity",
@@ -3222,7 +3222,7 @@ def select_payer_account():
         page = page,
         group = group,
         logged_in = logged_in,
-        hub_mode = "omtrad",
+        hub_mode = "slate",
         version = get_version(),
         show_csv_import_link = get_config("show_dataset_csv_import_link"),
         primid_type = "login identity",
@@ -3337,7 +3337,7 @@ def select_payee_account(payer_account_fph = None):
         page = page,
         group = group,
         logged_in = logged_in,
-        hub_mode = "omtrad",
+        hub_mode = "slate",
         version = get_version(),
         show_csv_import_link = get_config("show_dataset_csv_import_link"),
         primid_type = "login identity",
@@ -3489,7 +3489,7 @@ def make_payment_between_selected_accounts(
         form = form,
         page = page,
         group = group,
-        hub_mode = "omtrad",
+        hub_mode = "slate",
         version = get_version(),
         show_csv_import_link = get_config("show_dataset_csv_import_link"),
         primid_type = "login identity",
@@ -3665,7 +3665,7 @@ def select_payer_account_(payee_account_fph):
         page = page,
         group = group,
         logged_in = logged_in,
-        hub_mode = "omtrad",
+        hub_mode = "slate",
         version = get_version(),
         show_csv_import_link = get_config("show_dataset_csv_import_link"),
         payee_account_fph = payee_account_fph,
@@ -3758,7 +3758,7 @@ def account_details(account_fph):
         logged_in = logged_in,
         page = page,
         group = group,
-        hub_mode = "omtrad",
+        hub_mode = "slate",
         version = get_version(),
         show_csv_import_link = get_config("show_dataset_csv_import_link"),
         primid_type = "login identity",
@@ -3827,7 +3827,7 @@ def stewardships(identity_fph):
         title = "Stewardships",
         page = page,
         group = group,
-        hub_mode = "omtrad",
+        hub_mode = "slate",
         version = get_version(),
         show_csv_import_link = get_config("show_dataset_csv_import_link"),
         primid_type = "login identity",
@@ -3899,7 +3899,7 @@ def secids(identity_fph):
         title = "Secondary identities",
         page = page,
         group = group,
-        hub_mode = "omtrad",
+        hub_mode = "slate",
         version = get_version(),
         show_csv_import_link = get_config("show_dataset_csv_import_link"),
         primid_type = "login identity",
@@ -3959,7 +3959,7 @@ def manage_secid(secid_fph):
         title = "Manage an alias",
         page = page,
         group = group,
-        hub_mode = "omtrad",
+        hub_mode = "slate",
         version = get_version(),
         show_csv_import_link = get_config("show_dataset_csv_import_link"),
         primid_type = "login identity",
@@ -4038,7 +4038,7 @@ def currency(currency_fph):
         title = "Currency",
         page = page,
         group = group,
-        hub_mode = "omtrad",
+        hub_mode = "slate",
         version = get_version(),
         show_csv_import_link = get_config("show_dataset_csv_import_link"),
         currency_fph = currency_fph,
@@ -4106,7 +4106,7 @@ def currency_steward_add(currency_fph):
         else:
             flash(form.new_steward.data + " is not a registered identity")
 
-        if hub_mode == "omtrad":
+        if hub_mode == "slate":
             return redirect("/home_ahc")
         else:
             return redirect("/home")
@@ -4116,7 +4116,7 @@ def currency_steward_add(currency_fph):
         title = "Add currency steward",
         page = page,
         group = group,
-        hub_mode = "omtrad",
+        hub_mode = "slate",
         version = get_version(),
         show_csv_import_link = get_config("show_dataset_csv_import_link"),
         form = form,
@@ -4184,7 +4184,7 @@ def currency_steward_remove(currency_fph, steward_fph):
     if steward_fph in stewards_list:
         m = remove_currency_stewardship(currency_fph, steward_fph, primid_fph)
 
-    if hub_mode == "omtrad":
+    if hub_mode == "slate":
         return redirect("/home_ahc")
     else:
         return redirect("/home")
@@ -4237,7 +4237,7 @@ def manage():
         logged_in = logged_in,
         page = page,
         group = group,
-        hub_mode = "omtrad",
+        hub_mode = "slate",
         version = get_version(),
         show_csv_import_link = get_config("show_dataset_csv_import_link"),
         primid_type = "login identity",
@@ -4313,17 +4313,17 @@ def create_currency():
                 form.prefix_symbol.data,
                 form.suffix_symbol.data,
                 form.default_account_name.data,
-                account_type="scalar",
-                category="money",
-                units="unspecified",
-                metrical_equivalence="lt",
-                dimensions="unspecified"
+                "scalar",
+                "money",
+                "unspecified",
+                "lt",
+                "unspecified"
             )
         flash(
             "A new currency has been created: " + currency_hrns
         )
 
-        if hub_mode == "omtrad":
+        if hub_mode == "slate":
             return redirect("/home_ahc")
         else:
             return redirect("/home")
@@ -4334,7 +4334,7 @@ def create_currency():
         logged_in = logged_in,
         page = page,
         group = group,
-        hub_mode = "omtrad",
+        hub_mode = "slate",
         version = get_version(),
         show_csv_import_link = get_config("show_dataset_csv_import_link"),
         form = form,
@@ -4359,7 +4359,7 @@ def create_pairing(owner_fph = ""):
 
     # Hub operational mode (read from environment variable HUB_MODE)
     hub_mode = get_hub_mode()
-    if hub_mode != "omtrad":
+    if hub_mode != "slate":
         flash("Invalid opertional mode for this endpoint")
         return redirect("/home")
 
@@ -4384,14 +4384,14 @@ def create_pairing(owner_fph = ""):
             flash("The owner FPH in the URL cannot be identified")
             return redirect("/home")
 
-    if hub_mode != "omtrad":
+    if hub_mode != "slate":
         flash("This endpoint is not valid in the current mode.")
         return redirect("/home")
 
     primid_fph, primid_hrns, etypes, \
     m = identify_entity(current_user.get_id())
 
-    # In omtrad mode the *working identity* is always the *primary identity*.
+    # In slate mode the *working identity* is always the *primary identity*.
     working_identity_fph = primid_fph
     working_identity_hrns = primid_hrns
     working_identity_type = "primid"
@@ -4437,7 +4437,7 @@ def create_pairing(owner_fph = ""):
                           currency_hrns
                       )
 
-        if hub_mode == "omtrad":
+        if hub_mode == "slate":
             return redirect("/home_ahc")
         else:
             return redirect("/home")
@@ -4448,7 +4448,7 @@ def create_pairing(owner_fph = ""):
         logged_in = logged_in,
         page = page,
         group = group,
-        hub_mode = "omtrad",
+        hub_mode = "slate",
         version = get_version(),
         show_csv_import_link = get_config("show_dataset_csv_import_link"),
         form = form,
@@ -4601,7 +4601,7 @@ def create_account(owner_fph):
         logged_in = logged_in,
         page = page,
         group = group,
-        hub_mode = "omtrad",
+        hub_mode = "slate",
         version = get_version(),
         show_csv_import_link = get_config("show_dataset_csv_import_link"),
         form = form,
@@ -4668,7 +4668,7 @@ def list_identiies():
         logged_in = logged_in,
         page = page,
         group = group,
-        hub_mode = "omtrad",
+        hub_mode = "slate",
         version = get_version(),
         show_csv_import_link = get_config("show_dataset_csv_import_link"),
         primid_type = "login identity",
@@ -4787,7 +4787,7 @@ def create_secid():
         logged_in = logged_in,
         page = page,
         group = group,
-        hub_mode = "omtrad",
+        hub_mode = "slate",
         version = get_version(),
         show_csv_import_link = get_config("show_dataset_csv_import_link"),
         form = form,
@@ -4887,7 +4887,7 @@ def create_namespace():
         logged_in = logged_in,
         page = page,
         group = group,
-        hub_mode = "omtrad",
+        hub_mode = "slate",
         version = get_version(),
         show_csv_import_link = get_config("show_dataset_csv_import_link"),
         form = form,
@@ -4953,7 +4953,7 @@ def list_namespaces():
         logged_in = logged_in,
         page = page,
         group = group,
-        hub_mode = "omtrad",
+        hub_mode = "slate",
         version = get_version(),
         show_csv_import_link = get_config("show_dataset_csv_import_link"),
         primid_type = "login identity",
@@ -5074,7 +5074,7 @@ def export_account_csv(account_fph):
     primid_fph, primid_hrns, etypes, \
     m = identify_entity(current_user.get_id())
 
-    if hub_mode == "omtrad":
+    if hub_mode == "slate":
         working_identity_fph = primid_fph
         working_identity_hrns = primid_hrns
         working_identity_type = "primid"
@@ -5143,7 +5143,7 @@ def export_account_csv(account_fph):
         logged_in = logged_in,
         page = page,
         group = group,
-        hub_mode = "omtrad",
+        hub_mode = "slate",
         version = get_version(),
         show_csv_import_link = get_config("show_dataset_csv_import_link"),
         primid_type = "login identity",
@@ -5182,7 +5182,7 @@ def export_currency_csv(currency_fph):
     primid_fph, primid_hrns, etypes, \
     m = identify_entity(current_user.get_id())
 
-    if hub_mode == "omtrad":
+    if hub_mode == "slate":
         working_identity_fph = primid_fph
         working_identity_hrns = primid_hrns
         working_identity_type = "primid"
@@ -5235,7 +5235,7 @@ def export_currency_csv(currency_fph):
         logged_in = logged_in,
         page = page,
         group = group,
-        hub_mode = "omtrad",
+        hub_mode = "slate",
         version = get_version(),
         show_csv_import_link = get_config("show_dataset_csv_import_link"),
         primid_type = "login identity",
@@ -5291,7 +5291,7 @@ def upload():
 def importing(file):
     # Hub operational mode (read from environment variable HUB_MODE)
     hub_mode = get_hub_mode()
-    if hub_mode != "omtrad":
+    if hub_mode != "slate":
         flash("You are working in the wrong mode to use this import function")
         return redirect("/home_ahc")
     page = "dataset_import"
@@ -5322,7 +5322,7 @@ def importing(file):
         title = "Processing import of CSV payment set",
         page = page,
         group = group,
-        hub_mode = "omtrad",
+        hub_mode = "slate",
         version = get_version(),
         logged_in = logged_in,
         primid_type = "login identity",
@@ -5338,7 +5338,7 @@ def importing(file):
 def import_payment_set():
     # Hub operational mode (read from environment variable HUB_MODE)
     hub_mode = get_hub_mode()
-    if hub_mode != "omtrad":
+    if hub_mode != "slate":
         flash("You are working in the wrong mode to use this import function")
         return redirect("/home_ahc")
     page = "dataset_import"
@@ -5375,7 +5375,7 @@ def import_payment_set():
         form = CSVImportForm(),
         page = page,
         group = group,
-        hub_mode = "omtrad",
+        hub_mode = "slate",
         version = get_version(),
         show_csv_import_link = get_config("show_dataset_csv_import_link"),
         logged_in = logged_in,
@@ -5559,7 +5559,7 @@ def messages():
     total_number_of_indelible_messages = 0
     message_recipients_list = [] # (list of dictionaries for template)
 
-    if hub_mode == "omtrad":
+    if hub_mode == "slate":
 
         pmap_t, m = retrieve_pmap(primid_fph)
 
@@ -5624,7 +5624,7 @@ def messages():
         title = "Messages",
         page = page,
         group = group,
-        hub_mode = "omtrad",
+        hub_mode = "slate",
         version = get_version(),
         show_csv_import_link = get_config("show_dataset_csv_import_link"),
         logged_in = logged_in,
@@ -5764,7 +5764,7 @@ def message_send():
         title = "Send user message",
         page = page,
         group = group,
-        hub_mode = "omtrad",
+        hub_mode = "slate",
         version = get_version(),
         show_csv_import_link = get_config("show_dataset_csv_import_link"),
         logged_in = logged_in,
@@ -5863,7 +5863,7 @@ def messages_show(recipient_fph):
         title = "Messages",
         page = page,
         group = group,
-        hub_mode = "omtrad",
+        hub_mode = "slate",
         version = get_version(),
         show_csv_import_link = get_config("show_dataset_csv_import_link"),
         logged_in = logged_in,
@@ -6003,7 +6003,7 @@ def invitation_generate():
     primid_fph, primid_hrns, etypes, \
     m = identify_entity(current_user.get_id())
 
-    if (hub_mode != "omtrad") and ("working_identity" in session):
+    if (hub_mode != "slate") and ("working_identity" in session):
         working_identity_fph, working_identity_hrns, etypes, \
         m = identify_entity(session["working_identity"])
     else:
@@ -6044,7 +6044,7 @@ def invitation_generate():
         title = "Create invitation QR code",
         page = page,
         group = group,
-        hub_mode = "omtrad",
+        hub_mode = "slate",
         version = get_version(),
         show_csv_import_link = get_config("show_dataset_csv_import_link"),
         logged_in = logged_in,
@@ -6092,7 +6092,7 @@ def invitation_display(qrfilename):
     m = identify_entity(current_user.get_id())
 
     working_identity_type = "primid"
-    if (hub_mode != "omtrad") and ("working_identity" in session):
+    if (hub_mode != "slate") and ("working_identity" in session):
         working_identity_fph, working_identity_hrns, etypes, \
         m = identify_entity(session["working_identity"])
     else:
@@ -6109,7 +6109,7 @@ def invitation_display(qrfilename):
         title = "Display invitation QR code",
         page = page,
         group = group,
-        hub_mode = "omtrad",
+        hub_mode = "slate",
         version = get_version(),
         show_csv_import_link = get_config("show_dataset_csv_import_link"),
         logged_in = logged_in,
@@ -6147,7 +6147,7 @@ def help_():
         logged_in = logged_in,
         page = page,
         group = group,
-        hub_mode = "omtrad",
+        hub_mode = "slate",
         version = get_version(),
         show_csv_import_link = get_config("show_dataset_csv_import_link"),
         number_of_messages = number_of_messages,
@@ -6200,7 +6200,7 @@ def help():
         logged_in = logged_in,
         page = page,
         group = group,
-        hub_mode = "omtrad",
+        hub_mode = "slate",
         version = get_version(),
         show_csv_import_link = get_config("show_dataset_csv_import_link"),
         development_mode = development_mode,

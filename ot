@@ -1,0 +1,8 @@
+mv app/core/new_2028-08-13 removed/
+mv app/core/2025-08-25_1328_slate_core.py removed/
+mv app/core/obsolete/omtrad.py removed/
+mv app/core/slate_core_0.2.33.py removed/
+mv app/core/2025-08-24_1704_slate_core.py removed/
+mv app/core/2025-08-25_1513_slate_core.py removed/
+mv app/core/slate_core_2025-09-27_1850.py removed/
+mv app/core/omtrad.py_202505192026 removed/

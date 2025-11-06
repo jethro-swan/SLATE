@@ -4,7 +4,7 @@
 
 <h3>Send a message</h3>
 
-{% if hub_mode != "omtrad" %}
+{% if hub_mode != "slate" %}
 <p class="footnote">
   You can use this form to send a message from the current working
   <b>identity</b> to any other known <b>identity</b>.
@@ -21,7 +21,7 @@
 <form action="" method="post" autocomplete="off" novalidate>
 {{ form.hidden_tag() }}
 <table class="msg">
-  {% if hub_mode == "omtrad" %}
+  {% if hub_mode == "slate" %}
   <tr valign="top">
     <td class="msg">{{ form.sender.label }}</td>
     <td class="msg">{{ form.sender(size=15,

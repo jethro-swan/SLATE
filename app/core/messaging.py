@@ -472,7 +472,7 @@ def message_count(primid_id, hub_mode):
         )
         return 0, 0
 
-    if hub_mode == "omtrad":
+    if hub_mode == "slate":
         recipient_list = list_ahids(primid_fph)
     else:
         recipient_list = list_secids(primid_fph)

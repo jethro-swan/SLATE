@@ -8,7 +8,7 @@
   You can now
   <b><a href="/export/{{ csv_file }}">download the journal</a></b>
   <br />
-  {% if hub_mode == "omtrad" %}
+  {% if hub_mode == "slate" %}
   for your <em>account-holder</em> <b>{{ ahid_hrns }}</b><br />
   in <em>currency</em> <b>{{ currency_hrns }}</b>)
   {% else %}
@@ -19,10 +19,11 @@
 <br />
 <hr />
 <br />
-{% if hub_mode == "omtrad" %}
+{% if hub_mode == "slate" %}
 <p>(You can <b><a href="/home_ahc">return home</a></b> now)</p>
 {% else %}
 <p>(You can <b><a href="/home">return home</a></b> now)</p>
 {% endif %}
 
 {% endblock %}
+slate
