@@ -33,7 +33,6 @@ from app.core.slate_core import get_primid
 from app.core.slate_core import entity_type_is_registered
 from app.core.slate_core import entity_types_are_registered
 from app.core.slate_core import new_primid
-from app.core.slate_core import new_secid
 from app.core.slate_core import update_primid_access_details
 from app.core.slate_core import new_namespace
 from app.core.slate_core import new_currency
@@ -47,7 +46,6 @@ from app.core.slate_core import list_currency_stewardships
 from app.core.slate_core import list_stewards
 from app.core.slate_core import retrieve_primid_access_details
 from app.core.slate_core import list_agent_accounts
-from app.core.slate_core import list_secids
 from app.core.slate_core import list_ahids
 from app.core.slate_core import get_namespace_properties
 from app.core.slate_core import get_currency_properties
@@ -195,22 +193,8 @@ def fph_to_display_type(agent_id):
     m = identify_entity(agent_id)
     if "primid" in etypes:
         return "login identity"
-    elif "secid" in etypes:
-        return "alias"
     else:
         return ""
-
-# The *primid* need be displayed only if the current active *identity* is a
-# *secid*:
-def fph_to_primid_iff_needed(agent_id):
-    agent_fph, agent_hrns, etypes, \
-    m = identify_entity(agent_id)
-    if entity_type(agent_fph, "secid"):
-        primid_fph = get_primid(agent_fph)
-        primid_hrns = fph_to_hrns(primid_fph)
-        return primid_fph, primid_hrns
-    else:
-        return "", ""
 
 #------------------------------------------------------------------------------
 
@@ -242,7 +226,7 @@ def register():
 
     if logged_in:
         flash("You cannot register while logged in")
-        return redirect("/home")
+        return redirect("/home_ahc")
 
     # This one may not be needed:
     mode = "logged_out"
@@ -454,7 +438,7 @@ def login():
     if current_user.is_authenticated: # user is already logged in
         mode = "logged_in"
         logged_in = True
-        return redirect(url_for("home"))
+        return redirect(url_for("home_ahc"))
 
     session["show_top_menu"] = False
 
@@ -482,7 +466,7 @@ def login():
             if m:
                 flash(m)
                 return redirect(url_for("login"))
-            if not (("primid" in etypes) or ("secid" in etypes)):
+            if not ("primid" in etypes):
                 flash("Invalid identity entered")
                 return redirect(url_for("login"))
             if not ("primid" in etypes):
@@ -542,9 +526,9 @@ def login():
 
         else:
 
-            session["previous_page"] = "home"      # (This one subsequently
+            session["previous_page"] = "home_ahc"      # (This one subsequently
                                                    # serves as shift register)
-            return redirect(url_for("home"))
+            return redirect(url_for("home_ahc"))
 
 
     return render_template(
@@ -590,8 +574,6 @@ def login_recover():
         m = identify_entity(agent_id)
         if "primid" in etypes:
             agent_primid_fph = agent_fph
-        elif "secid" in etypes:
-            agent_primid_fph = get_primid(agent_fph)
         else:
             flash(agent_id + " is not a registered identity")
             return redirect(url_for("login"))
@@ -734,157 +716,6 @@ def login_reset(user_id, token):
         version = get_version()
     )
 
-# ==============================================================================
-# change working identity
-##@app.route("/change_working_identity/<new_identity_fph>",
-@app.route("/identity/change/<new_identity_fph>",
-           methods = ["GET", "POST"])
-@login_required
-def change_working_identity(new_identity_fph):
-
-    # Hub operational mode (read from environment variable HUB_MODE)
-    hub_mode = get_hub_mode()
-    #version = get_version()()
-
-    #version = get_version()()
-
-
-    new_identity_fph, new_identity_hrns, etypes, \
-    m = identify_entity(new_identity_fph)
-    if m:
-        flash(m)
-        return redirect("/home")
-    if new_identity_fph == "":
-        flash(new_identity_fph + " is not a valid identity")
-        return redirect("/home")
-
-    login_identity_fph, login_identity_hrns, etypes, \
-    m = identify_entity(current_user.get_id())
-
-    if "working_identity" in session:
-        current_working_identity_fph = session["working_identity"]
-    else:
-        session["working_identity"] = login_identity_fph
-        current_working_identity_fph = login_identity_fph
-
-    current_identity_fph, current_identity_hrns, etypes, \
-    m = identify_entity(current_working_identity_fph)
-
-    if new_identity_fph == current_identity_fph:
-        flash("No change of identity has been requested")
-        return redirect("/home")
-
-    identities_fph_list = list_secids(login_identity_fph)
-    identities_fph_list.append(login_identity_fph)
-    if new_identity_fph in identities_fph_list:
-        working_identity_fph, working_identity_hrns, etypes, \
-        m = identify_entity(new_identity_fph)
-        session["working_identity"] = working_identity_fph
-        flash("Working identity changed to " + working_identity_hrns)
-        return redirect("/home")
-    else:
-        working_identity_fph = current_identity_fph
-        working_identity_hrns = current_identity_hrns
-        working_identity_type = current_identity_type
-        return redirect("/home")
-
-#==============================================================================
-# login landing page
-
-@app.route("/home/new", methods = ["GET", "POST"])
-@login_required
-def new_home():
-
-    # Hub operational mode (read from environment variable HUB_MODE)
-    hub_mode = get_hub_mode()
-    #version = get_version()()
-
-
-    page = "new_home"
-    if "previous_page" in session: # already active
-        previous_page = session["previous_page"]
-    else: # initializing
-#        session["previous_page"] = "home" ### probably not needed
-        previous_page = "home"
-    session["previous_page"] = page
-
-    group = "home" # Used to control top menu behaviour.
-
-    hub_mode = get_hub_mode()
-    #version = get_version()()
- ### New variable added
-
-    namespace_steward = False
-    currency_steward = False
-    paying = False
-    logged_in = current_user.is_authenticated
-
-    primid_fph, primid_hrns, etypes, \
-    m = identify_entity(current_user.get_id())
-
-    if "working_identity" in session:
-        working_identity_fph, working_identity_hrns, etypes, \
-        m = identify_entity(session["working_identity"])
-        if ("secid" in etypes):
-            working_identity_type = "secid"
-        else:
-            working_identity_type = "primid"
-    else:
-        working_identity_fph = primid_fph
-        session["working_identity"] = working_identity_fph
-        working_identity_hrns = primid_hrns
-        working_identity_type = "primid"
-    working_identity_type = etype_to_adtype(working_identity_type)
-
-    ## SOME OF THE FOLLOWING WILL NOT BE NEEDED
-
-    # The user logs in as the *primid*, even if indirectly as one of its
-    # *secid*s, but once logged in will see all of its *identities* along with
-    # a list of *accounts* belonging to each. The user will also see a list of
-    # entities over which it holds/shares stewardship.
-
-    nstewardships_list, m = list_nstewardships(primid_fph)
-    cstewardships_list, m = list_cstewardships(primid_fph)
-
-    # Since a user may have *accounts* scattered across an arbitrary number of
-    # *namespaces*, it is necessary to maintain a list of these:
-
-    # A full list of *identities* is compiled, with the *primid* first:
-    identities_list = list_secids(primid_fph)
-    identities_list.insert(0, primid_fph)
-
-    identities = [] # list of *identity* dictionaries) to "home.html" template.
-
-    lid_messages = fetch_messages(primid_fph)   # Always display
-    wid_messages = fetch_messages(working_identity_fph)
-
-
-
-#
-    return render_template(
-            "new_home.html",
-            title = "Home",
-            page = page,
-            group = group,
-            hub_mode = "slate",
-            version = get_version(),
-            show_csv_import_link = get_config("show_dataset_csv_import_link"),
-            logged_in = logged_in,
-            primid_type = "login identity",
-            primid_fph = primid_fph,
-            primid_hrns = primid_hrns,
-            working_identity_fph = working_identity_fph,
-            working_identity_hrns = working_identity_hrns,
-            working_identity_type = working_identity_type,
-
-            lid_messages = lid_messages,
-            wid_messages = wid_messages
-
-            # List of (nested) dictionaries for display in "home.html":
-#            identities = identities,
-#            secids = secids,
-#            stewardships = stewardships
-        )
 
 @app.route("/hold")
 @login_required
@@ -894,7 +725,7 @@ def hold():
     hub_mode = get_hub_mode()
     if hub_mode != "slate":
         flash("Operational mode invalid for this endpoint")
-        return redirect("/home")
+        return redirect("/home_ahc")
 
     page = "hold"
     if "previous_page" in session: # already active
@@ -1014,7 +845,7 @@ def home_ahc(payer_ahid_fph=None, p_currency_fph=None, payer_balance=None):
 
     if hub_mode != "slate":
         flash("Operational mode invalid for this endpoint")
-        return redirect("/home")
+        return redirect("/home_ahc")
 
     if show_payment_form:
         page = "home_ahp"
@@ -1199,7 +1030,7 @@ def home_ahc(payer_ahid_fph=None, p_currency_fph=None, payer_balance=None):
         if hub_mode == "slate":
             return redirect("/home_ahc")
         else:
-            return redirect("/home")
+            return redirect("/home_ahc")
 
     return render_template(
         "home_ahc.html",
@@ -1231,239 +1062,6 @@ def home_ahc(payer_ahid_fph=None, p_currency_fph=None, payer_balance=None):
     )
 
 
-## NB: This will be assigned a new endpoint to allow "/home" to be used for a
-##     sparser login landing page centred around internal messaging.
-
-@app.route("/home/full", methods = ["GET", "POST"])
-@app.route("/home", methods = ["GET", "POST"])
-@login_required
-def home():
-
-    # Hub operational mode (read from environment variable HUB_MODE)
-    hub_mode = get_hub_mode()
-    if hub_mode == "slate":
-        return redirect("/home_ahc")
-
-    page = "home"
-    if "previous_page" in session: # already active
-        previous_page = session["previous_page"]
-    elif hub_mode == "slate":
-        previous_page = "home_ahc"
-        return redirect("/home_ahc")
-    else:
-        previous_page = "home"
-    session["previous_page"] = page
-
-    group = "home" # Used to control top menu behaviour.
-
-    namespace_steward = False
-    currency_steward = False
-    paying = False
-    logged_in = current_user.is_authenticated
-
-    primid_fph, primid_hrns, etypes, \
-    m = identify_entity(current_user.get_id())
-
-    if "working_identity" in session:
-        working_identity_fph, working_identity_hrns, etypes, \
-        m = identify_entity(session["working_identity"])
-    else:
-        working_identity_fph = primid_fph
-        session["working_identity"] = working_identity_fph
-        working_identity_hrns = primid_hrns
-        working_identity_type = "primid"
-#    working_identity_type = etype_to_adtype(working_identity_type)
-    working_identity_type = "primid"
-
-
-    # List all identities:
-    identity_list = []
-    identity_list.append(primid_fph)
-    secids_list = list_secids(primid_fph)
-    for secid_fph in secids_list:
-        identity_list.append(secid_fph)
-
-    total_number_of_messages = 0
-    total_number_of_indelible_messages = 0
-    # List identities for which messages are available:
-    message_recipients_list = [] # (list of dictionaries for template)
-    for identity_fph in identity_list:
-        number_of_messages, \
-        number_of_indelible_messages = messages_available(identity_fph)
-        total_number_of_messages += number_of_messages
-        total_number_of_indelible_messages += number_of_indelible_messages
-
-    if total_number_of_messages > 0:
-        number_of_messages = str(total_number_of_messages)
-    else:
-        number_of_messages = ""
-    if total_number_of_indelible_messages > 0:
-        number_of_indelible_messages = str(total_number_of_indelible_messages)
-    else:
-        number_of_indelible_messages = ""
-
-#    number_of_wid_messages, d = messages_available(working_identity_fph)
-#    number_of_messages = number_of_wid_messages + number_of_primid_messages
-#    if number_of_messages > 0:
-#        number_of_messages = str(number_of_messages)
-#    else:
-#        number_of_messages = ""
-
-    # The user logs in as the *primid*, even if indirectly as one of its
-    # *secid*s, but once logged in will see all of its *identities* along with
-    # a list of *accounts* belonging to each. The user will also see a list of
-    # entities over which it holds/shares stewardship.
-
-    nstewardships_list, m = list_namespace_stewardships(primid_fph)
-    cstewardships_list, m = list_currency_stewardships(primid_fph)
-
-    # Since a user may have *accounts* scattered across an arbitrary number of
-    # *namespaces*, it is necessary to maintain a list of these:
-
-    # A full list of *identities* is compiled, with the *primid* first:
-    identities_list = list_secids(primid_fph)
-    identities_list.insert(0, primid_fph)
-
-    identities = [] # list of *identity* dictionaries) to "home.html" template.
-
-    for id_fph in identities_list:
-
-        id = {} # the outer dictionary for this *identity*
-
-        id_fph, id_hrns, etypes, \
-        m = identify_entity(id_fph)
-        if m:
-            flash(m)
-
-        id["fph"] = id_fph
-        id["hrns"] = fph_to_hrns(id_fph)
-        if "primid" in etypes:
-            id["type"] = "login identity"
-        elif "secid" in etypes:
-            id["type"] = "alias"
-        elif "ahid" in etypes:
-            id["type"] = "ahid"
-        else:
-            flash("Invalid identity type found")
-            return redirect("/home")
-
-        accounts_list, m = list_agent_accounts(id_fph)
-        if m:
-            flash(m)
-
-        # List the *accounts* belonging to this *identity*:
-        accounts = [] # (second-level dictionary for iteration in template)
-        for account_fph in accounts_list:
-            # Fetch account details:
-            account_currency_fph, account_owner_fph, \
-            account_balance, account_volume, active, \
-            account_type, account_category, account_units, \
-            account_metrical_equivalence, account_dimensions, \
-            m = get_account_properties(account_fph)
-
-            # Fetch currency details:
-            currency_fph, currency_hrns, active, private, sandbox, \
-            type, category, units, metrical_equivalence, dimensions, \
-            prefix, suffix, default_account_name, stewards_list, \
-            m = get_currency_properties(account_currency_fph)
-
-            # Assemble a dictonary of *account* properties:
-            a = {}
-            a["fph"] = account_fph
-            a["hrns"] = fph_to_hrns(account_fph)
-            a["owner_fph"] = account_owner_fph
-            a["owner_hrns"] = fph_to_hrns(account_owner_fph)
-            a["balance"] = integer_to_money_format(account_balance)
-            a["isneg"] = (account_balance < 0)
-            a["prefix"] = prefix
-            a["suffix"] = suffix
-            a["volume"] = integer_to_money_format(account_volume)
-            #primid_currency_steward = (currency_fph in stewardships_list)
-            if currency_fph in cstewardships_list:
-                primid_currency_steward = True
-            else:
-                primid_currency_steward = False
-            a["primid_is_currency_steward"] = primid_currency_steward
-            a["currency_fph"] = currency_fph
-            a["currency_hrns"] = currency_hrns
-            accounts.append(a)
-
-            # The following dictionary is used in template only if
-            # HUB_MODE = "slate")
-
-            # The following dictionary is used in template only if
-            # HUB_MODE = "slate_simple")
-            #account_hrns = fph_to_hrns(account_fph)
-#            p["currency"] = {}
-#            p["currency"]["fph"] = currency_fph
-#            p["currency"]["hrns"] = currency_hrns
-#            p["currency"]["identity"] = {}
-#            p["currency"]["identity"]["account"] = {}
-#            p["currency"]["identity"]["account"]["fph"] = account_fph
-            #p["currency"]["identity"]["account"]["hrns"] = account_hrns
-#            payment_option.append(p)
-            # This is a temporary fudge.
-
-        id["accounts"] = accounts
-        identities.append(id)
-
-    # If this is a *primid*, fetch a list of its *secid*s and stewardships:
-    secid_list = list_secids(primid_fph)
-    secids = []
-    for secid_fph in secid_list:
-        secid = {}
-        if secid_fph != "":
-            secid["fph"] = secid_fph
-            secid["hrns"] = fph_to_hrns(secid_fph)
-            secids.append(secid)
-
-    nstewardships = []
-    for nstewardship_fph in nstewardships_list:
-        if nstewardship_fph != "":
-            nstewardship = {}
-            entity_fph, entity_hrns, etypes, \
-            m = identify_entity(nstewardship_fph)
-            nstewardship["fph"] = nstewardship_fph
-            nstewardship["hrns"] = entity_hrns
-            nstewardship["etype"] = "namespace"
-            nstewardships.append(nstewardship)
-
-    cstewardships = []
-    for cstewardship_fph in cstewardships_list:
-        if cstewardship_fph != "":
-            cstewardship = {}
-            entity_fph, entity_hrns, etypes, \
-            m = identify_entity(cstewardship_fph)
-            cstewardship["fph"] = cstewardship_fph
-            cstewardship["hrns"] = entity_hrns
-            cstewardship["etype"] = "currency"
-            cstewardships.append(cstewardship)
-
-    return render_template(
-        "home.html",
-        title = "Home",
-        page = page,
-        group = group,
-        hub_mode = "slate",
-        version = get_version(),
-        show_csv_import_link = get_config("show_dataset_csv_import_link"),
-        development_mode = development_mode,
-        logged_in = logged_in,
-        primid_type = "login identity",
-        primid_fph = primid_fph,
-        primid_hrns = primid_hrns,
-        working_identity_fph = working_identity_fph,
-        working_identity_hrns = working_identity_hrns,
-        working_identity_type = working_identity_type,
-
-        # List of (nested) dictionaries for display in "home.html":
-        identities = identities,
-        secids = secids,
-        stewardships = stewardships,
-        number_of_indelible_messages = number_of_indelible_messages,
-        number_of_messages = number_of_messages
-    )
-
 #==============================================================================
 # This variant of the /home endpoint prioritizes *accounts* over *identities*
 # and *currencies*.
@@ -1481,7 +1079,7 @@ def list_accounts():
     if "previous_page" in session: # already active
         previous_page = session["previous_page"]
     else: # initializing
-        previous_page = "home"
+        previous_page = "home_ahc"
     session["previous_page"] = page
 
     group = "home" # Used to control top menu behaviour.
@@ -1497,10 +1095,7 @@ def list_accounts():
     if "working_identity" in session:
         working_identity_fph, working_identity_hrns, etypes, \
         m = identify_entity(session["working_identity"])
-        if ("secid" in etypes):
-            working_identity_type = "secid"
-        else:
-            working_identity_type = "primid"
+        working_identity_type = "primid"
     else:
         working_identity_fph = primid_fph
         session["working_identity"] = working_identity_fph
@@ -1508,8 +1103,8 @@ def list_accounts():
         working_identity_type = "primid"
     working_identity_type = etype_to_adtype(working_identity_type)
 
-    # The user logs in as the *primid*, even if indirectly as one of its
-    # *secid*s, but once logged in will see all of its *identities* along with
+    # The user logs in as the *primid*, but once logged in will see all of its
+    # *identities* along with
     # a list of *accounts* belonging to each. The user will also see a list of
     # entities over which it holds/shares stewardship.
 
@@ -1520,8 +1115,6 @@ def list_accounts():
     # *namespaces*, it is necessary to maintain a list of these:
 
     # A full list of *identities* is compiled, with the *primid* first:
-    identities_list = list_secids(primid_fph)
-    identities_list.insert(0, primid_fph)
 
     identities = [] # list of *identity* dictionaries) to "home.html" template.
 
@@ -1538,11 +1131,9 @@ def list_accounts():
         id["hrns"] = fph_to_hrns(id_fph)
         if "primid" in etypes:
             id["type"] = "login identity"
-        elif "secid" in etypes:
-            id["type"] = "alias"
         else:
             flash("Invalid identity type found")
-            return redirect("/home")
+            return redirect("/home_ahc")
 
         accounts_list, m = list_agent_accounts(id_fph)
         if m:
@@ -1587,16 +1178,6 @@ def list_accounts():
 
         id["accounts"] = accounts
         identities.append(id)
-
-    # If this is a *primid*, fetch a list of its *secid*s and stewardships:
-    secid_list = list_secids(primid_fph)
-    secids = []
-    for secid_fph in secid_list:
-        secid = {}
-        if secid_fph != "":
-            secid["fph"] = secid_fph
-            secid["hrns"] = fph_to_hrns(secid_fph)
-            secids.append(secid)
 
     nstewardships = []
     for nstewardship_fph in nstewardships_list:
@@ -1639,674 +1220,11 @@ def list_accounts():
 
         # List of (nested) dictionaries for display in "home.html":
         identities = identities,
-        secids = secids,
         nstewardships = nstewardships,
         cstewardships = cstewardships
      )
 
 #==============================================================================
-# Payment optionspage (first version).
-#
-# This is an alternative view of the payment options available to that shown in
-# the login landing page ("/home"). This view shows a list of payment options
-# arranged alphabetically by *currency* and *identity*.
-#
-# This view is still too cluttered so will be replaced by a two-stage view
-# comprising
-# (1) "/currency/options" listing the currencies available to this *agent*, and
-# (2) "/accounts_available" listing the *accounts* available in the *currency*
-#     selected from the "/currency/options" list, each along with the current
-#     balance and its owner (one of this *agent*'s identities').
-
-@app.route("/payment_options", methods = ["GET", "POST"])
-@login_required
-def payment_options():
-
-    # Hub operational mode (read from environment variable HUB_MODE)
-    hub_mode = get_hub_mode()
-    #version = get_version()()
-
-
-    page = "payment_options"
-    previous_page = session["previous_page"]    # Add these two lines to all
-    session["previous_page"] = page             # endpoint handlers. Some (but
-                                                # but by no means all) screens
-                                                # should be able to follow only
-                                                # from a limited set of
-                                                # previous screens.
-    group = "home" # Used to control top menu behaviour.
-
-    namespace_steward = False
-    currency_steward = False
-    paying = False
-    logged_in = current_user.is_authenticated
-
-    primid_fph, primid_hrns, etypes, \
-    m = identify_entity(current_user.get_id())
-
-    if "working_identity" in session:
-        working_identity_fph, working_identity_hrns, etypes, \
-        m = identify_entity(session["working_identity"])
-        if ("secid" in etypes):
-            working_identity_type = "secid"
-        else:
-            working_identity_type = "primid"
-    else:
-        working_identity_fph = primid_fph
-        session["working_identity"] = working_identity_fph
-        working_identity_hrns = primid_hrns
-        working_identity_type = "primid"
-    working_identity_type = etype_to_adtype(working_identity_type)
-
-    # The user logs in as the *primid*, even if indirectly as one of its
-    # *secid*s, but once logged in will see all of its *identities* along with
-    # a list of *accounts* belonging to each. The user will also see a list of
-    # entities over which it holds/shares stewardship.
-
-    nstewardships_list, m = list_namespace_stewardships(primid_fph)
-    nstewardships_list, m = list_currency_stewardships(primid_fph)
-
-    # Since a user may have *accounts* scattered across an arbitrary number of
-    # *namespaces*, it is necessary to maintain a list of these:
-
-    # A full list of *identities* is compiled, with the *primid* first and the
-    # *secids* arranged alphabetically:
-    identities_list = list_secids(primid_fph)
-    identities_list.sort()
-    identities_list.insert(0, primid_fph)
-
-    # We now need a list of the *currencies* available to these *identities*
-    # along with a list of *accounts* in each.
-
-    # In order to accommodate the table in the width of a typical phone screen,
-    # the table needs to be divided into sections (one for each *currency*).
-    # A single table is used (rather than a separate table for each *currency*)
-    # in order to keep the column widths consistent.
-    #
-    # In due course, the table will be replaced with suitable <div> elements,
-    # but that is not an urgent priority.
-
-    currency_changed = True     # To be changed to false whenever consecutive
-    previous_currency_fph = ""  # option rows are found to have the same
-                                # currency. This transition is then indicated
-                                # in the dictionary passed to the template.
-
-    payment_options_list = [] # a list of dictionaries to be iterated
-    for id_fph in identities_list:
-
-        id_fph, id_hrns, etypes, \
-        m = identify_entity(id_fph)
-        if m: # (this should never happen)
-            flash(m)
-            return redirect("/home")
-
-        if "primid" in etypes:
-            id_type = "login identity"
-        elif "secid" in etypes:
-            id_type = "alias"
-        else:
-            id_type = "poltergeist" # something to be investigated
-
-        accounts_list, m = list_agent_accounts(id_fph)
-        if m: # (this should never happen)
-            flash(m)
-            return redirect("/home")
-        accounts_list.sort()
-        for a_fph in accounts_list:
-            # fetch *account* details:
-            c_fph, a_owner_fph, a_balance, a_volume, active, \
-            account_type, account_category, account_units, \
-            account_metrical_equivalence, account_dimensions, \
-            m = get_account_properties(a_fph)
-            a_balance_d = integer_to_money_format(a_balance)
-
-            isneg = (a_balance < 0)
-
-            # Fetch *currency* details:
-            c_fph, c_hrns, active, private, sandbox, \
-            type, category, units, metrical_equivalence, dimensions, \
-            c_prefix, c_suffix, c_default_account_name, c_stewards_list, \
-            m = get_currency_properties(c_fph)
-
-            currency_changed = (c_fph != previous_currency_fph)
-
-            p = {} # a (*currency", *identity*, *account*) triplet
-            p["currency"] = {}
-            p["currency"]["currency_changed"] = currency_changed
-            p["currency"]["fph"] = c_fph
-            p["currency"]["hrns"] = fph_to_hrns(c_fph)
-            #p["currency"]["primid_is_c_steward"] = primid_currency_steward
-            if c_fph in cstewardships_list:
-                p["currency"]["primid_is_c_steward"] = True
-            else:
-                p["currency"]["primid_is_c_steward"] = False
-            p["currency"]["identity"] = {}
-            p["currency"]["identity"]["fph"] = id_fph
-            p["currency"]["identity"]["hrns"] = fph_to_hrns(id_fph)
-            p["currency"]["identity"]["type"] = id_type
-            p["currency"]["identity"]["account"] = {}
-            p["currency"]["identity"]["account"]["fph"] = a_fph
-            p["currency"]["identity"]["account"]["hrns"] = fph_to_hrns(a_fph)
-            p["currency"]["identity"]["account"]["owner_fph"] = a_owner_fph
-            p["currency"]["identity"]["account"]["balance"] = a_balance_d
-            p["currency"]["identity"]["account"]["isneg"] = (a_balance < 0)
-            p["currency"]["identity"]["account"]["prefix"] = c_prefix
-            p["currency"]["identity"]["account"]["suffix"] = c_suffix
-            payment_options_list.append(p)
-
-            previous_currency_fph = c_fph
-
-    # We now have a list of dictionaries to be iterated that can be iterated
-    # by the Jinja2 template.
-
-    return render_template(
-        "payment_options.html",
-        title = "payment options",
-        page = page,
-        group = group,
-        hub_mode = "slate",
-        development_mode = development_mode,
-        version = get_version(),
-        show_csv_import_link = get_config("show_dataset_csv_import_link"),
-        logged_in = logged_in,
-        primid_type = "login identity",
-        primid_fph = primid_fph,
-        primid_hrns = primid_hrns,
-        working_identity_fph = working_identity_fph,
-        working_identity_hrns = working_identity_hrns,
-        working_identity_type = working_identity_type,
-        # List of (nested) dictionaries for "payment_options.html":
-        payment_options_list = payment_options_list
-    )
-
-#==============================================================================
-# Payment optionspage (second version).
-#
-# This is an alternative view of the payment options available to that shown in
-# the login landing page ("/home"). This view shows a sorted list of the
-# *currencies* available to this *agent*.
-#
-# This is the first of a two-stage view comprising
-# (1) "/currency/options" listing the currencies available to this *agent*, and
-# (2) "/accounts_available" listing the *accounts* available in the *currency*
-#     selected from the "/currency/options" list, each along with the current
-#     balance and its owner (one of this *agent*'s identities').
-#
-# First stage:
-
-@app.route("/currency/options", methods = ["GET", "POST"])
-@login_required
-def currency_options():
-
-    # Hub operational mode (read from environment variable HUB_MODE)
-    hub_mode = get_hub_mode()
-    #version = get_version()()
-
-
-    page = "currency_options"
-    previous_page = session["previous_page"]
-    session["previous_page"] = page
-
-    group = "home" # Used to control top menu behaviour.
-
-    logged_in = current_user.is_authenticated
-
-    primid_fph, primid_hrns, etypes, \
-    m = identify_entity(current_user.get_id())
-
-    if "working_identity" in session:
-        working_identity_fph, working_identity_hrns, etypes, \
-        m = identify_entity(session["working_identity"])
-        if ("secid" in etypes):
-            working_identity_type = "secid"
-        else:
-            working_identity_type = "primid"
-    else:
-        working_identity_fph = primid_fph
-        session["working_identity"] = working_identity_fph
-        working_identity_hrns = primid_hrns
-        working_identity_type = "primid"
-    working_identity_type = etype_to_adtype(working_identity_type)
-
-    # The user logs in as the *primid*, even if indirectly as one of its
-    # *secid*s, but once logged in will see all of its *identities* along with
-    # a list of *accounts* belonging to each. The user will also see a list of
-    # entities over which it holds/shares stewardship.
-
-    nstewardships_list, m = list_namespace_stewardships(primid_fph)
-    cstewardships_list, m = list_currency_stewardships(primid_fph)
-
-    # Since a user may have *accounts* scattered across an arbitrary number of
-    # *namespaces*, it is necessary to maintain a list of these:
-
-    # A full list of *identities* is compiled, with the *primid* first and the
-    # *secids* arranged alphabetically:
-    identities_list = list_secids(primid_fph)
-    identities_list.sort()
-    identities_list.insert(0, primid_fph)
-
-    # We now need a list of the *currencies* available to these *identities*
-    # along with a list of *accounts* in each.
-
-    # In order to accommodate the table in the width of a typical phone screen,
-    # the table needs to be divided into sections (one for each *currency*).
-    # A single table is used (rather than a separate table for each *currency*)
-    # in order to keep the column widths consistent.
-    #
-    # In due course, the table will be replaced with suitable <div> elements,
-    # but that is not an urgent priority.
-
-    currencies_available = []   # for use by "/currency/options"
-                                # This list will be passed to the template.
-                                # The *currency* selected from that list will
-                                # then determine which collection of *accounts*
-                                # (to whichever of this *agent*'s *identities*
-                                # each belongs) will be listed in the next view
-                                # "/account/options".
-
-    currencies_list = []        # for use by "/account/options"
-
-    payment_options = []
-
-    for id_fph in identities_list:
-
-        id_fph, id_hrns, etypes, \
-        m = identify_entity(id_fph)
-        if m: # (this should never happen)
-            flash(m)
-            return redirect("/home")
-
-        if "primid" in etypes:
-            id_type = "login identity"
-        elif "secid" in etypes:
-            id_type = "alias"
-        else:
-            id_type = "poltergeist" # something to be investigated
-
-        accounts_list, m = list_agent_accounts(id_fph)
-        if m: # (this should never happen)
-            flash(m)
-            return redirect("/home")
-        accounts_list.sort()
-        for a_fph in accounts_list:
-            # fetch *account* details:
-            c_fph, a_owner_fph, a_balance, a_volume, active, \
-            account_type, account_category, account_units, \
-            account_metrical_equivalence, account_dimensions, \
-            m = get_account_properties(a_fph)
-            a_balance_d = integer_to_money_format(a_balance)
-
-            isneg = (a_balance < 0)
-
-            # Fetch *currency* details:
-            c_fph, c_hrns, active, private, sandbox, \
-            type, category, units, metrical_equivalence, dimensions, \
-            c_prefix, c_suffix, c_default_account_name, c_stewards_list, \
-            m = get_currency_properties(c_fph)
-
-            # For the "/currency/options" page we need a list of *currencie*
-            # available to this *agent*:
-            c = {}
-            c["fph"] = c_fph
-            c["hrns"] = fph_to_hrns(c_fph)
-            if c_fph in cstewardships_list:
-                c["primid_is_c_steward"] = True
-            else:
-                c["primid_is_c_steward"] = False
-            if not (c in currencies_list):
-                currencies_list.append(c)
-
-            currencies_available.append(c_fph)
-
-            # For the "/account/options" page we need a full dictionary of the
-            # *accounts* available in each *currency* since we do not yet know
-            # which will be selected from those displayed in the
-            # "/currency/options" page:
-            p = {} # a (*currency", *identity*, *account*) triplet
-            p["currency"] = {}
-            p["currency"]["fph"] = c_fph
-            p["currency"]["hrns"] = fph_to_hrns(c_fph)
-            if c_fph in cstewardships_list:
-                p["currency"]["primid_is_c_steward"] = True
-            else:
-                p["currency"]["primid_is_c_steward"] = False
-            p["currency"]["identity"] = {}
-            p["currency"]["identity"]["fph"] = id_fph
-            p["currency"]["identity"]["hrns"] = fph_to_hrns(id_fph)
-            p["currency"]["identity"]["type"] = id_type
-            p["currency"]["identity"]["account"] = {}
-            p["currency"]["identity"]["account"]["fph"] = a_fph
-            p["currency"]["identity"]["account"]["hrns"] = fph_to_hrns(a_fph)
-            p["currency"]["identity"]["account"]["owner_fph"] = a_owner_fph
-            p["currency"]["identity"]["account"]["balance"] = a_balance_d
-            p["currency"]["identity"]["account"]["isneg"] = (a_balance < 0)
-            p["currency"]["identity"]["account"]["prefix"] = c_prefix
-            p["currency"]["identity"]["account"]["suffix"] = c_suffix
-
-            payment_options.append(p)
-
-    # We now have a list of *currencies* (each as a dictionary to be passed to
-    # the "/currency/options" view).
-    #
-    # We also have a dictionary, with the *currency* FPH as the top-level key,
-    # to be interated in the "/account/options" view which follows after the
-    # selection of a *currency* from those listed in the  "/currency/options"
-    # view. Both the selected *currency* and the full dictionary of *account*
-    # options are needed by the "/account/options" view, these must be passed
-    # across from the first view to the second. The simplest approach might be
-    # to use the Flask  session[ ]  dictionary.
-    session_save_currencies_available(currencies_available, payment_options)
-    #session["payment_options"] = pickle.dumps(payment_options)
-
-    # Although the *currency* selected is passed via the URL slug, we must
-    # still be able to check that it is a valid option for the *agent* in this
-    # session, so it is added to the  session[ ]  dictionary:
-    #session["currencies_available"] = pickle.dumps(currencies_available)
-
-    # NB, the p dictionary may be quite large so we need to avoid passing it
-    # upon every subsequent page request. Therefore it should be cleared from
-    # session[ ]  as soon as it has been used by the "/account/options" view.
-
-    return render_template(
-        "currency_options.html",
-        title = "currency options",
-        page = page,
-        group = group,
-        development_mode = development_mode,
-        logged_in = logged_in,
-        hub_mode = "slate",
-        version = get_version(),
-        show_csv_import_link = get_config("show_dataset_csv_import_link"),
-        primid_type = "login identity",
-        primid_fph = primid_fph,
-        primid_hrns = primid_hrns,
-        working_identity_fph = working_identity_fph,
-        working_identity_hrns = working_identity_hrns,
-        working_identity_type = working_identity_type,
-        currencies_list = currencies_list # list of *currencies* available
-     )
-
-#------------------------------------------------------------------------------
-# Second stage:
-#
-# "/account/options" (always follow immediately after "/currency/options")
-
-@app.route("/account/options/<currency_fph>", methods = ["GET", "POST"])
-@login_required
-def account_options(currency_fph):
-
-    # Hub operational mode (read from environment variable HUB_MODE)
-    hub_mode = get_hub_mode()
-    #version = get_version()()
-
-
-    page = "payment_options"
-    previous_page = session["previous_page"]
-    session["previous_page"] = page
-
-    group = "home" # Used to control top menu behaviour.
-
-    currencies_available, payment_options_list, \
-    m = session_retrieve_currencies_available()
-    if m:
-        flash(m)
-    if m == "Payment options unavailable":
-        #flash(m)
-        return redirect("/currency/options")
-
-    currency_selected_hrns = fph_to_hrns(currency_fph)
-
-    logged_in = current_user.is_authenticated # for menu display control
-
-    primid_fph, primid_hrns, etypes, \
-    m = identify_entity(current_user.get_id())
-
-    if "working_identity" in session:
-        working_identity_fph, working_identity_hrns, etypes, \
-        m = identify_entity(session["working_identity"])
-        if ("secid" in etypes):
-            working_identity_type = "secid"
-        else:
-            working_identity_type = "primid"
-    else:
-        working_identity_fph = primid_fph
-        session["working_identity"] = working_identity_fph
-        working_identity_hrns = primid_hrns
-        working_identity_type = "primid"
-    working_identity_type = etype_to_adtype(working_identity_type)
-
-    return render_template(
-        "payment_options.html",
-        title = "account options",
-        page = page,
-        group = group,
-        development_mode = development_mode,
-        logged_in = logged_in,
-        hub_mode = "slate",
-        version = get_version(),
-        show_csv_import_link = get_config("show_dataset_csv_import_link"),
-        primid_type = "login identity",
-        primid_fph = primid_fph,
-        primid_hrns = primid_hrns,
-        working_identity_fph = working_identity_fph,
-        working_identity_hrns = working_identity_hrns,
-        working_identity_type = working_identity_type,
-        # The *currency* selected from the list of *currency* options:
-        currency_selected_hrns = currency_selected_hrns,
-        payment_options_list = payment_options_list
-     )
-
-#==============================================================================
-# account details page --------------------------------------------------------
-
-# Note:
-#
-# Change endpoint from
-#   /account/<account_fph>
-# to
-#   /pay/account/<account_fph>
-# and (possibly) change
-#   def account(account_fph)
-# to
-#   def pay_account(account_fph)
-# (although that may introduce complications, so don't leap without looking
-# very thoroughly).
-#
-# Also dd
-#   /pay/identity
-# or
-#   /pay_identity
-
-@app.route("/account/<payer_account_fph>/<payee_account_fph>/<owner_fph>",
-           methods = ["GET", "POST"])
-@login_required
-def account(payer_account_fph, payee_account_fph, owner_fph = None):
-
-    if owner_fph is not None:
-        account_owner_fph, account_owner_hrns, etypes, \
-        m = identify_entity(owner_fph)
-        if m:
-            flash(m)
-            return redirect("/home")
-        if account_owner_fph == "":
-            flash("Invalid account owner in URL")
-            return redirect("/home")
-
-    # Hub operational mode (read from environment variable HUB_MODE)
-    hub_mode = get_hub_mode()
-    #version = get_version()()
-
-
-    page = "account"
-    group = "home" # Used to control top menu behaviour.
-    logged_in = current_user.is_authenticated
-
-    previous_page = session["previous_page"]
-    session["previous_page"] = page
-
-    # The *primid* (or its alias *secid*) logged in currently:
-    primid_fph, primid_hrns, etypes, \
-    m = identify_entity(current_user.get_id())
-
-    # (This uses the identify_entity( ) function:)
-    #primid_type = fph_to_display_type(primid_fph)
-
-    if "working_identity" in session:
-        working_identity_fph, working_identity_hrns, etypes, \
-        m = identify_entity(session["working_identity"])
-        if ("secid" in etypes):
-            working_identity_type = "secid"
-        else:
-            working_identity_type = "primid"
-    else:
-        working_identity_fph = primid_fph
-        session["working_identity"] = working_identity_fph
-        working_identity_hrns = primid_hrns
-        working_identity_type = etype_to_adtype(working_identity_type)
-
-   # If a payer *account* has been specified (by FPH) in the URL slug
-    payer_account_fph, payer_account_hrns, etypes, \
-    m = identify_entity(payer_account_fph)
-    if m:
-        flash(m)
-
-    if not payer_account_fph:
-        flash("The FPH in the URL cannot be identified.")
-        return redirect("/account")
-    elif "account" in etypes:
-        flash("The FPH in the URL does not identify an account.")
-        return redirect("/home")
-
-    payee_account_known = False
-    if payee_account_fph is not None:
-        # A pseudo-FPH is used where only the payer account FPH is provided:
-        if payee_account_fph == "0": # (obviously not a valid FPH)
-            payee_account_fph = ""
-            payee_account_hrns = ""
-        else:
-            # If a payee *account* has been specified (by FPH) in the URL slug
-            payee_account_fph, payee_account_hrns, etypes, \
-            m = identify_entity(payee_account_fph)
-            if m:
-                flash(m)
-            if payee_account_fph:
-                payee_account_known = True
-    else:
-        payee_account_fph = ""
-        payee_account_hrns = ""
-
-    payer_currency_fph, payer_owner_fph, payer_balance, volume, active, \
-    account_type, account_category, account_units, \
-    account_metrical_equivalence, account_dimensions, \
-    m = get_account_properties(payer_account_fph)
-
-    if m:
-        flash(m)
-        return redirect("/account")
-
-    account_balance_is_negative = (payer_balance < 0)
-
-    currency_fph, currency_hrns, active, private, sandbox, \
-    type, category, units, metrical_equivalence, dimensions, \
-    currency_prefix, currency_suffix, default_account_name, stewards_list, \
-    m = get_currency_properties(payer_currency_fph)
-
-    # If control reaches this point, it has been established that the *account*
-    # specified in the URL slug belongs to the current user.
-    #
-    form = PaymentToAccountForm()
-    if form.validate_on_submit():
-
-        payee_account_id = form.to_account_id.data # HRNS or FPH
-        amount_entered = form.amount.data
-        annotation = form.annotation.data
-
-        amount = int(round(float(amount_entered)*100))
-
-        if (payee_account_id is not None) and payee_account_id:
-            payee_account_fph, payee_account_hrns, etypes, \
-            m = identify_entity(payee_account_id)
-
-            if "account" in etypes:
-                flash(payee_account_id + " is not an account")
-                return redirect("/account/" + payer_account_fph)
-
-        if payee_account_fph == payer_account_fph:
-            flash("An account cannot pay to itself")
-            return redirect("/account/" + payer_account_fph)
-
-        payee_currency_fph, payee_owner_fph, payee_balance, volume, active, \
-        account_type, account_category, account_units, \
-        account_metrical_equivalence, account_dimensions, \
-        m = get_account_properties(payee_account_fph)
-
-        if payee_currency_fph != payer_currency_fph:
-            flash(
-                "The payer account  " + payer_account_hrns + "  and the " \
-                + "payee account  " + payee_account_hrns \
-                + "  are not in the same currency."
-            )
-            return redirect(
-                "/account/" + payer_account_fph + payer_account_fph
-            )
-
-        # If control reaches this point, the two *accounts* are in the same
-        # *currency* so the payment can be made:
-        m = payment(payer_account_fph, payee_account_fph, amount, annotation)
-        if m:
-            flash(m)
-            return redirect("/home")
-
-        payer_currency_fph, payer_owner_fph, payer_balance, volume, active, \
-        account_type, account_category, account_units, \
-        account_metrical_equivalence, account_dimensions, \
-        m = get_account_properties(payer_account_fph)
-
-        payee_currency_fph, payee_owner_fph, payee_balance, volume, active, \
-        account_type, account_category, account_units, \
-        account_metrical_equivalence, account_dimensions, \
-        m = get_account_properties(payee_account_fph)
-
-        flash(
-            "Payment submitted: " \
-            + currency_prefix \
-            + integer_to_money_format(amount) \
-            + currency_suffix
-        )
-        return redirect("/home")
-
-    return render_template(
-        "account.html",
-        title = "Account",
-        form = form,
-        page = page,
-        group = group,
-        hub_mode = "slate",
-        version = get_version(),
-        show_csv_import_link = get_config("show_dataset_csv_import_link"),
-        primid_type = "login identity",
-        primid_fph = primid_fph,
-        primid_hrns = primid_hrns,
-        working_identity_fph = working_identity_fph,
-        working_identity_hrns = working_identity_hrns,
-        working_identity_type = working_identity_type,
-        account_owner_hrns = account_owner_hrns,
-        payer_account_fph = payer_account_fph,
-        payer_account_hrns = payer_account_hrns,
-        payee_account_known = payee_account_known,
-        payee_account_fph = payee_account_fph,
-        payee_account_hrns = payee_account_hrns,
-        account_balance = integer_to_money_format(payer_balance),
-        account_balance_is_negative = account_balance_is_negative,
-        logged_in = logged_in,
-        currency_prefix = currency_prefix,
-        currency_suffix = currency_suffix,
-        currency_fph = currency_fph,
-        currency_hrns = currency_hrns,
-        payer_balance = payer_balance
-    )
-
-# ==============================================================================
 #
 @app.route("/pay_to_ahid/<payer_ahid_fph>/<payment_currency_fph>",
            methods = ["GET", "POST"])
@@ -2378,7 +1296,7 @@ def pay_ahid(payer_ahid_fph, payment_currency_fph):
         if hub_mode == "slate":
             return redirect("/home_ahc")
         else:
-            return redirect("/home")
+            return redirect("/home_ahc")
 
     return render_template(
         "pay_to_ahid.html",
@@ -2406,73 +1324,6 @@ def pay_ahid(payer_ahid_fph, payment_currency_fph):
 
 
 #==============================================================================
-#
-@app.route("/pay_to_account", methods = ["GET", "POST"])
-@login_required
-def pay_account():
-
-    # Hub operational mode (read from environment variable HUB_MODE)
-    hub_mode = get_hub_mode()
-    #version = get_version()()
-
-
-    page = "pay_account"
-    group = "home" # Used to control top menu behaviour.
-    logged_in = current_user.is_authenticated
-
-    previous_page = session["previous_page"] # Ensure correct page sequence
-    session["previous_page"] = page
-
-    primid_fph, primid_hrns, etypes, \
-    m = identify_entity(current_user.get_id())
-
-    if "working_identity" in session:
-        working_identity_fph, working_identity_hrns, etypes, \
-        m = identify_entity(session["working_identity"])
-        if ("secid" in etypes):
-            working_identity_type = "secid"
-        else:
-            working_identity_type = "primid"
-    else:
-        working_identity_fph = primid_fph
-        session["working_identity"] = working_identity_fph
-        working_identity_hrns = primid_hrns
-        working_identity_type = "primid"
-    working_identity_type = etype_to_adtype(working_identity_type)
-
-    form = SpecifyPayeeAccountForm()
-    if form.validate_on_submit():
-        payee_account_fph, payee_account_hrns, etypes, \
-        m = identify_entity(form.to_account_id.data) # HRNS or FPH
-        if m:
-            flash(m)
-            return redirect("/pay_to_account")
-        if payee_account_fph == "":
-            return redirect("/pay_to_account")
-
-        return redirect("/select_payer_account/" + payee_account_fph)
-
-    return render_template(
-        "pay_to_account.html",
-        title = "Make a payment to an account",
-        page = page,
-        group = group,
-        form = form,
-        logged_in = logged_in,
-        hub_mode = "slate",
-        version = get_version(),
-        show_csv_import_link = get_config("show_dataset_csv_import_link"),
-        primid_type = "login identity",
-        primid_fph = primid_fph,
-        primid_hrns = primid_hrns,
-        working_identity_fph = working_identity_fph,
-        working_identity_hrns = working_identity_hrns,
-        working_identity_type = working_identity_type
-    )
-
-
-#
-# ==============================================================================
 #
 @app.route("/journal/<ahid_fph>/<currency_fph>", methods = ["GET", "POST"])
 @login_required
@@ -2636,1148 +1487,6 @@ def print_payments_session_variables():
 
 
 
-#=============================================================================
-# Make a payment to an *agent*+*currency* rather than to an *account*. This
-# endpoint is reached when a "pay" link is clicked in the "/home" screen table
-# (in )"slate_simple" mode).
-#
-@app.route("/pay/from/<payer_account_fph>", methods = ["GET", "POST"])
-@login_required
-def pay_from_account_to_agent(payer_account_fph = None):
-
-    if payer_account_fph is None:
-        flash("No payer account specified in URL")
-        return redirect("/home")
-    payer_account_fph, payer_account_hrns, etypes, \
-    m = identify_entity(payer_account_fph)
-    if m:
-        flash(m)
-        return redirect("/home")
-    if payer_account_fph == "":
-        flash("Invalid FPH in URL")
-        return redirect("/home")
-    if "account" in etypes:
-        flash("Entity type of FPH in URL is not account")
-        return redirect("/home")
-
-    payment_currency_fph, payer_account_owner_fph, \
-    payer_account_balance, volume, active, \
-    account_type, account_category, account_units, \
-    account_metrical_equivalence, account_dimensions, \
-    m = get_account_properties(payer_account_fph)
-
-    if payer_account_balance < 0:
-        payer_account_balance_negative = True
-    else:
-        payer_account_balance_negative = False
-
-    # Hub operational mode (read from environment variable HUB_MODE)
-    hub_mode = get_hub_mode()
-
-    page = "payer_currency_known"
-    group = "home"
-    logged_in = current_user.is_authenticated
-
-    previous_page = session["previous_page"] # Ensure correct page sequence
-    session["previous_page"] = page
-
-    if (previous_page != "home") and (previous_page != "payer_currency_known"):
-        flash("Incorrect page succession")
-        return redirect("/home")
-
-    primid_fph, primid_hrns, etypes, \
-    m = identify_entity(current_user.get_id())
-
-    if "working_identity" in session:
-        working_identity_fph, working_identity_hrns, etypes, \
-        m = identify_entity(session["working_identity"])
-        if ("secid" in etypes):
-            working_identity_type = "secid"
-        else:
-            working_identity_type = "primid"
-    else:
-        working_identity_fph = primid_fph
-        session["working_identity"] = working_identity_fph
-        working_identity_hrns = primid_hrns
-        working_identity_type = "primid"
-    working_identity_type = etype_to_adtype(working_identity_type)
-
-    # (1) Clear any existing data from the session dictionary:
-    if "payee_identity_fph" in session:
-        session.pop("payee_identity_fph")
-    if "payment_currency_fph" in session:
-        session.pop("payment_currency_fph")
-    if "number_of_payer_accounts" in session:
-        session.pop("number_of_payer_accounts")
-    if "number_of_payee_accounts" in session:
-        session.pop("number_of_payee_accounts")
-    if "payer_account_fph" in session:
-        session.pop("payer_account_fph")
-    if "payee_account_fph" in session:
-        session.pop("payee_account_fph")
-    # (2) Clear any existing data from the session database:
-    remove_slate_session_data()
-
-    session["payment_currency_fph"] = payment_currency_fph
-    session["payer_account_fph"] = payer_account_fph
-
-
-    # We now know both the payer *account* and the payment *currency*, so now
-    # we need to acquire the *identity* form data:
-    form = SpecifyPayeeAgentForm()
-    if form.validate_on_submit():
-
-        payee_identity_fph, payee_identity_hrns, etypes, \
-        m = identify_entity(form.to_identity_id.data) # HRNS or FPH
-        if m:
-            flash(m)
-            return redirect("/home")
-        if payee_identity_fph == "":
-            flash("The identity is invalid")
-            return redirect("/home")
-        session["payee_identity_fph"] = payee_identity_fph
-
-        payer_options = []
-        payer_options.append(payer_account_fph) # single option already known
-
-        # Next we need to find the payee *accounts* in the specified
-        # *currency*:
-        payee_accounts, m = list_agent_accounts(payee_identity_fph)
-        if payer_account_fph in payee_accounts:
-            payee_accounts.remove(payer_account_fph)
-        if len(payee_accounts) == 0:
-            flash("There are no payee account options.")
-            return redirect("/home")
-        payee_options = []
-        for payee_account_fph in payee_accounts:
-            account_currency_fph = get_account_currency(payee_account_fph)
-            if account_currency_fph == payment_currency_fph:
-                payee_options.append(payee_account_fph)
-
-        # These lists of payer and payee *account* options are now saved for
-        # use in the selection stages:
-        session_save_payment_options(payer_options, payee_options)
-
-        return redirect("/pay/select/payee/" + payer_account_fph) # next page
-
-    return render_template(
-        "pay_agent_in_known_currency.html",
-        title = "Make a payment to an agent in known currency",
-        page = page,
-        group = group,
-        form = form,
-        logged_in = logged_in,
-        hub_mode = "slate",
-        version = get_version(),
-        show_csv_import_link = get_config("show_dataset_csv_import_link"),
-        primid_type = "login identity",
-        primid_fph = primid_fph,
-        primid_hrns = primid_hrns,
-        working_identity_fph = working_identity_fph,
-        working_identity_hrns = working_identity_hrns,
-        working_identity_type = working_identity_type,
-        payer_account_hrns = fph_to_hrns(payer_account_fph),
-        payer_identity_hrns = fph_to_hrns(payer_account_owner_fph),
-        payment_currency_hrns = fph_to_hrns(payment_currency_fph),
-        payer_account_balance = integer_to_money_format(payer_account_balance),
-        payer_account_balance_negative = payer_account_balance_negative
-    )
-
-
-#=============================================================================
-# Make a payment to an *agent*+*currency* rather than to an *account*. This
-# endpoint is reached when the "pay" link is clicked in "slate_minimal" mode.
-#
-# Added 2025-03-17:
-@app.route("/pay/agent/direct/<payer_currency_fph>/<payer_identity_fph>",
-           methods = ["GET", "POST"]
-          )
-@login_required
-def pay_agent_direct(payer_currency_fph, payer_identity_fph):
-
-    # Hub operational mode (read from environment variable HUB_MODE)
-    hub_mode = get_hub_mode()
-    #version = get_version()()
-
-
-    page = "pay_agent_direct"
-    group = "home"
-    logged_in = current_user.is_authenticated
-
-    previous_page = session["previous_page"] # Ensure correct page sequence
-    session["previous_page"] = page
-
-    primid_fph, primid_hrns, etypes, \
-    m = identify_entity(current_user.get_id())
-
-    if "working_identity" in session:
-        working_identity_fph, working_identity_hrns, etypes, \
-        m = identify_entity(session["working_identity"])
-        if ("secid" in etypes):
-            working_identity_type = "secid"
-        else:
-            working_identity_type = "primid"
-    else:
-        working_identity_fph = primid_fph
-        session["working_identity"] = working_identity_fph
-        working_identity_hrns = primid_hrns
-        working_identity_type = "primid"
-    working_identity_type = etype_to_adtype(working_identity_type)
-
-    # Every process of payment to *identity*+*currency* begins here, so it is
-    # only here where the relevant persistent data needs to be cleared out.
-    #
-    # (1) Clear any existing data from the session dictionary:
-    if "payee_identity_fph" in session:
-        session.pop("payee_identity_fph")
-    if "payment_currency_fph" in session:
-        session.pop("payment_currency_fph")
-    if "number_of_payer_accounts" in session:
-        session.pop("number_of_payer_accounts")
-    if "number_of_payee_accounts" in session:
-        session.pop("number_of_payee_accounts")
-    if "payer_account_fph" in session:
-        session.pop("payer_account_fph")
-    if "payee_account_fph" in session:
-        session.pop("payee_account_fph")
-    # (2) Clear any existing data from the session database:
-    remove_slate_session_data()
-
-    currency_fph, currency_hrns, etypes, \
-    m = identify_entity(payer_currency_fph)
-    if m:
-        flash(m)
-        return redirect("/pay/agent")
-    if currency_fph == "":
-        flash("The currency cannot be identified")
-        return redirect("/pay/agent")
-    session["payment_currency_fph"] = currency_fph
-
-    payer_identity_fph, payer_identity_hrns, etypes, \
-    m = identify_entity(payer_identity_fph)
-
-    # Now we need to acquire the payee *identity* and *amount* form data:
-    form = PayeeCurrencyAmountPaymentForm()
-    if form.validate_on_submit():
-        payee_identity_fph, payee_identity_hrns, etypes, \
-        m = identify_entity(form.to_identity_id.data) # HRNS or FPH
-        if m:
-            flash(m)
-            return redirect("/pay/agent")
-        if payee_identity_fph == "":
-            flash("The identity is invalid")
-            return redirect("/pay/agent")
-        session["payee_identity_fph"] = payee_identity_fph
-        # First we need to find the payer *accounts* in the specified
-        # *currency*:
-        payer_accounts, m = list_agent_accounts(working_identity_fph)
-        payer_options = []
-        for payer_account_fph in payer_accounts:
-            account_currency_fph = get_account_currency(payer_account_fph)
-            if account_currency_fph == currency_fph:
-                payer_options.append(payer_account_fph)
-        # Next we need to find the payee *accounts* in the specified
-        # *currency*:
-        payee_accounts, m = list_agent_accounts(payee_identity_fph)
-        payee_options = []
-        for payee_account_fph in payee_accounts:
-            account_currency_fph = get_account_currency(payee_account_fph)
-            if account_currency_fph == currency_fph:
-                payee_options.append(payee_account_fph)
-
-        # These lists of payer and payee *account* options are now saved for
-        # use in the selection stages:
-        session_save_payment_options(payer_options, payee_options)
-
-        # Unless both the payee and the payee have at least one *account* in
-        # this *currency*, the payment cannpt be made.
-        if len(payer_options) == 0:
-            flash("The payer has no accounts in the specified currency")
-            return redirect("/pay/agent")
-        if len(payee_options) == 0:
-            flash("The payee has no accounts in the specified currency")
-            return redirect("/pay/agent")
-        # If both the payer and the payee have only one *account* in this
-        # *currency*, the payment can be made immediately.
-
-        # If either the payer or the payee has more than one *account* in this
-        # *currency* a selection must be made. Therefore the list of options
-        # must be passed to one or both intermediate form/endpoint to allow the
-        # selection of *accounts*.
-
-        amount_entered = form.amount.data
-        annotation = form.annotation.data
-
-        amount = int(round(float(amount_entered)*100))
-
-        m = payment(payer_account_fph, payee_account_fph, amount, annotation)
-        if m:
-            flash(m)
-            return redirect("/home")
-
-        payer_currency_fph, payer_owner_fph, payer_balance, payer_volume, \
-        active, account_type, account_category, account_units, \
-        account_metrical_equivalence, account_dimensions, \
-        m = get_account_properties(payer_account_fph)
-
-        payee_currency_fph, payee_owner_fph, payee_balance, payee_volume, \
-        active, account_type, account_category, account_units, \
-        account_metrical_equivalence, account_dimensions, \
-        m = get_account_properties(payee_account_fph)
-
-        flash(
-            "Payment submitted: " \
-            + currency_prefix \
-            + integer_to_money_format(amount) \
-            + currency_suffix
-        )
-
-        # Clear out any existing session data relating to payments:
-        if "payee_identity_fph" in session:
-            session.pop("payee_identity_fph")
-        if "payment_currency_fph" in session:
-            session.pop("payment_currency_fph")
-        if "number_of_payer_accounts" in session:
-            session.pop("number_of_payer_accounts")
-        if "number_of_payee_accounts" in session:
-            session.pop("number_of_payee_accounts")
-        if "payer_account_fph" in session:
-            session.pop("payer_account_fph")
-        if "payee_account_fph" in session:
-            session.pop("payee_account_fph")
-
-        return redirect("/home")
-
-    return render_template(
-        "pay_agent_direct.html",
-        title = "Make a payment to an agent",
-        page = page,
-        group = group,
-        form = form,
-        logged_in = logged_in,
-        hub_mode = "slate",
-        version = get_version(),
-        show_csv_import_link = get_config("show_dataset_csv_import_link"),
-        primid_type = "login identity",
-        primid_fph = primid_fph,
-        primid_hrns = primid_hrns,
-        working_identity_fph = working_identity_fph,
-        working_identity_hrns = working_identity_hrns,
-        working_identity_type = working_identity_type,
-        payer_identity_hrns = payer_identity_hrns,
-        currency_hrns = currency_hrns
-    )
-
-
-
-
-
-
-
-
-#=============================================================================
-# Make a payment to an *agent*+*currency* rather than to an *account*. This
-# endpoint is reached when the "pay to agent" button is clicked.
-#
-@app.route("/pay/agent/", methods = ["GET", "POST"])
-@login_required
-def pay_agent():
-
-    # The payee will have specified an *identity* and a *currency*, both of
-    # which are entered into the form below, so here we need to take the
-    # followig steps:
-    # (1) List the *accounts* that the payer has in this *currency*.
-    # (1.1) If none, display explanatory message and return to home.
-    # (1.2) If only one, no selection will be necessary.
-    # (1.3) If more than one, it will be necessary to choose from the options.
-    # (2) List the *accounts* that the payee has in this *currency*.
-    # (2.1) If none (unlikely), display explanatory message and return to home.
-    # (2.2) If only one, no selection will be necessary.
-    # (2.3) If more than one, it will be necessary to choose from the options.
-    #       This situation may arise if the payee has specified only an
-    #       *identity* and a *currency* but not an *account* and cannot be
-    #       be contacted for clarification.
-    #
-    # If (1.2) and (2.2), pass control immediately to payment form.
-    #
-    # If (1.3) or (2.3), pass control to intermediate *account* selection form
-    # before passing control to payment form.
-    #
-    # In payment form, enter amount and annotation beform confirming payment.
-    # The messaging system will inform the payee that the payment has been made
-    # and to which *account*.
-
-    # Hub operational mode (read from environment variable HUB_MODE)
-    hub_mode = get_hub_mode()
-    #version = get_version()()
-
-    page = "pay_agent"
-    group = "home"
-    logged_in = current_user.is_authenticated
-
-    previous_page = session["previous_page"] # Ensure correct page sequence
-    session["previous_page"] = page
-
-    primid_fph, primid_hrns, etypes, \
-    m = identify_entity(current_user.get_id())
-
-    if "working_identity" in session:
-        working_identity_fph, working_identity_hrns, etypes, \
-        m = identify_entity(session["working_identity"])
-        if ("secid" in etypes):
-            working_identity_type = "secid"
-        else:
-            working_identity_type = "primid"
-    else:
-        working_identity_fph = primid_fph
-        session["working_identity"] = working_identity_fph
-        working_identity_hrns = primid_hrns
-        working_identity_type = "primid"
-    working_identity_type = etype_to_adtype(working_identity_type)
-
-    # Every process of payment to *identity*+*currency* begins here, so it is
-    # only here where the relevant persistent data needs to be cleared out.
-    #
-    # (1) Clear any existing data from the session dictionary:
-    if "payee_identity_fph" in session:
-        session.pop("payee_identity_fph")
-    if "payment_currency_fph" in session:
-        session.pop("payment_currency_fph")
-    if "number_of_payer_accounts" in session:
-        session.pop("number_of_payer_accounts")
-    if "number_of_payee_accounts" in session:
-        session.pop("number_of_payee_accounts")
-    if "payer_account_fph" in session:
-        session.pop("payer_account_fph")
-    if "payee_account_fph" in session:
-        session.pop("payee_account_fph")
-    # (2) Clear any existing data from the session database:
-    remove_slate_session_data()
-
-    # Now we need to acquire the *identity* and *account* form data:
-    form = SpecifyPayeeAgentAndCurrencyForm()
-    if form.validate_on_submit():
-
-        payee_identity_fph, payee_identity_hrns, etypes, \
-        m = identify_entity(form.to_identity_id.data) # HRNS or FPH
-        if m:
-            flash(m)
-            return redirect("/pay/agent")
-        if payee_identity_fph == "":
-            flash("The identity is invalid")
-            return redirect("/pay/agent")
-        session["payee_identity_fph"] = payee_identity_fph
-
-        currency_fph, currency_hrns, etypes, \
-        m = identify_entity(form.currency_id.data)
-        if m:
-            flash(m)
-            return redirect("/pay/agent")
-        if currency_fph == "":
-            flash("The currency cannot be identified")
-            return redirect("/pay/agent")
-        session["payment_currency_fph"] = currency_fph
-
-        # First we need to find the payer *accounts* in the specified
-        # *currency*:
-        payer_accounts, m = list_agent_accounts(working_identity_fph)
-        payer_options = []
-        for payer_account_fph in payer_accounts:
-            account_currency_fph = get_account_currency(payer_account_fph)
-            if account_currency_fph == currency_fph:
-                payer_options.append(payer_account_fph)
-
-        # Next we need to find the payee *accounts* in the specified
-        # *currency*:
-        payee_accounts, m = list_agent_accounts(payee_identity_fph)
-        payee_options = []
-        for payee_account_fph in payee_accounts:
-            account_currency_fph = get_account_currency(payee_account_fph)
-            if account_currency_fph == currency_fph:
-                payee_options.append(payee_account_fph)
-
-        # These lists of payer and payee *account* options are now saved for
-        # use in the selection stages:
-        session_save_payment_options(payer_options, payee_options)
-
-        # Unless both the payee and the payee have at least one *account* in
-        # this *currency*, the payment cannpt be made.
-        if len(payer_options) == 0:
-            flash("The payer has no accounts in the specified currency")
-            return redirect("/pay/agent")
-        if len(payee_options) == 0:
-            flash("The payee has no accounts in the specified currency")
-            return redirect("/pay/agent")
-
-        # If both the payer and the payee have only one *account* in this
-        # *currency*, the payment can be made immediately.
-
-        # If either the payer or the payee has more than one *account* in this
-        # *currency* a selection must be made. Therefore the list of options
-        # must be passed to one or both intermediate form/endpoint to allow the
-        # selection of *accounts*.
-        return redirect("/pay/select/payer") # next page
-
-
-    return render_template(
-        "pay_agent_in_currency.html",
-        title = "Make a payment to an agent",
-        page = page,
-        group = group,
-        form = form,
-        logged_in = logged_in,
-        hub_mode = "slate",
-        version = get_version(),
-        show_csv_import_link = get_config("show_dataset_csv_import_link"),
-        primid_type = "login identity",
-        primid_fph = primid_fph,
-        primid_hrns = primid_hrns,
-        working_identity_fph = working_identity_fph,
-        working_identity_hrns = working_identity_hrns,
-        working_identity_type = working_identity_type
-    )
-
-#------------------------------------------------------------------------------
-# Select from available payer *accounts*:
-#
-@app.route("/pay/select/payer", methods = ["GET", "POST"])
-@login_required
-def select_payer_account():
-
-    # Hub operational mode (read from environment variable HUB_MODE)
-    hub_mode = get_hub_mode()
-    #version = get_version()()
-
-    group = "home" # Used to control top menu behaviour.
-    logged_in = current_user.is_authenticated
-    page = "select_account_combination_in_currency"
-
-    previous_page = session["previous_page"] # Ensure correct page sequence
-    session["previous_page"] = page
-
-    primid_fph, primid_hrns, etypes, \
-    m = identify_entity(current_user.get_id())
-
-    if "working_identity" in session:
-        working_identity_fph, working_identity_hrns, etypes, \
-        m = identify_entity(session["working_identity"])
-        if ("secid" in etypes):
-            working_identity_type = "secid"
-        else:
-            working_identity_type = "primid"
-    else:
-        working_identity_fph = primid_fph
-        session["working_identity"] = working_identity_fph
-        working_identity_hrns = primid_hrns
-    working_identity_type = etype_to_adtype(working_identity_type)
-
-    # The original *identity*+*currency* data are retrieved for use in the
-    # template:
-    #
-    if not "payee_identity_fph" in session:
-        flash("Error: payee_identity_fph not in session dictionary")
-        return redirect("/pay/agent")
-    else:
-        payee_identity_hrns = fph_to_hrns(session["payee_identity_fph"])
-
-    if not "payment_currency_fph" in session:
-        flash("Error: payment_currency_fph not in session dictionary")
-        return redirect("/pay/agent")
-    else:
-        payment_currency_hrns = fph_to_hrns(session["payment_currency_fph"])
-
-    # The payer and payee *account* options lists are retrieved:
-    payer_accounts_available, \
-    payee_accounts_available, \
-    m = session_retrieve_payment_options()
-
-    # If there is only one payer *account* option, we can move straight on to
-    # the payee *account* selection stage. Otherwise we need to select the
-    # payer *account* from a list, in which case the selection is made by
-    # clicking on a link in a page rather than by using a form. Therefore the
-    # payee *account* FPH is passed in the URL:
-    #
-    if len(payer_accounts_available) == 1:
-        payer_account_fph = payer_accounts_available[0]
-        session["payer_account_fph"] = payer_account_fph
-        return redirect("/pay/select/payee/" + payer_account_fph)
-
-    # If there are no payee *accounts* available, give up:
-    if len(payer_accounts_available) == 0:
-        flash("There are no account options from which to pay.")
-        return redirect("/home")
-
-    #
-    # Otherwise we need to select the payer *account* from a list.
-    payer_account_options = []
-    for payer_account_fph in payer_accounts_available:
-        a = {}
-        a["fph"] = payer_account_fph
-        a["hrns"] = fph_to_hrns(payer_account_fph)
-        payer_account_options.append(a)
-
-    return render_template(
-        "select_payer_account.html",
-        title = "Select the payer account",
-        page = page,
-        group = group,
-        logged_in = logged_in,
-        hub_mode = "slate",
-        version = get_version(),
-        show_csv_import_link = get_config("show_dataset_csv_import_link"),
-        primid_type = "login identity",
-        primid_fph = primid_fph,
-        primid_hrns = primid_hrns,
-        working_identity_fph = working_identity_fph,
-        working_identity_hrns = working_identity_hrns,
-        working_identity_type = working_identity_type,
-        payee_identity_hrns = payee_identity_hrns,
-        payment_currency_hrns = payment_currency_hrns,
-        payer_account_options = payer_account_options
-    )
-
-#------------------------------------------------------------------------------
-# Select from available payee *accounts*:
-#
-@app.route("/pay/select/payee/<payer_account_fph>", methods = ["GET", "POST"])
-@login_required
-def select_payee_account(payer_account_fph = None):
-
-    if payer_account_fph is None:
-        flash("Payer account not specified in URL")
-        return redirect("/pay/agent")
-
-    payer_account_fph, payer_account_hrns, etypes, \
-    m = identify_entity(payer_account_fph)
-    if m:
-        flash(m)
-    if payer_account_fph == "":
-        flash("Invalid payer account specified in URL")
-        return redirect("/pay/agent")
-    #session["payer_account_fph"] = payer_account_fph
-
-    # Hub operational mode (read from environment variable HUB_MODE)
-    hub_mode = get_hub_mode()
-    #version = get_version()()
-
-    group = "home" # Used to control top menu behaviour.
-    logged_in = current_user.is_authenticated
-    page = "select_account_combination_in_currency"
-
-    previous_page = session["previous_page"] # Ensure correct page sequence
-    session["previous_page"] = page
-
-    primid_fph, primid_hrns, etypes, \
-    m = identify_entity(current_user.get_id())
-
-    if "working_identity" in session:
-        working_identity_fph, working_identity_hrns, etypes, \
-        m = identify_entity(session["working_identity"])
-        if ("secid" in etypes):
-            working_identity_type = "secid"
-        else:
-            working_identity_type = "primid"
-    else:
-        working_identity_fph = primid_fph
-        session["working_identity"] = working_identity_fph
-        working_identity_hrns = primid_hrns
-    working_identity_type = etype_to_adtype(working_identity_type)
-
-    # The original *identity*+*currency* data are retrieved for use in the
-    # template:
-    #
-    if not "payee_identity_fph" in session:
-        flash("Error: payee_identity_fph not in session dictionary")
-        return redirect("/pay/agent")
-    else:
-        payee_identity_hrns = fph_to_hrns(session["payee_identity_fph"])
-
-    if not "payment_currency_fph" in session:
-        flash("Error: payment_currency_fph not in session dictionary")
-        return redirect("/pay/agent")
-    else:
-        payment_currency_hrns = fph_to_hrns(session["payment_currency_fph"])
-
-    payer_accounts_available, \
-    payee_accounts_available, \
-    m = session_retrieve_payment_options()
-
-    # If there is only one payee *account* option, we can move straight on to
-    # the payment stage. Otherwise we need to select the payee *account* from a
-    # list, in which case the selection is made by clicking on a link in a page
-    # rather than by using a form. Therefore the payee *account* FPH is passed
-    # in the URL:
-    #
-    if (len(payee_accounts_available) == 1):
-        payee_account_fph = payee_accounts_available[0]
-        session["payee_account_fph"] = payee_account_fph
-        return redirect(
-                    "/pay/agent/payment/" \
-                    + payer_account_fph + "/" \
-                    + payee_account_fph
-               )
-
-    # If there are no payee *account* options, give up:
-    elif (len(payee_accounts_available) == 0):
-        flash("There are no account options to which to pay.")
-        return redirect("/home")
-
-
-    # Otherwise we need to select the payee *account* from a list.
-    payee_account_options = []
-    for payee_account_fph in payee_accounts_available:
-        a = {}
-        a["fph"] = payee_account_fph
-        a["hrns"] = fph_to_hrns(payee_account_fph)
-        payee_account_options.append(a)
-
-    return render_template(
-        "select_payee_account.html",
-        title = "Select the payee account",
-        page = page,
-        group = group,
-        logged_in = logged_in,
-        hub_mode = "slate",
-        version = get_version(),
-        show_csv_import_link = get_config("show_dataset_csv_import_link"),
-        primid_type = "login identity",
-        primid_fph = primid_fph,
-        primid_hrns = primid_hrns,
-        working_identity_fph = working_identity_fph,
-        working_identity_hrns = working_identity_hrns,
-        working_identity_type = working_identity_type,
-        payee_identity_hrns = payee_identity_hrns,
-        payment_currency_hrns = payment_currency_hrns,
-        payer_account_fph = payer_account_fph,
-        payer_account_hrns = payer_account_hrns,
-        payee_account_options = payee_account_options
-    )
-
-
-#------------------------------------------------------------------------------
-# Make the payment:
-#
-@app.route("/pay/agent/payment/<payer_account_fph>/<payee_account_fph>",
-           methods = ["GET", "POST"]
-          )
-@login_required
-def make_payment_between_selected_accounts(
-        payer_account_fph = None,
-        payee_account_fph = None
-    ):
-
-    if payer_account_fph is None:
-        flash("Invalid payer account in URL string")
-        return redirect("/home")
-    if payee_account_fph is None:
-        flash("Invalid payee account in URL string")
-        return redirect("/home")
-
-    payer_account_fph, payer_account_hrns, etypes, \
-    m = identify_entity(payer_account_fph)
-    if m:
-        flash(m)
-        return redirect("/home")
-    if payer_account_fph == "":
-        flash("No payer account in URL string")
-        return redirect("/home")
-
-    payee_account_fph, payee_account_hrns, etypes, \
-    m = identify_entity(payee_account_fph)
-    if m:
-        flash(m)
-        return redirect("/home")
-    if payee_account_fph == "":
-        flash("No payee account in URL string")
-        return redirect("/home")
-
-    # Clear out any existing session data relating to payments:
-    if "payee_identity_fph" in session:
-        payee_identity_fph = session["payee_identity_fph"]
-    if "payment_currency_fph" in session:
-        payment_currency_fph = session["payment_currency_fph"]
-    if "number_of_payer_accounts" in session:
-        number_of_payer_accounts = session["number_of_payer_accounts"]
-    if "number_of_payee_accounts" in session:
-        number_of_payee_accounts = session["number_of_payee_accounts"]
-    if "payer_account_fph" in session:
-        payer_account_fph = session["payer_account_fph"]
-    if "payee_account_fph" in session:
-        payee_account_fph = session["payee_account_fph"]
-
-    currency_fph, currency_hrns, active, private, sandbox, \
-    type, category, units, metrical_equivalence, dimensions, \
-    currency_prefix, currency_suffix, default_account_name, stewards_list, \
-    m = get_currency_properties(payment_currency_fph)
-
-    # Hub operational mode (read from environment variable HUB_MODE)
-    hub_mode = get_hub_mode()
-    #version = get_version()()
-
-    group = "home" # Used to control top menu behaviour.
-    logged_in = current_user.is_authenticated
-    page = "make_payment_between_selected_accounts"
-
-    previous_page = session["previous_page"] # Ensure correct page sequence
-    session["previous_page"] = page
-
-    primid_fph, primid_hrns, etypes, \
-    m = identify_entity(current_user.get_id())
-
-    if "working_identity" in session:
-        working_identity_fph, working_identity_hrns, etypes, \
-        m = identify_entity(session["working_identity"])
-        if ("secid" in etypes):
-            working_identity_type = "secid"
-        else:
-            working_identity_type = "primid"
-    else:
-        working_identity_fph = primid_fph
-        session["working_identity"] = working_identity_fph
-        working_identity_hrns = primid_hrns
-    working_identity_type = etype_to_adtype(working_identity_type)
-
-    form = PaymentAccountPairForm()
-    if form.validate_on_submit():
-
-        amount_entered = form.amount.data
-        annotation = form.annotation.data
-
-        amount = int(round(float(amount_entered)*100))
-
-        m = payment(payer_account_fph, payee_account_fph, amount, annotation)
-        if m:
-            flash(m)
-            return redirect("/home")
-
-        payer_currency_fph, payer_owner_fph, payer_balance, payer_volume, \
-        active, account_type, account_category, account_units, \
-        account_metrical_equivalence, account_dimensions, \
-        m = get_account_properties(payer_account_fph)
-
-        payee_currency_fph, payee_owner_fph, payee_balance, payee_volume, \
-        active, account_type, account_category, account_units, \
-        account_metrical_equivalence, account_dimensions, \
-        m = get_account_properties(payee_account_fph)
-
-        flash(
-            "Payment submitted: " \
-            + currency_prefix \
-            + integer_to_money_format(amount) \
-            + currency_suffix
-        )
-
-        # Clear out any existing session data relating to payments:
-        if "payee_identity_fph" in session:
-            session.pop("payee_identity_fph")
-        if "payment_currency_fph" in session:
-            session.pop("payment_currency_fph")
-        if "number_of_payer_accounts" in session:
-            session.pop("number_of_payer_accounts")
-        if "number_of_payee_accounts" in session:
-            session.pop("number_of_payee_accounts")
-        if "payer_account_fph" in session:
-            session.pop("payer_account_fph")
-        if "payee_account_fph" in session:
-            session.pop("payee_account_fph")
-
-        return redirect("/home")
-
-    return render_template(
-        "account_pair_payment.html",
-        title = "Account pair payment",
-        form = form,
-        page = page,
-        group = group,
-        hub_mode = "slate",
-        version = get_version(),
-        show_csv_import_link = get_config("show_dataset_csv_import_link"),
-        primid_type = "login identity",
-        primid_fph = primid_fph,
-        primid_hrns = primid_hrns,
-        working_identity_fph = working_identity_fph,
-        working_identity_hrns = working_identity_hrns,
-        working_identity_type = working_identity_type,
-        payer_account_fph = payer_account_fph,
-        payer_account_hrns = payer_account_hrns,
-#        payee_account_known = payee_account_known,
-        payee_account_fph = payee_account_fph,
-        payee_account_hrns = payee_account_hrns,
-        payee_identity_hrns = fph_to_hrns(payee_identity_fph),
-        logged_in = logged_in,
-        currency_prefix = currency_prefix,
-        currency_suffix = currency_suffix,
-        currency_fph = currency_fph,
-        currency_hrns = currency_hrns
-    )
-
-
-###############################################################################
-# payment to an *agent* -- select available payer-payee *account* pair --------
-#
-@app.route("/select_account_combination_in_currency" \
-           + "/<payee_identity_fph>/<currency_fph>", methods = ["GET", "POST"])
-@login_required
-def select_account_combination_in_currency(payee_identity_fph, currency_fph):
-
-    # Hub operational mode (read from environment variable HUB_MODE)
-    hub_mode = get_hub_mode()
-    #version = get_version()()
-
-    page = "select_account_combination_in_currency"
-    group = "home" # Used to control top menu behaviour.
-    logged_in = current_user.is_authenticated
-
-    previous_page = session["previous_page"] # Ensure correct page sequence
-    session["previous_page"] = page
-
-    primid_fph, primid_hrns, etypes, \
-    m = identify_entity(current_user.get_id())
-
-    if "working_identity" in session:
-        working_identity_fph, working_identity_hrns, etypes, \
-        m = identify_entity(session["working_identity"])
-        if ("secid" in etypes):
-            working_identity_type = "secid"
-        else:
-            working_identity_type = "primid"
-    else:
-        working_identity_fph = primid_fph
-        session["working_identity"] = working_identity_fph
-        working_identity_hrns = primid_hrns
-        working_identity_type = etype_to_adtype(working_identity_type)
-
-    # In contrast to the case of paying to a known *account*, here the payee
-    #*account* and the *currency* have been specified.
-    #
-    # Both the payer and the payee may each have several accounts in this
-    # *currenccy*, so one of the available combinations must be selected.
-
-    all_payer_accounts, m = list_agent_accounts(primid_fph)
-    all_payee_accounts, m = list_agent_accounts(payee_fph)
-
-    # NB, the following is a temporary solution pending cleanup and merger:
-
-    usable_payer_accounts = []
-    for payer_account_fph in all_payer_accounts:
-        if get_account_currency(payer_account_fph) == currency_fph:
-            usable_payer_accounts.append(payer_account_fph)
-
-    usable_payee_accounts = []
-    for payee_account_fph in all_payee_accounts:
-        if get_account_currency(payee_account_fph) == currency_fph:
-            usable_payee_accounts.append(payee_account_fph)
-
-    # The two lists now have to be passed to the template renderer:
-
-
-
-
-
-
-
-# payment to an *account* -- select payer *account* ---------------------------
-@app.route("/select_payer_account/<payee_account_fph>",
-           methods = ["GET", "POST"])
-@login_required
-def select_payer_account_(payee_account_fph):
-
-    # Hub operational mode (read from environment variable HUB_MODE)
-    hub_mode = get_hub_mode()
-    #version = get_version()()
-
-
-    page = "select_payer_account"
-    previous_page = session["previous_page"]    # Add these two lines to all
-    session["previous_page"] = page             # endpoint handlers. Some (but
-                                                # but by no means all) screens
-                                                # should be able to follow only
-                                                # from a limited set of previous
-                                                # screens.
-    group = "home" # Used to control top menu behaviour.
-
-    logged_in = current_user.is_authenticated
-
-    primid_fph, primid_hrns, etypes, \
-    m = identify_entity(current_user.get_id())
-
-    if "working_identity" in session:
-        working_identity_fph, working_identity_hrns, etypes, \
-        m = identify_entity(session["working_identity"])
-        if ("secid" in etypes):
-            working_identity_type = "secid"
-        else:
-            working_identity_type = "primid"
-    else:
-        working_identity_fph = primid_fph
-        session["working_identity"] = working_identity_fph
-        working_identity_hrns = primid_hrns
-        working_identity_type = etype_to_adtype(working_identity_type)
-
-    # In contrast to the case of paying from an *account* (and therefore a
-    # known *currency*), here a knowledge of the payee *account* tells us both
-    # the *identity* and the *currency*. However, the payer *identity* may have
-    # several accounts in this *currenccy*, so one of these must be selected.
-
-    if payee_account_fph and re_fph.match(payee_account_fph):
-        payee_account_fph, payee_account_hrns, etypes, \
-        m = identify_entity(payee_account_fph)
-        if "account" in etypes:
-            flash(payee_account_fph + " in URL slug is not an account")
-            return redirect("/pay_to_account")
-    else:
-        flash("No payee account specified in URL slug")
-        return redirect("/pay_to_account")
-
-    payee_account_currency_fph, payee_account_owner_fph, \
-    payee_account_balance, payee_account_volume, \
-    active, account_type, account_category, account_units, \
-    account_metrical_equivalence, account_dimensions, \
-    m = get_account_properties(payee_account_fph)
-
-    number_of_payer_accounts = 0
-    payer_usable_accounts = []
-    payer_accounts_list, m = list_agent_accounts(identity_fph)
-
-    for account_fph in payer_accounts_list:
-
-        account_currency_fph, account_owner_fph, \
-        account_balance, account_volume, \
-        active, account_type, account_category, account_units, \
-        account_metrical_equivalence, account_dimensions, \
-        m = get_account_properties(account_fph)
-
-        if account_currency_fph == payee_account_currency_fph:
-            a = {}
-            a["fph"] = account_fph
-            a["hrns"] = fph_to_hrns(account_fph)
-            a["currency_fph"] = account_currency_fph
-            a["balance"] = integer_to_money_format(account_balance)
-            a["isneg"] = (account_balance < 0)
-            payer_usable_accounts.append(a)
-            number_of_payer_accounts += 1
-
-    payer_has_accounts_available = (number_of_payer_accounts > 0)
-
-    return render_template(
-        "select_payer_account.html",
-        title = "Select an account from which to pay",
-        page = page,
-        group = group,
-        logged_in = logged_in,
-        hub_mode = "slate",
-        version = get_version(),
-        show_csv_import_link = get_config("show_dataset_csv_import_link"),
-        payee_account_fph = payee_account_fph,
-        payee_account_hrns = payee_account_hrns,
-        specified_currency_fph = payee_account_currency_fph,
-        specified_currency_hrns = fph_to_hrns(payee_account_currency_fph),
-        number_of_payer_accounts = number_of_payer_accounts,
-        payer_has_accounts_available = payer_has_accounts_available,
-        payer_usable_accounts = payer_usable_accounts,
-        primid_type = "login identity",
-        primid_fph = primid_fph,
-        primid_hrns = primid_hrns,
-        working_identity_fph = working_identity_fph,
-        working_identity_hrns = working_identity_hrns,
-        working_identity_type = working_identity_type
-    )
-
-# account details page --------------------------------------------------------
-@app.route("/account_details/<account_fph>", methods = ["GET", "POST"])
-@login_required
-def account_details(account_fph):
-
-    # Hub operational mode (read from environment variable HUB_MODE)
-    hub_mode = get_hub_mode()
-    #version = get_version()()
-
-
-    page = "account_details"
-    previous_page = session["previous_page"]    # Add these two lines to all
-    session["previous_page"] = page             # endpoint handlers. Some (but
-                                                # but by no means all) screens
-                                                # should be able to follow only
-                                                # from a limited set of previous
-                                                # screens.
-    group = "home" # Used to control top menu behaviour.
-
-    logged_in = current_user.is_authenticated
-
-    primid_fph, primid_hrns, etypes, \
-    m = identify_entity(current_user.get_id())
-
-    if "working_identity" in session:
-        working_identity_fph, working_identity_hrns, etypes, \
-        m = identify_entity(session["working_identity"])
-        if ("secid" in etypes):
-            working_identity_type = "secid"
-        else:
-            working_identity_type = "primid"
-    else:
-        working_identity_fph = primid_fph
-        session["working_identity"] = working_identity_fph
-        working_identity_hrns = primid_hrns
-        working_identity_type = etype_to_adtype(working_identity_type)
-
-    # If an *account* has been specified (by FPH) in the URL slug
-    account_fph, account_hrns, etypes, \
-    m = identify_entity(account_fph)
-
-    if not account_fph:
-        flash("The FPH in the URL cannot be identified.")
-        return redirect("/account")
-    elif not ("account" in etypes):
-        flash("The FPH in the URL does not identify an account.")
-        return redirect("/account")
-
-    currency_fph, owner_fph, account_balance, account_volume, active, \
-    account_type, account_category, account_units, \
-    account_metrical_equivalence, account_dimensions, \
-    m = get_account_properties(account_fph)
-    if m:
-        flash(m)
-        return redirect("/account")
-
-    account_balance_is_negative = account_balance < 0
-
-    currency_fph, currency_hrns, active, private, sandbox, \
-    type, category, units, metrical_equivalence, dimensions, \
-    currency_prefix, currency_suffix, default_account_name, stewards_list, \
-    m = get_currency_properties(currency_fph)
-
-
-    #payments_history, m = dump_account_payments_csv(account_fph)
-    payments_history, m = list_payments_for_account(account_fph)
-    if m:
-        flash(m)
-
-    return render_template(
-        "account_details.html",
-        title = "Account details",
-        logged_in = logged_in,
-        page = page,
-        group = group,
-        hub_mode = "slate",
-        version = get_version(),
-        show_csv_import_link = get_config("show_dataset_csv_import_link"),
-        primid_type = "login identity",
-        primid_fph = primid_fph,
-        primid_hrns = primid_hrns,
-        working_identity_fph = working_identity_fph,
-        working_identity_hrns = working_identity_hrns,
-        working_identity_type = working_identity_type,
-        account_fph = account_fph,
-        account_hrns = account_hrns,
-        account_balance = integer_to_money_format(account_balance),
-        account_balance_is_negative = account_balance_is_negative,
-        payments_history = payments_history,
-        currency_prefix = currency_prefix,    # just added
-        currency_suffix = currency_suffix,    # just added
-        currency_fph = currency_fph,          # just added
-        currency_hrns = currency_hrns         # just added
-    )
-
 # stewardships page ----------------------------------------------------------
 @app.route("/stewardships/<identity_fph>")
 @login_required
@@ -3808,10 +1517,7 @@ def stewardships(identity_fph):
     if "working_identity" in session:
         working_identity_fph, working_identity_hrns, etypes, \
         m = identify_entity(session["working_identity"])
-        if ("secid" in etypes):
-            working_identity_type = "secid"
-        else:
-            working_identity_type = "primid"
+        working_identity_type = "primid"
     else:
         working_identity_fph = primid_fph
         session["working_identity"] = working_identity_fph
@@ -3852,131 +1558,6 @@ def stewardships_list(primid_fph):
 
 
 
-# secids page -----------------------------------------------------------------
-@app.route("/secids/<identity_fph>")
-@login_required
-def secids(identity_fph):
-
-    # Hub operational mode (read from environment variable HUB_MODE)
-    hub_mode = get_hub_mode()
-    #version = get_version()()
-
-
-    page = "secids"
-    previous_page = session["previous_page"]    # Add these two lines to all
-    session["previous_page"] = page             # endpoint handlers. Some (but
-                                                # but by no means all) screens
-                                                # should be able to follow only
-                                                # from a limited set of previous
-                                                # screens.
-    group = "home" # Used to control top menu behaviour.
-
-    namespace_steward = True
-    currency_steward = True
-    paying = False
-    logged_in = current_user.is_authenticated
-
-    primid_fph, primid_hrns, etypes, \
-    m = identify_entity(current_user.get_id())
-
-    if "working_identity" in session:
-        working_identity_fph, working_identity_hrns, etypes, \
-        m = identify_entity(session["working_identity"])
-        if ("secid" in etypes):
-            working_identity_type = "secid"
-        else:
-            working_identity_type = "primid"
-    else:
-        working_identity_fph = primid_fph
-        session["working_identity"] = working_identity_fph
-        working_identity_hrns = primid_hrns
-        working_identity_type = etype_to_adtype(working_identity_type)
-
-    secids = list_secids(primid_fph)
-
-    return render_template(
-        "secids.html",
-        title = "Secondary identities",
-        page = page,
-        group = group,
-        hub_mode = "slate",
-        version = get_version(),
-        show_csv_import_link = get_config("show_dataset_csv_import_link"),
-        primid_type = "login identity",
-        primid_fph = primid_fph,
-        primid_hrns = primid_hrns,
-        working_identity_fph = working_identity_fph,
-        working_identity_hrns = working_identity_hrns,
-        working_identity_type = working_identity_type,
-        development_mode = development_mode,
-        logged_in = logged_in,
-        namespace_steward = namespace_steward,
-        secids = secids
-    )
-
-
-
-
-@app.route("/secid/manage/<secid_fph>", methods = ["GET", "POST"])
-@login_required
-def manage_secid(secid_fph):
-
-    # Hub operational mode (read from environment variable HUB_MODE)
-    hub_mode = get_hub_mode()
-    #version = get_version()()
-
-
-    page = "secids"
-    previous_page = session["previous_page"]    # Add these two lines to all
-    session["previous_page"] = page             # endpoint handlers. Some (but
-                                                # but by no means all) screens
-                                                # should be able to follow only
-                                                # from a limited set of previous
-                                                # screens.
-    group = "home" # Used to control top menu behaviour.
-
-    namespace_steward = True
-    currency_steward = True
-    paying = False
-    logged_in = current_user.is_authenticated
-
-    primid_fph, primid_hrns, etypes, \
-    m = identify_entity(current_user.get_id())
-
-    if "working_identity" in session:
-        working_identity_fph, working_identity_hrns, etypes, \
-        m = identify_entity(session["working_identity"])
-    else:
-        working_identity_fph = primid_fph
-        session["working_identity"] = working_identity_fph
-        working_identity_hrns = primid_hrns
-        working_identity_type = etype_to_adtype(working_identity_type)
-
-    secids = list_secids(primid_fph)
-
-    return render_template(
-        "manage_secid.html",
-        title = "Manage an alias",
-        page = page,
-        group = group,
-        hub_mode = "slate",
-        version = get_version(),
-        show_csv_import_link = get_config("show_dataset_csv_import_link"),
-        primid_type = "login identity",
-        primid_fph = primid_fph,
-        primid_hrns = primid_hrns,
-        working_identity_fph = working_identity_fph,
-        working_identity_hrns = working_identity_hrns,
-        working_identity_type = working_identity_type,
-        development_mode = development_mode,
-        logged_in = logged_in,
-        namespace_steward = namespace_steward,
-        secids = secids
-    )
-
-
-
-
 
 
 @app.route("/currency/<currency_fph>", methods = ["GET", "POST"])
@@ -4000,10 +1581,7 @@ def currency(currency_fph):
     if "working_identity" in session:
         working_identity_fph, working_identity_hrns, etypes, \
         m = identify_entity(session["working_identity"])
-        if ("secid" in etypes):
-            working_identity_type = "secid"
-        else:
-            working_identity_type = "primid"
+        working_identity_type = "primid"
     else:
         working_identity_fph = primid_fph
         session["working_identity"] = working_identity_fph
@@ -4079,15 +1657,11 @@ def currency_steward_add(currency_fph):
     if "working_identity" in session:
         working_identity_fph, working_identity_hrns, etypes, \
         m = identify_entity(session["working_identity"])
-        if ("secid" in etypes):
-            working_identity_type = "secid"
-        else:
-            working_identity_type = "primid"
+        working_identity_type = "primid"
     else:
         working_identity_fph = primid_fph
         session["working_identity"] = working_identity_fph
         working_identity_hrns = primid_hrns
-    #    working_identity_type = etype_to_adtype(working_identity_type)
 
     currency_fph, currency_hrns, active, private, sandbox, \
     type, category, units, metrical_equivalence, dimensions, \
@@ -4109,7 +1683,7 @@ def currency_steward_add(currency_fph):
         if hub_mode == "slate":
             return redirect("/home_ahc")
         else:
-            return redirect("/home")
+            return redirect("/home_ahc")
 
     return render_template(
         "currency_steward_add.html",
@@ -4187,7 +1761,7 @@ def currency_steward_remove(currency_fph, steward_fph):
     if hub_mode == "slate":
         return redirect("/home_ahc")
     else:
-        return redirect("/home")
+        return redirect("/home_ahc")
 
 # MANAGEMENT ==================================================================
 
@@ -4221,10 +1795,7 @@ def manage():
     if "working_identity" in session:
         working_identity_fph, working_identity_hrns, etypes, \
         m = identify_entity(session["working_identity"])
-        if ("secid" in etypes):
-            working_identity_type = "secid"
-        else:
-            working_identity_type = "primid"
+        working_identity_type = "primid"
     else:
         working_identity_fph = primid_fph
         session["working_identity"] = working_identity_fph
@@ -4275,10 +1846,9 @@ def create_currency():
 
     if "working_identity" in session:
         working_identity_type = session["working_identity"]
-        if not (working_identity_type in ["primid", "secid"]):
-            working_identity_fph = primid_fph
-            working_identity_hrns = primid_hrns
-            working_identity_type = "primid"
+        working_identity_fph = primid_fph
+        working_identity_hrns = primid_hrns
+        working_identity_type = "primid"
     else:
         working_identity_fph = primid_fph
         session["working_identity"] = working_identity_fph
@@ -4323,10 +1893,7 @@ def create_currency():
             "A new currency has been created: " + currency_hrns
         )
 
-        if hub_mode == "slate":
-            return redirect("/home_ahc")
-        else:
-            return redirect("/home")
+        return redirect("/home_ahc")
 
     return render_template(
         "create_currency.html",
@@ -4335,6 +1902,7 @@ def create_currency():
         page = page,
         group = group,
         hub_mode = "slate",
+        create_currency_form_full = get_config("create_currency_form_full"),
         version = get_version(),
         show_csv_import_link = get_config("show_dataset_csv_import_link"),
         form = form,
@@ -4360,8 +1928,8 @@ def create_pairing(owner_fph = ""):
     # Hub operational mode (read from environment variable HUB_MODE)
     hub_mode = get_hub_mode()
     if hub_mode != "slate":
-        flash("Invalid opertional mode for this endpoint")
-        return redirect("/home")
+        flash("Invalid operational mode for this endpoint")
+        return redirect("/home_ahc")
 
     page = "create_pairing"
     previous_page = session["previous_page"]
@@ -4379,14 +1947,14 @@ def create_pairing(owner_fph = ""):
         m = identify_entity(owner_fph)
         if m:
             flash(m)
-            return redirect("/home")
+            return redirect("/home_ahc")
         if owner_fph == "":
             flash("The owner FPH in the URL cannot be identified")
-            return redirect("/home")
+            return redirect("/home_ahc")
 
     if hub_mode != "slate":
         flash("This endpoint is not valid in the current mode.")
-        return redirect("/home")
+        return redirect("/home_ahc")
 
     primid_fph, primid_hrns, etypes, \
     m = identify_entity(current_user.get_id())
@@ -4419,10 +1987,10 @@ def create_pairing(owner_fph = ""):
         m = identify_entity(currency_id)
         if m:
             flash(m)
-            return redirect("/home")
+            return redirect("/home_ahc")
         if not ("currency" in etypes):
             flash(currency_id + " is not a currency")
-            #return redirect("/home")
+            #return redirect("/home_ahc")
             return redirect("/create_pairing/" + owner_fph)
             #return redirect("/create_ahid/" + owner_fph)
 
@@ -4440,7 +2008,7 @@ def create_pairing(owner_fph = ""):
         if hub_mode == "slate":
             return redirect("/home_ahc")
         else:
-            return redirect("/home")
+            return redirect("/home_ahc")
 
     return render_template(
         "create_ahid_currency_pair.html",
@@ -4464,343 +2032,6 @@ def create_pairing(owner_fph = ""):
         number_of_indelible_messages = number_of_indelible_messages
     )
 
-
-
-# create an *account* ---------------------------------------------------------
-@app.route("/create_account/<owner_fph>", methods = ["GET", "POST"])
-@login_required
-def create_account(owner_fph):
-
-    # Hub operational mode (read from environment variable HUB_MODE)
-    hub_mode = get_hub_mode()
-
-    page = "create_account"
-    previous_page = session["previous_page"]
-    session["previous_page"] = page
-
-    group = "home" # Used to control top menu behaviour.
-
-    namespace_steward = False
-    currency_steward = False
-    paying = True
-    logged_in = current_user.is_authenticated
-
-    owner_fph, owner_hrns, owner_type, \
-    m = identify_entity(owner_fph)
-    if m:
-        flash(m)
-        return redirect("/home")
-    if owner_fph == "":
-        flash("The owner FPH in the URL cannot be identified")
-        return redirect("/home")
-
-    primid_fph, primid_hrns, etypes, \
-    m = identify_entity(current_user.get_id())
-
-    if "working_identity" in session:
-        working_identity_fph, working_identity_hrns, etypes, \
-        m = identify_entity(session["working_identity"])
-    else:
-        working_identity_fph = primid_fph
-        session["working_identity"] = working_identity_fph
-        working_identity_hrns = primid_hrns
-        working_identity_type = etype_to_adtype(working_identity_type)
-
-    if hub_mode == "slate_minimal":
-        form = AccountCreateFormMinimal()
-    else:
-        form = AccountCreateForm()
-
-    if form.validate_on_submit():
-
-        currency_id = form.currency_id.data
-
-        currency_fph, currency_hrns, etypes, \
-        m = identify_entity(currency_id)
-        if m:
-            flash(m)
-            #return redirect("/create_account")
-            return redirect("/home")
-        if not ("currency" in etypes):
-            flash(currency_id + " is not a currency")
-            return redirect("/home")
-
-        # 2025-03-13:
-        # If mode = "slate_minimal", the *identity* is always a *primid* and
-        # can have no more than one *account* in any *currency*:
-        #
-#        accounts_fph_list, m = list_primid_accounts(primid_fph)
-        accounts_fph_list, m = list_accounts(primid_fph, "primid")
-#        for account_fph in accounts_fph_list:
-#            account_currency_fph = get_account_currency(account_fph)
-#            if account_currency_fph == currency_fph:
-#                flash("You are already using currency " + currency_hrns)
-#                return redirect("/home")
-
-
-        if hub_mode != "slate_minimal":
-            namespace_fph, namespace_hrns, etypes, \
-            m = identify_entity(form.namespace_id.data.strip().lstrip("."))
-            if m:
-                flash(m)
-                return redirect("/home")
-            if not namespace_fph:
-                flash("Parent namespace does not exist")
-                return redirect("/home")
-
-            account_name = form.account_name.data
-            # Check whether an entity with the proposed HRNS exists already.
-            proposed_hrns = account_name + "." + namespace_hrns
-            if hrns_exists_already(proposed_hrns):
-                flash(proposed_hrns + " is already registered")
-                return redirect("/home")
-
-        else:
-            # 2025-03-13:
-            # Temporary fudge for automatic account naming:
-            #n = primid_hrns.split(".")
-
-            #account_name = primid_hrns + "." + currency_hrns
-            #namespace_fph = hrns_to_fph("cc")
-            # Since this account name is hidden, it can be safely constructed
-            # from a concatentation of *primid* and *currency* HRNS and placed
-            # in the "cc" seed *namespace*.
-
-            currency_fph, currency_hrns, active, private, sandbox, \
-            type, category, units, metrical_equivalence, dimensions, \
-            prefix, suffix, default_account_name, stewards_list, \
-            m = get_currency_properties(currency_fph)
-
-            account_name = default_account_name
-            namespace_fph = primid_fph
-
-        account_fph, account_hrns, \
-        m = new_account(
-                account_name,
-                namespace_fph,
-                owner_fph, # the owner of this *account*
-                currency_fph
-            )
-        if m:
-            flash(m)
-        if hub_mode != "slate_minimal":
-            flash("A new account " + account_hrns + " has been created")
-        return redirect("/home")
-
-
-
-
-
-
-
-
-
-    return render_template(
-        "create_account.html",
-        title = "Create an account",
-        logged_in = logged_in,
-        page = page,
-        group = group,
-        hub_mode = "slate",
-        version = get_version(),
-        show_csv_import_link = get_config("show_dataset_csv_import_link"),
-        form = form,
-        primid_type = "login identity",
-        primid_fph = primid_fph,
-        primid_hrns = primid_hrns,
-        working_identity_fph = working_identity_fph,
-        working_identity_hrns = working_identity_hrns,
-        working_identity_type = working_identity_type,
-        development_mode = development_mode,
-        namespace_steward = namespace_steward
-    )
-
-# list *secondary identities* =================================================
-@app.route("/identity/list", methods = ["GET", "POST"])
-@login_required
-def list_identiies():
-
-    # Hub operational mode (read from environment variable HUB_MODE)
-    hub_mode = get_hub_mode()
-    #version = get_version()()
-
-
-    page = "list_identities"
-    previous_page = session["previous_page"]
-    session["previous_page"] = page
-
-    group = "home" # Used to control top menu behaviour.
-
-    logged_in = current_user.is_authenticated
-
-    primid_fph, primid_hrns, etypes, \
-    m = identify_entity(current_user.get_id())
-
-    if "working_identity" in session:
-        working_identity_fph, working_identity_hrns, etypes, \
-        m = identify_entity(session["working_identity"])
-        if ("secid" in etypes):
-            working_identity_type = "secid"
-        else:
-            working_identity_type = "primid"
-    else:
-        working_identity_fph = primid_fph
-        session["working_identity"] = working_identity_fph
-        working_identity_hrns = primid_hrns
-        working_identity_type = "login identity"
-    working_identity_type = etype_to_adtype(working_identity_type)
-
-    secids_fph_list = list_secids(primid_fph)
-    identities = []
-    s = {}
-    s["fph"] = primid_fph
-    s["hrns"] = primid_hrns
-    identities.append(s)
-    for secid_fph in secids_fph_list:
-        s = {}
-        s["fph"] = secid_fph
-        s["hrns"] = fph_to_hrns(secid_fph)
-        identities.append(s)
-
-    return render_template(
-        "list_identities.html",
-        title = "List identities",
-        logged_in = logged_in,
-        page = page,
-        group = group,
-        hub_mode = "slate",
-        version = get_version(),
-        show_csv_import_link = get_config("show_dataset_csv_import_link"),
-        primid_type = "login identity",
-        primid_fph = primid_fph,
-        primid_hrns = primid_hrns,
-        working_identity_fph = working_identity_fph,
-        working_identity_hrns = working_identity_hrns,
-        working_identity_type = working_identity_type,
-        #secids_list = secids_list
-        identities = identities
-    )
-
-# create *secondary identity* =================================================
-@app.route("/create_secid", methods = ["GET", "POST"])
-@login_required
-def create_secid():
-
-    # Hub operational mode (read from environment variable HUB_MODE)
-    hub_mode = get_hub_mode()
-
-    group = "home" # Used to control top menu behaviour.
-    page = "create_secid"
-    previous_page = session["previous_page"]
-    session["previous_page"] = page
-
-    logged_in = current_user.is_authenticated
-
-    primid_fph, primid_hrns, etypes, \
-    m = identify_entity(current_user.get_id())
-
-    if "working_identity" in session:
-        working_identity_fph, working_identity_hrns, etypes, \
-        m = identify_entity(session["working_identity"])
-        if ("secid" in etypes):
-            working_identity_type = "secid"
-        else:
-            working_identity_type = "primid"
-    else:
-        working_identity_fph = primid_fph
-        session["working_identity"] = working_identity_fph
-        working_identity_hrns = primid_hrns
-        working_identity_type = etype_to_adtype(working_identity_type)
-
-    number_of_messages, \
-    number_of_indelible_messages = message_count(primid_fph, hub_mode)
-
-    form = SecidCreateForm()
-    if form.validate_on_submit():
-        parent_fph, parent_hrns, etypes, \
-        m = identify_entity(form.parent_namespace_id.data.strip().lstrip("."))
-        if m:
-            flash(m)
-            return redirect("/create_secid")
-        if not parent_fph:
-            flash("Parent namespace does not exist")
-            return redirect("/create_secid")
-        # The *namespace* may actually be a *primid* or *secid* (serving as the
-        # root private *namespace*) in which case a default
-
-        secid_name = form.secid_name.data
-        # Check whether an entity with the proposed HRNS exists already.
-        proposed_hrns = secid_name + "." + parent_hrns
-        if hrns_exists_already(proposed_hrns):
-            flash(proposed_hrns + " is already registered")
-            return redirect("/create_secid")
-
-        secid_fph, \
-        secid_hrns, \
-        m = new_secid(
-                secid_name,
-                parent_fph,
-                primid_fph # the *primd* of this *secid*
-            )
-        flash(
-            "A new alias has been created, identified as \n" \
-            + secid_hrns
-#            + secid_hrns + " [" + secid_fph + "]"
-        )
-
-        # An *account* is now created for this new *alias* in the default
-        # *currency* of the parent *namespace*:
-
-        default_currency_fph = get_default_currency(parent_fph)
-        m = set_default_currency(secid_fph, default_currency_fph)
-        if m:
-            flash(m)
-            return redirect("/create_secid")
-
-        currency_fph, currency_hrns, active, private, sandbox, \
-        type, category, units, metrical_equivalence, dimensions, \
-        prefix, suffix, default_account_name, stewards_list, \
-        m = get_currency_properties(default_currency_fph)
-
-        account_fph, account_hrns, \
-        m = new_account(
-            default_account_name,
-            secid_fph,
-            secid_fph,
-            default_currency_fph
-        )
-        flash(
-            "Account " + account_hrns + " has been created for " \
-            + secid_hrns + " in currency " + currency_hrns
-        )
-
-        # The new *alias* also serves as a (private) *namespace* so must be
-        # assigned a default *currency*. No other information being available
-        # at this point, the default *currency* of the parent *namespace* is
-        # used as the initial default *currency* of the *alias-namespace*.
-
-        return redirect("/home")
-
-    return render_template(
-        "create_secid.html",
-        title = "Create an alias",
-        logged_in = logged_in,
-        page = page,
-        group = group,
-        hub_mode = "slate",
-        version = get_version(),
-        show_csv_import_link = get_config("show_dataset_csv_import_link"),
-        form = form,
-        primid_type = "login identity",
-        primid_fph = primid_fph,
-        primid_hrns = primid_hrns,
-        working_identity_fph = working_identity_fph,
-        working_identity_hrns = working_identity_hrns,
-        working_identity_type = working_identity_type,
-        number_of_messages = number_of_messages,
-        number_of_indelible_messages = number_of_indelible_messages
-
-    )
 
 # create a new namespace ------------------------------------------------------
 @app.route("/create_namespace", methods = ["GET", "POST"])
@@ -4827,12 +2058,7 @@ def create_namespace():
     if "working_identity" in session:
         working_identity_fph, working_identity_hrns, etypes, \
         m = identify_entity(session["working_identity"])
-        if "primid" in etypes:
-            working_identity_type = "primid"
-        elif "secid" in etypes:
-            working_identity_type = "secid"
-        else:
-            working_identity_type = "primid"
+        working_identity_type = "primid"
     else:
         working_identity_fph = primid_fph
         session["working_identity"] = working_identity_fph
@@ -4851,13 +2077,6 @@ def create_namespace():
             return redirect("/create_namespace")
 
         inh_default_currency_fph = get_default_currency(parent_fph)
-
-#        default_currency_fph, default_currency_hrns, etypes, \
-#        m = identify_entity(form.default_currency_id.data.strip().lstrip("."))
-#        if default_currency_fph == "":
-#            default_currency_fph = inh_default_currency_fph
-#            default_currency_hrns = fph_to_hrns(default_currency_fph)
-
 
         namespace_name = form.namespace_name.data
         # Check whether an entity with the proposed HRNS exists already.
@@ -4879,7 +2098,7 @@ def create_namespace():
             "A new namespace has been created, identified as \n" \
             + namespace_hrns
         )
-        return redirect("/home")
+        return redirect("/home_ahc")
 
     return render_template(
         "create_namespace.html",
@@ -4908,8 +2127,6 @@ def list_namespaces():
 
     # Hub operational mode (read from environment variable HUB_MODE)
     hub_mode = get_hub_mode()
-    #version = get_version()()
-
 
     page = "list_namespaces"
     previous_page = session["previous_page"]
@@ -4927,10 +2144,7 @@ def list_namespaces():
     if "working_identity" in session:
         working_identity_fph, working_identity_hrns, etypes, \
         m = identify_entity(session["working_identity"])
-        if ("secid" in etypes):
-            working_identity_type = "secid"
-        else:
-            working_identity_type = "primid"
+        working_identity_type = "primid"
     else:
         working_identity_fph = primid_fph
         session["working_identity"] = working_identity_fph
@@ -4969,8 +2183,6 @@ def add_steward():
 
     # Hub operational mode (read from environment variable HUB_MODE)
     hub_mode = get_hub_mode()
-    #version = get_version()()
-
 
     page = "add_steward"
     previous_page = session["previous_page"]
@@ -4984,10 +2196,7 @@ def add_steward():
     if "working_identity" in session:
         working_identity_fph, working_identity_hrns, etypes, \
         m = identify_entity(session["working_identity"])
-        if ("secid" in etypes):
-            working_identity_type = "secid"
-        else:
-            working_identity_type = "primid"
+        working_identity_type = "primid"
     else:
         working_identity_fph = primid_fph
         session["working_identity"] = working_identity_fph
@@ -5002,10 +2211,10 @@ def add_steward():
     m = identify_entity(entity_fph) # slug
     if m:
         flash(m)
-        return redirect("/home")
+        return redirect("/home_ahc")
     if entity_fph == "":
         flash("The entity specified does not exist")
-        return redirect("/home")
+        return redirect("/home_ahc")
     if "namespace" in etypes:
         namespace_exists, namespace_private, namespace_active, stewards_list, \
         m = namespace_status(namespace_fph)
@@ -5016,7 +2225,7 @@ def add_steward():
         m = get_currency_properties(currency_fph)
     else:
         flash("The entity specified is not of a stewarded type")
-        return redirect("/home")
+        return redirect("/home_ahc")
 
     form = StewardAddForm()
     if form.validate_on_submit():
@@ -5092,13 +2301,13 @@ def export_account_csv(account_fph):
     m = identify_entity(account_fph) # slug
     if m:
         flash(m)
-        return redirect("/home")
+        return redirect("/home_ahc")
     if not account_fph:
         flash(account_fph + " is not a registered identifier")
-        return redirect("/home")
+        return redirect("/home_ahc")
     if not ("account" in etypes):
         flash(account_hrns + " has no registered account")
-        return redirect("/home")
+        return redirect("/home_ahc")
 
     currency_fph, owner_fph, balance, volume, active, \
     account_type, account_category, account_units, \
@@ -5106,33 +2315,33 @@ def export_account_csv(account_fph):
     m = get_account_properties(account_fph)
     if m:
         flash(m)
-        return redirect("/home")
+        return redirect("/home_ahc")
     ahid_hrns = fph_to_hrns(owner_fph)
 
     owner_fph, owner_hrns, etypes, \
     m = identify_entity(owner_fph)
     if m:
         flash(m)
-        return redirect("/home")
-    if ("ahid" in etypes) or ("secid" in etypes):
+        return redirect("/home_ahc")
+    if ("ahid" in etypes):
         owner_primid_fph, m = get_primid(owner_fph)
     else:
         flash("None of your identities owns this account")
-        return redirect("/home")
+        return redirect("/home_ahc")
 
     currency_fph, currency_hrns, etypes, \
     m = identify_entity(currency_fph)
     if m:
         flash(m)
-        return redirect("/home")
+        return redirect("/home_ahc")
     if not ("currency" in etypes):
         flash(currency_id + " is not a currency")
-        return redirect("/home")
+        return redirect("/home_ahc")
 
     csv_file, m = dump_account_payments_csv(account_fph, True)
     if m:
         flash(m)
-        return redirect("/home")
+        return redirect("/home_ahc")
 
     number_of_messages, \
     number_of_indelible_messages = message_count(primid_fph, hub_mode)
@@ -5200,13 +2409,13 @@ def export_currency_csv(currency_fph):
     m = identify_entity(currency_fph) # from URL slug
     if m:
         flash(m)
-        return redirect("/home")
+        return redirect("/home_ahc")
     if currency_fph == "":
         flash("The entity specified does not exist")
-        return redirect("/home")
+        return redirect("/home_ahc")
     if not ("currency" in etypes):
         flash("The entity specified is not a currency")
-        return redirect("/home")
+        return redirect("/home_ahc")
 
     currency_fph, currency_hrns, active, private, sandbox, \
     type, category, units, metrical_equivalence, dimensions, \
@@ -5214,17 +2423,17 @@ def export_currency_csv(currency_fph):
     m = get_currency_properties(currency_fph)
     if m:
         flash(m)
-        return redirect("/home")
+        return redirect("/home_ahc")
 
     if not (primid_fph in stewards_list):
         flash("You are not a steward of this currency")
-        return redirect("/home")
+        return redirect("/home_ahc")
 
     csv_file, \
     m = dump_currency_payments_csv(currency_fph, True)
     if m:
         flash(m)
-        return redirect("/home")
+        return redirect("/home_ahc")
 
     number_of_messages, \
     number_of_indelible_messages = message_count(primid_fph, hub_mode)
@@ -5255,7 +2464,7 @@ def export_currency_csv(currency_fph):
 
 
 #==============================================================================
-# CSV import: sandbox payments set ============================================
+# CSV import: sandbox payments set
 #
 # The screen is use to import a set of payments for sandbox purposes (as CSV),
 # each row having the format:
@@ -5391,20 +2600,6 @@ def import_payment_set():
 
 #==============================================================================
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 @app.route("/import/create/namespaces", methods = ["GET", "POST"])
 @login_required
 def upload_create_namespaces():
@@ -5526,7 +2721,7 @@ def messages():
     if "previous_page" in session: # already active
         previous_page = session["previous_page"]
     else: # initializing
-        previous_page = "home"
+        previous_page = "home_ahc"
     session["previous_page"] = page
 
     group = "home" # Used to control top menu behaviour.
@@ -5542,12 +2737,7 @@ def messages():
     if "working_identity" in session:
         working_identity_fph, working_identity_hrns, etypes, \
         m = identify_entity(session["working_identity"])
-        if "primid" in etypes:
-            working_identity_type = "primid"
-        elif "secid" in etypes:
-            working_identity_type = "secid"
-        else:
-            working_identity_type = "primid"
+        working_identity_type = "primid"
     else:
         working_identity_fph = primid_fph
         session["working_identity"] = working_identity_fph
@@ -5569,8 +2759,6 @@ def messages():
             ahid_list.append(ahid_hrns)
             number_of_messages, \
             number_of_indelible_messages = messages_available(ahid_hrns)
-#            number_of_messages, \
-#            number_of_indelible_messages = message_count(primid_hrns)
             total_number_of_messages += number_of_messages
             total_number_of_indelible_messages += number_of_indelible_messages
             if number_of_messages > 0:
@@ -5578,32 +2766,6 @@ def messages():
                 m["hrns"] = ahid_hrns
                 m["fph"], e = hrns_to_fph(ahid_hrns)
                 m["message_count"] = str(number_of_messages)
-                if number_of_indelible_messages > 0:
-                    m["some_indelible"] = True
-                else:
-                    m["some_indelible"] = False
-                message_recipients_list.append(m)
-
-    else: # List all *identities*:
-        identity_list = []
-        identity_list.append(primid_fph)
-        secids_list = list_secids(primid_fph)
-        for secid_fph in secids_list:
-            identity_list.append(secid_fph)
-
-        for identity_fph in identity_list:
-            number_of_messages, \
-            number_of_indelible_messages = messages_available(identity_fph)
-            total_number_of_messages += number_of_messages
-            total_number_of_indelible_messages += number_of_indelible_messages
-            if number_of_messages > 0:
-                m = {}
-                m["fph"] = identity_fph
-                m["hrns"] = fph_to_hrns(identity_fph)
-                if identity_fph == primid_fph: # extend later
-                    m["primid"] = True
-                else:
-                    m["primid"] = False
                 if number_of_indelible_messages > 0:
                     m["some_indelible"] = True
                 else:
@@ -5650,7 +2812,7 @@ def message_send():
     if "previous_page" in session: # already active
         previous_page = session["previous_page"]
     else: # initializing
-        previous_page = "home"
+        previous_page = "home_ahc"
     session["previous_page"] = page
 
     group = "home" # Used to control top menu behaviour.
@@ -5666,10 +2828,7 @@ def message_send():
     if "working_identity" in session:
         working_identity_fph, working_identity_hrns, etypes, \
         m = identify_entity(session["working_identity"])
-        if ("secid" in etypes):
-            working_identity_type = "secid"
-        else:
-            working_identity_type = "primid"
+        working_identity_type = "primid"
     else:
         working_identity_fph = primid_fph
         session["working_identity"] = working_identity_fph
@@ -5755,7 +2914,7 @@ def message_send():
             )
         if em:
             flash(em)
-            return redirect("/home")
+            return redirect("/home_ahc")
         else:
             return redirect("/message/list")
 
@@ -5791,7 +2950,7 @@ def messages_show(recipient_fph):
     if "previous_page" in session: # already active
         previous_page = session["previous_page"]
     else: # initializing
-        previous_page = "home"
+        previous_page = "home_ahc"
     session["previous_page"] = page
 
     group = "home" # Used to control top menu behaviour.
@@ -5808,10 +2967,7 @@ def messages_show(recipient_fph):
         working_identity_fph, working_identity_hrns, etypes, \
         m = identify_entity(session["working_identity"])
         # TEMPORARY FUDGE ...
-        if ("secid" in etypes):
-            working_identity_type = "secid"
-        else:
-            working_identity_type = "primid"
+        working_identity_type = "primid"
     else:
         working_identity_fph = primid_fph
         session["working_identity"] = working_identity_fph
@@ -5822,38 +2978,11 @@ def messages_show(recipient_fph):
     number_of_messages, \
     number_of_indelible_messages = message_count(primid_fph, hub_mode)
 
-    # NB, this bit has been duplicated from "/home" so should be moved into a
-    # function in app/core/messaging.py
-    #
-    # List all identities:
-#    identity_list = []
-#    identity_list.append(primid_fph)
-#    secids_list = list_secids(primid_fph)
-#    for secid_fph in secids_list:
-#        identity_list.append(secid_fph)
-#    total_number_of_messages = 0
-#    total_number_of_indelible_messages = 0
-#    # List identities for which messages are available:
-#    message_recipients_list = [] # (list of dictionaries for template)
-#    for identity_fph in identity_list:
-#        number_of_messages, \
-#        number_of_indelible_messages = messages_available(identity_fph)
-#        total_number_of_messages += number_of_messages
-#        total_number_of_indelible_messages += number_of_indelible_messages
-#    if total_number_of_messages > 0:
-#        number_of_messages = str(total_number_of_messages)
-#    else:
-#        number_of_messages = ""
-#    if total_number_of_indelible_messages > 0:
-#        number_of_indelible_messages = str(total_number_of_indelible_messages)
-#    else:
-#        number_of_indelible_messages = ""
-
     recipient_fph, recipient_hrns, etypes, \
     m = identify_entity(recipient_fph)
-    if len(set(["primid", "secid", "ahid"]) & set(etypes)) == 0:
+    if len(set(["primid", "ahid"]) & set(etypes)) == 0:
         flash("Recipient is not an agent")
-        return redirect("/home")
+        return redirect("/home_ahc")
 
     message_list = fetch_messages(recipient_fph)
     any_messages = len(message_list) > 0
@@ -5897,29 +3026,24 @@ def message_delete(recipient_fph, message_id):
 
     if recipient_fph == "":
         flash("ERROR: recipient is unregistered")
-        return redirect("/home")
+        return redirect("/home_ahc")
     if ("primid" in recipient_types) and (recipient_fph != primid_fph):
         flash("ERROR: recipient is incorrect primid")
-        return redirect("/home")
-    elif ("secid" in recipient_types):
-        secids_list = list_secids(primid_fph)
-        if not (recipient_fph in secids_list):
-            flash("ERROR: recipient secid does not belong to current primid")
-            return redirect("/home")
+        return redirect("/home_ahc")
     elif ("ahid" in recipient_types):
         ahids_list = list_ahids(primid_fph)
         if not (recipient_fph in ahids_list):
             flash("ERROR: recipient ahid does not belong to current primid")
-            return redirect("/home")
+            return redirect("/home_ahc")
 
     if not isinstance(message_id, str):
         flash("ERROR: invalid message ID in URL")
-        return redirect("/home")
+        return redirect("/home_ahc")
 
     if "previous_page" in session: # already active
         previous_page = session["previous_page"]
     else: # initializing
-        previous_page = "home"
+        previous_page = "home_ahc"
 
     em = delete_message(message_id)
     if em:
@@ -5943,44 +3067,30 @@ def messages_clear(recipient_fph):
 
     if recipient_fph == "":
         flash("ERROR: recipient is unregistered")
-        return redirect("/home")
+        return redirect("/home_ahc")
 
     if ("primid" in recipient_types) and (recipient_fph != primid_fph):
         flash("ERROR: recipient is incorrect primid")
-        return redirect("/home")
-    elif ("secid" in recipient_types):
-        secids_list = list_secids(primid_fph)
-        if not (recipient_fph in secids_list):
-            flash("ERROR: recipient secid does not belong to current primid")
-            return redirect("/home")
+        return redirect("/home_ahc")
     elif ("ahid" in recipient_types):
         ahids_list = list_ahids(primid_fph)
         if not (recipient_fph in ahids_list):
             flash("ERROR: recipient ahid does not belong to current primid")
-            return redirect("/home")
+            return redirect("/home_ahc")
 
 #    if not isinstance(message_id, str):
 #        flash("ERROR: invalid message ID in URL")
-#        return redirect("/home")
+#        return redirect("/home_ahc")
 
     if "previous_page" in session: # already active
         previous_page = session["previous_page"]
     else: # initializing
-        previous_page = "home"
+        previous_page = "home_ahc"
 
 #    em = delete_message(message_id)
     delete_all_messages(recipient_fph)
 
     return redirect("/message/show/" + recipient_fph)
-
-
-
-
-
-
-
-
-
 
 #==============================================================================
 #
@@ -6015,7 +3125,7 @@ def invitation_generate():
     hub_url = get_config("hub_url")
     if not hub_url:
         flash("hub_url is not defined in hub_config")
-        return redirect("/home")
+        return redirect("/home_ahc")
 
     number_of_messages, \
     number_of_indelible_messages = message_count(primid_fph, hub_mode)
@@ -6067,13 +3177,13 @@ def invitation_display(qrfilename):
 
     if (qrfilename is None) or (not re_qrfilename.match(qrfilename)):
         flash("QR code filename format is invalid")
-        return redirect("/home")
+        return redirect("/home_ahc")
     else:
         qrc = qrfilename.split("_")
         if unixtime_int() > int(qrc[0]):      # The QR code has expired so
             os.unlink(QR_CODES + qrfilename)    # the PNG file is deleted.
             flash("The QR code has expired")
-            return redirect("/home")
+            return redirect("/home_ahc")
 
     qr_png_path = QR_CODES + qrfilename
 
@@ -6124,38 +3234,7 @@ def invitation_display(qrfilename):
         qrfilename = qrfilename
     )
 
-
-
-
-
-
 # help ========================================================================
-#
-@app.route("/help_")
-def help_():
-    # Hub operational mode (read from environment variable HUB_MODE)
-    hub_mode = get_hub_mode()
-    page = "help"
-    group = ""
-    namespace_steward = True
-    currency_steward = True
-    paying = False
-    logged_in = current_user.is_authenticated
-    return render_template(
-        "help.html",
-        title = "help",
-        logged_in = logged_in,
-        page = page,
-        group = group,
-        hub_mode = "slate",
-        version = get_version(),
-        show_csv_import_link = get_config("show_dataset_csv_import_link"),
-        number_of_messages = number_of_messages,
-        number_of_indelible_messages = number_of_indelible_messages,
-        development_mode = development_mode,
-        namespace_steward = namespace_steward,
-        currency_steward = currency_steward
-    )
 
 @app.route("/help")
 def help():
@@ -6175,23 +3254,12 @@ def help():
     elif "previous_page" in session:
         help_page = session["previous_page"]
 
-
-
-
     # Otherwise, contextual help is shown detemined by the previous page (from
     # which help was requested). That previous page is also where control must
     # be returned after the help page has been read.
     #
     # If help is invoked from one of the contextual help pages, control is
     # returned to the previous page.
-
-
-
-
-
-
-
-
 
     return render_template(
         "help.html",
