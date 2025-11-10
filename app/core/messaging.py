@@ -8,8 +8,8 @@ import calendar
 
 from app.core.slate_core import identify_entity
 from app.core.slate_core import account_status
-from app.core.slate_core import list_secids, list_ahids
-from app.core.slate_core import get_ahid_primid, get_primid
+from app.core.slate_core import list_ahids
+from app.core.slate_core import get_ahid_primid
 
 from app.core.fph_hrns_maps import hrns_to_fph, fph_to_hrns
 
@@ -167,36 +167,6 @@ def send_message(
         broadcast = False       # boolean: broadcast to users of *curremcy*
     ):
 
-#    print()
-#    print(message_timestamp)
-#    print("from: " + fph_to_hrns(sender_id))
-#    print("to: " + fph_to_hrns(recipient_id))
-#    print("category: " + category)
-#    if subject_prefix:
-#        print(subject_prefix)
-#    print(subject)
-#    if stewardship_id:
-#        print(stewardship_id)
-#    if longevity:
-#        print(longevity)
-#    if expiry_datetime:
-#        print(expiry_datetime)
-#    if payer_account_fph:
-#        print(fph_to_hrns(payer_account_fph))
-#    if payee_account_fph:
-#        print(fph_to_hrns(payee_account_fph))
-#    if payer_ahid_fph:
-#        print(fph_to_hrns(payer_ahid_fph))
-#    if payee_ahid_fph:
-#        print(fph_to_hrns(payee_ahid_fph))
-#    if currency_fph:
-#        print(fph_to_hrns(currency_fph))
-#    if amount:
-#        print(amount)
-#    print(message_body)
-#    print(indelible)
-#    print()
-
     sender_fph, sender_hrns, etypes, \
     em = identify_entity(sender_id)
     if em:
@@ -207,7 +177,7 @@ def send_message(
     if em:
         return "Recipient unknown"
 
-    recipient_primid_fph, m = get_primid(recipient_identity_fph)
+    recipient_primid_fph = get_ahid_primid(recipient_identity_fph)
 
     if stewardship_id:
         stewardship_fph, stewardship_hrns, etypes, \
@@ -215,7 +185,6 @@ def send_message(
     else:
         stewardship_fph = ""
         stewardship_hrns = ""
-#        etype = ""
 
     if not isinstance(subject_prefix, str):
         return "Invalid subject prefix string"
@@ -223,7 +192,6 @@ def send_message(
     if not isinstance(subject, str):
         return "Invalid subject string"
 
-#    subject = subject_prefix + ": " + subject
     if subject_prefix:
         subject = subject_prefix + ": " + subject
 
@@ -231,9 +199,6 @@ def send_message(
         return "Invalid message body"
 
     timestamp_now = datetime.now(timezone.utc)
-
-    #print("message_timestamp = " + str(message_timestamp))
-#    print("message_timestamp = " +  message_timestamp)
 
     if expiry_datetime: # no expiry if ""
         if not re_datestamp.match(expiry_datetime):

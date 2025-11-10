@@ -29,7 +29,6 @@ from app.core.common import unixtime_int
 from app.core.slate_core import get_entity_types
 from app.core.slate_core import get_account_currency
 from app.core.slate_core import identify_entity
-from app.core.slate_core import get_primid
 from app.core.slate_core import entity_type_is_registered
 from app.core.slate_core import entity_types_are_registered
 from app.core.slate_core import new_primid
@@ -441,13 +440,13 @@ def login():
         return redirect(url_for("home_ahc"))
 
     session["show_top_menu"] = False
+    session["show_extended_menu"] = False
 
     # Hub operational mode (read from environment variable HUB_MODE)
     hub_mode = get_hub_mode()
 
     pin_prompt, pin_subset_indices = pin_subset_prompt()
 
-#    form = LoginForm(pro = pin_subset_indices)
     form = LoginForm()
     if form.validate_on_submit():
 
@@ -501,11 +500,6 @@ def login():
         if not bcrypt.checkpw(pwd.encode("utf-8"), pwd_hash.encode("utf-8")):
             return redirect(url_for("login"))
 
-#        print("\nform.pse.data = ", end="")
-#        print(form.pse.data)
-#        print("form.pro.data = ", end="")
-#        print(form.pro.data)
-
         if not authenticate_pin(stored_pin, form.pse.data, form.pro.data):
             flash("Incorrect PIN digits")
             return redirect(url_for("login"))
@@ -518,18 +512,7 @@ def login():
         session["login_identity"] = identity_fph   # Initial values upon login
         session["working_identity"] = identity_fph #
 
-        if hub_mode == "slate":
-
-            session["previous_page"] = "home_ahc"  # (This one subsequently
-                                                   # serves as shift register).
-            return redirect(url_for("home_ahc"))
-
-        else:
-
-            session["previous_page"] = "home_ahc"      # (This one subsequently
-                                                   # serves as shift register)
-            return redirect(url_for("home_ahc"))
-
+        return redirect(url_for("home_ahc"))
 
     return render_template(
         "login.html",
@@ -540,7 +523,6 @@ def login():
         version = get_version(),
         logged_in = logged_in,
         form = form,
-#        pin_prompt = pin_prompt,
         development_mode = development_mode
     )
 
@@ -767,19 +749,22 @@ def hold():
     )
 
 
-# 2025-10-25: Modified to move *ahid* payment form from  /pay_to_ahid  endpoint
-# in order to place the form above the table on the home page. This requires
-# additional modifications to  app/templates/home_ahc.html
-#
-# The unmodified versions of  app/routes.py  and  app/templates/home_ahc.html
-# have been preserved in ~/SLATE_0.2.38
-
-
 @app.route("/toggle_menu")
 @login_required
 def toggle_menu():
     session["show_top_menu"] = not session["show_top_menu"]
     return redirect("/home_ahc")
+
+@app.route("/toggle_more")
+@login_required
+def toggle_more():
+    session["show_extended_menu"] = not session["show_extended_menu"]
+    return redirect("/home_ahc")
+
+
+
+
+
 
 @app.route("/home_ahp/<payer_ahid_fph>/<p_currency_fph>/<payer_balance>",
            methods=["GET", "POST"])
@@ -794,8 +779,6 @@ def home_ahc(payer_ahid_fph=None, p_currency_fph=None, payer_balance=None):
         show_top_menu = False
         session["show_top_menu"] = show_top_menu
     show_top_menu = session["show_top_menu"]
-
-    #print("show_top_menu = " + str(show_top_menu))
 
     show_payment_form = True
 
@@ -938,17 +921,11 @@ def home_ahc(payer_ahid_fph=None, p_currency_fph=None, payer_balance=None):
                 else:
                     p_row["primid_currency_steward"] = False
                 p_row["currency_fph"] = currency_fph
-
                 p_row["pairing_selected"] = False
                 if (currency_hrns == p_currency_hrns):
                     if (ahid_hrns == payer_ahid_hrns):
                         p_row["pairing_selected"] = True
-
-
                 p_rows.append(p_row)
-
-#                if p_row["pairing_selected"]:
-#                    print(currency_hrns + " & " + ahid_hrns + " selected")
 
     # Sorting by *currency* and *ahid* (quick and dirty method)
     currencies_list = []
@@ -1027,10 +1004,7 @@ def home_ahc(payer_ahid_fph=None, p_currency_fph=None, payer_balance=None):
             if annotation:
                 flash("(" + annotation + ")")
 
-        if hub_mode == "slate":
-            return redirect("/home_ahc")
-        else:
-            return redirect("/home_ahc")
+        return redirect("/home_ahc")
 
     return render_template(
         "home_ahc.html",
@@ -1072,8 +1046,6 @@ def list_accounts():
 
     # Hub operational mode (read from environment variable HUB_MODE)
     hub_mode = get_hub_mode()
-    #version = get_version()()
-
 
     page = "list_accounts"
     if "previous_page" in session: # already active
@@ -1293,10 +1265,7 @@ def pay_ahid(payer_ahid_fph, payment_currency_fph):
         if m:
             flash(m)
 
-        if hub_mode == "slate":
-            return redirect("/home_ahc")
-        else:
-            return redirect("/home_ahc")
+        return redirect("/home_ahc")
 
     return render_template(
         "pay_to_ahid.html",
@@ -1494,8 +1463,6 @@ def stewardships(identity_fph):
 
     # Hub operational mode (read from environment variable HUB_MODE)
     hub_mode = get_hub_mode()
-    #version = get_version()()
-
 
     page = "stewardships"
     previous_page = session["previous_page"]    # Add these two lines to all
@@ -1758,10 +1725,7 @@ def currency_steward_remove(currency_fph, steward_fph):
     if steward_fph in stewards_list:
         m = remove_currency_stewardship(currency_fph, steward_fph, primid_fph)
 
-    if hub_mode == "slate":
-        return redirect("/home_ahc")
-    else:
-        return redirect("/home_ahc")
+    return redirect("/home_ahc")
 
 # MANAGEMENT ==================================================================
 
@@ -1979,7 +1943,6 @@ def create_pairing(owner_fph = ""):
         #if not is_ancestor(ahid_hrns, owner_hrns):
             flash(ahid_hrns + " is not in private namespace of " + owner_hrns)
             return redirect("/create_pairing/" + owner_fph)
-            #return redirect("/create_ahid/" + owner_fph)
 
         currency_id = form.currency_id.data
 
@@ -2491,9 +2454,6 @@ def upload():
 
 
 
-#@app.route(
-#    "/importing/<file>", defaults={"file": None}, methods=["GET", "POST"]
-#)
 @app.route(
     "/importing/<file>", methods=["GET", "POST"]
 )
@@ -2541,7 +2501,6 @@ def importing(file):
         working_identity_hrns = working_identity_hrns
     )
 
-#@app.route("/import/dataset/<filename>", methods = ["GET", "POST"])
 @app.route("/import/dataset", methods = ["GET", "POST"])
 @login_required
 def import_payment_set():
@@ -3078,16 +3037,11 @@ def messages_clear(recipient_fph):
             flash("ERROR: recipient ahid does not belong to current primid")
             return redirect("/home_ahc")
 
-#    if not isinstance(message_id, str):
-#        flash("ERROR: invalid message ID in URL")
-#        return redirect("/home_ahc")
-
     if "previous_page" in session: # already active
         previous_page = session["previous_page"]
     else: # initializing
         previous_page = "home_ahc"
 
-#    em = delete_message(message_id)
     delete_all_messages(recipient_fph)
 
     return redirect("/message/show/" + recipient_fph)

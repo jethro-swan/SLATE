@@ -6,7 +6,7 @@ from pathlib import Path
 
 from app.core.constants import ENTITIES_DB
 from app.core.regexp_list import *
-from app.core.slate_core import get_entity_types, get_primid
+from app.core.slate_core import get_entity_types
 #from .slate_login import get_auth_data
 
 from app.core.slate_core import fph_to_hrns

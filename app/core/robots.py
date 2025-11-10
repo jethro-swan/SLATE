@@ -13,7 +13,6 @@ from app.core.fph_hrns_maps import hrns_to_fph, fph_to_hrns
 
 from app.core.slate_core import identify_entity
 from app.core.slate_core import new_ahid
-from app.core.slate_core import get_primid
 from app.core.slate_core import list_primid_ahids
 from app.core.slate_core import list_ahid_accounts
 from app.core.slate_core import get_account_currency

@@ -165,44 +165,6 @@ def hrns_to_fph(hrns): # returns FPH and message
             cursor.close()
             return fph, ""
 
-def __hrns_to_fph(hrns): # returns FPH and message
-    if hrns == "":
-        return SUBSTRATE_FPH, ""
-    fph = dbm_fetch(HRNS_C_FPH_MAP, hrns) # (Expecting "")
-    if fph: # (exceedingly improbable)
-        return fph, ""
-
-
-    fph = nshash(hrns)
-    hrns_ = fph_to_hrns(fph)
-    if hrns_:
-        if hrns == hrns_:
-            return fph, ""
-        else:
-            return "", "inconsistent FPH>HRNS mapping" # should NEVER happen.
-    else:
-        while fph_to_hrns(fph):
-            fph = nshash(fph)
-        while not dbm_store(HRNS_C_FPH_MAP, hrns, fph):
-            continue
-    while not dbm_store(FPH_TO_HRNS_MAP, fph, hrns):
-        continue
-
-    return fph, ""
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 save_fph_to_map = hrns_to_fph # alias
 
@@ -232,6 +194,49 @@ def delete_fph_from_map(fph):
 #------------------------------------------------------------------------------
 
 
+#==============================================================================
+# A note on PRUNING & GRAFTING  (2025-11-10)
+#
+# Inserting one or more *namespaces* into a path involves
+# (1) creation of a new branch at the insertion point, and
+# (2) movement of the chain of descendant *namespaces* chain to the end of the
+#     newly-created branch.
+# e.g.
+# inserting  p.q.r  into  a.b.c.d.e  between  a.b  and  c.d.e  would involve
+# creation of *namespace* chain  p.q.r.c.d.e  and the movement of  b  (along
+# with all of its descendants) from *namespace*  c.d.e  into *namespace*
+# p.q.r.c.d.e  to form the new *namespace* chain  a.b.p.q.r.c.d.e
+#
+# Such an action requires authorization both from the stewards of  c.d.e  and
+# from the stewards of  b  at the very least, and will probably be a rather
+# infrequent event. In most cases it would be reasonable to require the consent
+# of the stewards of all the descendant namespaces of  b  and this additional
+# inconvenience is likely to make it an even more unusual event.
+#
+# Similarly, the removal of a *namespace* chain would require (at the very
+# least) the approval of the stewards of all entities within that chain.
+# Furthermore, the disruption arising from a change of HRNS suggests that all
+# such operations should be undertaken only in exceptional circumstances. In
+# general, it will be far better to predict the required ramifications and to
+# create chains of (initially empty) *namespaces* than to make ad hoc changes.
+#
+# For this reason, creation of functions to perform pruning and grafting may
+# be too low a priority justify the robust versions required for use within
+# open *namespaces*. However, slightly simpler versions (omitting the strict
+# multi-/omni-steward authorization requirements) may be very useful in private
+# *namespaces*, especially to help in planning the structure of such trees for
+# construction (replication) within open *namespace* trees.
+
+#------------------------------------------------------------------------------
+# An additional note regarding FPH and HRNS
+#
+# For any entity, the only identifier guaranteed to be invariant is its FPH.
+# The HRNS may change (but such changes should probablbe avoided as far as
+# possible).
+#
+#------------------------------------------------------------------------------
+
+
 
 #==============================================================================
 # When any entity is moved to a new *namespace*, the HRNS>FPH and FPH>HRNS
@@ -240,249 +245,97 @@ def delete_fph_from_map(fph):
 def update_mapping(current_hrns, new_hrns):
 
     if not re_hrns.match(current_hrns):
-        return current_hrns + " is not a valid HRNS", ""
+        return current_hrns + " is not a valid HRNS"
+    if not re_hrns.match(new_hrns):
+        return current_hrns + " is not a valid HRNS"
 
+    # The FPH (originally assigned as hash of HRNS) must be preserved:
     current_fph, m = hrns_to_fph(current_hrns)
     if not current_fph:
         return "HRNS " + current_hrns + " has not been registered"
     if m:
         return m # error message
 
+    if current_hrns == new_hrns:
+        return ""
+
     # The entity's HRNS is updated but its FPH must remain the same. Therefore,
     # whereas the original FPH is a simple hash of the HRNS when first mapped,
     # any subsequent update to the HRNS must be mapped to the original FPH (and
     # vice versa).
     #
-    # (1) HRNS>FPH map must be updated
-    #dbm_delete(HRNS_C_FPH_MAP, current_hrns)
-    dbm_store(HRNS_C_FPH_MAP, new_hrns, current_fph)
-
-    # (2) FPH>HRNS map must be updated
-    #dbm_delete(FPH_TO_HRNS_MAP, current_fph)
-    dbm_store(FPH_TO_HRNS_MAP, current_fph, new_hrns)
-
+    with sqlite3.connect(MAP_DB) as conn:
+        cursor = conn.cursor()
+        # (1) The HRNS>FPH map must be updated
+        #
+        cursor.execute(
+            "INSERT INTO hrns_fph_map (hrns, fph) VALUES (?, ?)",
+            (new_hrns, current_fph)
+        )
+        cursor.execute(
+            "DELETE FROM hrns_fph_map WHERE hrns = ?",
+            (current_hrns,)
+        )
+        # (2) The FPH>HRNS map must be updated
+        # 2.1 The FPH>HRNS mapping must be deleted first because FPH is unique.
+        cursor.execute(
+            "DELETE FROM fph_hrns_map WHERE fph = ?",
+            (current_fph,)
+        )
+        # 2.2 The new FPH>HRNS mapping can now be inserted.
+        cursor.execute(
+            "INSERT INTO fph_hrns_map (fph, hrns) VALUES (?, ?)",
+            (current_fph, new_hrns)
+        )
+        conn.commit()
+        cursor.close()
     return ""
 
 #==============================================================================
-##
-# Added 2025-08-30:
+# Move *namespace* ns1 (and its contents) into *namespace* ns2.
+# e.g.
+# moving b.c.d.e into f.g.h changes
+#   a.b.c.d.e
+# to
+#   a.b.f.g.h
 
-#------------------------------------------------------------------------------
-# Record parent FPH:
+# NB: The function defined below is still incomplete. Each individual HRNS
+# within the tree of descendants must also be updated.
+#
+# New functions needed:
+#   list_children(namespace_id)     return list of FPH (all entity types)
+#   list_descendants(namespace_id)  return list of FPH (all entity types)
+#
+# The former can probably be built by listing all identifiers sharing a
+# specified parent. The latter can probably be built by apply the former
+# repeatedly.
 
-#def record_parent(id_fph, parent_fph):
-#    return dbm_store(FPH_PARENT_MAP, id_fph, parent_fph)
+def move_namespace(ns1_id, ns2_id):
 
-# Retrieve parent FPH from any entity FPH:
+    ns1_fph, ns1_hrns, etypes, m = identify_entity(ns1_id)
+    if not ns1_fph:
+        return "", "", ns1_id + " is not a registered identifier"
+    if not ("namespace" in etypes):
+        return "", "", ns1_hrns + " is not a registered namespace identifier"
 
-#def get_parent(id_fph):
-#    if re_fph.match(id_fph):
-#        parent_fph = dbm_fetch(FPH_PARENT_MAP, id_fph).strip()
-#        return parent_fph
-#    else:
-#        return ""
+    ns2_fph, ns2_hrns, etypes, m = identify_entity(ns2_id)
+    if not ns2_fph:
+        return "", "", ns2_id + " is not a registered identifier"
+    if not ("namespace" in etypes):
+        return "", "", ns2_hrns + " is not a registered namespace identifier"
 
-#------------------------------------------------------------------------------
-# Record private "namespace* root FPH:
+    ns1_name, ns1_parent = split_hrns(ns1_hrns)
+    ns3_hrns = ns1_name + "." + ns2
+    ns3_fph, ns3_hrns, etypes, m = identify_entity(ns3_hrns)
+    if ns3_fph and ("namespace" in etypes):
+        return "", "", "Namespace " + ns3_fph + " exists already"
 
-#def record_private_namespace_root(id_fph, private_namespace_root_fph):
-#    # Return True iff stored successfully:
-#    return dbm_store(PNSR_MAP, id_fph, private_namespace_root_fph)
-
-# Retrieve private "namespace* root FPH:
-
-#def get_private_namespace_root(id_fph):
-#    if re_fph.match(id_fph):
-#        private_namespace_root_fph = dbm_fetch(PNSR_MAP, id_fph).strip()
-#        return private_namespace_root_fph
-#    else:
-#        return ""
-
-
-
-
-
-###############################################################################
-
-def _create_maps(): # DBM map
-    # If the databases exists already, they are deleted after a time-stamped
-    # copy has been saved.
-    T = timestamp()
-    if os.path.exists(FPH_TO_HRNS_MAP):
-        os.remove(FPH_TO_HRNS_MAP)
-    if os.path.exists(HRNS_C_FPH_MAP):
-        os.remove(HRNS_C_FPH_MAP)
-    if os.path.exists(FPH_PARENT_MAP):
-        os.remove(FPH_PARENT_MAP)
-    if os.path.exists(PNSR_MAP):
-        os.remove(PNSR_MAP)
-    # The new empty maps are created:
-    dbm_create_map(FPH_TO_HRNS_MAP)     # map: FPH>HRNS
-    dbm_create_map(HRNS_C_FPH_MAP)      # map: HRNS>FPH
-    dbm_create_map(FPH_PARENT_MAP)      # map: FPH>FPH (child>parent)
-    dbm_create_map(PNSR_MAP)
-    # These two DBM maps are created initially to ensure that the DB type can
-    # be identified correctly by the first read operation.
-    substrate_fph = nshash("")
-    dbm_store(FPH_TO_HRNS_MAP, substrate_fph, "") # FPH>HRNS map
-    # The first "root" entity created (the "cc" namespace) has no named parent
-    # namespace, its parent namespace being the nameless "substrate". Although
-    # this contains no names, and is therefore not a *namespace*, it does have
-    # some of the properties of such. In particular, it must have a valid FPH
-    # corresponding to an empty string.
-    dbm_store(HRNS_C_FPH_MAP, "", substrate_fph) # FPH collision map
-    # Although no collision is likely to occur, there is nothing to be lost by
-    # creating the reverse mapping in this specific instance.
-    return
-
-#------------------------------------------------------------------------------
-# Retrieve HRNS from FPH:
-
-def _fph_to_hrns(fph):
-    if re_fph.match(fph):
-        hrns = dbm_fetch(FPH_TO_HRNS_MAP, fph).strip()
-        return hrns
-    else:
-        return ""
-
-fph_exists = fph_to_hrns # function alias
-
-def _hrns_exists_already(hrns):
-    fph = nshash(hrns)
-    return (fph_to_hrns(fph) == hrns)
-
-# Most frequently (e.g. when mapping a known HRNS to its FPH), this function
-# will not add anything to the FPH>HRNS map. Only when an unknown HRNS is
-# passed will the FPH>HRNS map be affected.
-
-def _hrns_to_fph(hrns): # returns FPH and message
-
-    if hrns == "":
-        return SUBSTRATE_FPH, ""
-
-    # First, the indirect HRNS>FPH map is queried in case this is a known HRNS
-    # for which a collision has been identified previously. If the HRNS exists
-    # already in the HRNS>FPH collisions map and has been mapped as a collision
-    # exception (extremely improbable), its FPH is returned.
-    fph = dbm_fetch(HRNS_C_FPH_MAP, hrns) # (Expecting "")
-    if fph: # (exceedingly improbable)
-        return fph, ""
-
-    # If the HRNS is not listed in the collision map (overwhelmingly probably)
-    # a provional FPH is hashed:
-    fph = nshash(hrns)
-    hrns_ = fph_to_hrns(fph)
-    # If the FPH and HRNS both exist already in the FPH>HRNS map, the FPH is
-    # returned unless found to be inconsistent.
-    if hrns_:
-        if hrns == hrns_:
-            #print(">>> HRNS mapping collision")
-            return fph, ""
-        else:
-            return "", "inconsistent FPH>HRNS mapping" # should NEVER happen.
-
-    # On the other hand, if the HRNS is not yet known (in the FPH>HRNS map):
-    else:
-        # At this point, the FPH hashed above from the HRNS will usually be
-        # unique (so not already in the FPH>HRNS map), but collisions are not
-        # impossible. In the rare case of a collision, a new FPH must be found
-        # (in this case by repeatedly hashing the FPH itself).
-        while fph_to_hrns(fph):
-            fph = nshash(fph)
-        # The collision-causing HRNS is now added to the FPH in the HRNS>FPH
-        # exception map (which will usually be empty and will never grow beyond
-        # a very small size) to be queried hereafter by hrns_to_fph(hrns).
-##        dbm_store(HRNS_C_FPH_MAP, hrns, fph)
-# 2025-03-01: experimental change
-        while not dbm_store(HRNS_C_FPH_MAP, hrns, fph):
-            continue
-    # In either case, the FPH:HRNS pair is added to the FPH>HRNS map to be used
-    # hereafter by fph_to_hrns(fph).
-##    dbm_store(FPH_TO_HRNS_MAP, fph, hrns)
-# 2025-03-01: experimental change
-    while not dbm_store(FPH_TO_HRNS_MAP, fph, hrns):
-        continue
-
-    return fph, ""
-
-#save_fph_to_map = hrns_to_fph # alias
-
-#------------------------------------------------------------------------------
-
-def _delete_fph_from_map(fph):
-
-    if fph is None: ## 2025-01-212
-        fph = ""
-
-    hrns = dbm_delete(FPH_TO_HRNS_MAP, fph)
-    dbm_delete(FPH_TO_HRNS_MAP, fph)
-    dbm_delete(HRNS_C_FPH_MAP, hrns)
-
-#------------------------------------------------------------------------------
-
-
-
-#==============================================================================
-# When any entity is moved to a new *namespace*, the HRNS>FPH and FPH>HRNS
-# mappings must be updated.
-
-def _update_mapping(current_hrns, new_hrns):
-
-    if not re_hrns.match(current_hrns):
-        return current_hrns + " is not a valid HRNS", ""
-
-    current_fph, m = hrns_to_fph(current_hrns)
-    if not current_fph:
-        return "HRNS " + current_hrns + " has not been registered"
+    m = update_mapping(ns1_hrns, ns3_hrns)
     if m:
-        return m # error message
-
-    # The entity's HRNS is updated but its FPH must remain the same. Therefore,
-    # whereas the original FPH is a simple hash of the HRNS when first mapped,
-    # any subsequent update to the HRNS must be mapped to the original FPH (and
-    # vice versa).
-    #
-    # (1) HRNS>FPH map must be updated
-    #dbm_delete(HRNS_C_FPH_MAP, current_hrns)
-    dbm_store(HRNS_C_FPH_MAP, new_hrns, current_fph)
-
-    # (2) FPH>HRNS map must be updated
-    #dbm_delete(FPH_TO_HRNS_MAP, current_fph)
-    dbm_store(FPH_TO_HRNS_MAP, current_fph, new_hrns)
-
-    return ""
-
-#==============================================================================
-##
-# Added 2025-08-30:
-
-#------------------------------------------------------------------------------
-# Record parent FPH:
-
-def _record_parent(id_fph, parent_fph):
-    return dbm_store(FPH_PARENT_MAP, id_fph, parent_fph)
-
-# Retrieve parent FPH from any entity FPH:
-
-def _get_parent(id_fph):
-    if re_fph.match(id_fph):
-        parent_fph = dbm_fetch(FPH_PARENT_MAP, id_fph).strip()
-        return parent_fph
+        return "", "", m
+    # The new mapping is verified:
+    ns3_fph, ns3_hrns, etypes, m = identify_entity(ns3_hrns)
+    if ns3_fph:
+        return ns3_fph, ns3_hrns, ""
     else:
-        return ""
-
-#------------------------------------------------------------------------------
-# Record private "namespace* root FPH:
-
-def _record_private_namespace_root(id_fph, private_namespace_root_fph):
-    # Return True iff stored successfully:
-    return dbm_store(PNSR_MAP, id_fph, private_namespace_root_fph)
-
-# Retrieve private "namespace* root FPH:
-
-def _get_private_namespace_root(id_fph):
-    if re_fph.match(id_fph):
-        private_namespace_root_fph = dbm_fetch(PNSR_MAP, id_fph).strip()
-        return private_namespace_root_fph
-    else:
-        return ""
+        return "", "", m

@@ -408,8 +408,8 @@ def ah_payment(
             "",                 # stewardship_id (n/a)
             0,                  # longevity (indefinite)
             "",                 # expiry_datetime (no expiry)
-            "",                 # string
-            "",                 # string
+            "",                 # payer_account_fph
+            "",                 # payer_ahid_fph
             payee_ahid_fph,     # string
             payee_ahid_fph,     # string
             currency_fph,       # string

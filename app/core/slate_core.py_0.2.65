@@ -180,9 +180,6 @@ def is_in_active_tree(entity_id):
             break
     return in_active_tree
 
-
-
-
 #==============================================================================
 ## Choose the working database file for the *namespace*:
 
@@ -224,7 +221,7 @@ def select_payments_db_filepath(entity_fph):
     return DB
 
 #==============================================================================
-## Create the SQLite indentifiers database
+## Create the SQLite indeinfiers database
 
 def create_identifiers_db():
 
@@ -245,6 +242,7 @@ def create_identifiers_db():
             + "currency INTEGER NOT NULL DEFAULT 0, " \
             + "account INTEGER NOT NULL DEFAULT 0, " \
             + "primid INTEGER NOT NULL DEFAULT 0, " \
+            + "secid INTEGER NOT NULL DEFAULT 0, " \
             + "ahid INTEGER NOT NULL DEFAULT 0" \
             + ");"
         )
@@ -265,8 +263,7 @@ def create_entities_db(owner_fph):
         os.remove(ENTITIES_DB)
 
     # If this entity is a *private namespace* (one that has ramified from a
-    # *primid* or from a *ahid* belonging to that *primid*, both that privacy
-    # and its ownerhip must be evident.
+    # *primid* or *secid*, both that privacy and its ownerhip must be evident.
     # By default, ownership is inherited from the parent *namespace* but may
     # be overridden.
     #
@@ -291,7 +288,7 @@ def create_entities_db(owner_fph):
             + ");"
         )
 
-        # NB, since a *primid* or *ahid* can serve as the root private
+        # NB, since a *primid* or *secid* can serve as the root private
         # *namespace*, a default *currency* must be specified. This has the
         # same identifier as this *primid* initially but may be changed
         # subsequently should the need arise.
@@ -300,6 +297,7 @@ def create_entities_db(owner_fph):
         # of the following entity types:
         #   *primid*    -- a.k.a. *login identity* - unique agent identifier
         #   *ahid*      -- pairing *identity*
+        #   *secid*     -- a.k.a. *alias* (hidden in omtrad mode)
         #   *currency*
         #   *namespace*
         #   *account*   -- hidden in omtrad mode
@@ -316,8 +314,8 @@ def create_entities_db(owner_fph):
             + "primid_realname TEXT, " \
             + "primid_email_1_hash TEXT NOT NULL, " \
             + "primid_email_2_hash TEXT, " \
+            + "secids_fph_list BLOB, " \
             + "ahids_fph_list BLOB, " \
-            + "accounts_fph_list BLOB, " \
             + "pmap BLOB, " \
             + "nstewardships_fph_list BLOB, " \
             + "cstewardships_fph_list BLOB, " \
@@ -327,7 +325,17 @@ def create_entities_db(owner_fph):
             + "administrator INTEGER NOT NULL DEFAULT 0" \
             + ");"
         )
-       # Create *ahids* (*account-holder identities*) table:
+        # Create *secids* table:
+        #
+        cursor.execute(
+            "CREATE TABLE IF NOT EXISTS secids (" \
+            + "entity_fph TEXT, " \
+            + "active INTEGER NOT NULL DEFAULT 1, " \
+            + "primid_fph TEXT, " \
+            + "accounts_fph_list BLOB" \
+            + ");"
+        )
+        # Create *ahids* (*account-holder identities*) table:
         #
         cursor.execute(
             "CREATE TABLE IF NOT EXISTS ahids (" \
@@ -338,7 +346,7 @@ def create_entities_db(owner_fph):
             + "active INTEGER NOT NULL DEFAULT 1" \
             + ");"
         )
-        # Create *currencies* table:
+        # Create currencies table:
         #
         # Please note:
         #
@@ -485,12 +493,13 @@ def register_identifier(identifier_hrns):
                        + "currency, " \
                        + "account, " \
                        + "primid, " \
+                       + "secid, " \
                        + "ahid" \
-                       + ") VALUES (?, ?, ?, ?, ?, ?, ?, ?)"
+                       + ") VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)"
             # Initially, no entity type is registered for this identifier:
             cursor.execute(
                 insert_str,
-                (identifier_fph, parent_fph, pnsr_fph, 0, 0, 0, 0, 0)
+                (identifier_fph, parent_fph, pnsr_fph, 0, 0, 0, 0, 0, 0)
             )
             # NB: The PNSR will be recorded subsequently.
             conn.commit()
@@ -558,6 +567,7 @@ def get_entity_types(entity_fph):
             + "currency, " \
             + "account, " \
             + "primid, " \
+            + "secid, " \
             + "ahid " \
             + "FROM entities_registered " \
             + "WHERE entity_fph = ?",
@@ -576,6 +586,8 @@ def get_entity_types(entity_fph):
         if result[3]:
             entity_types.append("primid")
         if result[4]:
+            entity_types.append("secid")
+        if result[5]:
             entity_types.append("ahid")
         return entity_types, ""
     else:
@@ -588,7 +600,7 @@ def set_entity_type(identifier_fph, entity_type, value):
     if not re_fph.match(identifier_fph):
         return "Invalid FPH: " + identifier_fph
     # The valid entity types are:
-    vetypes = ["namespace", "currency", "account", "primid", "ahid"]
+    vetypes = ["namespace", "currency", "account", "primid", "secid", "ahid"]
     if not (entity_type in vetypes):
         return "Invalid entity type: " + entity_type
     with sqlite3.connect(IDENTIFIERS_DB) as conn:
@@ -630,6 +642,7 @@ def register_full_entity_set(identifier_fph):
           + "currency = 1, " \
           + "account = 1, " \
           + "primid = 1, " \
+          + "secid = 1, " \
           + "ahid = 1 " \
           + "WHERE entity_fph = ?"
         cursor.execute(u, (identifier_fph,))
@@ -782,9 +795,9 @@ def entity_types_are_registered(entity_id, entity_types):
 #==============================================================================
 ## Get *namespace* owner
 #
-# Here, the identifier of the private *namespace* may be that of a *primid* or
-# an *ahid*. Where these all share the same identifier, this will be the same
-# private *namespace*.
+# Here, the identifier of the private *namespace* may be that of a *primid*, a
+# *secid* or an *ahid*. Where these all share the same identifier, this will be
+# the same private *namespace*.
 
 def get_namespace_details(namespace_id):
     namespace_fph, namespace_hrns, etypes, m = identify_entity(namespace_id)
@@ -792,11 +805,14 @@ def get_namespace_details(namespace_id):
     if not ("namespace" in etypes):
         return False, "", "Entity is not a namespace"
     # Is at least one of the following types registered for this identifier?
-    if not (len(set(["primid", "ahid"]) & set(etypes)) > 0):
+    if not (len(set(["primid", "secid", "ahid"]) & set(etypes)) > 0):
         return False, "", "Entity cannot be a private namespace"
-    # Every identifier of a *primid* also identifies an *ahid*, but the
-    # identifier of any *ahid* other than one created alongside a *primid*
-    # cannot be used to identify a different *primid* subsequently.
+    # Every identifier of a *primid* also identifies an *ahid*, but:
+    # (1) the identifier of any *ahid* other than one created alongside a
+    #     *primid* cannot be used to identify a different *primid*
+    #     subsequently; and
+    # (2) the identifier of any *secid* cannot be used subsequently for a new
+    #     *primid*.
     with sqlite3.connect(ENTITIES_DB) as conn:
         cursor = conn.cursor()
         cursor.execute(
@@ -874,7 +890,7 @@ def get_owner(entity_id, entity_type):
     entity_fph, entity_hrns, etypes, m = identify_entity(entity_id)
     if not (entity_type in etypes):
         return False, "No " + entity_type + " is registered for " + entity_id
-    if not (entity_type in ["account", "namespace", "ahid"]):
+    if not (entity_type in ["account", "namespace", "ahid", "secid"]):
         return "", entity_id + " is not an owned type"
     with sqlite3.connect(ENTITIES_DB) as conn:
         cursor = conn.cursor()
@@ -1092,6 +1108,8 @@ def new_primid(
     # - a *currency* (of which this *primid* will be the initial steward)
     # - an *ahid* (since any *primid* must serve also as an *ahid*)
     # - an *account* owned by this *primid*
+    # However, a *secid* cannot be created using this identifier.
+    # NB: *secids* are now obsolete and will be removed.
 
     primid_hrns = username + NSS + parent_hrns
     if identifier_unregistered(primid_hrns):
@@ -1114,6 +1132,11 @@ def new_primid(
 #        errors += "Unable to record primid FPH as PNSR\n"
 #        return "", "", "", errors
     record_private_namespace_root(primid_fph, primid_fph)
+
+
+    # At the point of its creation, a *primid* has no *secids", so an empty
+    # list is created:
+    secids_fph_list = [] # REMOVE - obsolete
 
     # This *primid* will be the owner of a an *account* sharing the same
     # identifier, but it cannot be created at this point because the *primid*
@@ -1139,18 +1162,20 @@ def new_primid(
             + "primid_realname, " \
             + "primid_email_1_hash, " \
             + "primid_email_2_hash, " \
+            + "secids_fph_list, " \
             + "pmap, " \
             + "nstewardships_fph_list, " \
             + "cstewardships_fph_list, " \
             + "password_hash, " \
             + "pin, " \
             + "access_token_hash" \
-            + ") VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+            + ") VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
             (
                 primid_fph,
                 realname,
                 auth_hash(email_address_1),
                 auth_hash(email_address_2),
+                pickle.dumps(secids_fph_list),
                 pickle.dumps({}),
                 pickle.dumps(nstewardships_fph_list),
                 pickle.dumps(cstewardships_fph_list),
@@ -1194,10 +1219,77 @@ def new_primid(
             currency_fph    # *currency* was created immediately before this.
         )
 
+    # REMOVE - OBSOLETE
+
+    # A second new *account* is created  with the same identifier as the
+    # *primid* which also serves as its initial steward:
+#    account_fph, account_hrns, \
+#    m = new_account(
+#            username, parent_fph,   # identifier
+#            primid_fph,             # owner (*ahid* or *secid*) identifier
+#            currency_fph            # *currency* identifier
+#        )
     return primid_fph, primid_hrns, access_token, errors
 
 # Although the initial access token is generated automatically here, it may be
 # updated by the *primid* at any time.
+
+#==============================================================================
+## A new *secid* is created:
+
+def new_secid(
+        username,
+        parent_id,
+        primid_fph
+    ):
+    errors = ""
+    parent_fph, parent_hrns, etypes, m = identify_entity(parent_id)
+    if not parent_fph:
+        return "", "", "", "Invalid parent FPH: " + parent_id
+    if not re_slatename.match(username):
+        return "", "", "", "Invalid name provided"
+    secid_hrns = username + NSS + parent_hrns
+    secid_fph, secid_hrns, etypes, m = identify_entity(secid_hrns)
+    if not secid_fph:
+        # If the identifier is not registered, that can be done now (creating
+        # the HRNS>FPH and FPH>HRNS mappings):
+        secid_fph = register_identifier(secid_hrns)
+        if not secid_fph: # Unable to register identifier
+            return "", "", "", "Unable to register " + secid_hrns
+    elif ("secid" in etypes):
+        # The identifier of an existing *secid* cannot be used for another.
+        return "", "", "", secid_hrns + " exists already (secid)"
+    else:
+        # We can now register a *secid* for this identifier:
+        register_entity_type(secid_fph, "secid")
+    # Add the *secid*-specific properties:
+    with sqlite3.connect(ENTITIES_DB) as conn:
+        cursor = conn.cursor()
+        cursor.execute(
+            "INSERT INTO secids (entity_fph, primid_fph, accounts_fph_list) " \
+            + "VALUES (?, ?, ?)",
+            (secid_fph, primid_fph, pickle.dumps([]))
+        )
+        cursor.execute(
+            "SELECT secids_fph_list FROM primids WHERE entity_fph = ?",
+            (primid_fph,)
+        )
+        result = cursor.fetchone()
+        if result is None:
+            secids_fph_list = []
+            #secids_fph_blob = pickle.dumps(secids_fph_list)
+        else:
+            secids_fph_blob = result[0]
+            secids_fph_list = pickle.loads(secids_fph_blob)
+        secids_fph_list.append(secid_fph)
+        secids_fph_blob = pickle.dumps(secids_fph_list)
+        cursor.execute(
+            "UPDATE primids SET secids_fph_list = ? WHERE entity_fph = ?",
+            (secids_fph_blob, primid_fph)
+        )
+        conn.commit()
+        cursor.close()
+    return secid_fph, secid_hrns, ""
 
 #==============================================================================
 ## A new *ahid* is created:
@@ -1471,7 +1563,7 @@ def new_currency(
 
 def new_account(
         account_name, parent_id,    # identifier
-        owner_id,                   # *ahid* or *primid*
+        owner_id,                   # *ahid* or *secid*
         currency_id
     ):
     errors = ""
@@ -1479,20 +1571,20 @@ def new_account(
     if not parent_fph:
         return "", "", "Invalid parent FPH: " + parent_id
     # The *account* name may take either of two forms:
-    # (1) that of a typical identifier (if  the *account* is for a "primid") or
+    # (1) that of a typical identifier (if  the *account* is for a "secid"), or
     # (2) a form encoded automatically from the identifiers of an *ahid* and
     #     a *currency* (if  the *account* is for an "ahid"|*currency*)pairing).
-    account_for_primid = False
+    account_for_secid = False
     account_for_pairing = False
     if re_slatename.match(account_name):
-        account_for_primid = True
+        account_for_secid = True
     elif re_pan1.match(account_name):
         pan = account_name.split("_&_")
         pan_ahid = pan[0].replace("_", "")
         pan_currency = pan[0].replace("_", "")
         if (re_pan2.match(pan_ahid) and re_pan2.match(pan_currency)):
             account_for_pairing = True
-    if not (account_for_primid or account_for_pairing):
+    if not (account_for_secid or account_for_pairing):
         return "", "", "Invalid account name provided"
     account_hrns = account_name + NSS + parent_hrns
     if identifier_unregistered(account_hrns):
@@ -1517,14 +1609,14 @@ def new_account(
         account_name = default_account_name # from *currency*
     account_fph = register_identifier(account_hrns)
     register_entity_type(account_fph, "account")
-    # The owner may be either an *ahid* or a *primid".
+    # The owner may be either an *ahid* or a *secid".
     owner_fph, owner_hrns, etypes, m = identify_entity(owner_id)
     if not owner_fph:
         return "", "", "Invalid owner FPH: " + owner_fph
     if ("ahid" in etypes):
         table = "ahids"
-    elif ("primid" in etypes):
-        table = "primids"
+    elif ("secid" in etypes):
+        table = "secids"
     else:
         return "", "", owner_fph + " is not a valid agent type"
     # Now add *account* specific properties:
@@ -1693,14 +1785,14 @@ def get_currency_name(currency_fph):
 #==============================================================================
 ## List the *identity*'s *accounts*:
 #
-# This will list all *accounts* belonging to an *ahid* or "primid", the
+# This will list all *accounts* belonging to an *ahid* or "secid", the
 # *account* itself identifying its *currency*.
 
 def list_accounts(identity_id, identity_etype):
     identity_fph, identity_hrns, etypes, m = identify_entity(identity_id)
     if not identity_fph:
         return [], identity_id + " is not a registered identifier (3)"
-    if not (identity_etype in etypes): # *ahid* or *primid*
+    if not (identity_etype in etypes): # *ahid* or *secid*
         return [], identity_hrns + " has no registered " + identity_etype
     with sqlite3.connect(ENTITIES_DB) as conn:
         cursor = conn.cursor()
@@ -1727,7 +1819,7 @@ def list_accounts(identity_id, identity_etype):
 ## List the *identity*'s *accounts* in a specified *currency*:
 #
 # This will list all *accounts* in a specified *currency* belonging to a
-# *primid*, *ahid* or "primid".
+# *primid*, *ahid* or "secid".
 
 def list_id_accounts_in_currency(identity_id, identity_etype, currency_id):
     currency_fph, currency_hrns, etypes, m = identify_entity(identity_id)
@@ -1748,14 +1840,14 @@ def list_id_accounts_in_currency(identity_id, identity_etype, currency_id):
     return accounts_in_currency, ""
 
 #==============================================================================
-## List the *primid*'s accounts: #
+## List the *secid*'s accounts: #
 
-def list_primid_accounts(primid_fph):
+def list_secid_accounts(secid_fph):
     with sqlite3.connect(ENTITIES_DB) as conn:
         cursor = conn.cursor()
         cursor.execute(
-            "SELECT accounts_fph_list FROM primids WHERE entity_fph = ?",
-            (primid_fph,)
+            "SELECT accounts_fph_list FROM secids WHERE entity_fph = ?",
+            (secid_fph,)
         )
         result = cursor.fetchone()
         if result is None:
@@ -1763,12 +1855,12 @@ def list_primid_accounts(primid_fph):
 #            accounts_fph_blob = pickle.dumps(accounts_fph_list)
             accounts_fph_blob = pickle.dumps([])
             cursor.execute(
-                "UPDATE primids SET accounts_fph_list = ? WHERE entity_fph = ?",
-                (accounts_fph_blob, primid_fph)
+                "UPDATE secids SET accounts_fph_list = ? WHERE entity_fph = ?",
+                (accounts_fph_blob, secid_fph)
             )
             conn.commit()
             cursor.close()
-            return [], "The primid " + primid_fph + " has no accounts."
+            return [], "The secid " + secid_fph + " has no accounts."
         else:
             cursor.close()
 #            accounts_fph_blob = result[0]
@@ -1822,8 +1914,8 @@ def list_agent_accounts(agent_fph):
         accounts_fph_list, m = list_ahid_accounts(agent_fph)
         if m:
             return [], m
-    elif entity_type_is_registered(agent_fph, "primid"):
-        accounts_fph_list, m = list_primid_accounts(agent_fph)
+    elif entity_type_is_registered(agent_fph, "secid"):
+        accounts_fph_list, m = list_secid_accounts(agent_fph)
         if m:
             return [], m
     else:
@@ -1890,35 +1982,40 @@ def list_all_accounts_in_currency(currency_id):
 
 #==============================================================================
 # Identify the *account* (if any) in which the specified *identity* has access
-# to the specified *currency*: UPDATE URGENTLY (2025-11-10)
+# to the specified *currency*: KEEP
 #
+# NB, where a *primid*, an *ahid* and a *secid* share the same identifier they
+# also share the same set of *accounts*, so a *secid* will not generally be
+# registered to an identifier if it has a *primid* or an *ahid*, and if it is
+# it will be ignored.
 # i.e. valid combinations for a specific identifier are:
-#   | *primid* | *ahid*   |      *currency*|*ahid* -> *account*
-#   |          | *ahid*   |      *currency*|*ahid* -> *account*
+#   | *primid* | *ahid*   |          |      *currency*|*ahid* -> *account*
+#   |          | *ahid*   |          |      *currency*|*ahid* -> *account*
+#   |          |          | *secid*  |      *secid* -> *account*
 #
 # The following combinations are also possible for a specific identifier:
-#   | *primid* |          |      no *account*
-#   | *primid* | *ahid*   |      *currency*|*ahid* -> *account*
-#   |          | *ahid*   |      *currency*|*ahid* -> *account*
+#   | *primid* |          |          |      no *account*
+#   | *primid* | *ahid*   | *secid*  |      *currency*|*ahid* -> *account*
+#   | *primid* |          | *secid*  |      *secid* -> *account*
+#   |          | *ahid*   | *secid*  |      *currency*|*ahid* -> *account*
 # The system will still function in these combinations, but they should never
 # occur by design.
 #
 # Therefore,
-# - *accounts* can still be held by a *primid*, but those are indexed directly
-#   by an identifier rather than indirectly from a pairing
-# - each *account* belongs to an *ahid* or a *primid*
+# - *accounts* are no longer held by a *primid*
+# - each *account* belongs to an *ahid* or a *secid*
 # - each *account* is addressed either directly (by its own identifier) or
 #   indirectly (by a pairing of *currency* and *ahid* identifiers)
-# - each *account* identifies the *ahid* or *primid* to which it belongs
+# - each *account* identifies the *ahid* or *secid* to which it belongs
 # - each *account* identifies its *currency*
 # - each *currency* lists every *account* belonging to it
-# - each *ahid* identifies the *primid* to which it belongs
-# - each *primid* lists every *ahid* and *account* belonging to it
+# - each *ahid* or *secid* identifies the *primid* to which it belongs
+# - each *primid* lists every *ahid* and *secid* belonging to it
 # - each *primid* lists every *currency* and *namespace* in its stewardship
 # - each *primid* holds a *currency*|*ahid* pairing matrix indexing *account*
 
 def list_id_accounts_in_currency(identity_id, identity_etype, currency_id):
-    if not (identity_etype in ["ahid", "primid"]):
+    if not (identity_etype in ["ahid", "secid"]):
         return "", identity_etype + " is not an identity type"
     identity_fph, identity_hrns, etypes, m = identify_entity(identity_id)
     if not identity_fph:
@@ -1963,17 +2060,42 @@ def list_primid_currencies(primid_fph): # in which an primid has accounts
 
 
 #==============================================================================
-## List the *primid*'s *account*s' *currencies*:
+## List the *secid*'s *account*s' *currencies*:
 #
-# For specified *primid*, return a list the *currencies* in which it has an
+# For specified *secid*, return a list the *currencies* in which it has an
 # *account*
 
-def list_primid_currencies(primid_fph):
-    accounts_fph_list, m = list_primid_accounts(primid_fph)
+def list_secid_currencies(secid_fph):
+    accounts_fph_list, m = list_secid_accounts(secid_fph)
     currencies_fph_list = []
     for account_fph in accounts_fph_list:
         currencies_fph_list.append(get_account_currency(account_fph))
     return currencies_fph_list
+
+#==============================================================================
+#
+
+def list_secids(primid_id):
+    primid_fph, primid_hrns, etypes, m = identify_entity(primid_id)
+    if not primid_fph:
+        return [], primid_id + " is not a registered identifier (9)"
+    if not ("primid" in etypes):
+        return [], "No primid registered for " + primid_hrns
+    with sqlite3.connect(ENTITIES_DB) as conn:
+        cursor = conn.cursor()
+        # Retrieve the list of *secids* for this *primid*:
+        cursor.execute(
+            "SELECT secids_fph_list FROM primids WHERE entity_fph = ?",
+            (primid_fph,)
+        )
+        result = cursor.fetchone()
+        cursor.close()
+    if result is None:
+        secids_fph_list = []
+    else:
+        secids_fph_list = pickle.loads(result[0])
+    return secids_fph_list
+
 
 #==============================================================================
 #
@@ -1986,7 +2108,7 @@ def list_ahids(primid_id):
         return [], "No primid registered for " + primid_hrns
     with sqlite3.connect(ENTITIES_DB) as conn:
         cursor = conn.cursor()
-        # Retrieve the list of *ahids* for this *primid*:
+        # Retrieve the list of *secids* for this *primid*:
         cursor.execute(
             "SELECT ahids_fph_list FROM primids WHERE entity_fph = ?",
             (primid_fph,)
@@ -2171,9 +2293,9 @@ def get_account_properties(account_id):
         cursor.close()
     if result is None:
         return "", "", 0, 0, False, "", "", "", "", "", "Account not found"
-    # The owner of this *account* may be either an *ahid* or a *primid*.
+    # The owner of this *account* may be either an *ahid* or a *secid*.
     owner_fph, owner_hrns, etypes, m = identify_entity(result[0])
-    if not (("ahid" in etypes) or ("primid" in etypes)):
+    if not (("ahid" in etypes) or ("secid" in etypes)):
         return "", "", 0, 0, False, "", "", "", "", "", \
                "Account  has no owner"
     currency_fph = result[1]
@@ -2206,7 +2328,7 @@ def account_status(account_fph):
 #==============================================================================
 ## Sum the balances of *accounts* with similar properties:
 
-# owner_id                  May be either an *ahid* or a *primid*
+# owner_id                  May be either an *ahid* or a *secid*
 # account_category          May only be "money" or
 #
 # In all cases
@@ -2223,7 +2345,7 @@ def sum_account_balances(
     owner_fph, owner_hrns, etypes, m = identify_entity(owner_id)
     if not owner_fph:
         return {}, {}, owner_id + " is not a registered identifier"
-    if not (("ahid" in etypes) or ("primid" in etypes)):
+    if not (("ahid" in etypes) or ("secid" in etypes)):
         return {}, {}, owner_hrns + " is not a registered ahid"
 
     print("category:              " + account_category)
@@ -2309,7 +2431,7 @@ def get_primid_properties(primid_id):
             + "active, " \
             + "administrator, " \
             + "ahids_fph_list, " \
-            + "accounts_fph_list, " \
+            + "secids_fph_list, " \
             + "pmap, " \
             + "nstewardships_fph_list, " \
             + "cstewardships_fph_list " \
@@ -2324,12 +2446,12 @@ def get_primid_properties(primid_id):
     active = bool(result[0])
     administrator = bool(result[1])
     ahids_fph_list = pickle.loads(result[2])
-    accounts_fph_list = pickle.loads(result[3])
+    secids_fph_list = pickle.loads(result[3])
     pmap = pickle.loads(result[4])
     nstewardships_fph_list = pickle.loads(result[5])
     cstewardships_fph_list = pickle.loads(result[6])
     return active, administrator, \
-           ahids_fph_list, accounts_fph_list, pmap, \
+           ahids_fph_list, secids_fph_list, pmap, \
            nstewardships_fph_list, cstewardships_fph_list, ""
 
 
@@ -2363,7 +2485,43 @@ def get_ahid_properties(ahid_id):
 
 
 #==============================================================================
-# Add a stewardship to a *primid* and a steward to a *namespace* or *currency*:
+##
+
+def get_secid_properties(secid_id):
+    secid_fph, secid_hrns, etypes, m = identify_entity(secid_id)
+    if not secid_fph:
+        return False, "", [], "No entity registered for " + secid_id
+    if not ("account" in etypes):
+        return False, "", [], "No account registered for " + secid_hrns
+    with sqlite3.connect(ENTITIES_DB) as conn:
+        cursor = conn.cursor()
+        cursor.execute(
+            "SELECT " \
+            + "active, " \
+            + "primid_fph, " \
+            + "accounts_fph_list " \
+            + "FROM secids WHERE entity_fph = ?",
+            (secid_fph,)
+        )
+        result = cursor.fetchone()
+        cursor.close()
+    if result is None:
+        return False, "", [], "Secid not found"
+    active = bool(result[0])
+    primid_fph = result[1]
+    accounts_fph_list = pickle.loads(result[2])
+    return active, primid_fph, accounts_fph_list, ""
+
+
+#==============================================================================
+## Add a stewardship to a *primid* and a steward to a *namespace* or *currency*:
+
+### CHANGE:
+#
+# Separate the following into two distinct functions:
+# i.e.
+#   add_namespace_stewardship(entity_fph, steward_fph)
+#   add_currency_stewardship(entity_fph, steward_fph)
 
 def add_namespace_stewardship(entity_fph, steward_fph):
     if not re_fph.match(steward_fph):
@@ -2679,6 +2837,37 @@ def list_active_namespaces(ancestor_namespace_id = ""): # FPH or HRNS
 
 
 #==============================================================================
+# Get the *primid* to which a *secid* belongs:
+
+def get_primid(id_id): # *secid* or *ahid*
+    # (1) Each *ahid* or *secid* belongs to one *primid*
+    # (2) Each *primid* may have any number of *ahid* or *secids*
+    # (3) The identifier of a *primid* also identifies the first *ahid* in the
+    #     set available to that *primid*. In effect, this particular *ahid*
+    #     belongs to that *primid*.
+    id_fph, id_hrns, etypes, m = identify_entity(id_id)
+    if not id_fph:
+        return "", id_id + " is not a registered identifier"
+    if ("ahid" in etypes):
+        table = "ahids"
+    elif ("secid" in etypes):
+        table = "secids"
+    else:
+        return "", id_hrns + " identifies neither an ahid nor a secid"
+    with sqlite3.connect(ENTITIES_DB) as conn:
+        cursor = conn.cursor()
+        cursor.execute(
+            "SELECT primid_fph FROM " + table + " WHERE entity_fph = ?",
+            (id_fph,)
+        )
+        result = cursor.fetchone()
+        cursor.close()
+    if result is None:
+        return "", "Owner not recorded (this should never happen)"
+    owner_fph = result[0]
+    return owner_fph, ""
+
+#==============================================================================
 
 def get_ahid_primid(ahid_id):
     # (1) Each *ahid* belongs to one *primid*
@@ -2701,6 +2890,9 @@ def get_ahid_primid(ahid_id):
         return ""
     owner_fph = result[0]
     return owner_fph # owner *primid* FPH
+
+
+
 
 #==============================================================================
 # List *primid*s:

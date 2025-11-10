@@ -16,7 +16,7 @@ if not ("primid" in etypes):
     sys.exit(1)
 
 # Fetch *primid* properties
-active, administrator, ahids_fph_list, secids_fph_list, pmap, \
+active, administrator, ahids_fph_list, accounts_fph_list, pmap, \
 nstewardships_list, cstewardships_list, \
 m = get_primid_properties(identifier_fph)
 # set up table:
@@ -90,13 +90,13 @@ else:
     for ahid_fph in ahids_fph_list:
         print("  " + ahid_fph + " = " + fph_to_hrns(ahid_fph))
 
-# secids:
-print("\nsecids: ", end="")
-if len(secids_fph_list) == 0:
+# accounts:
+print("\naccounts: ", end="")
+if len(accounts_fph_list) == 0:
     print("none\n")
 else:
     print()
-    for secid_fph in secids_fph_list:
-        print("  " + secid_fph + " = " + fph_to_hrns(secid_fph))
+    for account_fph in sccounts_fph_list:
+        print("  " + account_fph + " = " + fph_to_hrns(account_fph))
 
 sys.exit(1)

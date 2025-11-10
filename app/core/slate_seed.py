@@ -98,9 +98,9 @@ def create_substrate():
         cursor.execute(
             "INSERT INTO entities_registered (" \
             + "entity_fph, parent_fph, " \
-            + "namespace, currency, account, primid, secid, ahid" \
-            + ") VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
-            (SUBSTRATE_FPH, SUBSTRATE_FPH, 1, 0, 0, 0, 0, 0)
+            + "namespace, currency, account, primid, ahid" \
+            + ") VALUES (?, ?, ?, ?, ?, ?, ?)",
+            (SUBSTRATE_FPH, SUBSTRATE_FPH, 1, 0, 0, 0, 0)
         )
         conn.commit()
         cursor.close()
@@ -288,8 +288,8 @@ def create_seed_entities():
                 + "primid_realname, " \
                 + "primid_email_1_hash, " \
                 + "primid_email_2_hash, " \
-                + "secids_fph_list, " \
                 + "ahids_fph_list, " \
+                + "accounts_fph_list, " \
                 + "pmap, " \
                 + "nstewardships_fph_list, " \
                 + "cstewardships_fph_list, " \
