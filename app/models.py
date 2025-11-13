@@ -66,9 +66,6 @@ class User(UserMixin):
         #    return False
         return check_authenticated_login(self)
 
-    # When logged in (always authenticated as *primid*), it is necessary to
-    # know as which specific *identity* and whether as a *primid* or a *secid*:
-
     def mark_authenticated(self):
         #print("mark_authenticated: self.id = " + self.id)
         #fpath = fph_to_dpath(self.id) + "/.authenticated"

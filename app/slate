@@ -344,8 +344,8 @@ elif entity_type_to_create: # The action required is creation of an entity
         m = new_account(
                 account_name,
                 parent_namespace_fph,
-                owner_fph,      # (Owner may be a *primid* or a *secid*)
-                ahid_fph,       # *account-holder* for omtrad mode.
+                owner_fph,      # *primid*
+                ahid_fph,       # *account-holder*
                 currency_fph
         )
         if m:

@@ -30,7 +30,7 @@ class UserMessageForm(FlaskForm):
 
     # If broadcast box is checked. then for each of the following entity types
     # - *primid*: the message will be sent to that *primid*
-    # - *secid*: the message will be sent to that *secod*
+    # - *ahid*: the message will be sent the *primid* to which it belongs.
     # - *currency*: the message will be sent to every *account* holder in that
     #   *currency*.
     #
@@ -86,7 +86,7 @@ class StewardMessageForm(FlaskForm):
 
     # If broadcast box is checked. then for each of the following entity types
     # - *primid*: the message will be sent to that *primid*
-    # - *secid*: the message will be sent *primid* of this *secod*
+    # - *ahid*: the message will be sent to *primid* to which it belongs.
     # - *currency*: the message will be sent to the *primid* of each *account*
     #   holder in that *currency*.
     #
@@ -465,19 +465,6 @@ class NamespaceCreateForm(FlaskForm):
 
 #------------------------------------------------------------------------------
 
-class SecidCreateForm(FlaskForm):
-    secid_name      = StringField(
-                        "alias name",
-                        validators=[DataRequired("required")]
-                      )
-    parent_namespace_id = StringField(
-                       "parent namespace",
-                       validators=[DataRequired("required")]
-                      )
-    create_secid = SubmitField("create alias")
-
-#------------------------------------------------------------------------------
-
 class StewardAddForm(FlaskForm):
     new_steward     = StringField(
                         "identity of new steward",
@@ -485,8 +472,6 @@ class StewardAddForm(FlaskForm):
                         validators=[DataRequired("required")]
                       )
     add_steward     = SubmitField("add steward")
-
-
 
 #------------------------------------------------------------------------------
 
@@ -499,9 +484,7 @@ class LoginForm(FlaskForm):
     pin_prompt, pin_subset_indices = pin_subset_prompt()
 
     pro             = HiddenField(default=pin_subset_indices)
-#    pro             = HiddenField()
 
-#    pse             = PasswordField(
     pse             = StringField(
                          pin_prompt,
 #                         "PIN: ",

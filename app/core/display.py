@@ -61,17 +61,13 @@ def truefalse(b):
         return "false"
 
 
-etypes = ["namespace", "currency", "account", "primid", "secid", "ahid"]
+etypes = ["namespace", "currency", "account", "primid", "ahid"]
 def entity_type_verbose(etype):
     if not (etype in etypes):
-    #if not (etype in ["namespace", "currency", "account", "primid", "secid"]):
         return ""
     if etype == "primid":
         return "login identity"
         #return "primary identity"
-    if etype == "secid":
-        return "alias"
-        #return "secondary identity"
     else:
         return etype
 
@@ -80,8 +76,6 @@ def entity_type_verbose(etype):
 def etype_to_adtype(etype):
     if etype == "primid":
         return "login identity"
-    elif etype == "secid":
-        return "alias"
     else:
         return ""
 

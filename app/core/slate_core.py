@@ -264,12 +264,22 @@ def create_entities_db(owner_fph):
         # If the database exists already, it is deleted.
         os.remove(ENTITIES_DB)
 
-    # If this entity is a *private namespace* (one that has ramified from a
-    # *primid* or from a *ahid* belonging to that *primid*, both that privacy
-    # and its ownerhip must be evident.
-    # By default, ownership is inherited from the parent *namespace* but may
-    # be overridden.
-    #
+    # If this entity is a *private namespace* (one that shares an identifier
+    # with a *primid* or an *ahid*, or which has ramified from such a
+    # *namespace*:
+    # (1) It is owned by a *primid*, whether directly or indirectly via an
+    #     *ahid*.
+    # (2) It is either active (in which case all the usual operations are
+    #     possible) or inactive (in which case only its owner or stewards can
+    #     perform any actions on it).
+    # (3) If it is identified as a "sandbox" *namespace*, its contents may be
+    #     cleared or otherwise changed by its owner or stewards.
+    # (4) If is private, all operations upon or within it happen only with the
+    #     authorization of its owner|stewards.
+    # (5) If it is marked as "open", a new user can register its *primary
+    #     identity) within it.
+    # (6) When a *namespace* is created, its initial ownership is inherited
+    #     from its parent *namespace*.
     # That ownership is not the same as a stewardship. If a *namespace* has an
     # owner it needs no stewards and, if it is an *identity* serving as the
     # root *namespace* of such a tree it cannot have stewards, but *namespaces*
@@ -287,6 +297,7 @@ def create_entities_db(owner_fph):
             + "sandbox INTEGER NOT NULL DEFAULT 0, " \
             + "default_currency_fph TEXT DEFAULT '', " \
             + "private INTEGER NOT NULL DEFAULT 0, " \
+            + "open INTEGER NOT NULL DEFAULT 1, " \
             + "owner_fph TEXT DEFAULT ''" \
             + ");"
         )

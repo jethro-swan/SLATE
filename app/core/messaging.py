@@ -134,7 +134,7 @@ def create_messages_db():
     #   sender_fph          The *agent* who sent this message.
     #
     #   recipient_fph       The *agent* to whom this message has been sent.
-    #                       This may be a *primid*, a *secid* or an *ahid*.
+    #                       This may be a *primid* or an *ahid*.
     #
     #   subject             The subject line, displayed with the prefix string
     #                       and in the colour appriate to the message category.
@@ -148,8 +148,8 @@ def create_messages_db():
 
 def send_message(
         message_timestamp,
-        sender_id,              # FPH or HRNS - *primid*, *secid* or *ahid*
-        recipient_id,           # FPH or HRNS - *primid*, *secid* or *ahid*
+        sender_id,              # FPH or HRNS - *primid* or *ahid*
+        recipient_id,           # FPH or HRNS - *primid* or *ahid*
         category,               # string
         subject_prefix,         # string
         subject,                # string
@@ -406,9 +406,7 @@ def fetch_messages(recipient_id):
 
 
 #==============================================================================
-# Get the number of messages available for this *primid*.
-# If in "omtrad" mode, include thos for *ahid*s.
-# Otherwise, include those for *secids*.
+# Get the number of messages available for this *primid* and its *ahid*s.
 #
 def message_count(primid_id, hub_mode):
 
@@ -437,10 +435,7 @@ def message_count(primid_id, hub_mode):
         )
         return 0, 0
 
-    if hub_mode == "slate":
-        recipient_list = list_ahids(primid_fph)
-    else:
-        recipient_list = list_secids(primid_fph)
+    recipient_list = list_ahids(primid_fph)
     recipient_list.append(primid_fph)
 
     number_of_messages = 0

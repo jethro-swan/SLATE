@@ -18,17 +18,14 @@ debugging = True
 #==============================================================================
 # Authentication and login managemenet:
 
-def register_authenticated_login(agent_fph): # (agent is *primid* or *secid*)
+def register_authenticated_login(agent_fph): # (agent is *primid*)
     if not re_fph.match(agent_fph):
         return False, "", agent_fph + " is not an FPH"
-    if entity_type_is_registered(agent_fph, "secid"):
-        primid_fph = get_primid(agent_fph)
-        login_id_fph = agent_fph
     elif entity_type_is_registered(agent_fph, "primid"):
         primid_fph = agent_fph
         login_id_fph = agent_fph
     else:
-        return False, "", agent_fph + " is FPH of neither primid nor secid"
+        return False, "", agent_fph + " is FPH of not a *primid"
     with sqlite3.connect(ENTITIES_DB) as conn:
         cursor = conn.cursor()
         cursor.execute(
@@ -39,23 +36,18 @@ def register_authenticated_login(agent_fph): # (agent is *primid* or *secid*)
         )
         conn.commit()
         cursor.close()
-    return primid_fph, login_id_fph, "" # The login_id_fph may be either that
-                                        # of the primid or that of a secid
-                                        # acting as an alias of it.
+    return primid_fph, login_id_fph, "" # The login_id_fph must be a *primid*
 
 #------------------------------------------------------------------------------
 
 def deregister_authenticated_login(agent_fph):
     if not re_fph.match(agent_fph):
         return False, agent_fph + " is not an FPH"
-    if entity_type_is_registered(agent_fph, "secid"):
-        primid_fph = get_primid(agent_fph)
-        login_id_fph = agent_fph
     elif entity_type_is_registered(agent_fph, "primid"):
         primid_fph = agent_fph
         login_id_fph = agent_fph
     else:
-        return False, agent_fph + " is FPH of neither primid nor secid"
+        return False, agent_fph + " is not FPH of a primid"
     with sqlite3.connect(ENTITIES_DB) as conn:
         cursor = conn.cursor()
         cursor.execute(
@@ -71,14 +63,11 @@ def deregister_authenticated_login(agent_fph):
 def check_authenticated_login(agent_fph):
     if not re_fph.match(agent_fph):
         return False, "", "", agent_fph + " is not an FPH"
-    if entity_type_is_registered(agent_fph, "secid"):
-        primid_fph = get_primid(agent_fph)
-        login_id_fph = agent_fph
     elif entity_type_is_registered(agent_fph, "primid"):
         primid_fph = agent_fph
         login_id_fph = agent_fph
     else:
-        return False, "", "", agent_fph + " is FPH of neither primid nor secid"
+        return False, "", "", agent_fph + " is FPH not of a primid"
     with sqlite3.connect(ENTITIES_DB) as conn:
         cursor = conn.cursor()
         cursor.execute(

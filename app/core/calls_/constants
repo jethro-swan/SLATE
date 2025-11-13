@@ -1,7 +1,0 @@
-import xxhash
-#from .common import nshash
-def nshash(name): # Defined again here to avoid circular import from common.py
-IMPORT_QUEUE        = "/var/slate/active/temp/import_queue"
-IMPORTING           = "/var/slate/active/temp/importing"
-#SLATE_IMPORT        = "/srv/slate/import/"
-#SLATE_FLAGS         = SLATE_DATA + "flags/"     # The trailing / is important

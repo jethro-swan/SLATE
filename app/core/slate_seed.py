@@ -36,7 +36,7 @@ from app.core.cctld_list import *
 # an existing *namespace*. Namespaces fall into three categories:
 # (1) The term *namespace* is generally used to mean a non-terminal
 #     *namespace* that can contain the name of any type of entity.
-# (2) The identifier of an agent (whether a *primid*, and *ahid" or a *secid*)
+# (2) The identifier of an agent (whether a *primid* or an *ahid")
 #     identifies the root of a private *namespace*.
 # (3) A *root namespace* is one the ancestor of which is identified by an empty
 #     string (""). The *root namespaces* may include (typically) geographical
@@ -49,17 +49,13 @@ from app.core.cctld_list import *
 # The entity dependency rules for both SLATE and the (revised version of) NESTS
 # are essentially as summarized here:
 #
-# Agents: There are three classes of agent (*primid*, *ahid* and *secid*):
+# Agents: There are two classes of agent (*primid* and *ahid*):
 # (1) A *primid* (a.k.a. *login identity*) is the unique identifier
 #     anchoring the agent in the real world. Each *primid* may have any
-#     number of *ahid* or *secid*.
+#     number of *ahid*.
 # (2) An *ahid* (*account-hilder identity*) can be paired with any number of
 #     distinct *currencies*, each such pairing indexing an *account*. Each
 #     *ahid* has one *primid*.
-# (3) A *secid* (where used) can serve as an alias to anchor a *primid* in
-#     any number of *namespaces* (where authorized). A *secid* can hold any
-#     number of *accounts* but, in contrast to an *ahid*, is not itself used
-#     to identify those in a pairing. Each *secid* has one *primid*.
 #
 # All *root namespaces* share a nameless ancestor (the substrate) which has an
 # FPH but an empty HRNS. Uniquely, the substrate id its own ancestor.
@@ -149,8 +145,6 @@ def create_seed_entities():
     # will already have been added to the FPH>HRNS map (at the point of its
     # creation (see fph_hrns_maps.py).
     substrate_hrns = ""
-
-    # NB  There is no need for a seed *secid*
 
     # First the common proprties entries are created:
 

@@ -6,9 +6,7 @@
   <!-- <a href="/identity/change"><b>change identity</b></a> | -->
   <p>
     Your <b>identities</b> are all listed below, starting with your <b>login
-    identity</b> followed by its <b>aliases</b> (if any). You can click on any
-    to change immediately to that <em>working</em> <b>identity</b> or you can
-    <a href="/create_secid"><b>create a new alias</b></a>.
+    identity</b> followed by its <b>aliases</b> (if any).
   </p>
   <br />
   <ul>
@@ -21,11 +19,6 @@
       </b>
       (login identity)
       [<a href="/stewardships/{{ primid_fph }}">stewardships</a>]
-      {% else %}
-      [<a href="/secid/manage/{{ identity.fph }}">manage</a>]
-      <b>
-        <a href="/identity/change/{{ identity.fph }}">{{ identity.hrns }}</a>
-      </b>
       {% endif %}
     </li>
     {% endfor %}

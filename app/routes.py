@@ -166,7 +166,6 @@ from app.forms import CurrencyCreateForm
 from app.forms import AccountCreateForm
 from app.forms import AccountCreateFormMinimal
 from app.forms import NamespaceCreateForm
-from app.forms import SecidCreateForm
 from app.forms import SpecifyPayeeAccountForm
 from app.forms import SpecifyPayeeAgentForm
 from app.forms import SelectPayerAndPayeeAccountsForm
@@ -2045,7 +2044,6 @@ def create_namespace():
         # Check whether an entity with the proposed HRNS exists already.
         proposed_hrns = namespace_name + "." + parent_hrns
         if hrns_exists_already(proposed_hrns):
-            print("Groucho")
             flash(proposed_hrns + " is already registered")
             return redirect("/create_namespace")
 

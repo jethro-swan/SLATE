@@ -197,9 +197,8 @@ def import_csv_entity_set(data_set, entity_definition_file):
 #
 # The input fields are:
 #
-#   type        "primid"|"secid"
+#   type        "primid"
 #   identity    <HRNS string>
-#   primid      "" if type = primid, <HRNS string> if type = "secid"
 #   currency    <HRNS string> (initial currency must exist already)
 #   email       <email string>
 #   password    <password string>
@@ -230,7 +229,7 @@ def import_csv_entity_set(data_set, entity_definition_file):
 #        # The rest of the file is now read line by line:
 #        row = import_f.readline()
 #        col = row.split(",")
-#        if not ((col[0] == "primid") or (col[0] == "secid") \
+#        if not ((col[0] == "primid") \
 #                and re_hrns.match(col[1]) \
 #                and ((col[2] == "") or re_hrns.match(col[2])) \
 #                and re_hrns.match(col[3]) and re_email.match(col[4]) \
@@ -272,16 +271,6 @@ def import_csv_entity_set(data_set, entity_definition_file):
 #                             )
 #                report_line = "primid\t" + primid_fph + "\t" + id_hrns
 #                report.append(report_line)
-#            else: # type == "secid":
-#                if secid_exists(id_hrns):
-#                    report_line = "secid\t" + id_fph + " exists already"
-#                    report.append(report_line)
-#                    break
-#                if not primid_hrns:
-#                    report_line = "secid\t" + id_fph + " : primid not given"
-#                    report.append(report_line)
-#                    break
-#                secid_create(id_hrns, hrns_to_fph(primid_hrns))
 
 
 
