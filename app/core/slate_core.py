@@ -293,11 +293,11 @@ def create_entities_db(owner_fph):
             "CREATE TABLE IF NOT EXISTS namespaces (" \
             + "entity_fph TEXT PRIMARY KEY, " \
             + "active INTEGER NOT NULL DEFAULT 1, " \
+            + "open INTEGER NOT NULL DEFAULT 1, " \
             + "stewards_fph_list BLOB, " \
             + "sandbox INTEGER NOT NULL DEFAULT 0, " \
             + "default_currency_fph TEXT DEFAULT '', " \
             + "private INTEGER NOT NULL DEFAULT 0, " \
-            + "open INTEGER NOT NULL DEFAULT 1, " \
             + "owner_fph TEXT DEFAULT ''" \
             + ");"
         )
@@ -384,6 +384,7 @@ def create_entities_db(owner_fph):
             "CREATE TABLE IF NOT EXISTS currencies (" \
             + "entity_fph TEXT PRIMARY KEY, " \
             + "active INTEGER NOT NULL DEFAULT 1, " \
+            + "open INTEGER NOT NULL DEFAULT 1, " \
             + "private INTEGER NOT NULL DEFAULT 0, " \
             + "currency_prefix TEXT, " \
             + "currency_suffix TEXT, " \
@@ -1519,11 +1520,14 @@ def new_account(
         return "", "", currency_id + " is not a registered identifier"
     if not ("currency" in etypes):
         return "", "", currency_fph + " has no registered currency"
-    currency_fph, currency_hrns, active, private, sandbox, \
+    currency_fph, currency_hrns, \
+    active, open, private, sandbox, \
     currency_type, currency_category, currency_units, \
     currency_metrical_equivalence, currency_dimensions, \
     prefix, suffix, default_account_name, \
     stewards_list, m = get_currency_properties(currency_fph)
+    if not open:
+        return "", "", "Currency " + currency_hrns + " is not upon for use"
     if not re_slatename.match(account_name): # invalid *account* name provided
         account_name = default_account_name # from *currency*
     account_fph = register_identifier(account_hrns)
@@ -1658,11 +1662,15 @@ def get_default_currency(namespace_id):
 def get_currency_properties(currency_id):
     currency_fph, currency_hrns, etypes, m = identify_entity(currency_id)
     if m:
-        return "", "", False, False, False, "", "", "", [], m
+        return "", "", \
+               False, False, False, False, \
+               "", "", "", "", "", \
+               "", "", "", \
+               [], m
     with sqlite3.connect(ENTITIES_DB) as conn:
         cursor = conn.cursor()
         cursor.execute(
-            "SELECT active, private, sandbox, " \
+            "SELECT active, private, open, sandbox, " \
             + "type, category, units, metrical_equivalence, dimensions, " \
             + "currency_prefix, currency_suffix, default_account_name, " \
             + "stewards_fph_list FROM currencies WHERE entity_fph = ?",
@@ -1671,24 +1679,31 @@ def get_currency_properties(currency_id):
         result = cursor.fetchone()
     if result is None:
         m = "Currency " + fph_to_hrns(currency_fph) + " not found"
-        return "", "", False, False, False, "", "", "", [], m
+        return "", "", \
+               False, False, False, False, \
+               "", "", "", "", "", \
+               "", "", "", \
+               [], m
     #
     active = bool(result[0])
     private = bool(result[1])
-    sandbox = bool(result[2])
-    type = result[3]
-    category = result[4]
-    units = result[5]
-    metrical_equivalence = result[6]
-    dimensions = result[7]
-    prefix = result[8]
-    suffix = result[9]
-    default_account_name = result[10]
-    stewards_fph_blob = result[11]
+    open = bool(result[2])
+    sandbox = bool(result[3])
+    type = result[4]
+    category = result[5]
+    units = result[6]
+    metrical_equivalence = result[7]
+    dimensions = result[8]
+    prefix = result[9]
+    suffix = result[10]
+    default_account_name = result[11]
+    stewards_fph_blob = result[12]
     stewards_list = pickle.loads(stewards_fph_blob)
-    return currency_fph, currency_hrns, active, private, sandbox, \
+    return currency_fph, currency_hrns, \
+           active, open, private, sandbox, \
            type, category, units, metrical_equivalence, dimensions, \
-           prefix, suffix, default_account_name, stewards_list, ""
+           prefix, suffix, default_account_name, \
+           stewards_list, ""
 
 #==============================================================================
 ##
@@ -3116,9 +3131,9 @@ def complete_parent_namespace(identifier_hrns, primid_id):
     return ns_fph
 
 #==============================================================================
+#
 
-
-def set_activity_status_flag(entity_id, entity_type, active, primid_id):
+def set_activity_status_flag(entity_id, entity_type, active, steward_id):
 
     if entity_type == "namespace":
         table = "namespaces"
@@ -3132,11 +3147,11 @@ def set_activity_status_flag(entity_id, entity_type, active, primid_id):
     else:
         active_state = 0
 
-    primid_fph, primid_hrns, p_etypes, m = identify_entity(primid_id)
-    if not primid_fph:
-        return primid_id + " is not a registered identifier"
+    steward_fph, steward_hrns, p_etypes, m = identify_entity(steward_id)
+    if not steward_fph:
+        return steward_id + " is not a registered identifier"
     if not ("primid" in p_etypes):
-        return "Identifier " + primid_id + " has no login identity"
+        return "Identifier " + steward_hrns + " has no login identity"
 
     entity_fph, entity_hrns, etypes, m = identify_entity(entity_id)
     if not entity_fph:
@@ -3155,9 +3170,9 @@ def set_activity_status_flag(entity_id, entity_type, active, primid_id):
             cursor.close()
             return "The entity " + entity_hrns + " has no stewardships"
         stewards_fph_list = pickle.loads(result[0])
-        if not (primid_fph in stewards_fph_list):
+        if not (steward_fph in stewards_fph_list):
             cursor.close()
-            return primid_hrns + " is not a steward of " + entity_hrns
+            return steward_hrns + " is not a steward of " + entity_hrns
 
         cursor.execute(
             "UPDATE " + table + " SET active = ? WHERE entity_fph = ?",
@@ -3166,38 +3181,183 @@ def set_activity_status_flag(entity_id, entity_type, active, primid_id):
         conn.commit()
         cursor.close()
 
-def activate_currency(entity_id, primid_id):
-    return set_activity_status_flag(entity_id, "currency", True, primid_id)
-
-def deactivate_currency(entity_id, primid_id):
-    return set_activity_status_flag(entity_id, "currency", False, primid_id)
-
-def activate_namespace(entity_id, primid_id):
-    return set_activity_status_flag(entity_id, "namespace", True, primid_id)
-
-def deactivate_namespace(entity_id, primid_id):
-    return set_activity_status_flag(entity_id, "namespace", False, primid_id)
+    return ""
 
 
+def activate_currency(entity_id, steward_id):
+    return set_activity_status_flag(entity_id, "currency", True, steward_id)
 
+def deactivate_currency(entity_id, steward_id):
+    return set_activity_status_flag(entity_id, "currency", False, steward_id)
 
+def activate_namespace(entity_id, steward_id):
+    return set_activity_status_flag(entity_id, "namespace", True, steward_id)
 
-#def create_import_currency(currency_hrns, steward_fph):
-#    if not re_hrns.match(currency_hrns):
-#        return "", "", currency_hrns + " is invalid HRNS"
-#    steward_fph, m = hrns_to_fph("adm.cc")
-#    currency_fph, currency_hrns, etype, m = identify_entity(currency_hrns)
-#    if currency_fph: # the entity exists already
-#        return currency_fph, currency_hrns, currency_hrns + " exists already"
-#    name, parent_hrns = split_hrns(currency_hrns)
-#    parent_fph = complete_parent_namespace(parent_hrns)
-#    currency_fph, currency_hrns, \
-#    m = new_currency(
-#            name,
-#            parent_fph,
-#            steward_fph,
-#            "",
-#            "",
-#            name
-#        )
-#    return currency_fph, currency_hrns, ""
+def deactivate_namespace(entity_id, steward_id):
+    return set_activity_status_flag(entity_id, "namespace", False, steward_id)
+
+#==============================================================================
+#
+
+def set_open_status_flag(entity_id, entity_type, open, steward_id):
+
+    if entity_type == "namespace":
+        table = "namespaces"
+    elif entity_type == "currency":
+        table = "currencies"
+    else:
+        return "Invalid type specified: must be a namespace or currency"
+
+    if open:
+        open_state = 1
+    else:
+        open_state = 0
+
+    steward_fph, steward_hrns, p_etypes, m = identify_entity(steward_id)
+    if not steward_fph:
+        return steward_id + " is not a registered identifier"
+    if not ("primid" in p_etypes):
+        return "Identifier " + steward_id + " has no login identity"
+
+    entity_fph, entity_hrns, etypes, m = identify_entity(entity_id)
+    if not entity_fph:
+        return entity_id + " is not a registered identifier"
+    if not (entity_type in etypes):
+        return "Identifier " + entity_hrns + " has no " + entity_type
+
+    with sqlite3.connect(ENTITIES_DB) as conn:
+        cursor = conn.cursor()
+        cursor.execute(
+            "SELECT stewards_fph_list FROM " + table + " WHERE entity_fph = ?",
+            (entity_fph,)
+        )
+        result = cursor.fetchone()
+        if result is None: # (should never happen)
+            cursor.close()
+            return "The entity " + entity_hrns + " has no stewardships"
+        stewards_fph_list = pickle.loads(result[0])
+        if not (steward_fph in stewards_fph_list):
+            cursor.close()
+            return steward_hrns + " is not a steward of " + entity_hrns
+
+        cursor.execute(
+            "UPDATE " + table + " SET open = ? WHERE entity_fph = ?",
+            (open_state, entity_fph)
+        )
+        conn.commit()
+        cursor.close()
+
+    return ""
+
+def open_namespace(entity_id, steward_id):
+    return set_open_status_flag(entity_id, "currency", True, steward_id)
+
+def close_namespace(entity_id, steward_id):
+    return set_open_status_flag(entity_id, "currency", False, steward_id)
+
+def open_currency(entity_id, steward_id):
+    return set_open_status_flag(entity_id, "namespace", True, steward_id)
+
+def close_currency(entity_id, steward_id):
+    return set_activity_status_flag(entity_id, "namespace", False, steward_id)
+
+#==============================================================================
+#
+
+def add_or_remove_steward(
+        entity_id,          # HRNS or FPH identifier
+        entity_type,        # namespace | currency
+        operation,          # add | remove
+        auth_steward_id,    # The steward authorizing the change
+        other_steward_id    # The steward affected
+    ):
+
+    if entity_type == "namespace":
+        table = "namespaces"
+    elif entity_type == "currency":
+        table = "currencies"
+    else:
+        return "Invalid type specified: must be a namespace or currency"
+
+    # Is the authorizing steward a registered *primid*:
+    auth_steward_fph, auth_steward_hrns, p_etypes, \
+    m = identify_entity(auth_steward_id)
+    if not auth_steward_fph:
+        return auth_steward_id + " is not a registered identifier"
+    if not ("primid" in p_etypes):
+        return "Identifier " + auth_steward_id + " has no login identity"
+
+    # Is the affected steward a registered *primid*:
+    other_steward_fph, other_steward_hrns, p_etypes, \
+    m = identify_entity(other_steward_id)
+    if not other_steward_fph:
+        return other_steward_id + " is not a registered identifier"
+    if not ("primid" in p_etypes):
+        return "Identifier " + other_steward_id + " has no login identity"
+
+    entity_fph, entity_hrns, etypes, m = identify_entity(entity_id)
+    if not entity_fph:
+        return entity_id + " is not a registered identifier"
+    if not (entity_type in etypes):
+        return "Identifier " + entity_hrns + " has no " + entity_type
+
+    with sqlite3.connect(ENTITIES_DB) as conn:
+        cursor = conn.cursor()
+        cursor.execute(
+            "SELECT stewards_fph_list FROM " + table + " WHERE entity_fph = ?",
+            (entity_fph,)
+        )
+        result = cursor.fetchone()
+        if result is None: # (should never happen)
+            cursor.close()
+            return "The entity " + entity_hrns + " has no stewardships"
+        stewards_fph_list = pickle.loads(result[0])
+        if not (auth_steward_fph in stewards_fph_list):
+            cursor.close()
+            return auth_steward_hrns + " is not a steward of " + entity_hrns
+
+        if operation == "add":
+            if other_steward_fph in stewards_fph_list:
+                cursor.close()
+                return other_steward_hrns + " is already a steward of " \
+                       + entity_type + " " + entity_hrns
+            else:
+                stewards_fph_list.append(other_steward_fph)
+                conn.commit()
+                cursor.close()
+                return ""
+        elif operation == "remove":
+            if not (other_steward_fph in stewards_fph_list):
+                cursor.close()
+                return other_steward_hrns + " is not a steward of " \
+                       + entity_type + " " + entity_hrns
+            else:
+                stewards_fph_list.remove(other_steward_fph)
+                conn.commit()
+                cursor.close()
+                return ""
+        else:
+            cursor.close()
+            return ""
+
+    return ""
+
+def add_namespace_steward(entity_id, current_steward_id, new_steward_id):
+    return add_or_remove_steward(
+        entity_id, "namespace", "add", current_steward_id, new_steward_id
+    )
+
+def remove_namespace_steward(entity_id, current_steward_id, other_steward_id):
+    return add_or_remove_steward(
+        entity_id, "namespace", "remove", current_steward_id, other_steward_id
+    )
+
+def add_currency_steward(entity_id, current_steward_id, new_steward_id):
+    return add_or_remove_steward(
+        entity_id, "currency", "add", current_steward_id, new_steward_id
+    )
+
+def remove_currency_steward(entity_id, current_steward_id, other_steward_id):
+    return add_or_remove_steward(
+        entity_id, "currency", "remove", current_steward_id, other_steward_id
+    )

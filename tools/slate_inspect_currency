@@ -21,9 +21,11 @@ if not ("currency" in etypes):
     sys.exit(1)
 
 # fetch *currency* properties
-currency_fph, currency_hrns, active, private, sandbox, \
+currency_fph, currency_hrns, \
+active, open, private, sandbox, \
 account_type, account_category, units, metrical_equivalence, dimensions, \
-prefix, suffix, default_account_name, stewards_list, \
+prefix, suffix, default_account_name, \
+stewards_list, \
 m = get_currency_properties(identifier_fph)
 # set up table:
 currency_table = PrettyTable()
@@ -38,6 +40,11 @@ table_rows.append(table_row)
 # active?
 table_row = []
 table_row.append("active")
+table_row.append(truefalse(active))
+table_rows.append(table_row)
+# open?
+table_row = []
+table_row.append("open")
 table_row.append(truefalse(active))
 table_rows.append(table_row)
 # private?

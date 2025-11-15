@@ -1,0 +1,125 @@
+#!/home/slate/SLATE/venv/bin/python3
+
+import sys
+
+from app.core.slate_core import identify_entity
+from app.core.slate_core import activate_currency, deactivate_currency
+from app.core.slate_core import activate_namespace, deactivate_namespace
+from app.core.slate_core import open_namespace, close_namespace
+from app.core.slate_core import open_currency, close_currency
+from app.core.slate_core import add_namespace_steward, remove_namespace_steward
+from app.core.slate_core import add_currency_steward, remove_currency_steward
+
+# Called as:
+#   slate_manage_entity <steward_id> <type> <entity_id> <operation> <primid_id>
+
+def show_help():
+    print(
+        "slate_manage_entity <steward_id> <type> <entity_id> <operation> " \
+        + "<primid_id>\n\n" \
+        + "  steward_id:  HRNS or FPH of a steward of this entity\n" \
+        + "  type:        namespace | currency\n" \
+        + "  entity_id:   HRNS or FPH of the namespace or currency\n" \
+        + "  operation:   enable | disable | open | close " \
+        + " | add-steward | remove-steward\n" \
+        + "  primid_id:   HRNS or FPH of a steward to be added or removed"
+    )
+
+if (len(sys.argv) == 1) or (sys.argv[1] in ["h", "-h", "help", "--help"]):
+    show_help()
+    sys.exit(1)
+
+steward_id = sys.argv[1]
+steward_fph, steward_hrns, etypes, m = identify_entity(steward_id)
+if not steward_fph:
+    print(steward_id + " is not a registered identifier")
+    show_help()
+    sys.exit(1)
+elif not ("primid" in etypes):
+    print("No primary identity " + steward_hrns)
+    show_help()
+    sys.exit(1)
+
+entity_type = sys.argv[2]
+if not (entity_type in ["namespace", "currency"]):
+    print("The second argument must be 'namespace' or 'currency'\n")
+    show_help()
+    sys.exit(1)
+
+entity_id = sys.argv[3]
+entity_fph, entity_hrns, etypes, m = identify_entity(entity_id)
+if not (entity_type in etypes):
+    print("No " + entity_type + " at " + entity_hrns + " (" + entity_fph + ")")
+    show_help()
+    sys.exit(1)
+
+ops = ["enable", "disable", "open", "close", "add-steward", "remove-steward"]
+operation = sys.argv[4]
+if not (operation in ops):
+    print(operation + " is not a valid operation\n")
+    show_help()
+    sys.exit(1)
+
+if operation in ["add-steward", "remove-steward"]:
+    primid_id = sys.argv[5]
+    primid_fph, primid_hrns, etypes, m = identify_entity(primid_id)
+    if not ("primid" in etypes):
+        print("No primary identifier" + primid_hrns)
+        show_help()
+        sys.exit(1)
+    if entity_type == "namespace":
+        active, private, stewards_list, default_currency_fph, owner_fph, \
+        m = get_namespace_details(namespace_id)
+        if not (steward_fph in stewards_list):
+            print(steward_hrns + " is not a steward of " + entity_hrns)
+            show_help()
+            sys.exit(1)
+        elif operation == "add-steward":
+            add_steward(entity_id, current_steward_id, new_steward_id)
+            sys.exit(1)
+        elif operation == "remove-steward":
+            remove_steward(entity_id, current_steward_id, new_steward_id)
+            sys.exit(1)
+        elif operation == "open":
+            open_namespace(entity_id, steward_id)
+            sys.exit(1)
+        elif operation == "close":
+            close_namespace(entity_id, steward_id)
+            sys.exit(1)
+        elif operation == "enable":
+            activate_namespace(entity_id, steward_id)
+            sys.exit(1)
+        elif operation == "disable":
+            deactivate_namespace(entity_id, steward_id)
+            sys.exit(1)
+        else:
+            sys.exit(1)
+    elif entity_type == "currency":
+        currency_fph, currency_hrns, active, private, sandbox, \
+        type, category, units, metrical_equivalence, dimensions, \
+        prefix, suffix, default_account_name, stewards_list, \
+        m = get_currency_properties(entity_id)
+        if not (steward_fph in stewards_list):
+            print(steward_hrns + " is not a steward of " + entity_hrns)
+            show_help()
+            sys.exit(1)
+        elif operation == "add-steward":
+            add_steward(entity_id, current_steward_id, new_steward_id)
+            sys.exit(1)
+        elif operation == "remove-steward":
+            remove_steward(entity_id, current_steward_id, new_steward_id)
+            sys.exit(1)
+        elif operation == "open":
+            open_namespace(entity_id, steward_id)
+            sys.exit(1)
+        elif operation == "close":
+            close_namespace(entity_id, steward_id)
+            sys.exit(1)
+        elif operation == "enable":
+            activate_namespace(entity_id, steward_id)
+            sys.exit(1)
+        elif operation == "disable":
+            deactivate_namespace(entity_id, steward_id)
+            sys.exit(1)
+        else:
+            sys.exit(1)
