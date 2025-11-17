@@ -32,9 +32,8 @@ if (len(sys.argv) == 1) or (sys.argv[1] in ["h", "-h", "help", "--help"]):
     sys.exit(1)
 
 auth_id = sys.argv[1]
-auth_fph, auth_hrns, etypes, \
-m = identify_entity(auth_id)
-print(auth_hrns)
+auth_fph, auth_hrns, etypes, m = identify_entity(auth_id)
+#print(auth_hrns)
 if not auth_fph:
     print(auth_id + " is not a registered identifier")
     show_help()
@@ -45,7 +44,7 @@ elif not ("primid" in etypes):
     sys.exit(1)
 
 entity_type = sys.argv[2]
-print(entity_type)
+#print(entity_type)
 if not (entity_type in ["namespace", "currency"]):
     print("The second argument must be 'namespace' or 'currency'\n")
     show_help()
@@ -53,7 +52,7 @@ if not (entity_type in ["namespace", "currency"]):
 
 entity_id = sys.argv[3]
 entity_fph, entity_hrns, etypes, m = identify_entity(entity_id)
-print(entity_hrns)
+#print(entity_hrns)
 if not (entity_type in etypes):
     print("No " + entity_type + " at " + entity_hrns + " (" + entity_fph + ")")
     show_help()
@@ -61,7 +60,7 @@ if not (entity_type in etypes):
 
 ops = ["enable", "disable", "open", "close", "add-steward", "remove-steward"]
 operation = sys.argv[4]
-print(operation)
+#print(operation)
 if not (operation in ops):
     print(operation + " is not a valid operation\n")
     show_help()
