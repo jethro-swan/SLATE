@@ -8,6 +8,11 @@ from app.core.slate_core import list_currency_accounts
 from app.core.fph_hrns_maps import fph_to_hrns
 from app.core.display import truefalse
 
+if len(sys.argv) == 1:
+    print("Usage: slate_inspect_currency <currency_id>")
+    print("       slate_inspect_currency -A <currency_id>")
+    sys.exit(1)
+
 if sys.argv[1] == "-A": # list *accounts*?
     list_accounts = True
     entity_identifier = sys.argv[2] # identifier (FPH or HRNS)
@@ -45,7 +50,7 @@ table_rows.append(table_row)
 # open?
 table_row = []
 table_row.append("open")
-table_row.append(truefalse(active))
+table_row.append(truefalse(open))
 table_rows.append(table_row)
 # private?
 table_row = []
@@ -106,7 +111,7 @@ else:
         print("  " + steward_fph + " = " + fph_to_hrns(steward_fph))
 print()
 
-# *accounst*:
+# *accounts*:
 if list_accounts:
     print("\naccounts: ", end="")
     accounts_list = list_currency_accounts(currency_fph)
@@ -116,6 +121,10 @@ if list_accounts:
         print()
         for account_fph in accounts_list:
             print("  " + account_fph + " = " + fph_to_hrns(account_fph))
-    print()
+else:
+    print("Use")
+    print("   slate_inspect_currency -A <currency_id>")
+    print("if you want to list the accounts in this currency.")
+print()
 
 sys.exit(1)

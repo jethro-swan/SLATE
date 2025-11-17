@@ -294,11 +294,11 @@ def create_entities_db(owner_fph):
             + "entity_fph TEXT PRIMARY KEY, " \
             + "active INTEGER NOT NULL DEFAULT 1, " \
             + "open INTEGER NOT NULL DEFAULT 1, " \
-            + "stewards_fph_list BLOB, " \
+            + "private INTEGER NOT NULL DEFAULT 0, " \
             + "sandbox INTEGER NOT NULL DEFAULT 0, " \
             + "default_currency_fph TEXT DEFAULT '', " \
-            + "private INTEGER NOT NULL DEFAULT 0, " \
-            + "owner_fph TEXT DEFAULT ''" \
+            + "owner_fph TEXT DEFAULT '', " \
+            + "stewards_fph_list BLOB" \
             + ");"
         )
 
@@ -791,45 +791,6 @@ def entity_types_are_registered(entity_id, entity_types):
     else:
         return set(entity_types) <= set(etypes)
 
-#==============================================================================
-## Get *namespace* owner
-#
-# Here, the identifier of the private *namespace* may be that of a *primid* or
-# an *ahid*. Where these all share the same identifier, this will be the same
-# private *namespace*.
-
-def get_namespace_details(namespace_id):
-    namespace_fph, namespace_hrns, etypes, m = identify_entity(namespace_id)
-    # Is a *namespace* registered for this identifier?
-    if not ("namespace" in etypes):
-        return False, "", "Entity is not a namespace"
-    # Is at least one of the following types registered for this identifier?
-    if not (len(set(["primid", "ahid"]) & set(etypes)) > 0):
-        return False, "", "Entity cannot be a private namespace"
-    # Every identifier of a *primid* also identifies an *ahid*, but the
-    # identifier of any *ahid* other than one created alongside a *primid*
-    # cannot be used to identify a different *primid* subsequently.
-    with sqlite3.connect(ENTITIES_DB) as conn:
-        cursor = conn.cursor()
-        cursor.execute(
-            "SELECT " \
-            + "active, " \
-            + "private, " \
-            + "stewards_fph_list, " \
-            + "default_currency_fph, " \
-            + "owner_fph " \
-            + "FROM namespaces WHERE entity_fph = ?", (namespace_fph,)
-        )
-        result = cursor.fetchone()
-        cursor.close()
-    if result is None:
-        return False, "", "Namespace not registered"
-    active = bool(result[0])
-    private = bool(result[1])
-    stewards_list = pickle.loads(result[2])
-    default_currency_fph = result[3]
-    owner_fph = result[5]
-    return active, private, stewards_list, default_currency_fph, owner_fph, ""
 
 #==============================================================================
 ## Check whether an entity is currently active:
@@ -918,7 +879,8 @@ def list_currency_accounts(currency_id):
     if results is not None:
         accounts = []
         for result in results:
-            accounts.append(result[0])
+            account_fph = result[0]
+            accounts.append(account_fph)
         return accounts
     else:
         return []
@@ -1262,7 +1224,8 @@ def new_ahid(
         # (2) it is assigned the default *currency* of its parent *namespace*.
         stewards_fph_list = []
         stewards_fph_list.append(primid_fph)
-        active, sandbox, private, owner_fph, currency_fph, stewards_list, \
+        active, open, sandbox, private, owner_fph, \
+        currency_fph, stewards_list, \
         m = get_namespace_properties(parent_fph)
         with sqlite3.connect(ENTITIES_DB) as conn:
             cursor = conn.cursor()
@@ -1565,7 +1528,9 @@ def new_account(
         )
         result = cursor.fetchone()
         accounts_fph_list = pickle.loads(result[0])
+        print(accounts_fph_list)
         accounts_fph_list.append(account_fph)
+        print(accounts_fph_list)
         accounts_fph_blob = pickle.dumps(accounts_fph_list)
         cursor.execute(
             "UPDATE " + table + " SET accounts_fph_list = ?" \
@@ -1587,29 +1552,37 @@ def new_account(
 def get_namespace_properties(namespace_id):
     namespace_fph, namespace_hrns, etypes, m = identify_entity(namespace_id)
     if m:
-        return False, False, False, "", "", [], m
+        return False, False, False, False, "", "", [], m
+    # Is a *namespace* registered for this identifier?
+    if not ("namespace" in etypes):
+        return False, False, False, False, "", "", [], "Not a namespace"
+    # Is at least one of the following types registered for this identifier?
+#    if not (len(set(["primid", "ahid"]) & set(etypes)) > 0):
+#        return False, "", "Entity cannot be a private namespace"
     with sqlite3.connect(ENTITIES_DB) as conn:
         cursor = conn.cursor()
         # Add the stewarded entity's FPH to the *primid*'s stewardships list:
         cursor.execute(
-            "SELECT active, sandbox, private, owner_fph, stewards_fph_list, " \
-            + "default_currency_fph FROM namespaces " \
-            + "WHERE entity_fph = ?", (namespace_fph,)
+            "SELECT active, open, sandbox, private, owner_fph, " \
+            + "stewards_fph_list, default_currency_fph " \
+            + "FROM namespaces WHERE entity_fph = ?", (namespace_fph,)
         )
         result = cursor.fetchone()
         cursor.close()
     if result is None:
         m = "Namespace " + fph_to_hrns(namespace_fph) + " not found"
-        return False, False, False, "", "", [], m
+        return False, False, False, False, "", "", [], m
     else:
         active = bool(result[0])
-        sandbox = bool(result[1])
-        private = bool(result[2])
-        owner_fph = result[3]
-        stewards_fph_blob = result[4]
-        currency_fph = result[5]
+        open = bool(result[1])
+        sandbox = bool(result[2])
+        private = bool(result[3])
+        owner_fph = result[4]
+        stewards_fph_blob = result[5]
+        currency_fph = result[6]
         stewards_list = pickle.loads(stewards_fph_blob)
-    return active, sandbox, private, owner_fph, currency_fph, stewards_list, ""
+    return active, open, sandbox, private, \
+           owner_fph, currency_fph, stewards_list, ""
 
 #==============================================================================
 ## Set the default *currency* for the *namespace*. This will usually be set
@@ -2962,7 +2935,7 @@ def new_pairing(
             if not ("namespace" in etypes): # (should never happen)
                 print("Panic! " + parent_hrns + " has no registered namespace")
             # The parent *namespace* details are retrieved:
-            active, sandbox, private, owner_fph, \
+            active, open, sandbox, private, owner_fph, \
             parent_currency_fph, stewards_list, \
             m = get_namespace_properties(parent_fph)
             # Its new child *namespace* is created
@@ -3159,6 +3132,11 @@ def set_activity_status_flag(entity_id, entity_type, active, steward_id):
     if not (entity_type in etypes):
         return "Identifier " + entity_hrns + " has no " + entity_type
 
+#    print("active_state = " + str(active_state))
+#    print("entity_hrns = " + entity_hrns)
+#    print("steward_hrns = " + steward_hrns)
+
+
     with sqlite3.connect(ENTITIES_DB) as conn:
         cursor = conn.cursor()
         cursor.execute(
@@ -3172,7 +3150,13 @@ def set_activity_status_flag(entity_id, entity_type, active, steward_id):
         stewards_fph_list = pickle.loads(result[0])
         if not (steward_fph in stewards_fph_list):
             cursor.close()
+            print(steward_hrns + " is not a steward of " + entity_hrns)
             return steward_hrns + " is not a steward of " + entity_hrns
+
+#        print("active_state = " + str(active_state))
+#        print("entity_hrns = " + entity_hrns)
+#        print("steward_hrns = " + steward_hrns)
+#        print("table = " + table)
 
         cursor.execute(
             "UPDATE " + table + " SET active = ? WHERE entity_fph = ?",
@@ -3215,14 +3199,18 @@ def set_open_status_flag(entity_id, entity_type, open, steward_id):
 
     steward_fph, steward_hrns, p_etypes, m = identify_entity(steward_id)
     if not steward_fph:
+        print(steward_id + " is not a registered identifier")
         return steward_id + " is not a registered identifier"
     if not ("primid" in p_etypes):
+        print("Identifier " + steward_id + " has no login identity")
         return "Identifier " + steward_id + " has no login identity"
 
     entity_fph, entity_hrns, etypes, m = identify_entity(entity_id)
     if not entity_fph:
+        print(entity_id + " is not a registered identifier")
         return entity_id + " is not a registered identifier"
     if not (entity_type in etypes):
+        print("Identifier " + entity_hrns + " has no " + entity_type)
         return "Identifier " + entity_hrns + " has no " + entity_type
 
     with sqlite3.connect(ENTITIES_DB) as conn:
@@ -3234,12 +3222,14 @@ def set_open_status_flag(entity_id, entity_type, open, steward_id):
         result = cursor.fetchone()
         if result is None: # (should never happen)
             cursor.close()
+            print("The entity " + entity_hrns + " has no stewardships")
             return "The entity " + entity_hrns + " has no stewardships"
         stewards_fph_list = pickle.loads(result[0])
         if not (steward_fph in stewards_fph_list):
             cursor.close()
+            print(steward_hrns + " is not a steward of " + entity_hrns)
             return steward_hrns + " is not a steward of " + entity_hrns
-
+        print(entity_type + " " + entity_hrns + " set to " + str(open_state))
         cursor.execute(
             "UPDATE " + table + " SET open = ? WHERE entity_fph = ?",
             (open_state, entity_fph)
@@ -3250,16 +3240,16 @@ def set_open_status_flag(entity_id, entity_type, open, steward_id):
     return ""
 
 def open_namespace(entity_id, steward_id):
-    return set_open_status_flag(entity_id, "currency", True, steward_id)
-
-def close_namespace(entity_id, steward_id):
-    return set_open_status_flag(entity_id, "currency", False, steward_id)
-
-def open_currency(entity_id, steward_id):
     return set_open_status_flag(entity_id, "namespace", True, steward_id)
 
+def close_namespace(entity_id, steward_id):
+    return set_open_status_flag(entity_id, "namespace", False, steward_id)
+
+def open_currency(entity_id, steward_id):
+    return set_open_status_flag(entity_id, "currency", True, steward_id)
+
 def close_currency(entity_id, steward_id):
-    return set_activity_status_flag(entity_id, "namespace", False, steward_id)
+    return set_open_status_flag(entity_id, "currency", False, steward_id)
 
 #==============================================================================
 #
@@ -3323,9 +3313,6 @@ def add_or_remove_steward(
                        + entity_type + " " + entity_hrns
             else:
                 stewards_fph_list.append(other_steward_fph)
-                conn.commit()
-                cursor.close()
-                return ""
         elif operation == "remove":
             if not (other_steward_fph in stewards_fph_list):
                 cursor.close()
@@ -3333,12 +3320,17 @@ def add_or_remove_steward(
                        + entity_type + " " + entity_hrns
             else:
                 stewards_fph_list.remove(other_steward_fph)
-                conn.commit()
-                cursor.close()
-                return ""
         else:
             cursor.close()
             return ""
+        cursor.execute(
+            "UPDATE " + table + " SET stewards_fph_list = ? " \
+            + "WHERE entity_fph = ?",
+            (pickle.dumps(stewards_fph_list), entity_fph)
+        )
+        conn.commit()
+        cursor.close()
+        return ""
 
     return ""
 
