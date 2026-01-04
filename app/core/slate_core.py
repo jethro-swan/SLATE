@@ -1271,6 +1271,12 @@ def ahid_is_robot(ahid_id):
 #==============================================================================
 ## A new *namespace* is created:
 
+## TO DO:
+## (1) Add "private" to the parameters list.
+## (2) If the parent *namespace* is not within the specified _steward_'s
+##     private *namespace* tree, check that it is _open_.
+
+
 def new_namespace(
         nsname,
         parent_id,
@@ -1528,9 +1534,9 @@ def new_account(
         )
         result = cursor.fetchone()
         accounts_fph_list = pickle.loads(result[0])
-        print(accounts_fph_list)
+        #print(accounts_fph_list)
         accounts_fph_list.append(account_fph)
-        print(accounts_fph_list)
+        #print(accounts_fph_list)
         accounts_fph_blob = pickle.dumps(accounts_fph_list)
         cursor.execute(
             "UPDATE " + table + " SET accounts_fph_list = ?" \
@@ -1624,6 +1630,7 @@ def get_default_currency(namespace_id):
             + "WHERE entity_fph = ?", (entity_fph,)
         )
         result = cursor.fetchone()
+        cursor.close()
     if result is None:
         return "Default currency cannot be identified"
     else:
@@ -3150,7 +3157,7 @@ def set_activity_status_flag(entity_id, entity_type, active, steward_id):
         stewards_fph_list = pickle.loads(result[0])
         if not (steward_fph in stewards_fph_list):
             cursor.close()
-            print(steward_hrns + " is not a steward of " + entity_hrns)
+#            print(steward_hrns + " is not a steward of " + entity_hrns)
             return steward_hrns + " is not a steward of " + entity_hrns
 
 #        print("active_state = " + str(active_state))
@@ -3199,18 +3206,18 @@ def set_open_status_flag(entity_id, entity_type, open, steward_id):
 
     steward_fph, steward_hrns, p_etypes, m = identify_entity(steward_id)
     if not steward_fph:
-        print(steward_id + " is not a registered identifier")
+#        print(steward_id + " is not a registered identifier")
         return steward_id + " is not a registered identifier"
     if not ("primid" in p_etypes):
-        print("Identifier " + steward_id + " has no login identity")
+#        print("Identifier " + steward_id + " has no login identity")
         return "Identifier " + steward_id + " has no login identity"
 
     entity_fph, entity_hrns, etypes, m = identify_entity(entity_id)
     if not entity_fph:
-        print(entity_id + " is not a registered identifier")
+#        print(entity_id + " is not a registered identifier")
         return entity_id + " is not a registered identifier"
     if not (entity_type in etypes):
-        print("Identifier " + entity_hrns + " has no " + entity_type)
+#        print("Identifier " + entity_hrns + " has no " + entity_type)
         return "Identifier " + entity_hrns + " has no " + entity_type
 
     with sqlite3.connect(ENTITIES_DB) as conn:
@@ -3222,14 +3229,14 @@ def set_open_status_flag(entity_id, entity_type, open, steward_id):
         result = cursor.fetchone()
         if result is None: # (should never happen)
             cursor.close()
-            print("The entity " + entity_hrns + " has no stewardships")
+#            print("The entity " + entity_hrns + " has no stewardships")
             return "The entity " + entity_hrns + " has no stewardships"
         stewards_fph_list = pickle.loads(result[0])
         if not (steward_fph in stewards_fph_list):
             cursor.close()
-            print(steward_hrns + " is not a steward of " + entity_hrns)
+#            print(steward_hrns + " is not a steward of " + entity_hrns)
             return steward_hrns + " is not a steward of " + entity_hrns
-        print(entity_type + " " + entity_hrns + " set to " + str(open_state))
+#        print(entity_type + " " + entity_hrns + " set to " + str(open_state))
         cursor.execute(
             "UPDATE " + table + " SET open = ? WHERE entity_fph = ?",
             (open_state, entity_fph)
@@ -3353,3 +3360,73 @@ def remove_currency_steward(entity_id, current_steward_id, other_steward_id):
     return add_or_remove_steward(
         entity_id, "currency", "remove", current_steward_id, other_steward_id
     )
+
+
+def set_currency_parameter(currency_id, parameter, ctype, steward_id):
+
+    currency_fph, currency_hrns, \
+    active, open, private, sandbox, \
+    currency_type, currency_category, currency_units, \
+    currency_metrical_equivalence, currency_dimensions, \
+    prefix, suffix, default_account_name, \
+    stewards_list, m = get_currency_properties(currency_id)
+    if not currency_fph:
+        return currency_id + " is not a registered identifier"
+
+    steward_fph, steward_hrns, etypes, m = identify_entity(steward_id)
+    if not steward_fph:
+        return steward_id + " is not a registered identifier"
+    if not ("primid" in etypes):
+        return steward_hrns + " is not a registered primid"
+    if not (steward_fph in stewards_list):
+        return steward_hrns + " is not a steward of " + currency_hrns
+
+    if parameter == "type":
+        if ctype in [
+                        "scalar", "vector", "matrix",
+                        "tuple", "mapping", "pointer",
+                        "time_series", "trigger_threshold"
+                    ]:
+            if ctype == currency_type: # nothing to change
+                return ""
+            else:
+                with sqlite3.connect(ENTITIES_DB) as conn:
+                    cursor = conn.cursor()
+                    cursor.execute(
+                        "UPDATE currencies SET type = ? WHERE entity_fph = ?",
+                        (ctype, currency_fph)
+                    )
+                    conn.commit()
+                    cursor.close()
+        else:
+            return(ctype + " is invalid for " + parameter)
+    elif parameter == "category":
+        if ctype in ["money", "count", "vote", "measure"]:
+            if ctype == currency_category: # nothing to change
+                return ""
+            else:
+                with sqlite3.connect(ENTITIES_DB) as conn:
+                    cursor = conn.cursor()
+                    cursor.execute(
+                        "UPDATE currencies SET category = ? " \
+                        + "WHERE entity_fph = ?",
+                        (ctype, currency_fph)
+                    )
+                    conn.commit()
+                    cursor.close()
+
+
+    elif parameter == "units":
+        return ""
+    elif parameter == "metrical_equivalence":
+        return ""
+    elif parameter == "dimensions":
+        return ""
+
+    else:
+        return ""
+
+
+
+
+    return ""

@@ -3042,7 +3042,8 @@ def messages_clear(recipient_fph):
 
     delete_all_messages(recipient_fph)
 
-    return redirect("/message/show/" + recipient_fph)
+    #return redirect("/message/show/" + recipient_fph)
+    return redirect("/message/list")
 
 #==============================================================================
 #

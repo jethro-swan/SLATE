@@ -11,6 +11,7 @@ from app.core.slate_core import open_namespace, close_namespace
 from app.core.slate_core import open_currency, close_currency
 from app.core.slate_core import add_namespace_steward, remove_namespace_steward
 from app.core.slate_core import add_currency_steward, remove_currency_steward
+from app.core.slate_core import set_currency_parameter
 
 # Called as:
 #   slate_manage_entity <auth_id> <type> <entity_id> <op> <auth_id>
@@ -18,13 +19,13 @@ from app.core.slate_core import add_currency_steward, remove_currency_steward
 def show_help():
     print(
         "slate_manage_entity <auth_id> <type> <entity_id> " \
-        + "<operation> <auth_id>\n\n" \
-        + "  auth_id:    HRNS or FPH of an existing steward of this entity\n" \
-        + "  type:       namespace | currency\n" \
-        + "  entity_id:  HRNS or FPH of the namespace or currency\n" \
-        + "  operation:  enable | disable | open | close " \
+        + "<operation>      <auth_id>\n\n" \
+        + "  auth_id:       HRNS or FPH of an existing steward\n" \
+        + "  entirty_type:  namespace | currency\n" \
+        + "  entity_id:     HRNS or FPH of the namespace or currency\n" \
+        + "  operation:     enable | disable | open | close " \
         + " | add-steward | remove-steward\n" \
-        + "  auth_id: HRNS or FPH of a steward to be added or removed"
+        + "  auth_id:       HRNS or FPH of a steward to be added or removed"
     )
 
 if (len(sys.argv) == 1) or (sys.argv[1] in ["h", "-h", "help", "--help"]):
@@ -58,7 +59,10 @@ if not (entity_type in etypes):
     show_help()
     sys.exit(1)
 
-ops = ["enable", "disable", "open", "close", "add-steward", "remove-steward"]
+ops = [
+        "enable", "disable", "open", "close", "add-steward", "remove-steward",
+        "type", "category", "units", "metrical-equivalence"
+      ]
 operation = sys.argv[4]
 #print(operation)
 if not (operation in ops):
@@ -68,13 +72,18 @@ if not (operation in ops):
 
 if operation in ["add-steward", "remove-steward"]:
     steward_id = sys.argv[5]
-    steward_fph, steward_hrns, etypes, \
-    m = identify_entity(steward_id)
+    steward_fph, steward_hrns, etypes, m = identify_entity(steward_id)
     if not ("primid" in etypes):
         print("No primary identifier" + steward_hrns)
         show_help()
         sys.exit(1)
-#
+elif operation in ["type", "category", "units", "metrical-equivalence"]:
+    ctype = sys.argv[5]
+    if entity_type != "currency":
+        print("Applicable only to currencies")
+        show_help()
+        sys.exit(1)
+
 if entity_type == "namespace":
     active, open, sandbox, private, stewards_list, \
     default_currency_fph, owner_fph, \
@@ -129,6 +138,11 @@ elif entity_type == "currency":
         sys.exit(1)
     elif operation == "disable":
         deactivate_namespace(entity_id, auth_id)
+        sys.exit(1)
+    elif operation in ["type", "category", "units", "metrical-equivalence"]:
+        m = set_currency_parameter(currency_id, parameter, ctype, steward_id)
+        if m:
+            print(m)
         sys.exit(1)
     else:
         sys.exit(1)
