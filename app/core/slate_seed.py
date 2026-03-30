@@ -121,7 +121,8 @@ def create_seed_entities():
     seed_primid_access_token    = ""    # EDIT
 
     # Override values if defined:
-    fname = os.getcwd() + "/seed_primid_details.txt"
+    fname = "/home/slate/SLATE/seed_primid_details.txt"
+    #fname = os.getcwd() + "/seed_primid_details.txt"
     with open(fname, "r") as f:
         primid_details = f.readlines()
     for line in primid_details:

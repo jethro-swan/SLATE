@@ -65,6 +65,12 @@ def create_messages_db():
         # copy has been saved.
 #        fcopy(MESSAGES_DB, DB_BKP_DIR + '/messages_' + timestamp() + '.db')
         os.remove(MESSAGES_DB)
+    conn = sqlite3.connect(MESSAGES_DB)
+    conn.execute("PRAGMA user_version;")
+    conn.close()
+    # set permissions to 660 (rw-rw----)
+    os.chmod(MESSAGES_DB, 0o660)
+
 
     with sqlite3.connect(MESSAGES_DB) as conn:
         cursor = conn.cursor()

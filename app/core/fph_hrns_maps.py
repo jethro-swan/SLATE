@@ -55,6 +55,12 @@ def create_maps(): # SQLite
     T = timestamp()
     if os.path.exists(MAP_DB):
         os.remove(MAP_DB)
+    # create or open DB (this creates the file if it doesn't exist)
+    conn = sqlite3.connect(MAP_DB)
+    conn.execute("PRAGMA user_version;")
+    conn.close()
+    # set permissions to 660 (rw-rw----)
+    os.chmod(MAP_DB, 0o660)
 
     substrate_fph = nshash("")
 

@@ -379,7 +379,8 @@ def register():
         # using the new *login identity* (*primid*) as the *ahid*:
         if hub_mode == "slate":
             a_fph = new_pairing(primid_fph, primid_hrns, currency_hrns)
-            return redirect("/")
+            return redirect("/login")
+#            return redirect("/")
 
         # Otherwise, an initial *account* is created (in the new *primid*'s
         # private *namespace*) using the default name associated with the
@@ -397,7 +398,8 @@ def register():
                 flash("The account cannot be created. See error log.")
                 return redirect("/register")
             flash(account_hrns + " created in currency " + currency_hrns)
-            return redirect("/")
+#            return redirect("/")
+            return redirect("/login")
 
     # If control has reached this point then the new *primid* has been created.
     # Its SSH CLI access token has been recorded already and will be visible to

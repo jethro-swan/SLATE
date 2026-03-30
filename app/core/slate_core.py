@@ -62,7 +62,13 @@ def create_hubs_db():
         # If the database exists already, it is deleted after a time-stamped
         # copy has been saved.
         os.remove(HUBS_DB)
-    #
+        # create or open DB (this creates the file if it doesn't exist)
+    conn = sqlite3.connect(HUBS_DB)
+    conn.execute("PRAGMA user_version;")
+    conn.close()
+    # set permissions to 660 (rw-rw----)
+    os.chmod(HUBS_DB, 0o660)
+
     with sqlite3.connect(HUBS_DB) as conn:
         cursor = conn.cursor()
         # The initial values for the following details are read from a
@@ -231,6 +237,12 @@ def create_identifiers_db():
     if os.path.exists(IDENTIFIERS_DB):
         # If the database exists already, it is deleted.
         os.remove(IDENTIFIERS_DB)
+    # create or open DB (this creates the file if it doesn't exist)
+    conn = sqlite3.connect(IDENTIFIERS_DB)
+    conn.execute("PRAGMA user_version;")
+    conn.close()
+    # set permissions to 660 (rw-rw----)
+    os.chmod(IDENTIFIERS_DB, 0o660)
 
     with sqlite3.connect(IDENTIFIERS_DB) as conn:
         cursor = conn.cursor()
@@ -263,6 +275,13 @@ def create_entities_db(owner_fph):
     if os.path.exists(ENTITIES_DB):
         # If the database exists already, it is deleted.
         os.remove(ENTITIES_DB)
+    #
+    # create or open DB (this creates the file if it doesn't exist)
+    conn = sqlite3.connect(ENTITIES_DB)
+    conn.execute("PRAGMA user_version;")
+    conn.close()
+    # set permissions to 660 (rw-rw----)
+    os.chmod(ENTITIES_DB, 0o660)
 
     # If this entity is a *private namespace* (one that shares an identifier
     # with a *primid* or an *ahid*, or which has ramified from such a
@@ -335,10 +354,31 @@ def create_entities_db(owner_fph):
             + "password_hash BLOB NOT NULL, " \
             + "pin TEXT, " \
             + "access_token_hash BLOB, " \
-            + "administrator INTEGER NOT NULL DEFAULT 0" \
+            + "administrator INTEGER NOT NULL DEFAULT 0, " \
+            + "registry_namesapce TEXT, " \
+            + "initial_currency TEXT, " \
+            + "one_identity INTEGER NOT NULL DEFAULT 1, " \
+            + "one_currency INTEGER NOT NULL DEFAULT 1" \
             + ");"
         )
-       # Create *ahids* (*account-holder identities*) table:
+        #
+        # 2026-03-30 The following four tables have been added:
+        #
+        #   registry_namesapce  FPH         The *namespace* in which this
+        #                                   *primid* has been registered.
+        #
+        #   initial_currency    FPH         The initial *currency* for which
+        #                                   this *primid* has been registered.
+        #
+        #   one_identity        boolean     This agent has only one *identity*.
+        #
+        #   one_currency        boolean     This agent has only one *currency*.
+        #
+        # These have been added to allow suppression (masking) of the ancestor
+        # identifier string for neophytes having only one of each.
+        #
+        #----------------------------------------------------------------------
+        # Create *ahids* (*account-holder identities*) table:
         #
         cursor.execute(
             "CREATE TABLE IF NOT EXISTS ahids (" \

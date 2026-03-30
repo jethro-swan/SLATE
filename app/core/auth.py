@@ -55,7 +55,7 @@ def list_password_characters():
            + "   upper case letters\n" \
            + "   lower case letters\n" \
            + "   numbers\n" \
-           + "   !#$%&()*+,-./:;<=>?@[\]^_`{|}~\n" \
+           + "   !#$%&()*+,-./:;<=>?@\[\]^_`{|}~\n" \
            + "and must contain at least one of each type."  \
            + "It must be at least 16 characters in length."
 
@@ -78,7 +78,7 @@ def generate_password(min_length):
     n_alphac = min_length - n_pchars - n_digits
     valid_chars = string.ascii_letters \
                 + string.digits \
-                + "!#$%&()*+,-./:;<=>?@[\]^_`{|}~"
+                + "!#$%&()*+,-./:;<=>?@\[\]^_`{|}~"
     pwd = []
     for i in range(pwd_length):
         pwd.append(random.choice(valid_chars))

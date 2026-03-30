@@ -53,6 +53,11 @@ def create_payments_db(owner_fph):
     if os.path.exists(PAYMENTS_DB):
         # If the database exists already, it is deleted.
         os.remove(PAYMENTS_DB)
+    conn = sqlite3.connect(PAYMENTS_DB)
+    conn.execute("PRAGMA user_version;")
+    conn.close()
+    # set permissions to 660 (rw-rw----)
+    os.chmod(PAYMENTS_DB, 0o660)
 
     ENTITIES_DB = select_db_filepath("payments", owner_fph)
 

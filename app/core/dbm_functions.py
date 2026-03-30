@@ -8,7 +8,8 @@ from base64 import b64encode
 #------------------------------------------------------------------------------
 # Create new empty map:
 def dbm_create_map(dbm_file):
-    with dbm.open(dbm_file, "n", 0o600) as db:
+    #with dbm.open(dbm_file, "n", 0o600) as db:
+    with dbm.open(dbm_file, "n", 0o660) as db:
     #with dbm.sqlite3.open(dbm_file, /, "n", 0o600) as db:
         db.get("")
 

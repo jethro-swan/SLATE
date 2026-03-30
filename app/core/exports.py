@@ -77,6 +77,29 @@ def list_payments_in_currency(currency_id):
     for payment in all_payments:
         payment_row = []
         p = list(payment)
+
+#        timestamp = p[0]
+#        payment_id = str(p[1])
+#        payer_hrns = fph_to_hrns(p[2])          # *account* or *ahid*
+#        payee_hrns = fph_to_hrns(p[3])          # *account* or *ahid*
+#        amount = integer_to_money_s_format(p[4])
+#        payer_balance = integer_to_money_s_format(p[5])
+#        payee_balance = integer_to_money_s_format(p[6])
+#        annotation = p[7]
+#        payment_row.append(timestamp)           # timestamp
+#        #payment_row.append(str(p[1]).zfill(8)) # payment number
+#        payment_row.append(payment_id)          # payment number
+#        payment_row.append(payer_hrns)          # payer *ahid* HRNS
+#        payment_row.append(payee_hrns)          # payee  *ahid* HRNS
+#        if hub_mode == "slate":
+#            payment_row.append(currency_hrns)   # currency HRNS
+#        payment_row.append(amount)              # amount paid
+#        payment_row.append(payer_balance)       # payer balance
+#        payment_row.append(payee_balance)       # payee balance
+#        payment_row.append(annotation)          # annotation
+#        payments_list.append(payment_row)
+
+        # Re-ordered 2026-02-22:
         timestamp = p[0]
         payment_id = str(p[1])
         payer_hrns = fph_to_hrns(p[2])          # *account* or *ahid*
@@ -85,18 +108,20 @@ def list_payments_in_currency(currency_id):
         payer_balance = integer_to_money_s_format(p[5])
         payee_balance = integer_to_money_s_format(p[6])
         annotation = p[7]
+        if hub_mode == "slate":
+            payment_row.append(currency_hrns)   # currency HRNS
+        payment_row.append(payer_hrns)          # payer *ahid* HRNS
+        payment_row.append(payee_hrns)          # payee  *ahid* HRNS
+        payment_row.append(amount)              # amount paid
+        payment_row.append(annotation)          # annotation
         payment_row.append(timestamp)           # timestamp
         #payment_row.append(str(p[1]).zfill(8)) # payment number
         payment_row.append(payment_id)          # payment number
-        payment_row.append(payer_hrns)          # payer *ahid* HRNS
-        payment_row.append(payee_hrns)          # payee  *ahid* HRNS
-        if hub_mode == "slate":
-            payment_row.append(currency_hrns)   # currency HRNS
-        payment_row.append(amount)              # amount paid
         payment_row.append(payer_balance)       # payer balance
         payment_row.append(payee_balance)       # payee balance
-        payment_row.append(annotation)          # annotation
         payments_list.append(payment_row)
+
+
 
 #        print(payment_row)
 
@@ -248,16 +273,27 @@ def dump_currency_payments_csv(currency_id, show_header_row = True):
     with open(csv_export_filepath, "w") as csv_f:
         if show_header_row:
             if hub_mode == "slate":
+#                csv_f.write(
+#                    "date and time" + SC \
+#                    + "payment number" + SC \
+#                    + "payer" + SC \
+#                    + "payee" + SC \
+#                    + "currency" + SC \
+#                    + "payer balance" + SC \
+#                    + "payee balance" + SC \
+#                    + "amount" + SC \
+#                    + "annotation\n"
+#                )
                 csv_f.write(
-                    "date and time" + SC \
-                    + "payment number" + SC \
+                    "currency" + SC \
                     + "payer" + SC \
                     + "payee" + SC \
-                    + "currency" + SC \
-                    + "payer balance" + SC \
-                    + "payee balance" + SC \
                     + "amount" + SC \
-                    + "annotation\n"
+                    + "annotation" + SC \
+                    + "date and time" + SC \
+                    + "payment number" + SC \
+                    + "payer balance" + SC \
+                    + "payee balance\n"
                 )
             else:
                 csv_f.write(
