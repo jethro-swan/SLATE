@@ -24,10 +24,6 @@ def not_found_error(error):
 #        version = get_version()
 #    ), 404
 
-
-
-
-
 @app.errorhandler(500)
 def internal_error(error):
     return render_template(

@@ -15,6 +15,7 @@ from app.core.fph_hrns_maps import hrns_to_fph, fph_to_hrns
 from app.core.fph_hrns_maps import hrns_exists_already
 from app.core.slate_core import new_namespace, new_currency, new_account
 from app.core.slate_core import new_primid, new_secid
+#from app.core.slate_core import new_primid, new_ahid
 from app.core.slate_core import identify_entity, get_currency_name
 from app.core.slate_core import list_primid_accounts, list_secid_accounts
 from app.core.slate_core import list_primid_currencies, list_secid_currencies

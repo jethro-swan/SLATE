@@ -382,9 +382,19 @@ def create_seed_entities():
 def create_quasitld_set(full = False):
 
     if full:
-        cctld_list_here = cctld_list
+        cctld_list_here = cctld_list            # imported from cctld_list.py
     else:
-        cctld_list_here = cctld_reduced_list
+        cctld_list_here = cctld_reduced_list    # imported from cctld_list.py
+
+    # 2026-04-02: kludge for Diss, etc.
+    #
+    # These have been added to simplify things for the pilot projects emerging.
+    #
+    cctld_list_here.append("diss")
+    cctld_list_here.append("dalton")
+    cctld_list_here.append("clapton")
+
+
 
     # These are recreated here in case it is necessary to callthis function
     # before create_seed_entities( ).

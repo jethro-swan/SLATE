@@ -330,9 +330,9 @@ def dump_account_payments_csv(account_id, show_header_row = False):
 
     payment_rows, m = list_payments_for_account(account_id)
 
-    print("export journal: rows retrieved for CSV file")
-    for row in payment_rows:
-        print(row)
+#    print("export journal: rows retrieved for CSV file")
+#    for row in payment_rows:
+#        print(row)
 
     if hub_mode == "slate":
         currency_fph, owner_fph, balance, volume, active, \
@@ -346,7 +346,7 @@ def dump_account_payments_csv(account_id, show_header_row = False):
         csv_filename = "account_" + fph_to_hrns(account_fph) + "_journal_" \
                      + timestamp() + ".csv"
 
-    print("export journal: ready to compile journal CSV file")
+#    print("export journal: ready to compile journal CSV file")
 
     csv_export_filepath = os.path.join(app.root_path, "export", csv_filename)
     with open(csv_export_filepath, "w") as csv_f:

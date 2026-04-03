@@ -1,5 +1,16 @@
 #!/home/slate/SLATE/venv/bin/python3
 
+# 2026-03-30:
+#
+# Add optional parameters to limit output to (e.g.)
+# - identifiers belonging to a specified *primid"
+# - identifiers within a specified *namespace*
+# - identifiers within a specified *namespace* tree
+# and to summarize certain data such as (e.g.)
+# - total number of identifiers
+# - number of identifiers within a specified *namespace*
+# - number of identifiers within a specified *namespace* tree
+
 import sqlite3
 from prettytable import PrettyTable
 from app.core.constants import IDENTIFIERS_DB, ENTITIES_DB

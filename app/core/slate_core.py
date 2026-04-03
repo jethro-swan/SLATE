@@ -51,6 +51,18 @@ from app.core.cctld_list import *
 # NESTS and speed up the HRNS to FPH mapping without having any signifcant
 # impact on the FPH to HRNS and FPH to FIP mappings.
 
+def create_db(dbpath):
+    if os.path.exists(dbpath):
+        # If the database exists already, it is deleted after a time-stamped
+        # copy has been saved.
+        os.remove(dbpath)
+        # create or open DB (this creates the file if it doesn't exist)
+    conn = sqlite3.connect(dbpath)
+    conn.execute("PRAGMA user_version;")
+    conn.close()
+    # set permissions to 660 (rw-rw----)
+    os.chmod(dbpath, 0o660)
+
 #==============================================================================
 def create_hubs_db():
 
@@ -58,16 +70,18 @@ def create_hubs_db():
     # kept consistent with copies held across other hubs (according to rules
     # not yet defined):
 
-    if os.path.exists(HUBS_DB):
-        # If the database exists already, it is deleted after a time-stamped
-        # copy has been saved.
-        os.remove(HUBS_DB)
-        # create or open DB (this creates the file if it doesn't exist)
-    conn = sqlite3.connect(HUBS_DB)
-    conn.execute("PRAGMA user_version;")
-    conn.close()
-    # set permissions to 660 (rw-rw----)
-    os.chmod(HUBS_DB, 0o660)
+#    if os.path.exists(HUBS_DB):
+#        # If the database exists already, it is deleted after a time-stamped
+#        # copy has been saved.
+#        os.remove(HUBS_DB)
+#        # create or open DB (this creates the file if it doesn't exist)
+#    conn = sqlite3.connect(HUBS_DB)
+#    conn.execute("PRAGMA user_version;")
+#    conn.close()
+#    # set permissions to 660 (rw-rw----)
+#    os.chmod(HUBS_DB, 0o660)
+
+    create_db(HUBS_DB)
 
     with sqlite3.connect(HUBS_DB) as conn:
         cursor = conn.cursor()
@@ -2401,11 +2415,15 @@ def get_ahid_properties(ahid_id):
         result = cursor.fetchone()
         cursor.close()
     if result is None:
-        return False, "", [], "Secid not found"
+        return False, "", [], "secid not found"
     active = bool(result[0])
     primid_fph = result[1]
     accounts_fph_list = pickle.loads(result[2])
     return active, primid_fph, accounts_fph_list, ""
+
+def get_primid(ahid_id):
+    active, primid_fph, accounts_fph_list, m = get_ahid_properties(ahid_id)
+    return primid_fph
 
 
 #==============================================================================

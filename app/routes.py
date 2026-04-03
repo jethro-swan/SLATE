@@ -32,6 +32,7 @@ from app.core.slate_core import identify_entity
 from app.core.slate_core import entity_type_is_registered
 from app.core.slate_core import entity_types_are_registered
 from app.core.slate_core import new_primid
+from app.core.slate_core import get_primid # kludge 06-03-30
 from app.core.slate_core import update_primid_access_details
 from app.core.slate_core import new_namespace
 from app.core.slate_core import new_currency
@@ -1932,6 +1933,12 @@ def create_pairing(owner_fph = ""):
     number_of_messages, \
     number_of_indelible_messages = message_count(primid_fph, hub_mode)
 
+    # Devstuff ########################
+    print("create_pairing( ) ...")
+    print("owner  = " + owner_hrns)
+    print("primid = " + primid_hrns)
+    ###################################
+
     form = PairingCreateForm()
     if form.validate_on_submit():
 
@@ -1963,16 +1970,27 @@ def create_pairing(owner_fph = ""):
         prefix, suffix, default_account_name, stewards_list, \
         m = get_currency_properties(currency_fph)
 
-        account_fph = new_pairing(
-                          working_identity_fph,
-                          ahid_hrns,
-                          currency_hrns
-                      )
+        # Devstuff #########################
+        print("form ahid = " + ahid_hrns)
+        print("currency = " + currency_hrns)
+        ####################################
 
-        if hub_mode == "slate":
-            return redirect("/home_ahc")
-        else:
-            return redirect("/home_ahc")
+        account_fph, account_hrns, \
+        m = new_pairing(working_identity_fph, ahid_hrns, currency_hrns)
+
+        # Devstuff ############################################################
+        print("account_fph = " + account_fph)
+        account_fph, account_hrns, etypes, m = identify_entity(account_fph)
+        print("account = " + account_hrns)
+        #######################################################################
+
+
+
+#        if hub_mode == "slate":
+#           return redirect("/home_ahc")
+#        else:
+#            return redirect("/home_ahc")
+        return redirect("/home_ahc")
 
     return render_template(
         "create_ahid_currency_pair.html",
@@ -2287,7 +2305,8 @@ def export_account_csv(account_fph):
         flash(m)
         return redirect("/home_ahc")
     if ("ahid" in etypes):
-        owner_primid_fph, m = get_primid(owner_fph)
+#        owner_primid_fph, m = get_primid(owner_fph)
+        owner_primid_fph = get_primid(owner_fph)
     else:
         flash("None of your identities owns this account")
         return redirect("/home_ahc")

@@ -26,7 +26,7 @@ cctld_list = [ # used in: seed.py
     "ug", "uk", "us", "uy", "uz", "va", "vc", "ve", "vg", "vi", "vn", "vu",
     "wf", "ws", "ye", "yt", "za", "zm", "zw", "s"
 ]
-# NB, "cc" has been omitted becauseit is used as the seed *namespace*.
+# NB, "cc" has been omitted because it is used as the seed *namespace*.
 
 cctld_set = set(cctld_list)
 
