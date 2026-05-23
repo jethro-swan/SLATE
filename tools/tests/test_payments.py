@@ -62,14 +62,14 @@ for c in clist:
 #    print("currency: " + currency_fph + " > " + currency_hrns)
 #    print()
 
-print("="*160)
+print("="*80)
 print("Running test entity identification loop")
-print("-"*160)
+print("-"*80)
 for ahid_hrns in ["ah1.bb.cc", "ah2.bb.cc", "ah3.bb.cc", "ah4.bb.cc"]:
     for currency_hrns in ["cc", "hrs.cc", "kwh.cc"]:
         p_fph = new_pairing("bb.cc", ahid_hrns, currency_hrns)
         print(p_fph)
-print("="*160)
+print("="*80)
 
 pmap, m = retrieve_pmap("bb.cc")
 
@@ -92,9 +92,9 @@ ahid_hrns_list = ["ah1.bb.cc", "ah2.bb.cc", "ah3.bb.cc", "ah4.bb.cc"]
 currency_hrns_list = ["cc", "hrs.cc", "kwh.cc"]
 
 if test_entity_identification:
-    print("="*160)
+    print("="*80)
     print("Running test entity identification loop")
-    print("-"*160)
+    print("-"*80)
     for ahid_hrns in ahid_hrns_list:
         ahid_fph, ahid_hrns, etypes, \
         m = identify_entity(ahid_hrns)
@@ -115,12 +115,12 @@ if test_entity_identification:
         elif not ("currency" in etypes):
             print(currency_hrns + " has no registered  currency")
         print(etype + ": " + currency_fph + " > " + currency_hrns)
-    print("="*160)
+    print("="*80)
 
 if run_payment_test_loop:
-    print("="*160)
+    print("="*80)
     print("Running payment test loop")
-    print("-"*160)
+    print("-"*80)
     for n in range(100):
         payer_ahid_hrns = random.choice(ahid_hrns_list)
         payee_ahid_hrns = random.choice(ahid_hrns_list)
@@ -145,4 +145,4 @@ if run_payment_test_loop:
                     )
                 if m:
                     print(m)
-    print("="*160)
+    print("="*80)

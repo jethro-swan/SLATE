@@ -2073,7 +2073,8 @@ def create_namespace():
                 parent_fph,
                 "cc", # TEMPORARY
                 #default_currency_fph,
-                primid_fph
+                primid_fph,
+                True
             )
         flash(
             "A new namespace has been created, identified as \n" \

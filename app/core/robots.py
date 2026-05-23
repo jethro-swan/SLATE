@@ -126,6 +126,8 @@ def create_robots(number_of_robots=10, robot_parent="sand.box.cc"):
     with open(ROBOTS_LIST, "w") as rl:
         for i in range(number_of_robots):
             name = "r" + str(i).zfill(d)
+#            ahid_fph, ahid_hrns, \
+#            m = new_ahid(name, robot_parent, "adm.cc", robot=True)
             ahid_fph, ahid_hrns, \
             m = new_ahid(name, robot_parent, "cc", robot=True)
             if m:

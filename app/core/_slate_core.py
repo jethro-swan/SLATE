@@ -916,7 +916,7 @@ def get_owner(entity_id, entity_type):
     return result[0]
 
 #==============================================================================
-## List all *accounts* in the specified *currency*:
+## Listr all *accounts* in the specified *currency*:
 
 def list_currency_accounts(currency_id):
     currency_fph, currency_hrns, etypes, m = identify_entity(currency_id)
@@ -1192,6 +1192,7 @@ def new_primid(
 
     # The new *primid* having been added to the primids table, the other
     # entities sharing its identifier can now be created.
+
     # A new *currency* and *namespace* are created with the same identifier as
     # the *primid* which also serves as the initial steward of both.
     currency_fph, currency_hrns, \
@@ -1206,15 +1207,10 @@ def new_primid(
             metrical_equivalence="lt",
             dimensions="unspecified"
         )
-    #
-    namespace_fph, namespace_hrns, \
-    m = new_namespace(username, parent_fph, currency_fph, primid_fph, True)
-    if m:
-        print(m)
     # Although the *currency* has been created in order to prevent another
     # user from creating one with the same identifier, it is deactivated at
     # this point to prevent its display in the home page table:
-#    m = deactivate_currency(currency_hrns, primid_hrns)
+    m = deactivate_currency(currency_hrns, primid_hrns)
 
     # The new *ahid*|*currency* pairing-indexed *account* is created with this
     # *primid* as its owner, where the *ahid* shares the same identifier as the
@@ -1227,8 +1223,9 @@ def new_primid(
         )
     print(
         "\nNew pairing: " + primid_hrns + "|" + currency_hrns \
-        + " (" + account_fph + ")"
+        + "(" + account_fph + ")"
     )
+
 
     # A second new *ahid*|*currency* pairing-indexed *account* is created with
     # this *primid* as its owner, where the *ahid* and *currency* both share
@@ -1243,15 +1240,13 @@ def new_primid(
 #        "\nNew pairing: " + primid_hrns + "|" + primid_hrns \
 #        + "(" + account_fph + ")"
 #    )
-#    print("Boodnok")
+
     # The *primid*'s root '*namespace* (private) must now be created, using the
     # newly created *currency as its default and this *primid* as its initial
     # steward.
-#    namespace_fph, namespace_hrns, \
-#    m = new_namespace(username, parent_fph, currency_fph, primid_fph, True)
-#    if m:
-#        print(m)
-#    print("P3")
+    namespace_fph, namespace_hrns, \
+    m = new_namespace(username, parent_fph, currency_fph, primid_fph, True)
+
     return primid_fph, primid_hrns, access_token, errors
 
 # Although the initial access token is generated automatically here, it may be
@@ -1273,9 +1268,9 @@ def new_ahid(
         return "", "", "Invalid name provided"
     primid_fph, primid_hrns, etypes, m = identify_entity(primid_id)
     if not primid_fph:
-        return "", "", "The identifier " + primid_id + " is invalid"
+        return "", "", "The dentifer " + primid_id + " is invalid"
     if not ("primid" in etypes):
-        return "", "", "The identifier " + primid_hrns + " has no primid"
+        return "", "", "The dentifer " + primid_hrns + " has no primid"
     parent_fph, parent_hrns, etypes, m = identify_entity(parent_id)
     if not parent_fph:
         return "", "", m # parent is invalid
@@ -1370,9 +1365,9 @@ def new_namespace(
     ):
     if not re_slatename.match(nsname):
         return "", "", nsname + " is not a valid name"
-    # The substrate is a special case of parent *namespace* (nameless). No
-    # entity other than a *namespace* can be created with the substrate as its
-    # parent.
+    # The substrate is a special case of parent *namespace* (nameless).
+    # No entity other than a *namespace* can be created with the substrate
+    # as its parent.
     if parent_id == SUBSTRATE_FPH:
         parent_hrns = ""
         parent_fph = parent_id
@@ -1383,149 +1378,14 @@ def new_namespace(
         if not parent_fph: # parent *namespace* identifier is not registered
             return "", "", "Parent namespace does not exist"
         namespace_hrns = nsname + NSS + parent_hrns # tentative HRNS
-
-    namespace_fph, namespace_hrns_, etypes, m = identify_entity(namespace_hrns)
-    # If this identifier is already registered and has a *namespace* associated
-    # with it. no further action is required:
+    if identifier_unregistered(namespace_hrns):
+        namespace_fph = register_identifier(namespace_hrns)
+    namespace_fph, namespace_hrns, etypes, m = identify_entity(namespace_hrns)
     if ("namespace" in etypes):
-        return namespace_fph, namespace_hrns, ""
-    # The *namespace* identifier is registered if it does not exist already:
-    if not namespace_fph:
-        namespace_fph = register_identifier(namespace_hrns)
-
-    # The initial steward (*primid*) is validated:
-    steward_fph, steward_hrns, etypes, m = identify_entity(steward_id)
-    if not ("primid" in etypes):
-        return "", "", steward_id + " is not a valid steward"
-
-    # The initial *currency* is validated:
-    currency_fph, currency_hrns, etypes, m = identify_entity(currency_id)
-    if not ("currency" in etypes):
-        return "", "", currency_id + " is not a currency"
-
-    # TEMPORARY FUDGE (should not be needed) ##################################
-    with sqlite3.connect(ENTITIES_DB) as conn:
-        cursor = conn.cursor()
-        cursor.execute(
-            "SELECT * FROM namespaces WHERE entity_fph = ?", (namespace_fph,)
-        )
-        result = cursor.fetchone()
-        cursor.close()
-        if not (result is None):
-            return namespace_fph, namespace_hrns, ""
-    ###########################################################################
-
-    with sqlite3.connect(ENTITIES_DB) as conn:
-        cursor = conn.cursor()
-        cursor.execute(
-            "INSERT INTO namespaces (" \
-            + "entity_fph, " \
-            + "stewards_fph_list, " \
-            + "default_currency_fph " \
-            + ") VALUES (?, ?, ?)",
-            (
-                namespace_fph,
-                pickle.dumps([steward_fph]),
-                currency_fph
-            )
-        )
-        conn.commit()
-        cursor.close()
-
-    register_entity_type(namespace_fph, "namespace")
-
-    return namespace_fph, namespace_hrns, ""
-
-# The version below was saved at 2026-05-21
-
-def new_namespace_(
-        nsname,
-        parent_id,
-        currency_id,
-        steward_id,
-        private=False
-    ):
-    if not re_slatename.match(nsname):
-        return "", "", nsname + " is not a valid name"
-    # The substrate is a special case of parent *namespace* (nameless). No
-    # entity other than a *namespace* can be created with the substrate as its
-    # parent.
-    if parent_id == SUBSTRATE_FPH:
-        parent_hrns = ""
-        parent_fph = parent_id
-        etype = "namespace"
-        namespace_hrns = nsname
+        # The identifier of an existing *namespace* cannot be used for another.
+        return "", "", namespace_hrns + " exists already (namespace)"
     else:
-        parent_fph, parent_hrns, etypes, m = identify_entity(parent_id)
-        if not parent_fph: # parent *namespace* identifier is not registered
-            return "", "", "Parent namespace does not exist"
-        namespace_hrns = nsname + NSS + parent_hrns # tentative HRNS
-#    print("New namespace: " + namespace_hrns)
-    namespace_fph, namespace_hrns_, etypes, m = identify_entity(namespace_hrns)
-#    print("New namespace: " + namespace_hrns)
-    if not namespace_fph:
-        # The *namespace* identifier is registered if it does not exist already:
-        namespace_fph = register_identifier(namespace_hrns)
-    elif "namespace" in etypes:
-        # Otherwise, if a *namespace* is already registered for this identifier
-        # not further action is required:
-        return namespace_fph, namespace_hrns, ""
-#    if identifier_unregistered(namespace_hrns):
-#        namespace_fph = register_identifier(namespace_hrns)
-#    namespace_fph, namespace_hrns, etypes, m = identify_entity(namespace_hrns)
-    steward_fph, steward_hrns, etypes, m = identify_entity(steward_id)
-    if not ("primid" in etypes):
-        return "", "", steward_id + " is not a valid steward"
-    currency_fph, currency_hrns, etypes, m = identify_entity(currency_id)
-    if not ("currency" in etypes):
-        return "", "", currency_id + " is not a currency"
-
-    print(
-        "creating namespace: " + namespace_hrns \
-        + "\nwith default currency: " + currency_hrns \
-        + "\ninitial steward: " +  steward_hrns
-    )
-
-#    if ("namespace" in etypes):
-#        # The identifier of an existing *namespace* cannot be used for another.#
-#
-#        # Temporary check:
-    with sqlite3.connect(ENTITIES_DB) as conn:
-        cursor = conn.cursor()
-        cursor.execute(
-            "SELECT * FROM namespaces WHERE entity_fph = ?",
-            (namespace_fph,)
-        )
-#        cursor.close()
-        result = cursor.fetchone()
-        print(result)
-        if result is None:
-            cursor.execute(
-                "INSERT INTO namespaces (" \
-                + "entity_fph, " \
-                + "stewards_fph_list, " \
-                + "default_currency_fph " \
-                + ") VALUES (?, ?, ?)",
-                (
-                    namespace_fph,
-                    pickle.dumps([steward_fph]),
-                    currency_fph
-                )
-            )
-            conn.commit()
-            cursor.close()
-
-        else:
-            cursor.close()
-            return namespace_fph, namespace_hrns, \
-            namespace_hrns + " exists already (namespace)"
-
-
-
-
-#        return "", "", namespace_hrns + " exists already (namespace)"
-#    else:
-    register_entity_type(namespace_fph, "namespace")
+        register_entity_type(namespace_fph, "namespace")
     currency_fph, currency_hrns, etypes, m = identify_entity(currency_id)
     if not currency_fph:
         return "", "", currency_id + " is not a registered identifier (14)"
@@ -1537,66 +1397,35 @@ def new_namespace_(
     if not ("primid" in etypes):
         return "", "", steward_hrns + " has no registered primid"
     # We can now register a *namespace* for this identifier:
-#    print("N1")
+#    register_entity_type(namespace_fph, "namespace")
+#    inherited_pnsr = get_private_namespace_root(parent_fph)
+#    record_private_namespace_root(namespace_fph, inherited_pnsr)
 
-
-#    with sqlite3.connect(ENTITIES_DB) as conn:
-#        cursor = conn.cursor()
-#        cursor.execute(
-#            "SELECT * FROM namespaces WHERE entity_fph = ?",
-#            (parent_fph,)
-#        )
-#        print("N2")
-#        result = cursor.fetchone()
-#        if result is None:
-#            print("N3")
-#            cursor.execute(
-#                "INSERT INTO namespaces (" \
-#                + "entity_fph, " \
-#                + "stewards_fph_list, " \
-#                + "default_currency_fph, " \
-#                + "private" \
-#                + ") VALUES (?, ?, ?, ?)",
-#                (
-#                    namespace_fph,
-#                    pickle.dumps([steward_fph]),
-#                    currency_fph,
-#                    private
-#                )
-#            )
-#            conn.commit()
-#        cursor.close()
-
-    #
-#    with sqlite3.connect(ENTITIES_DB) as conn:
-#        cursor = conn.cursor()
-#        cursor.execute(
-#            "INSERT INTO namespaces (" \
-#            + "entity_fph, " \
-#            + "stewards_fph_list, " \
-#            + "default_currency_fph, " \
-#            + "private" \
-#            + ") VALUES (?, ?, ?, ?)",
-#            (
-#                namespace_fph,
-#                pickle.dumps([steward_fph]),
-#                currency_fph,
-#                private
-#            )
-#        )
-#        print("N2: ", end="")
-#        print(namespace_fph)
-#        conn.commit()
-#        cursor.close()
-
-
-
-
+    with sqlite3.connect(ENTITIES_DB) as conn:
+        cursor = conn.cursor()
+        cursor.execute(
+            "SELECT * FROM namespaces WHERE entity_fph = ?",
+            (namespace_fph,)
+        )
+        result = cursor.fetchone()
+        if result is None:
+            cursor.execute(
+                "INSERT INTO namespaces (" \
+                + "entity_fph, " \
+                + "stewards_fph_list, " \
+                + "default_currency_fph, " \
+                + "private" \
+                + ") VALUES (?, ?, ?, ?)",
+                (
+                    namespace_fph,
+                    pickle.dumps([steward_fph]),
+                    currency_fph,
+                    private
+                )
+            )
+            conn.commit()
+        cursor.close()
     return namespace_fph, namespace_hrns, ""
-
-#-------------------------------------------------------------------------------
-
-
 
 #-------------------------------------------------------------------------------
 # Build a chain of ancestor *namespaces* starting from the root *namespace* and
@@ -1774,7 +1603,6 @@ def new_account(
         account_for_primid = True
     elif re_pan1.match(account_name):
         pan = account_name.split("_&_")
-        pan = account_name.split("&")
         pan_ahid = pan[0].replace("_", "")
         pan_currency = pan[0].replace("_", "")
         if (re_pan2.match(pan_ahid) and re_pan2.match(pan_currency)):
@@ -1834,7 +1662,6 @@ def new_account(
             )
         )
         conn.commit()
-        print("table = " + table)
         cursor.execute(
             "SELECT accounts_fph_list FROM " + table + " WHERE entity_fph = ?",
             (owner_fph,)
@@ -2272,7 +2099,7 @@ def list_id_accounts_in_currency(identity_id, identity_etype, currency_id):
 # For a specified *primid*, return a list the *currencies* in which it has an
 # *account*
 
-def list_primid_currencies(primid_fph): # in which a *primid* has accounts
+def list_primid_currencies(primid_fph): # in which an primid has accounts
     accounts_fph_list, m = list_primid_accounts(primid_fph)
     currencies_fph_list = []
     for account_fph in accounts_fph_list:
@@ -2283,13 +2110,13 @@ def list_primid_currencies(primid_fph): # in which a *primid* has accounts
 
 
 #==============================================================================
-## List the *ahid*'s *account*s' *currencies*:
+## List the *primid*'s *account*s' *currencies*:
 #
-# For specified *ahid*, return a list the *currencies* in which it has an
+# For specified *primid*, return a list the *currencies* in which it has an
 # *account*
 
-def list_ahid_currencies(ahid_fph):
-    accounts_fph_list, m = list_ahid_accounts(ahid_fph)
+def list_primid_currencies(primid_fph):
+    accounts_fph_list, m = list_primid_accounts(primid_fph)
     currencies_fph_list = []
     for account_fph in accounts_fph_list:
         currencies_fph_list.append(get_account_currency(account_fph))
@@ -3227,27 +3054,56 @@ def new_pairing(
     # The *currency* and owner *primid* are validated before proceeding to
     # create a new *ahid* (*account-holder identity*. Only if both exist will a
     # new *account* or *ahid* be created.
+
     currency_fph, currency_hrns, cetypes, m = identify_entity(currency_id)
     if not currency_fph:
         return "", currency_id + " is not a registered identifier (12)"
     if not ("currency" in cetypes):
         return "", currency_hrns + " is not a currency"
+
     primid_fph, primid_hrns, petypes, m = identify_entity(primid_id)
     if not primid_fph:
         return "", "", primid_id + " is not a registered identifier (13)"
     if not ("primid" in petypes):
         return "", "", primid_hrns + " is not a primid"
+
     # If the *ahid* does not exist already it must be created:
-    r_ahid_fph, r_ahid_hrns, r_ahid_etypes, m = identify_entity(ahid_hrns)
-    if m:
-        print(m)
-        print(">"*40)
-    if not ("ahid" in r_ahid_etypes):
+    r_ahid_fph, r_ahid_hrns, etypes, m = identify_entity(ahid_hrns)
+    if not ("ahid" in etypes):
         # A new *ahid* is created:
         ahid_name, parent_hrns = split_hrns(ahid_hrns)
-        ahid_fph, ahid_hrns, m = new_ahid(ahid_name, parent_hrns, primid_fph)
-        print("ahid_hrns = " + ahid_hrns)
-        if not ("namespace" in r_ahid_etypes):
+        if not re_slatename.match(ahid_name):
+            return "", "", "Invalid ahid name provided"
+        #parent_fph, parent_hrns, etypes, m = identify_entity(parent_id)
+        parent_fph, parent_hrns, etypes, m = identify_entity(parent_hrns)
+        if not parent_fph:
+            return "", "", m # parent is invalid
+        if not ("namespace" in etypes):
+            return "", "", "Parent namespace not registered"
+        ahid_hrns = ahid_name + NSS + parent_hrns
+        # Does this *ahid*'s identifier exist already?
+        if identifier_unregistered(ahid_hrns):
+            ahid_fph = register_identifier(ahid_hrns)
+        ahid_fph, ahid_hrns, etypes, m = identify_entity(ahid_hrns)
+        if not ("ahid" in etypes):
+            register_entity_type(ahid_fph, "ahid")
+            with sqlite3.connect(ENTITIES_DB) as conn:
+                cursor = conn.cursor()
+                cursor.execute(
+                    "INSERT INTO ahids (" \
+                    + "entity_fph, " \
+                    + "primid_fph, " \
+                    + "accounts_fph_list, " \
+                    + "robot, " \
+                    + "active" \
+                    + ") VALUES (?, ?, ?, ?, ?)",
+                    (ahid_fph, primid_fph, pickle.dumps([]), 0, 1)
+                )
+                conn.commit()
+                cursor.close()
+#        ahid_fph, ahid_hrns, \
+#        m = new_ahid(ahid_name, parent_hrns, primid_fph)
+        if not ("namespace" in etypes):
             # A new *namespace* is created
             # (a) sharing the parent *namespace* of the new *ahid*
             # (b) using the default *currency* of the parent as its own
@@ -3262,7 +3118,6 @@ def new_pairing(
             parent_currency_fph, stewards_list, \
             m = get_namespace_properties(parent_fph)
             # Its new child *namespace* is created
-            print("ahid_name = " + ahid_name)
             namespace_fph, namespace_hrns, \
             m = new_namespace(
                     ahid_name,
@@ -3271,8 +3126,6 @@ def new_pairing(
                     primid_fph,             # The *primid* is initial steward.
                     False                   # This is a public *namespace*.
                 )
-            print("namespace_hrns = " + namespace_hrns)
-            print("namespace_fph = " + namespace_fph)
     else:
         ahid_fph = r_ahid_fph
         ahid_hrns = r_ahid_hrns
@@ -3400,21 +3253,17 @@ def retrieve_pairing_account_fph(ahid_id, currency_id):
 # *primid* as their initial steward).
 
 def complete_parent_namespace(identifier_hrns, primid_id):
+#def complete_parent_namespace(identifier_hrns, primid_fph):
     if primid_id == "":
-        print("primid does not exist")
-        s_fph, m = hrns_to_fph("cc")
-#        s_fph, m = hrns_to_fph("adm.cc")
+        s_fph, m = hrns_to_fph("adm.cc")
     else:
-        print("primid exists")
         s_fph, s_hrns, etype, m = identify_entity(primid_id)
         #s_fph, s_hrns, etype, m = identify_entity(primid_fph)
     c_fph, m = hrns_to_fph("cc")
     entity_fph, entity_hrns, etype, m = identify_entity(identifier_hrns)
     if entity_fph: # the entity exists already
-        print("entity exists already")
         return entity_fph
     if not re_hrns.match(identifier_hrns):
-        print("invalid HRNS")
         return ""
     parent_namespace_chain_incomplete = True
     chain_links = []
@@ -3423,14 +3272,12 @@ def complete_parent_namespace(identifier_hrns, primid_id):
     while not parent_fph:
         parent_fph, parent_hrns, etype, m = identify_entity(parent_hrns_)
         name, parent_hrns = split_hrns(parent_hrns_)
-        print(name)
         chain_links.append(name)
         parent_hrns_ = parent_hrns
     ns_fph = parent_fph
     chain_links.pop()
     while len(chain_links) > 0:
         ns_name = chain_links.pop()
-        print(ns_name)
         ns_fph, ns_hrns, \
         m = new_namespace(ns_name, ns_fph, c_fph, s_fph, False)
     return ns_fph

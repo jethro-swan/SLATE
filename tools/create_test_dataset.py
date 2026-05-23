@@ -14,13 +14,15 @@ import argparse
 from app.core.fph_hrns_maps import hrns_to_fph, fph_to_hrns
 from app.core.fph_hrns_maps import hrns_exists_already
 from app.core.slate_core import new_namespace, new_currency, new_account
-from app.core.slate_core import new_primid, new_secid
-#from app.core.slate_core import new_primid, new_ahid
+#from app.core.slate_core import new_primid, new_secid
+from app.core.slate_core import new_primid, new_ahid
 from app.core.slate_core import identify_entity, get_currency_name
-from app.core.slate_core import list_primid_accounts, list_secid_accounts
-from app.core.slate_core import list_primid_currencies, list_secid_currencies
-from app.core.slate_core import list_accounts_in_currency
-from app.core.slate_core import get_entity_type
+#from app.core.slate_core import list_primid_accounts, list_secid_accounts
+from app.core.slate_core import list_primid_accounts, list_ahid_accounts
+from app.core.slate_core import list_primid_currencies, list_ahid_currencies
+#from app.core.slate_core import list_primid_currencies, list_secid_currencies
+from app.core.slate_core import list_currency_accounts
+from app.core.slate_core import get_entity_types
 from app.core.slate_core import list_all_namespaces
 from app.core.slate_core import list_all_currencies
 from app.core.slate_seed import create_sandbox_root_set
@@ -190,15 +192,33 @@ steward_fph, \
 steward_hrns, \
 access_token, \
 m = new_primid(
-        login_username, login_user_parent_fph, "sandbox", login_user_email,
-        "", login_user_password, login_user_pin
+        login_username,
+        login_user_parent_fph,
+        "sandbox",
+        login_user_email,
+        "",
+        login_user_password,
+        login_user_pin,
+        "cc"
     )
 l_primids.append(steward_fph)
 
 # An initial *currency* is created:
 currency0_fph, \
 currency0_hrns, \
-m = new_currency("z", s_fph, steward_fph, "", "", "z")
+m = new_currency(
+        "z",
+        s_fph,
+        steward_fph,
+        "",
+        "",
+        "z",
+        "",
+        "",
+        "",
+        "",
+        ""
+    )
 l_currencies.append(currency0_fph)
 
 def random_char():

@@ -18,6 +18,8 @@ re_slatename = re.compile(r"^[a-zA-Z][a-zA-Z0-9]*$")
 #re_pairaccountname = re.compile(pa_re, re.UNICODE)
 
 # Validating pairing-indexed *account* identifier, e.g. _ah3^bb^cc_&_kwh^cc_
+#re_pan1 = re.compile(r"^[^&]+&[^&]+$")
+#re_pan2 = re.compile(r"^(?:[^\^]+\^)*[^\^]+$")
 re_pan1 = re.compile(r"^_[^_]+_&_[^_]+_$")
 re_pan2 = re.compile(r"^(?:[^\^]+\^)*[^\^]+$")
 

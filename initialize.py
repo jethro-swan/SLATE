@@ -67,8 +67,8 @@ for k in dbm_keys(CONFIG_MAP):
 # The SQLite and DBM files are backed up:
 TIMESTAMPED_BACKUP_DIR = BACKUPS + filename_timestamp()
 create_dir(TIMESTAMPED_BACKUP_DIR, 0o777)
-treecopy(DATA + "/maps", TIMESTAMPED_BACKUP_DIR + "/maps")
-treecopy(DATA + "/db", TIMESTAMPED_BACKUP_DIR + "/db")
+treecopy(DATA + "maps", TIMESTAMPED_BACKUP_DIR + "/maps")
+treecopy(DATA + "db", TIMESTAMPED_BACKUP_DIR + "/db")
 
 print("creating DBM maps")
 create_maps()

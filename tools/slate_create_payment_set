@@ -63,6 +63,14 @@ n_payments = int(args.n_payments)
 max_payment = int(args.max_payment)
 ahid_prefix = args.ahid_prefix
 
+if (login_identity is None) or (login_identity == ""):
+    print("A login identity must be specified")
+    sys.exit()
+
+if (currency is None) or (currency == ""):
+    print("A currency must be specified")
+    sys.exit()
+
 if n_ahid > 30:
     print("Too many AHIDs (max 30)")
     sys.exit()

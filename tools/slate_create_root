@@ -1,0 +1,20 @@
+#!/home/slate/SLATE/venv/bin/python3
+
+# Create a new ad hoc root "namespace" and a *currency* sharing its identifier.
+
+import sys
+from app.core.slate_seed import create_root_namespace
+from app.core.fph_hrns_maps import fph_to_hrns
+
+if sys.argv[1]:
+    name = sys.argv[1]
+    namespace_fph, namespace_hrns, steward_fph, m = create_root_namespace(name)
+    if m:
+        print(m)
+        sys.exit()
+    else:
+        steward_hrns = fph_to_hrns(steward_fph)
+        print("New ad hoc root (namespace + currency) created:")
+        print("    namespace: '" + name + "' (steward '" + steward_hrns + "')")
+        print("    currency: '" + name + "' (steward '" + steward_hrns + "')")
+        sys.exit()

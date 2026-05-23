@@ -28,56 +28,33 @@ print(qq_fph + " > " + fph_to_hrns(qq_fph))
 qq_fph2, m = hrns_to_fph("qq.cc")
 if qq_fph2 != qq_fph:
     print("Map inversion failure")
-
 list_etypes(qq_fph)
-
 register_entity_type(qq_fph, "currency")
-
 list_etypes(qq_fph)
-
 register_entity_type(qq_fph, "namespace")
-
 list_etypes(qq_fph)
-
 register_entity_type(qq_fph, "ahid")
-
 list_etypes(qq_fph)
-
 deregister_entity_type(qq_fph, "currency")
-
 list_etypes(qq_fph)
-
 deregister_entity_type(qq_fph, "ahid")
-
 list_etypes(qq_fph)
-
 deregister_entity_type(qq_fph, "namespace")
-
 list_etypes(qq_fph)
-
 register_entity_type(qq_fph, "currency")
-
 list_etypes(qq_fph)
-
 register_entity_type(qq_fph, "namespace")
-
 list_etypes(qq_fph)
-
 register_entity_type(qq_fph, "ahid")
-
 list_etypes(qq_fph)
-
 deregister_entity_type(qq_fph, "currency")
 deregister_entity_type(qq_fph, "namespace")
 deregister_entity_type(qq_fph, "ahid")
-
 list_etypes(qq_fph)
-
 register_full_entity_set(qq_fph)
 list_etypes(qq_fph)
 
 print("\nCreating test primid\n")
-
 cthulhu_fph, cthulhu_hrns, access_token, \
 m = new_primid(
         "cthulhu",
@@ -105,24 +82,13 @@ if m:
     print(m)
 
 print("\nCreating test account ...\n")
-
 account_fph, account_hrns, \
-m = new_account(
-        "montecristo",
-        "bb.cc",
-        "bb.cc",
-        "hrs.cc"
-    )
+m = new_account("montecristo", "bb.cc", "bb.cc", "hrs.cc")
 print("test account: " + account_fph + " > " + account_hrns)
 
 print("\nCreating test pairing ...\n")
-
 account_fph, account_hrns, \
-m = new_pairing(
-        cthulhu_hrns,     # *primid* HRNS or FPH
-        "ah1.cthulhu.cc", # HRNS (may not exist already)
-        "hrs.cc"          # HRNS or FPH (must exist already)
-    )
+m = new_pairing(cthulhu_hrns, "ah1.cthulhu.cc", "hrs.cc")
 
 print("account_fph = " + account_fph)
 print("account_hrns = " + account_hrns)

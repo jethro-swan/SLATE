@@ -86,6 +86,7 @@ for account_fph in l_accounts:
     currency_fph, \
     owner_fph, \
     balance, \
+    volume, \
     m = account_status(account_fph)
 
 with open("temp/" + output_filename, "a") as f:
@@ -96,6 +97,7 @@ with open("temp/" + output_filename, "a") as f:
         payer_account_currency_fph, \
         payer_account_owner_fph, \
         payer_account_balance, \
+        volume, \
         m = account_status(payer_account_fph)
         #
         payee_account_currency_fph = ""

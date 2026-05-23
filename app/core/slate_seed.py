@@ -155,21 +155,24 @@ def create_seed_entities():
     # NB  The *namespace* "cc" is a "root" *namespace*. Therefore it has no
     #     named parent *namespace*.
 
-    seed_entity_hrns  = "cc" # The identifier HRNS shared by all seed entities.
+    # The seed *primid* is registered inn order to allow ist use as a steward,
+    # but unlike other *primid* it has to be created separately and has minimal
+    # recorded properties.
+    seed_primid_hrns  = "cc"    # The identifier HRNS of the seed *primid*
+#    seed_primid_hrns  = "adm.cc"    # The identifier HRNS of the seed *primid*
+    seed_primid_fph = register_identifier(seed_primid_hrns)
+    m = register_entity_type(seed_primid_fph, "primid")
+    print("Registering " + seed_primid_hrns)
 
+    seed_entity_hrns  = "cc"    # The identifier HRNS shared by all other
+                                # seed entities.
     seed_ahid_hrns = seed_currency_hrns = seed_entity_hrns
-
     print("Registering " + seed_entity_hrns)
     seed_entity_fph = register_identifier(seed_entity_hrns)
-    print(seed_entity_fph)
+    print("seed entity: " + seed_currency_hrns + " = " + seed_entity_fph)
 
-    #record_private_namespace_root(seed_entity_fph, "")
-
-
-    m = register_entity_type(seed_entity_fph, "primid")
-
-    # Although a *primid* is registered for the seed entity identifier, the
-    # corresponding *namespace* is treated as public (an exception)>
+    # ??? Although a *primid* is registered for the seed entity identifier, the
+    # corresponding *namespace* is treated as public (an exception):
     record_private_namespace_root(seed_entity_fph, "")
     if m:
         print(m)
@@ -189,20 +192,20 @@ def create_seed_entities():
 
     seed_namespace_fph = seed_entity_fph
     seed_currency_fph = seed_entity_fph
-    seed_primid_fph = seed_entity_fph
     seed_ahid_fph = seed_entity_fph
     seed_account_fph = seed_entity_fph
 
     pmap = {}
     pmap[seed_ahid_hrns] = {}
     pmap[seed_ahid_hrns][seed_currency_fph] = seed_account_fph
-    print("pmap:", end="")
+#    pmap[seed_ahid_hrns][seed_currency_fph] = seed_account_fph
+    print("pmap: ", end="")
     print(pmap)
 
     stewards_fph_list = []
     stewards_fph_list.append(seed_primid_fph)
     stewards_fph_blob = pickle.dumps(stewards_fph_list)
-    print("stewards_fph_list:", end="")
+    print("stewards_fph_list: ", end="")
     print(stewards_fph_list)
 
     #--------------------------------------------------------------------------
@@ -222,7 +225,8 @@ def create_seed_entities():
                 + "owner_fph" \
             + ") VALUES (?, ?, ?, ?, ?, ?, ?)",
             (
-                seed_account_fph,   # *account* FPH
+#                seed_account_fph,   # *account* FPH
+                seed_namespace_fph, # *account* FPH
                 1,                  # active
                 0,                  # sandbox
                 0,                  # private
@@ -373,6 +377,55 @@ def create_seed_entities():
     seed_stewardship_2_fph  = seed_currency_fph
 
 
+#==============================================================================
+# Create a root *namespace*:
+
+# 2026-04-06:
+# Modify this to create partial set of entities with the specified name, all
+# sharing the same SUBSTRATE parent, i.e
+#   *namespace*
+#   *currency*
+# but not
+#   *primid*
+#   *ahid*
+#   *account*
+
+def create_root_namespace(name):
+
+    if re_slatename.match(name):
+        ns_hrns = name
+    else:
+        return "", "", "", "Invalid name: " + name
+
+    #
+#    ns_fph = register_identifier(ns_hrns)
+
+    currency_fph, currency_hrns, \
+    m = new_currency(
+            name,
+            SUBSTRATE_FPH,
+            seed_entity_fph,   # Initial steward is that of the substrate, etc.
+            "", "h", "hrs"     # Suffix and default account name
+        )
+    if m:
+        print(m)
+        return "", "", "", m
+
+    namespace_fph, namespace_hrns, \
+    m = new_namespace(
+            name,
+            SUBSTRATE_FPH,
+            currency_fph,   # initial steward
+            seed_entity_fph
+        )
+    if m:
+        print(m)
+        return "", "", "", m
+    if (currency_fph != namespace_fph) or (currency_hrns != namespace_hrns)  \
+       or (namespace_hrns != name) or m:
+        print("Internal error when creating root identifier: " + name)
+        return "", "", "",  "Internal error creating root identifier: " + name
+    return namespace_fph, namespace_hrns, seed_entity_fph, ""
 
 #==============================================================================
 # A set of "pseudo-TLD" root namespaces, each having the same null parent
@@ -399,6 +452,7 @@ def create_quasitld_set(full = False):
     # These are recreated here in case it is necessary to callthis function
     # before create_seed_entities( ).
     seed_primid_fph = nshash("cc")
+#    seed_primid_fph = nshash("adm.cc")
     seed_currency_fph = nshash("cc")
 
     errors = "\n"
@@ -452,8 +506,22 @@ def create_sandbox_root_set():
 def create_sandbox_space():
 
     # The sandbox/demo *namespaces* "sand.box.cc" is created:
-    sandox_fph = complete_parent_namespace("sand.box.cc", "cc")
-    print("sandox_fph = " + sandox_fph)
+#    sandbox_fph = complete_parent_namespace("sand.box.cc", "cc")
+
+
+
+#    box_fph, box_hrns, m = new_namespace("box", "cc", "cc", "adm.cc", False)
+    box_fph, box_hrns, m = new_namespace("box", "cc", "cc", "cc", False)
+    print("box.cc HRNS = " + box_hrns)
+
+#    sandbox_fph, sandbox_hrns, \
+#    m = new_namespace("sand", box_fph, "cc", "adm.cc", False)
+    sandbox_fph, sandbox_hrns, \
+    m = new_namespace("sand", box_fph, "cc", "cc", False)
+    print("sand.box.cc HRNS = " + sandbox_hrns)
+
+
+#    print("sandbox_fph = " + sandbox_fph)
 
     cc_fph, m = hrns_to_fph("cc")
     print("cc_fph = " + cc_fph)
@@ -463,7 +531,7 @@ def create_sandbox_space():
     # hrs.box.cc
     currency_fph, currency_hrns, \
     m = new_currency(
-            "hrs", sandox_fph, cc_fph, "", "h", "hrs",
+            "hrs", sandbox_fph, cc_fph, "", "h", "hrs",
             account_type="scalar", category="money", units="unspecified",
             metrical_equivalence="lt", dimensions="unspecified"
         )
@@ -471,7 +539,7 @@ def create_sandbox_space():
     # g£.box.cc
     currency_fph, currency_hrns, \
     m = new_currency(
-            "g£", sandox_fph, cc_fph, "£", "", "hrs",
+            "g£", sandbox_fph, cc_fph, "£", "", "hrs",
             account_type="scalar", category="money", units="unspecified",
             metrical_equivalence="lt", dimensions="unspecified"
         )
@@ -479,7 +547,7 @@ def create_sandbox_space():
     # cc.sand.box.cc
     currency_fph, currency_hrns, \
     m = new_currency(
-            "cc", sandox_fph, cc_fph, "", "", "",
+            "cc", sandbox_fph, cc_fph, "", "", "",
             account_type="scalar", category="money", units="unspecified",
             metrical_equivalence="lt", dimensions="unspecified"
         )
