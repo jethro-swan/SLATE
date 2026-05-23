@@ -62,6 +62,7 @@ sudo usermod -a -G slate $USER
 # Create SLATE data directories:
 sudo mkdir -p /var/slate/$DATASET
 sudo mkdir -p /var/slate/$DATASET/logs
+sudo mkdir -p /var/slate/$DATASET/{db,maps}
 #sudo mkdir -p /var/slate/$DATASET/{db,maps}/backups
 sudo mkdir -p /var/slate/$DATASET/temp
 sudo mkdir -p /var/slate/$DATASET/imports
@@ -80,6 +81,12 @@ sudo chmod -R 775 /var/slate/$DATASET
 sudo ln -sf /var/slate/$DATASET /var/slate/active
 
 sudo chown -R slate:slate /var/slate
+
+
+# alias slate_run='/home/slate/SLATE/venv/bin/gunicorn -w 4 --bind 0.0.0.0:8000 slate:app &'
+
+# /home/slate/SLATE
+
 
 # Create systemd service:
 

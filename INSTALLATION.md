@@ -13,6 +13,14 @@ Create a Python3 virtual environment and activate it:
     python3 -m venv venv
     source venv/bin/activate
 
+Create
+
+    venv/lib/python3.x/site-packages/slate.pth
+
+containing
+
+    /home/slate/SLATE
+
 To install the dependencies, run
 
     ./dependencies.sh
@@ -27,6 +35,11 @@ To create the database files and to populate these with the seed entities, run
 
 which will also display the login credentials needed by the initial
 administrator.
+
+Create an alias (e.g. in ~/bashrc) to start Gunicorn:
+
+    alias slate_run='/home/slate/SLATE/venv/bin/gunicorn -w 4 \
+    --bind 0.0.0.0:8000 slate:app &'
 
 ---    
 
