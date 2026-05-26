@@ -11,7 +11,26 @@ from app.core.slate_core import new_pairing
 from app.core.slate_core import identify_entity
 from app.core.payments import ah_payment
 
-ap = argparse.ArgumentParser(description = "Create a payment set")
+#==============================================================================
+# Bulk creation of *login identities* (*primids*) from a CSV file with format:
+#   primid name:parent namespace:currency:password:pin:recovery email
+# e.g.
+#   "fred":"flint.basalt":"rocks.neo.lith":"tr0gl0":"897612":"fred@neo.lith.ic"
+# Generally run over SSH as (e.g.):
+#   cat <filename>.csv | ssh -p <port> <user>@<server> slate_create_login_set
+# where
+#   filename.csv    is the name of the CSV file to be imported
+#   user            is the SSH login name of a user with SLATE/NESTS access
+#   port            is port number forwarded to a VM running SLATE/NESTS
+# and  slate_create_login_set  is this script, which sits somewhere easily
+# found in the PATH (typically /usr/local/bin/).
+
+ap = argparse.ArgumentParser(
+        description = "Create a set of login accounts (primids) from a CSV " \
+                    + "file, e.g.\n" \
+                    + "\tcat <filename>.csv | ssh -p <port> " \
+                    + "<user>@<server> slate_create_login_set"
+     )
 if len(sys.argv) == 1:
     ap.print_help(sys.stderr)
     sys.exit(1)

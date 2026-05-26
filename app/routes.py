@@ -2306,7 +2306,6 @@ def export_account_csv(account_fph):
         flash(m)
         return redirect("/home_ahc")
     if ("ahid" in etypes):
-#        owner_primid_fph, m = get_primid(owner_fph)
         owner_primid_fph = get_primid(owner_fph)
     else:
         flash("None of your identities owns this account")

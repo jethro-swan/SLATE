@@ -1834,7 +1834,7 @@ def new_account(
             )
         )
         conn.commit()
-        print("table = " + table)
+#        print("table = " + table)
         cursor.execute(
             "SELECT accounts_fph_list FROM " + table + " WHERE entity_fph = ?",
             (owner_fph,)

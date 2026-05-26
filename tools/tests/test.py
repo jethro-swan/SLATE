@@ -77,10 +77,8 @@ create_seed_entities()
 with sqlite3.connect(ENTITIES_DB) as conn:
     cursor = conn.cursor()
     cursor.execute(
-        """
-        SELECT entity_fph, parent_namespace_fph, entity_type, active
-        FROM entities_common
-        """
+        "SELECT entity_fph, parent_namespace_fph, entity_type, active " \
+        + "FROM entities_common"
     )
     results = cursor.fetchall()
     cursor.close()

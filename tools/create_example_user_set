@@ -1,0 +1,61 @@
+#!/home/slate/SLATE/venv/bin/python3
+
+import sys, os
+from faker import Faker
+import sqlite3
+import random
+import string
+import pickle
+import secrets
+from prettytable import PrettyTable
+from wonderwords import RandomWord
+
+#==============================================================================
+# Initialize Faker object
+fake = Faker()
+Faker.seed(24)
+
+
+out_path = "/home/slate/SLATE/csv_examples/primid_set.csv"
+
+#==============================================================================
+# A set of fake *primids* is created:
+
+#
+#def select_available_namespace():
+#    return random.choice(l_namespaces) # FPH
+
+parent_namespace_hrns = "sand.box.cc"
+initial_currency_hrns = "hrs.cc"
+
+#"fred":gc.chep.mon.uk":"":"fred@dodgy.com":"":"bAdpA55w0rd":"314159"
+
+def random_name():
+    name_length = random.randint(2,3)
+    letters = string.ascii_lowercase
+    n = []
+    for i in range(name_length):
+        n.append(random.choice(letters))
+    return "".join(n)
+
+def random_password():
+    alphabet = string.ascii_letters + string.digits
+    return "".join(secrets.choice(alphabet) for i in range(16))
+
+def random_pin():
+    p = random.randint(0,999999)
+    return str((p*p)%1000000).zfill(6)
+
+with open(out_path, "w") as csvf:
+    for i in range(50):
+        csv_row = []
+        csv_row.append('"' + random_name() + '"')
+        csv_row.append('"' + parent_namespace_hrns + '"')
+        csv_row.append('"' + fake.name() + '"')
+        csv_row.append('"' + fake.email() + '"')
+        csv_row.append('"' + fake.email() + '"')
+        csv_row.append('"' + random_password() + '"')
+        csv_row.append('"' + random_pin() + '"')
+        csv_row.append('"' + initial_currency_hrns + '"')
+        csv_line = ",".join(csv_row)
+        csvf.write(csv_line + "\n")

@@ -3,7 +3,7 @@
 import sys
 import re
 
-from app.core.slate_core import identify_entity, get_entity_type, new_account
+from app.core.slate_core import identify_entity, get_entity_types, new_account
 from app.core.fph_hrns_maps import fph_to_hrns, hrns_to_fph
 
 #==============================================================================
@@ -42,48 +42,41 @@ for line in sys.stdin:
     owner = field[2].strip("\"")
     currency = field[3].strip("\"")
 
-    parent_namespace_fph, \
-    parent_namespace_hrns, \
-    etype, \
+    parent_namespace_fph, parent_namespace_hrns, etypes, \
     m = identify_entity(parent_ns)
     if m:
         errors.append(line_no + "ERROR: " + m)
     if parent_namespace_fph == "":
         errors.append(line_no + "ERROR: " + account_name + " is not an entity")
-    elif etype != "namespace":
+    elif not ("namespace" in etypes):
         errors.append(
             line_no + parent_ns + " is " + etype + " (not a namespace)"
         )
 
-    owner_fph, \
-    owner_hrns, \
-    etype, \
+    owner_fph, owner_hrns, etypes, \
     m = identify_entity(owner)
     if m:
         errors.append(line_no + "ERROR: " + m)
     if owner_fph == "":
         errors.append(line_no + "ERROR: " + owner + " is not an entity")
-    elif (etype != "primid") and (etype != "secid"):
+    elif not ("primid" in etypes):
         errors.append(
             line_no + "ERROR: " + owner + " is " + etype \
             + " (not an identity)"
         )
 
-    currency_fph, \
-    currency_hrns, \
-    etype, \
+    currency_fph, currency_hrns, etypes, \
     m = identify_entity(currency)
     if m:
         errors.append(line_no + "ERROR: " + m)
     if currency_fph == "":
         errors.append(line_no + "ERROR: " + currency + " is not an entity")
-    elif etype != "currency":
+    elif not ("currency" in etypes):
         errors.append(
             line_no + "ERROR: " + currency + " is " + etype + " (not currency)"
         )
 
-    account_fph, \
-    account_hrns, \
+    account_fph, account_hrns, \
     m = new_account(
             account_name,
             parent_namespace_fph,
