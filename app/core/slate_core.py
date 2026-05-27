@@ -1470,9 +1470,6 @@ def new_namespace_(
         # Otherwise, if a *namespace* is already registered for this identifier
         # not further action is required:
         return namespace_fph, namespace_hrns, ""
-#    if identifier_unregistered(namespace_hrns):
-#        namespace_fph = register_identifier(namespace_hrns)
-#    namespace_fph, namespace_hrns, etypes, m = identify_entity(namespace_hrns)
     steward_fph, steward_hrns, etypes, m = identify_entity(steward_id)
     if not ("primid" in etypes):
         return "", "", steward_id + " is not a valid steward"
@@ -1656,14 +1653,14 @@ def new_currency(
         currency_name,
         parent_fph,
         initial_steward_fph,
-        currency_prefix,
-        currency_suffix,
-        default_account_name,
-        account_type,
-        category,
-        units,
-        metrical_equivalence,
-        dimensions
+        currency_prefix="",
+        currency_suffix="",
+        default_account_name="h",
+        account_type="scalar",
+        category="money",
+        units="",
+        metrical_equivalence="",
+        dimensions=""
     ):
     # The initial *account* in this *currency* is assigned to its initial
     # steward (which must exist already).
@@ -1677,7 +1674,10 @@ def new_currency(
     if default_account_name:
         if not re_slatename.match(default_account_name):
             return "", "", default_account_name + " is not a valid name"
-    currency_hrns = currency_name + NSS + parent_hrns # tentative HRNS
+    if parent_hrns: # not SUBSTRATE
+        currency_hrns = currency_name + NSS + parent_hrns # tentative HRNS
+    else:
+        currency_hrns = currency_name
     if identifier_unregistered(currency_hrns):
         currency_fph = register_identifier(currency_hrns)
     currency_fph, currency_hrns, etypes, m = identify_entity(currency_hrns)

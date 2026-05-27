@@ -397,15 +397,19 @@ def create_root_namespace(name):
     else:
         return "", "", "", "Invalid name: " + name
 
-    #
-#    ns_fph = register_identifier(ns_hrns)
-
     currency_fph, currency_hrns, \
     m = new_currency(
             name,
             SUBSTRATE_FPH,
-            seed_entity_fph,   # Initial steward is that of the substrate, etc.
-            "", "h", "hrs"     # Suffix and default account name
+            "cc",               # Initial steward is that of the substrate, etc.
+            "",                 # "prefix"
+            "h",                # suffix
+            "hrs",              # default *account* name
+            "scalar",           # account_type
+            "money",            # category
+            "",                 # units
+            "",                 # metrical_equivalence
+            ""                  # dimensions
         )
     if m:
         print(m)
@@ -415,17 +419,17 @@ def create_root_namespace(name):
     m = new_namespace(
             name,
             SUBSTRATE_FPH,
-            currency_fph,   # initial steward
-            seed_entity_fph
+            currency_fph,       # initial *currency*
+            "cc"                # Initial steward
         )
     if m:
         print(m)
         return "", "", "", m
-    if (currency_fph != namespace_fph) or (currency_hrns != namespace_hrns)  \
-       or (namespace_hrns != name) or m:
-        print("Internal error when creating root identifier: " + name)
+    if (currency_fph != namespace_fph) or (currency_hrns != namespace_hrns) \
+                                       or (namespace_hrns != name) \
+                                       or m:
         return "", "", "",  "Internal error creating root identifier: " + name
-    return namespace_fph, namespace_hrns, seed_entity_fph, ""
+    return namespace_fph, namespace_hrns, ""
 
 #==============================================================================
 # A set of "pseudo-TLD" root namespaces, each having the same null parent
