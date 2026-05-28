@@ -645,7 +645,8 @@ def get_entity_types(entity_fph):
             entity_types.append("ahid")
         return entity_types, ""
     else:
-        return [], "No entities registered for " + entity_fph
+        entity_hrns = fph_to_hrns(entity_fph)
+        return [], "No entities for " + entity_fph + " (" + entity_hrns + ")"
 
 #=============================================================================
 # Set, register or deregister an *entity* type for a specified identifier FPH:
@@ -1477,11 +1478,11 @@ def new_namespace_(
     if not ("currency" in etypes):
         return "", "", currency_id + " is not a currency"
 
-    print(
-        "creating namespace: " + namespace_hrns \
-        + "\nwith default currency: " + currency_hrns \
-        + "\ninitial steward: " +  steward_hrns
-    )
+#    print(
+#        "creating namespace: " + namespace_hrns \
+#        + "\nwith default currency: " + currency_hrns \
+#        + "\ninitial steward: " +  steward_hrns
+#    )
 
 #    if ("namespace" in etypes):
 #        # The identifier of an existing *namespace* cannot be used for another.#
@@ -1495,7 +1496,7 @@ def new_namespace_(
         )
 #        cursor.close()
         result = cursor.fetchone()
-        print(result)
+#        print(result)
         if result is None:
             cursor.execute(
                 "INSERT INTO namespaces (" \
@@ -1899,8 +1900,8 @@ def get_namespace_properties(namespace_id):
         stewards_fph_blob = result[5]
         currency_fph = result[6]
         stewards_list = pickle.loads(stewards_fph_blob)
-        print("stewards_list = ",   end="")
-        print(stewards_list)
+#        print("stewards_list = ",   end="")
+#        print(stewards_list)
     return active, open, sandbox, private, \
            owner_fph, currency_fph, stewards_list, ""
 
@@ -3241,12 +3242,12 @@ def new_pairing(
     r_ahid_fph, r_ahid_hrns, r_ahid_etypes, m = identify_entity(ahid_hrns)
     if m:
         print(m)
-        print(">"*40)
+#        print(">"*40)
     if not ("ahid" in r_ahid_etypes):
         # A new *ahid* is created:
         ahid_name, parent_hrns = split_hrns(ahid_hrns)
         ahid_fph, ahid_hrns, m = new_ahid(ahid_name, parent_hrns, primid_fph)
-        print("ahid_hrns = " + ahid_hrns)
+#        print("ahid_hrns = " + ahid_hrns)
         if not ("namespace" in r_ahid_etypes):
             # A new *namespace* is created
             # (a) sharing the parent *namespace* of the new *ahid*
@@ -3262,7 +3263,7 @@ def new_pairing(
             parent_currency_fph, stewards_list, \
             m = get_namespace_properties(parent_fph)
             # Its new child *namespace* is created
-            print("ahid_name = " + ahid_name)
+#            print("ahid_name = " + ahid_name)
             namespace_fph, namespace_hrns, \
             m = new_namespace(
                     ahid_name,
@@ -3271,8 +3272,8 @@ def new_pairing(
                     primid_fph,             # The *primid* is initial steward.
                     False                   # This is a public *namespace*.
                 )
-            print("namespace_hrns = " + namespace_hrns)
-            print("namespace_fph = " + namespace_fph)
+#            print("namespace_hrns = " + namespace_hrns)
+#            print("namespace_fph = " + namespace_fph)
     else:
         ahid_fph = r_ahid_fph
         ahid_hrns = r_ahid_hrns
@@ -3405,13 +3406,13 @@ def complete_parent_namespace(identifier_hrns, primid_id):
         s_fph, m = hrns_to_fph("cc")
 #        s_fph, m = hrns_to_fph("adm.cc")
     else:
-        print("primid exists")
+#        print("primid exists")
         s_fph, s_hrns, etype, m = identify_entity(primid_id)
         #s_fph, s_hrns, etype, m = identify_entity(primid_fph)
     c_fph, m = hrns_to_fph("cc")
     entity_fph, entity_hrns, etype, m = identify_entity(identifier_hrns)
     if entity_fph: # the entity exists already
-        print("entity exists already")
+#        print("entity exists already")
         return entity_fph
     if not re_hrns.match(identifier_hrns):
         print("invalid HRNS")

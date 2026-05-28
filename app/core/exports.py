@@ -4,7 +4,7 @@ import os
 import pickle
 from pathlib import Path
 from prettytable import PrettyTable
-# see ttps://learnpython.com/blog/print-table-in-python/
+# see https://learnpython.com/blog/print-table-in-python/
 
 from app.core.constants import ENTITIES_DB, PAYMENTS_DB, DB_DIR, DB_BKP_DIR
 #from .constants import SLATE_EXPORT, SLATE_IMPORT

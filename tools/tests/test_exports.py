@@ -29,7 +29,7 @@ from app.core.exports import dump_currency_payments
 
 op_path = "/tmp/SLATE_test_exports/"
 
-print("-"*80)
+print("\n" + "-"*120)
 print("Testing list_payments_in_currency( )")
 payments_list, m = list_payments_in_currency("hrs.cc")
 if m:
@@ -38,7 +38,7 @@ else:
     for payments_row in payments_list:
         print(payments_row)
 
-#print("-"*80)
+#print("\n" + "-"*120)
 #print("Testing list_payments_for_account( )")
 #payments_list, m = list_payments_for_account(account_id)
 #if m:
@@ -47,7 +47,7 @@ else:
 #    for payments_row in payments_list:
 #        print(payments_row)
 
-print("-"*80)
+print("\n" + "-"*120)
 print("Testing dump_currency_payments_csv( )")
 csv_filename, m = dump_currency_payments_csv("hrs.cc", True)
 if m:
@@ -60,7 +60,7 @@ else:
     for csv_row in csv_contents:
         print(csv_row)
 
-#print("-"*80)
+#print("\n" + "-"*120)
 #print("Testing dump_account_payments_csv( )")
 #csv_filename, m = dump_account_payments_csv(account_id, False)
 #if m:
@@ -72,30 +72,30 @@ else:
 #    for csv_row in csv_contents:
 #        print(csv_row)
 
-print("-"*80)
+print("\n" + "-"*120)
 print("Testing dump_dump_currency_payments_table( )")
 out_path = op_path + "dump_currency_payments_table"
 payments_table = dump_currency_payments_table("hrs.cc", out_path)
 print(payments_table)
 
-#print("-"*80)
+#print("\n" + "-"*120)
 #print("Testing dump_currency_payments( )")
 #payments_table = dump_currency_payments(currency_fph)
 #print(payments_table)
 
-print("-"*80)
+print("\n" + "-"*120)
 print("Testing dump_currency_payments_html( )")
 out_path = op_path + "dump_currency_payments_table.html"
 html_str = dump_currency_payments_html("hrs.cc", out_path)
 
-#print("-"*80)
+#print("\n" + "-"*120)
 #print("Testing dump_account_payments( )")
 #all_payments, m = dump_account_payments(account_fph)
 #print(all_payments)
 
-print("-"*80)
+print("\n" + "-"*120)
 print("Testing dump_currency_payments( )")
 all_payments, m = dump_currency_payments("hrs.cc")
 print(all_payments)
 
-print("-"*80)
+print("\n" + "-"*120)

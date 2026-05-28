@@ -450,6 +450,7 @@ def create_quasitld_set(full = False):
     cctld_list_here.append("diss")
     cctld_list_here.append("dalton")
     cctld_list_here.append("clapton")
+    cctld_list_here.append("team")
 
 
 
