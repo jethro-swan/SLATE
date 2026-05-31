@@ -17,8 +17,8 @@
 
 
 
-from app.core.exports import list_payments_in_currency
-from app.core.exports import list_payments_for_account
+from app.core.exports import list_currency_payments
+from app.core.exports import list_account_payments
 from app.core.exports import dump_currency_payments_csv
 from app.core.exports import dump_account_payments_csv
 from app.core.exports import dump_currency_payments_table
@@ -28,74 +28,95 @@ from app.core.exports import dump_account_payments
 from app.core.exports import dump_currency_payments
 
 op_path = "/tmp/SLATE_test_exports/"
+#test_account_fph = "05015e6c4c8cb18c3fff3a18071590b7"
+test_account_fph = "0c94e22da2add5b48acf5b3dfd3c2edb"
+export_path = "/home/slate/SLATE/app/export/"
 
-print("\n" + "-"*120)
-print("Testing list_payments_in_currency( )")
-payments_list, m = list_payments_in_currency("hrs.cc")
-if m:
-    print(m)
-else:
-    for payments_row in payments_list:
-        print(payments_row)
+def test_list_currency_payments():
+    print("\n"*5 + "-"*120)
+    print("Testing list_currency_payments( )\n")
+    payments_list, m = list_currency_payments("hrs.cc")
+    if m:
+        print(m)
+    else:
+        for payments_row in payments_list:
+            print(payments_row)
 
-#print("\n" + "-"*120)
-#print("Testing list_payments_for_account( )")
-#payments_list, m = list_payments_for_account(account_id)
-#if m:
-#    print(m)
-#else:
-#    for payments_row in payments_list:
-#        print(payments_row)
+def test_list_account_payments():
+    print("\n"*4 + "-"*120)
+    print("Testing list_account_payments( )\n")
+    payments_list, m = list_account_payments(test_account_fph)
+    if m:
+        print(m)
+    else:
+        for payments_row in payments_list:
+            print(payments_row)
 
-print("\n" + "-"*120)
-print("Testing dump_currency_payments_csv( )")
-csv_filename, m = dump_currency_payments_csv("hrs.cc", True)
-if m:
-    print(m)
-else:
-    print("csv_filename = " + csv_filename)
-    csv_filepath = "/home/slate/SLATE/app/export/" + csv_filename
-    with open(csv_filepath, "r") as csvf:
-        csv_contents = csvf.readlines()
-    for csv_row in csv_contents:
-        print(csv_row)
+def test_dump_currency_payments_csv():
+    print("\n"*4 + "-"*120)
+    print("Testing dump_currency_payments_csv( )\n")
+    csv_filename, m = dump_currency_payments_csv("hrs.cc", True)
+    if m:
+        print(m)
+    else:
+        print("csv_filename = " + csv_filename + "\n")
+        csv_filepath = "/home/slate/SLATE/app/export/" + csv_filename
+        with open(csv_filepath, "r") as csvf:
+            csv_contents = csvf.readlines()
+        for csv_row in csv_contents:
+            print(csv_row.strip())
 
-#print("\n" + "-"*120)
-#print("Testing dump_account_payments_csv( )")
-#csv_filename, m = dump_account_payments_csv(account_id, False)
-#if m:
-#    print(m)
-#else:
-#    print("csv_filename = " + csv_filename)
-#    with open(csv_filename, "r") as csvf:
-#        csv_contents = csvf.readlines()
-#    for csv_row in csv_contents:
-#        print(csv_row)
+def test_dump_account_payments_csv():
+    print("\n"*4 + "-"*120)
+    print("Testing dump_account_payments_csv( )\n")
+    csv_filename, m = dump_account_payments_csv(test_account_fph, False)
+    csv_filepath = export_path + csv_filename
+    if m:
+        print(m)
+    else:
+        print("csv_filename = " + csv_filename + "\n")
+        with open(csv_filepath, "r") as csvf:
+            csv_contents = csvf.readlines()
+        for csv_row in csv_contents:
+            print(csv_row.strip())
 
-print("\n" + "-"*120)
-print("Testing dump_dump_currency_payments_table( )")
-out_path = op_path + "dump_currency_payments_table"
-payments_table = dump_currency_payments_table("hrs.cc", out_path)
-print(payments_table)
+def test_dump_currency_payments_html():
+    print("\n"*4 + "-"*120)
+    print("Testing dump_currency_payments_html( )\n")
+    out_path = op_path + "dump_currency_payments_table.html"
+    html_str = dump_currency_payments_html("hrs.cc", out_path)
 
-#print("\n" + "-"*120)
-#print("Testing dump_currency_payments( )")
-#payments_table = dump_currency_payments(currency_fph)
-#print(payments_table)
+    #print("\n" + "-"*120)
+    #print("Testing dump_account_payments( )")
+    #all_payments, m = dump_account_payments(account_fph)
+    #print(all_payments)
 
-print("\n" + "-"*120)
-print("Testing dump_currency_payments_html( )")
-out_path = op_path + "dump_currency_payments_table.html"
-html_str = dump_currency_payments_html("hrs.cc", out_path)
+def test_dump_currency_payments():
+    print("\n"*4 + "-"*120)
+    print("Testing dump_currency_payments( )\n")
+    all_payments = dump_currency_payments("hrs.cc")
+    print(all_payments)
 
-#print("\n" + "-"*120)
-#print("Testing dump_account_payments( )")
-#all_payments, m = dump_account_payments(account_fph)
-#print(all_payments)
+def test_dump_currency_payments_table():
+    print("\n"*4 + "-"*120)
+    print("Testing dump_currency_payments_table( )\n")
+    out_path = op_path + "dump_currency_payments_table"
+    payments_table = dump_currency_payments_table("hrs.cc")
+    print(payments_table)
 
-print("\n" + "-"*120)
-print("Testing dump_currency_payments( )")
-all_payments, m = dump_currency_payments("hrs.cc")
-print(all_payments)
+    #print("\n" + "-"*120)
+    #print("Testing dump_currency_payments( )")
+    #payments_table = dump_currency_payments(currency_fph)
+    #print(payments_table)
+
+
+#test_list_currency_payments()
+test_list_account_payments()
+#test_dump_currency_payments_csv()
+test_dump_account_payments_csv()
+#test_dump_currency_payments()
+#test_dump_currency_payments_table()
+#test_dump_currency_payments_html()
+
 
 print("\n" + "-"*120)

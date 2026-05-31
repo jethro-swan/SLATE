@@ -16,7 +16,7 @@ from app.core.slate_core import list_currency_accounts
 from app.core.slate_core import get_ahid_primid
 from app.core.slate_core import retrieve_pairing_account_fph as pairing_account
 
-from app.core.exports import list_payments_in_currency
+from app.core.exports import list_currency_payments
 
 import math
 
@@ -57,7 +57,7 @@ def _accounts_circle(currency_id):
     if not ("currency" in etypes):
         return {}, "Identifier " + currency_hrns + " has no currency registered"
 
-    payments_list, m = list_payments_in_currency(currency_id)
+    payments_list, m = list_currency_payments(currency_id)
     accounts_fph_list = list_currency_accounts(currency_fph)
     # The *accounts* will be plotted as equally-spaced points on a circle.
     # For a modest number of *accounts* (suitable for display in a simpled SVG
@@ -106,7 +106,7 @@ def _plot_accounts_circle(currency_id):
     v_shift = str(v_len/2)
     #
     # (2) The list of payments in this *currency* is retrieved.
-    payments_list, m = list_payments_in_currency(currency_id)
+    payments_list, m = list_currency_payments(currency_id)
     for row in payments_list:
         print("from " + row[2] + " to " + row[3] + " in " + row[4])
 #    print(payments_list)
@@ -171,7 +171,7 @@ def accounts_circle(currency_id, primid_id):
         return [], "Identifier " + currency_id + " is not registered"
     if not ("currency" in etypes):
         return [], "Identifier " + currency_hrns + " has no currency registered"
-    payments_list, m = list_payments_in_currency(currency_id)
+    payments_list, m = list_currency_payments(currency_id)
     ahids_fph_list = []
     for row in payments_list:
 #        timestamp = row[0]

@@ -39,7 +39,7 @@ from app import app
 #==============================================================================
 # Create a list of payments made in the specified *currency*:
 
-def list_payments_in_currency(currency_id):
+def list_currency_payments(currency_id):
 
     currency_fph, currency_hrns, etypes, \
     m = identify_entity(currency_id)
@@ -247,7 +247,7 @@ def dump_currency_payments_csv(currency_id, show_header_row = True):
     # Hub operational mode (read from environment variable HUB_MODE)
     hub_mode = get_hub_mode()
 
-    payment_rows, m = list_payments_in_currency(currency_id)
+    payment_rows, m = list_currency_payments(currency_id)
     if m:
         return "", m
 
@@ -415,7 +415,7 @@ def dump_currency_payments_csv(currency_id, show_header_row = True):
     # Hub operational mode (read from environment variable HUB_MODE)
     hub_mode = get_hub_mode()
 
-    payment_rows, m = list_payments_in_currency(currency_id)
+    payment_rows, m = list_currency_payments(currency_id)
     if m:
         return "", m
 
@@ -519,7 +519,7 @@ def dump_account_payments_csv(account_id, show_header_row = False):
 
 def dump_currency_payments_table(currency_identifier, output_file_path):
 
-    payment_rows = list_payments_in_currency(currency_identifier)
+    payment_rows = list_currency_payments(currency_identifier)
     payments_table = PrettyTable()
     #print(payments_table)
     payments_table.align = "l"
@@ -559,7 +559,7 @@ def dump_currency_payments(currency_fph):
 
 #------------------------------------------------------------------------------
 def dump_currency_payments_html(currency_identifier, output_file_path):
-    payment_rows = list_payments_in_currency(currency_identifier)
+    payment_rows = list_currency_payments(currency_identifier)
 
     html_str = "<table class=\"dump_table\">\n" \
              + "<tr>" \

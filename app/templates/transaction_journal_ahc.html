@@ -4,11 +4,16 @@
 
 <h3>Transaction journal</h3>
 
-For <em>account-holder</em>: <b>{{ ahid_hrns }}</b><br />
+<p>For <em>account-holder</em>: <b>{{ ahid_hrns }}</b><br />
 in <em>currency</em>: <b>{{ currency_hrns }}</b><br /><br />
-(volume so far: {{ account_volume }})<br /><br />
+(volume so far: {{ account_volume }})</p>
 
 <table>
+  <tr>
+    <td class="h" colspan="5">
+      <b>Payments made/received</b> (most recent first)
+    </td>
+  </tr>
   <tr valign="bottom" align="center">
     <td class="h"><b>with</b></td>
     <td class="h"><b>in</b></td>

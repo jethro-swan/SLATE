@@ -102,9 +102,9 @@ from app.core.logging import log_event
 
 from app.core.payments import payment
 
-from app.core.exports import list_payments_for_account
+#from app.core.exports import list_account_payments
 from app.core.exports import dump_account_payments_csv
-from app.core.exports import list_payments_in_currency
+#from app.core.exports import list_currency_payments
 from app.core.exports import dump_currency_payments_csv
 
 from app.core.uploads import csv_create_namespaces
@@ -2248,7 +2248,7 @@ def export(file):
     return send_file(exports, as_attachment=True)
 
 #------------------------------------------------------------------------------
-# Export *account* jourbal:
+# Export *account* journal:
 @app.route("/account/export/<account_fph>", methods = ["GET", "POST"])
 @login_required
 def export_account_csv(account_fph):
@@ -2262,25 +2262,27 @@ def export_account_csv(account_fph):
     group = "home" # Used to control top menu behaviour.
     logged_in = current_user.is_authenticated
 
-    primid_fph, primid_hrns, etypes, \
-    m = identify_entity(current_user.get_id())
+    primid_fph, primid_hrns, etypes, m = identify_entity(current_user.get_id())
 
-    if hub_mode == "slate":
-        working_identity_fph = primid_fph
-        working_identity_hrns = primid_hrns
-        working_identity_type = "primid"
-    elif "working_identity" in session:
-        working_identity_fph, working_identity_hrns, etypes, \
-        m = identify_entity(session["working_identity"])
-    else:
-        working_identity_fph = primid_fph
-        session["working_identity"] = working_identity_fph
-        working_identity_hrns = primid_hrns
-        working_identity_type = "primid"
+#    if hub_mode == "slate":
+#        working_identity_fph = primid_fph
+#        working_identity_hrns = primid_hrns
+#        working_identity_type = "primid"
+#    elif "working_identity" in session:
+#        working_identity_fph, working_identity_hrns, etypes, \
+#        m = identify_entity(session["working_identity"])
+#    else:
+#        working_identity_fph = primid_fph
+#        session["working_identity"] = working_identity_fph
+#        working_identity_hrns = primid_hrns
+#        working_identity_type = "primid"
+    working_identity_fph = primid_fph
+    session["working_identity"] = working_identity_fph
+    working_identity_hrns = primid_hrns
+    working_identity_type = "primid"
     working_identity_type = etype_to_adtype(working_identity_type)
 
-    account_fph, account_hrns, etypes, \
-    m = identify_entity(account_fph) # slug
+    account_fph, account_hrns, etypes, m = identify_entity(account_fph) # slug
     if m:
         flash(m)
         return redirect("/home_ahc")
@@ -2291,6 +2293,8 @@ def export_account_csv(account_fph):
         flash(account_hrns + " has no registered account")
         return redirect("/home_ahc")
 
+    print("\n\naccount_hrns = " + account_hrns)
+
     currency_fph, owner_fph, balance, volume, active, \
     account_type, account_category, account_units, \
     account_metrical_equivalence, account_dimensions, \
@@ -2300,8 +2304,7 @@ def export_account_csv(account_fph):
         return redirect("/home_ahc")
     ahid_hrns = fph_to_hrns(owner_fph)
 
-    owner_fph, owner_hrns, etypes, \
-    m = identify_entity(owner_fph)
+    owner_fph, owner_hrns, etypes, m = identify_entity(owner_fph)
     if m:
         flash(m)
         return redirect("/home_ahc")
@@ -2311,8 +2314,9 @@ def export_account_csv(account_fph):
         flash("None of your identities owns this account")
         return redirect("/home_ahc")
 
-    currency_fph, currency_hrns, etypes, \
-    m = identify_entity(currency_fph)
+    print("owner_hrns = " + owner_hrns)
+
+    currency_fph, currency_hrns, etypes, m = identify_entity(currency_fph)
     if m:
         flash(m)
         return redirect("/home_ahc")
@@ -2320,10 +2324,15 @@ def export_account_csv(account_fph):
         flash(currency_id + " is not a currency")
         return redirect("/home_ahc")
 
+    print("currency_hrns = " + currency_hrns)
+    print("dump_account_payments_csv(" + account_fph + ", True)")
     csv_file, m = dump_account_payments_csv(account_fph, True)
     if m:
         flash(m)
         return redirect("/home_ahc")
+    print("csv_file = " + csv_file + "\n")
+
+
 
     number_of_messages, \
     number_of_indelible_messages = message_count(primid_fph, hub_mode)

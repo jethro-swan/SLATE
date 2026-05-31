@@ -126,7 +126,7 @@ if run_payment_test_loop:
         payee_ahid_hrns = random.choice(ahid_hrns_list)
         currency_hrns = random.choice(currency_hrns_list)
         amount = random.randint(0, 100000)
-        annotation = "test B" + str(n)
+        annotation = "test B" + str(n).zfill(4)
         if payer_ahid_hrns != payee_ahid_hrns:
             if display_random_selection:
                 print(

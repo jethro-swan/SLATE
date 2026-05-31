@@ -39,10 +39,9 @@ from app import app
 #==============================================================================
 # Create a list of payments made in the specified *currency*:
 
-def list_payments_in_currency(currency_id):
+def list_currency_payments(currency_id):
 
-    currency_fph, currency_hrns, etypes, \
-    m = identify_entity(currency_id)
+    currency_fph, currency_hrns, etypes, m = identify_entity(currency_id)
     if m:
         return [], m
     if not currency_fph:
@@ -74,32 +73,10 @@ def list_payments_in_currency(currency_id):
     if all_payments is None:
         return [], ""
     payments_list = []
-    for payment in all_payments:
+    #for payment in all_payments:
+    for p in all_payments:
         payment_row = []
-        p = list(payment)
-
-#        timestamp = p[0]
-#        payment_id = str(p[1])
-#        payer_hrns = fph_to_hrns(p[2])          # *account* or *ahid*
-#        payee_hrns = fph_to_hrns(p[3])          # *account* or *ahid*
-#        amount = integer_to_money_s_format(p[4])
-#        payer_balance = integer_to_money_s_format(p[5])
-#        payee_balance = integer_to_money_s_format(p[6])
-#        annotation = p[7]
-#        payment_row.append(timestamp)           # timestamp
-#        #payment_row.append(str(p[1]).zfill(8)) # payment number
-#        payment_row.append(payment_id)          # payment number
-#        payment_row.append(payer_hrns)          # payer *ahid* HRNS
-#        payment_row.append(payee_hrns)          # payee  *ahid* HRNS
-#        if hub_mode == "slate":
-#            payment_row.append(currency_hrns)   # currency HRNS
-#        payment_row.append(amount)              # amount paid
-#        payment_row.append(payer_balance)       # payer balance
-#        payment_row.append(payee_balance)       # payee balance
-#        payment_row.append(annotation)          # annotation
-#        payments_list.append(payment_row)
-
-        # Re-ordered 2026-02-22:
+        #p = list(payment)
         timestamp = p[0]
         payment_id = str(p[1])
         payer_hrns = fph_to_hrns(p[2])          # *account* or *ahid*
@@ -115,28 +92,23 @@ def list_payments_in_currency(currency_id):
         payment_row.append(amount)              # amount paid
         payment_row.append(annotation)          # annotation
         payment_row.append(timestamp)           # timestamp
-        #payment_row.append(str(p[1]).zfill(8)) # payment number
         payment_row.append(payment_id)          # payment number
         payment_row.append(payer_balance)       # payer balance
         payment_row.append(payee_balance)       # payee balance
         payments_list.append(payment_row)
-
-
-
-#        print(payment_row)
-
     return payments_list, ""
 
 
 #==============================================================================
 # Create a list of payments made to or from the specified *account*:
 
-def list_payments_for_account(account_id):
+def list_account_payments(account_id):
     account_fph, account_hrns, etypes, m = identify_entity(account_id)
     if m:
         return [], m
     if not account_fph:
         [], account_id + " is not a registered identifier"
+    print("account = " + account_fph + " (" + account_hrns + ")\n")
 
     currency_fph, owner_fph, balance, volume, active, \
     account_type, account_category, account_units, \
@@ -149,24 +121,12 @@ def list_payments_for_account(account_id):
         # This is a *currency*|*ahid* pairing-identified *account* so the payer
         # or payee is displayed as the *ahid*'s identifier.
         pair_indexed_account = True
-        payer_fph = payee_fph = ahid_fph = owner_fph
-#        print("paired: " + owner_fph + " > " + fph_to_hrns(owner_fph))
     elif ("account" in etypes):
         # This is a directly-addressed *account* so the payer or payee is
         # displayed as the *account*'s own identifier.
         directly_indexed_account = True
-        payer_fph = payee_fph = account_fph
-        print("direct: " + account_fph + " > " + fph_to_hrns(account_fph))
     else:
         return [], "Identifier " + account_hrns + " has no registered account"
-    # Hub operational mode (read from environment variable HUB_MODE)
-#    hub_mode = get_hub_mode()
-#    print("list_payments_for_account(" + account_hrns + ")")
-
-#    currency_fph, owner_fph, balance, volume, active, \
-#    m = get_account_properties(account_fph)
-#
-#    payer_fph = payee_fph = account_fph
 
     with sqlite3.connect(PAYMENTS_DB) as conn:
         cursor = conn.cursor()
@@ -177,14 +137,14 @@ def list_payments_for_account(account_id):
             + "payment_id, " \
             + "payer_fph, " \
             + "payee_fph, " \
-            + "currency_fph, " \
             + "amount, " \
             + "payer_balance, " \
             + "payee_balance, " \
             + "annotation " \
-            + "FROM payments WHERE payer_fph = ? OR payee_fph = ?",
-            (payer_fph, payee_fph)
-        )
+            + "FROM payments " \
+            + "WHERE (payer_fph = ? OR payee_fph = ?) and (currency_fph = ?)",
+            (owner_fph, owner_fph, currency_fph)
+       )
         all_payments = cursor.fetchall()
         cursor.close()
 
@@ -197,48 +157,32 @@ def list_payments_for_account(account_id):
         payment_row = []
         timestamp = p[0]
         payment_id = str(p[1]).zfill(8)
-        payer_hrns = fph_to_hrns(p[2])
-        payee_hrns = fph_to_hrns(p[3])
-        currency_hrns = fph_to_hrns(p[4])
-        amount = integer_to_money_s_format(p[5])
-        payer_balance = integer_to_money_s_format(p[6])
-        payee_balance = integer_to_money_s_format(p[7])
-        annotation = p[8]
+        payer_fph = p[2]
+        payer_hrns = fph_to_hrns(payer_fph)
+        payee_fph = p[3]
+        payee_hrns = fph_to_hrns(payee_fph)
+        amount = integer_to_money_s_format(p[4])
+        payer_balance = integer_to_money_s_format(p[5])
+        payee_balance = integer_to_money_s_format(p[6])
+        annotation = p[7]
         payment_row.append(timestamp)
         payment_row.append(payment_id)
-        if pair_indexed_account:
-            payment_row.append(currency_hrns)
-            if payee_fph == ahid_fph:
-                payment_row.append(amount)          # amount received
-                payment_row.append("")
-                payment_row.append(payee_hrns)      # payee HRNS
-                payment_row.append(payer_balance)   # account balance
-            elif payer_fph == ahid_fph:
-                payment_row.append("")
-                payment_row.append(amount)          # amount paid
-                payment_row.append(payer_hrns)      # payer HRNS
-                payment_row.append(payee_balance)   # balance account balance
-            else:
-                payment_row.append("")
-                payment_row.append("")
-                payment_row.append("")
-                payment_row.append("")
+        if payee_fph == owner_fph:
+            payment_row.append(amount)          # amount received
+            payment_row.append("")
+            payment_row.append(payer_hrns)      # payee HRNS
+            payment_row.append(payee_balance)   # account balance
+        elif payer_fph == owner_fph:
+            payment_row.append("")
+            payment_row.append(amount)          # amount paid
+            payment_row.append(payer_hrns)      # payer HRNS
+            payment_row.append(payee_hrns)      # payer HRNS
+            payment_row.append(payer_balance)   # balance account balance
         else:
-            if payee_fph == account_fph:
-                payment_row.append(amount)          # amount received
-                payment_row.append("")
-                payment_row.append(payee_hrns)      # payee HRNS
-                payment_row.append(payer_balance)   # account balance
-            elif payer_fph == account_fph:
-                payment_row.append("")
-                payment_row.append(amount)          # amount paid
-                payment_row.append(payer_hrns)      # payer HRNS
-                payment_row.append(payee_balance)   # balance account balance
-            else:
-                payment_row.append("")
-                payment_row.append("")
-                payment_row.append("")
-                payment_row.append("")
+            payment_row.append("")
+            payment_row.append("")
+            payment_row.append("")
+            payment_row.append("")
         payment_row.append(annotation)          # annotation
         payments_list.append(payment_row)
 
@@ -263,7 +207,7 @@ def dump_currency_payments_csv(currency_id, show_header_row = True):
     # Hub operational mode (read from environment variable HUB_MODE)
     hub_mode = get_hub_mode()
 
-    payment_rows, m = list_payments_in_currency(currency_id)
+    payment_rows, m = list_currency_payments(currency_id)
     if m:
         return "", m
 
@@ -273,18 +217,7 @@ def dump_currency_payments_csv(currency_id, show_header_row = True):
     with open(csv_export_filepath, "w") as csv_f:
         if show_header_row:
             if hub_mode == "slate":
-#                csv_f.write(
-#                    "date and time" + SC \
-#                    + "payment number" + SC \
-#                    + "payer" + SC \
-#                    + "payee" + SC \
-#                    + "currency" + SC \
-#                    + "payer balance" + SC \
-#                    + "payee balance" + SC \
-#                    + "amount" + SC \
-#                    + "annotation\n"
-#                )
-                csv_f.write(
+               csv_f.write(
                     "currency" + SC \
                     + "payer" + SC \
                     + "payee" + SC \
@@ -328,7 +261,8 @@ def dump_account_payments_csv(account_id, show_header_row = False):
     # Hub operational mode (read from environment variable HUB_MODE)
     hub_mode = get_hub_mode()
 
-    payment_rows, m = list_payments_for_account(account_id)
+    payment_rows, m = list_account_payments(account_id)
+    print(payment_rows)
 
     if hub_mode == "slate":
         currency_fph, owner_fph, balance, volume, active, \
@@ -346,70 +280,30 @@ def dump_account_payments_csv(account_id, show_header_row = False):
     with open(csv_export_filepath, "w") as csv_f:
         if show_header_row:
             csv_f.write(
-                      "date and time" + SC \
-#                     + "currency_fph" + SC \
-                      + "payment number" + SC \
-                      + "credit" + SC \
-                      + "debit" + SC \
-                      + "other account" + SC \
-                      + "balance" + SC \
-                      + "annotation\n"
-                  )
+                "date and time" + SC \
+                + "payment number" + SC \
+                + "credit" + SC \
+                + "debit" + SC \
+                + "other account" + SC \
+                + "balance" + SC \
+                + "annotation\n"
+            )
         for row in payment_rows:
+
             for i in range(len(row)-1):
                 csv_f.write(row[i])
                 csv_f.write(SC)
+
             csv_f.write(row[-1])
             csv_f.write("\n")
 
     return csv_filename, ""
 
-#==============================================================================
-##
-
-def dump_currency_payments_table(currency_identifier, output_file_path):
-
-    payment_rows = list_payments_in_currency(currency_identifier)
-    payments_table = PrettyTable()
-    #print(payments_table)
-    payments_table.align = "l"
-    payments_table.field_names = [
-                                    "payment number",
-                                    "payer HRNS",
-                                    "payee HRNS",
-                                    "amount",
-                                    "annotation"
-                                 ]
-    table_rows = []
-    for row in payment_rows:
-        table_row = []
-        table_row.append(row[0])                        # payment ID
-        table_row.append(fph_to_hrns(row[1]))           # payer HRNS
-        table_row.append(fph_to_hrns(row[2]))           # payee HRNS
-        table_row.append(row[3])                        # amount paid
-        table_row.append(row[4])                        # annotation
-        table_rows.append(table_row)
-
-    payments_table.add_rows(table_rows[1:])
-
-
-
-    if output_file_path and os.path.exists(output_file_path):
-        with open(output_file_path, "w") as table_f:
-            table_f.write(text_table)
-
-    return payments_table
-
-#------------------------------------------------------------------------------
-def dump_currency_payments(currency_fph):
-
-    payments_table = dump_currency_payments_table(currency_fph)
-
-    return payments_table
-
 #------------------------------------------------------------------------------
 def dump_currency_payments_html(currency_identifier, output_file_path):
-    payment_rows = list_payments_in_currency(currency_identifier)
+    payment_rows = list_currency_payments(currency_identifier)
+    if len(payment_rows) == 0:
+        return ""
 
     html_str = "<table class=\"dump_table\">\n" \
              + "<tr>" \
@@ -420,6 +314,8 @@ def dump_currency_payments_html(currency_identifier, output_file_path):
              + "<th>annotation</th>" \
              + "</tr>\n"
     for row in payment_rows:
+        if len(row) < 5:
+            return ""
         html_str = []
         html_str += "<tr>"
         # payment ID:
@@ -471,16 +367,6 @@ def dump_account_payments(account_fph):
         all_payments = []
         for payment in payments:
             p = {}
-            #print("Payments history")
-            #for i in range(len(payments)):
-            #    print(payments[i])
-            #print()
-            #if account_fph == payments[1]:
-            #    p["direction"] = "payment"
-            #elif account_fph == payments[2]:
-            #    p["direction"] = "receipt"
-            #else:
-            #    p["direction"] = "gremlin alert" # something very wrong
             p["payment_id"] = str(payment[0]).zfill(6)
             p["payer_fph"] = payment[1]
             if isinstance(payment[1], str):
@@ -499,9 +385,12 @@ def dump_account_payments(account_fph):
 #==============================================================================
 #
 
-def dump_currency_payments(currency_fph):
+def dump_currency_payments(currency_id):
 
-    currency_hrns = fph_to_hrns(currency_fph)
+    currency_fph, currency_hrns, etypes, m = identify_entity(currency_id)
+    if m:
+        return [], "Invalid currency"
+    print("currency = " + currency_fph + " (" + currency_hrns + ")\n")
 
     with sqlite3.connect(PAYMENTS_DB) as conn:
         cursor = conn.cursor()
@@ -512,12 +401,12 @@ def dump_currency_payments(currency_fph):
             + "FROM payments WHERE currency_fph = ?",
             (currency_fph,)
         )
-        payments = cursor.fetchall()
+        results = cursor.fetchall()
         cursor.close()
-        if payments is None:
+        if results is None:
             return [], "No payments yet in currency " + currency_hrns
         all_payments = []
-        for payment in payments:
+        for payment in results:
             p = {}
             p["payment_id"] = results[0]
             p["payer_fph"] = results[1]
@@ -527,5 +416,57 @@ def dump_currency_payments(currency_fph):
             all_payments.append(p)
         return all_payments, ""     # Returned as a list of dictionaries for
                                     # convenience of processin by Jinja2.
+
+#==============================================================================
+##
+
+def dump_currency_payments_table(currency_id):
+
+    payment_rows, m = list_currency_payments(currency_id)
+    if len(payment_rows) == 0:
+        return ""
+#    print(payment_rows)
+    errors = ""
+    line_no = 0
+
+    payments_table = PrettyTable()
+    payments_table.align = "l"
+    payments_table.field_names = [
+        "payment number", "payer HRNS", "payee HRNS", "amount", "annotation"
+    ]
+    table_rows = []
+    for row in payment_rows:
+        if len(row) < 5:
+            line_no += 1
+            errors += str(line_no).zfill(4) + " : " + row
+            continue
+        print(row)
+#        for i in range(5):
+#            print(row[i])
+        table_row = []
+        table_row.append(row[4])           # payment ID
+        table_row.append(row[1])           # payer HRNS
+        table_row.append(row[2])           # payee HRNS
+        table_row.append(row[3])           # amount paid
+        table_row.append(row[0])           # annotation
+        table_rows.append(table_row)
+
+    payments_table.add_rows(table_rows[1:])
+
+    if errors:
+        print(errors)
+
+#    if output_file_path and os.path.exists(output_file_path):
+#        with open(output_file_path, "w") as table_f:
+#            table_f.write(text_table)
+
+    return payments_table
+
+#------------------------------------------------------------------------------
+#def dump_currency_payments(currency_fph):
+
+#    payments_table = dump_currency_payments_table(currency_fph)
+
+#    return payments_table
 
 #==============================================================================

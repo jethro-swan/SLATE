@@ -645,8 +645,9 @@ def get_entity_types(entity_fph):
             entity_types.append("ahid")
         return entity_types, ""
     else:
-        entity_hrns = fph_to_hrns(entity_fph)
-        return [], "No entities for " + entity_fph + " (" + entity_hrns + ")"
+#        entity_hrns = fph_to_hrns(entity_fph)
+#        return [], "No entities for " + entity_fph + " (" + entity_hrns + ")"
+        return [], ""
 
 #=============================================================================
 # Set, register or deregister an *entity* type for a specified identifier FPH:
