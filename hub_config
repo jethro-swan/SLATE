@@ -1,5 +1,19 @@
+#------------------------------------------------------------------------------
+# HUB CONFIGURATION FILE
+#
+# The contents of this file (other than # comments or empty lines) are read at
+# installation time (when ~/initialize.py is run) and saved in a DBM map. The
+# value (at the right) is accessed using the key (at the left) as the argument
+# for the  get_config( )  function - e.g.
+#   hub_url = get_config("hub_url")
+#------------------------------------------------------------------------------
+
 # This is the URL of the host, needed for the creation of QR-coded invitations:
 hub_url = https://locus01.lrc.org.uk
+
+# The operational mode of this hub:
+hub_mode = slate
+#hub_mode = nests
 
 # This is the default lifespan of a QR-coded invitation (in seconds):
 qr_lifespan = 31536000

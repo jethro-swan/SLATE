@@ -1,0 +1,120 @@
+#------------------------------------------------------------------------------
+# HUB CONFIGURATION FILE
+#
+# The contents of this file (other than # comments or empty lines) are read at
+# installation time (when ~/initialize.py is run) and saved in a DBM map. The
+# value (at the right) is accessed using the key (at the left) as the argument
+# for the  get_config( )  function - e.g.
+#   hub_url = get_config("hub_url")
+#------------------------------------------------------------------------------
+
+# This is the URL of the host, needed for the creation of QR-coded invitations
+# and must be changed to match the specific installation:
+hub_url = https://locus02.lrc.org.uk
+
+# The operational mode of this hub:
+hub_mode = slate
+#hub_mode = nests
+
+# This is the default lifespan of a QR-coded invitation (in seconds):
+qr_lifespan = 31536000
+
+# This is the email address appearing as the sender when issuing an access
+# recovery link:
+hub_email = server@lrc.org.uk
+
+# If the following is true, all accounts of the same category (typically those
+# of a metrically equivalent type) belong to a specified user can be summed and
+# displayed to their owner:
+intracategory_account_summation = TRUE
+
+# If "specify_metrical_equivalence" is true, the metrically equivalent legal
+# tender will be specified when a *currency" is created.  Otherwise, all
+# *currencies* of type "money" are assumed to be metrically equivalent to the
+# LT currency in use where the geographical root namespace indicates.
+specify_metrical_equivalence = TRUE
+
+# If the following is true, *secondary identities* (a.k.a. "secid" or "alias")
+# can be created by an agent (*primary identity* or *primid*). Each such
+# *secid* will have its own collection of *accounts*:
+allow_secid_creation = TRUE
+
+# If the following value is true, a link to one or more additional pages of
+# functions will be displayed in the top menu, perhaps labelled "more ...":
+display_additional_functions_link = FALSE
+display_vector_functions_link = FALSE
+
+
+# In its most basic mode of operation, SLATE displays only the pairings of
+# *currencies* and *ahid* (*account-holder identities*), but each such pairing
+# indexes an *account* the identifier of which is (by default) created
+# automatically from those of the *currency* and *ahid*. Such identifiers are
+# ugly and therefore generally hidden from the user, but if the following is
+# true they will be displayed nevertheless:
+display_account_identifiers = FALSE
+
+# If the following is true, the user may specify a less ugly identifier for
+# such *accounts*:
+allow_pairing_account_naming = FALSE
+
+# If the following is true, a payment may be made directly from an *account* to
+# another *account* (without having to specify an *ahid* and *currency*):
+allow_account_to_account_payment = TRUE
+
+# If the following is true, a payment may be made directly from an *account* to
+# an *agent* (without having to specify an *ahid* and *currency*). In this case
+# the user will be provided with a list of the *accounts* (if any) the recipient
+# (payee) holds in the *currency* of the payer account.
+allow_agent_to_agent_payment = TRUE
+
+# If the following is true, a payment may be made directly from an *agent* (the
+# payee) to another *agent* (the payee). In this case payer will be presented
+# with a list of the *currencies* (if any) to which both payer and payee have
+# access, along with a list (if more than one option) of the available payer
+# and payee *accounts*.
+allow_account_to_agent_payment = TRUE
+
+# If the following is true, the user may import a CSV dataset:
+allow_user_dataset_csv_import = TRUE
+show_dataset_csv_import_link = FALSE
+
+# If the following is true, vector currency support is enabled:
+enable_vector_currency_support = TRUE
+
+# Different hosts may expose different user interfaces. The options are:
+#   slate       - used typically for basic open money applications
+#   nests       - required for more sophisticated open measure applications
+#   user_choice - either of the above if permitted by the stewards of the
+#                 *namespace* in which this user is registered.
+user_interface = omtrad
+hub_mode = omtrad
+
+# NB: Use of the HUB_MODE environment variable will be discontinued in due
+#     course, using instead a state transition approached based upon values
+#     passed from each endpoint-handler to the corresponding template.
+
+# If the following is true, in basic open money operations the agents *account*
+# balances will be plotted on a parabolic canvas similar to that used in the
+# LETSplay game:
+parabola_plotting = TRUE
+
+# Allow new registrant to enter/store address details:
+address_details_included = FALSE
+
+# Allow new registrant to enter/store location details (grid reference):
+location_details_included = FALSE
+
+# Allow new registrant to enter/store a contact phone number:
+phone_details_included = FALSE
+
+# Add a recovery question:
+recovery_questions_included = FALSE
+
+# Include a notification option:
+notification_option_included = FALSE
+
+# Record the country:
+country_included = FALSE
+
+# Allow the user include an SSH public key for command line access:
+ssh_public_key_allowed = False

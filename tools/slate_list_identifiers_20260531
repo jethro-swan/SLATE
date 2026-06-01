@@ -12,67 +12,14 @@
 # - number of identifiers within a specified *namespace* tree
 
 import sqlite3
-import sys
-import argparse
 from prettytable import PrettyTable
-from app.core.constants import IDENTIFIERS_DB, ENTITIES_DB, SUBSTRATE_FPH
+from app.core.constants import IDENTIFIERS_DB, ENTITIES_DB
 from app.core.fph_hrns_maps import hrns_to_fph, fph_to_hrns
 #from app.core.fph_hrns_maps import get_parent
 from app.core.slate_core import get_parent
 #from app.core.fph_hrns_maps import get_private_namespace_root
 from app.core.slate_core import get_private_namespace_root
 from app.core.slate_core import get_entity_types
-from app.core.slate_core import identify_entity
-
-ap = argparse.ArgumentParser(
-        description = "List the entity types associated with each " \
-                    + "registered identifier. Optionally, the following " \
-                    + "can also be displayed:\n" \
-                    + "  - The parent (namespace) identifier\n" \
-                    + "  - The root of the private namespace tree (clade) " \
-                    + "    in which the identifier sits.\n"
-     )
-#if len(sys.argv) == 1:
-#    ap.print_help(sys.stderr)
-#    sys.exit(1)
-#ap.add_argument(
-#    "-p", "--show-parent", dest = "show_parent", action = "store_true",
-#    default = False,
-#    help = "Show the parent (namespace) FPH of the identifier."
-#)
-#ap.add_argument(
-#    "-c", "--show-clade-root", dest = "show_clade_root", action = "store_true",
-#    default = False,
-#    help = "Show the root (namespace) FPH of the clade."
-#)
-ap.add_argument(
-    "-R", "--clade-root", dest = "clade_root_id", action = "store",
-    default = None,
-    help = "Show only identifiers in clade (namespace tree) above root."
-)
-args = ap.parse_args()
-#show_parent = args.show_parent
-#show_clade_root = args.show_clade_root
-clade_root_id = args.clade_root_id
-
-if clade_root_id is not None:
-    clade_root_provided = True
-    clade_root_fph, clade_root_hrns, etypes, m = identify_entity(clade_root_id)
-    if not ("primid" in etypes):
-        print("The specified clade root identifier is not that of a ", end="")
-        print("primid. Therefore the SUBSTRATE will be assumed for the ", end="")
-        print("root - i.e. the entire identifier tree will be displayed.")
-        clade_root_fph = SUBSTRATE_FPH
-        clade_root_hrns = ""
-else:
-    clade_root_provided = False
-    clade_root_fph = SUBSTRATE_FPH
-    clade_root_hrns = ""
-
-#print("\nshow_parent = " + str(show_parent))
-#print("show_clade_root = " + str(show_clade_root))
-print("clade_root_provided = " + str(clade_root_provided))
-print("clade_root = " + clade_root_fph + " (" + clade_root_hrns + ")\n")
 
 with sqlite3.connect(IDENTIFIERS_DB) as conn:
     cursor = conn.cursor()
@@ -86,20 +33,6 @@ if identifiers_list is None:
 
 entity_table = PrettyTable()
 entity_table.align = "l"
-
-#entity_table.field_names = ["entity HRNS", "entity FPH"]
-##if show_parent:
-##    entity_table.field_names.append("parent FPH")
-##if show_clade_root:
-##    entity_table.field_names.append("private namespace tree root FPH")
-#entity_table.field_names.append("parent FPH")
-#entity_table.field_names.append("private namespace tree root FPH")
-#entity_table.field_names.append("N")
-#entity_table.field_names.append("C")
-#entity_table.field_names.append("A")
-#entity_table.field_names.append("H")
-#entity_table.field_names.append("P")
-
 entity_table.field_names = [
                              "entity HRNS",
                              "entity FPH",
@@ -113,9 +46,6 @@ entity_table.field_names = [
 #                             "S",
 #                             "private namespace tree root FPH"
                            ]
-
-
-
 table_rows = []
 for identifier in identifiers_list:
     identifier_fph = identifier[0]
@@ -124,10 +54,6 @@ for identifier in identifiers_list:
     pnsr = get_private_namespace_root(identifier_fph)
     if m: # (this should never happen)
         print(m)
-
-    if clade_root_provided and (pnsr != clade_root_fph):
-#    if clade_root_fph and (pnsr != clade_root_fph):
-        continue
 
     parent_fph = get_parent(identifier_fph)
 
@@ -140,14 +66,10 @@ for identifier in identifiers_list:
     # column 2: identifier FPH
     table_row.append(identifier_fph)
 
-#    if show_parent:
-#        # Column 3: FPH of parent *namespace*
-#        table_row.append(parent_fph)
+    # Column 3: FPH of parent *namespace*
     table_row.append(parent_fph)
 
-#    if show_clade_root:
-#        # Column 4: private *namespace* root FPH
-#        table_row.append(pnsr)
+    # Column 4: private *namespace* root FPH
     table_row.append(pnsr)
 
     # Column 5: *namespace* registered?
@@ -155,25 +77,21 @@ for identifier in identifiers_list:
         table_row.append("N")
     else:
         table_row.append("")
-
     # Column 6: *currency* registered?
     if "currency" in etypes:
         table_row.append("C")
     else:
         table_row.append("")
-
     # Column 7: *account* registered?
     if "account" in etypes:
         table_row.append("A")
     else:
         table_row.append("")
-
     # Column 8: *ahid* registered?
     if "ahid" in etypes:
         table_row.append("H")
     else:
         table_row.append("")
-
     # Column 9: *primid* registered?
     if "primid" in etypes:
         table_row.append("P")

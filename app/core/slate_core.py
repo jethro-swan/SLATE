@@ -127,9 +127,8 @@ def get_version():
 #==============================================================================
 #
 def get_hub_mode():
-    # TEMPORARY FUDGE!
-    return "slate"
-    #return get_config("hub_mode")
+#    return "slate"    # TEMPORARY FUDGE!
+    return get_config("hub_mode")
 
 #==============================================================================
 
