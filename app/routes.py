@@ -1459,62 +1459,107 @@ def print_payments_session_variables():
 
 
 # stewardships page ----------------------------------------------------------
-@app.route("/stewardships/<identity_fph>")
+@app.route("/stewardships")
 @login_required
-def stewardships(identity_fph):
+def stewardships():
 
-    # Hub operational mode (read from environment variable HUB_MODE)
-    hub_mode = get_hub_mode()
+    hub_mode = get_hub_mode() # Hub operational mode
 
-    page = "stewardships"
-    previous_page = session["previous_page"]    # Add these two lines to all
-    session["previous_page"] = page             # endpoint handlers. Some (but
-                                                # but by no means all) screens
-                                                # should be able to follow only
-                                                # from a limited set of previous
-                                                # screens.
-    group = "home" # Used to control top menu behaviour.
-
-    namespace_steward = True
-    currency_steward = True
-    paying = False
     logged_in = current_user.is_authenticated
 
-    primid_fph, primid_hrns, etypes, \
-    m = identify_entity(current_user.get_id())
+    primid_fph, primid_hrns, etypes, m = identify_entity(current_user.get_id())
 
-    if "working_identity" in session:
-        working_identity_fph, working_identity_hrns, etypes, \
-        m = identify_entity(session["working_identity"])
-        working_identity_type = "primid"
-    else:
-        working_identity_fph = primid_fph
-        session["working_identity"] = working_identity_fph
-        working_identity_hrns = primid_hrns
-        working_identity_type = etype_to_adtype(working_identity_type)
+    session["previous_page"] = "stewardships"
 
-    stewardships, m = list_stewardships(primid_fph)
+    if not ("show_top_menu" in session.keys()):
+        show_top_menu = False
+        session["show_top_menu"] = show_top_menu
+    show_top_menu = session["show_top_menu"]
+
+    # The *primid* may be a steward of any number of *namespaces* and
+    # *currencies*. When a *namespaces* and a *currency* share an identifier,
+    # the *primid* will not necessarily a steward of both (although it usually
+    # will be).
+
+    n_stewardships_fph, m = list_namespace_stewardships(primid_fph)
     if m:
         splash(m)
+    namespace_stewardships_hrns = []
+    for s in n_stewardships_fph:
+        namespace_stewardships_hrns.append(fph_to_hrns(s))
+
+    print("\nnamespace stewardships (HRNS):", end="")
+    print(namespace_stewardships_hrns)
+
+    c_stewardships_fph, m = list_currency_stewardships(primid_fph)
+    if m:
+        splash(m)
+    currency_stewardships_hrns = []
+    for s in c_stewardships_fph:
+        currency_stewardships_hrns.append(fph_to_hrns(s))
+
+    print("\ncurrency_stewardships (HRNS):", end="")
+    print(currency_stewardships_hrns)
+
+    # The identifiers of all the entities stewarded by this *primid* will be
+    # displayed side by side in a table, listed alphabetically by HRNS. For
+    # this reason, the template will be passed a dictionary of dictionaries.
+    all_stewardships_fph = n_stewardships_fph + c_stewardships_fph
+    all_stewardships_hrns = []
+    stewardships = {}
+    for stewardship_fph in all_stewardships_fph:
+        stewardship_hrns = fph_to_hrns(stewardship_fph)
+        print(stewardship_hrns)
+        stewardships[stewardship_hrns] = stewardship_fph
+    stewardships_sorted = dict(sorted(stewardships.items()))
+
+    print("\nstewardships_sorted:", end="")
+    print(stewardships_sorted)
+
+    stewardships_tabulated = []
+    for stewardship_hrns in stewardships_sorted.keys():
+        print(stewardship_hrns)
+        s_row = {}
+        # the identifier:
+        s_row["hrns"] = stewardship_hrns
+        s_row["fph"], m = hrns_to_fph(stewardship_fph)
+        if m:
+            flash(m)
+#        if stewardships_sorted[stewardship_hrns] in namespace_stewardships_hrns:
+        if stewardships_sorted[stewardship_hrns] in n_stewardships_fph:
+            s_row["n"] = True
+        else:
+            s_row["n"] = False
+#        if stewardships_sorted[stewardship_hrns] in currency_stewardships_hrns:
+        if stewardships_sorted[stewardship_hrns] in c_stewardships_fph:
+            s_row["c"] = True
+        else:
+            s_row["c"] = False
+        stewardships_tabulated.append(s_row)
+
+    print("\nstewardships_tabulated:", end="")
+    print(stewardships_tabulated)
+
+    n_messages, n_indelible_messages = message_count(primid_fph, hub_mode)
 
     return render_template(
         "stewardships.html",
         title = "Stewardships",
-        page = page,
-        group = group,
+        page = "stewardships",
+        group = "home",
         hub_mode = "slate",
+#        hub_mode = get_hub_mode(),
+        show_top_menu = show_top_menu,
         version = get_version(),
         show_csv_import_link = get_config("show_dataset_csv_import_link"),
         primid_type = "login identity",
         primid_fph = primid_fph,
         primid_hrns = primid_hrns,
-        working_identity_fph = working_identity_fph,
-        working_identity_hrns = working_identity_hrns,
-        working_identity_type = working_identity_type,
-        development_mode = development_mode,
         logged_in = logged_in,
-        namespace_steward = namespace_steward,
-        currency_steward = currency_steward
+        stewardships_tabulated = stewardships_tabulated,
+        number_of_messages = n_messages,
+        number_of_indelible_messages = n_indelible_messages
+
     )
 
 # list stewardships -----------------------------------------------------------
@@ -1934,9 +1979,9 @@ def create_pairing(owner_fph = ""):
     number_of_indelible_messages = message_count(primid_fph, hub_mode)
 
     # Devstuff ########################
-    print("create_pairing( ) ...")
-    print("owner  = " + owner_hrns)
-    print("primid = " + primid_hrns)
+    #print("create_pairing( ) ...")
+    #print("owner  = " + owner_hrns)
+    #print("primid = " + primid_hrns)
     ###################################
 
     form = PairingCreateForm()

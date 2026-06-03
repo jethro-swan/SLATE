@@ -127,8 +127,8 @@ def get_version():
 #==============================================================================
 #
 def get_hub_mode():
-#    return "slate"    # TEMPORARY FUDGE!
-    return get_config("hub_mode")
+    return "slate"    # TEMPORARY FUDGE!
+#    return get_config("hub_mode")
 
 #==============================================================================
 
@@ -1415,6 +1415,9 @@ def new_namespace(
         if not (result is None):
             return namespace_fph, namespace_hrns, ""
     ###########################################################################
+
+    print("namespace steward = " + steward_hrns + " (" + steward_fph + ")")
+
 
     with sqlite3.connect(ENTITIES_DB) as conn:
         cursor = conn.cursor()
@@ -2845,26 +2848,30 @@ def remove_currency_stewardship(currency_fph, steward_fph, primid_fph):
 #------------------------------------------------------------------------------
 # List stewards of a namespace or currency:
 
-def list_stewards(entity_fph):
+def list_stewards(entity_id, etype):
 
-    if not re_fph.match(entity_fph):
-        return [], entity_fph + " is not an FPH"
+    entity_fph, entity_hrns, etypes, m = identify_entity(entity_id)
+    if not entity_fph:
+        return [], entity_id + " is not a registered identifier"
+    if not (etype in etypes):
+        return [], entity_hrns + " has no registered " + etype
 
-    if entity_type_is_registered(entity_fph ,"namespace"):
-        table = " namespaces "
-    elif entity_type_is_registered(entity_fph ,"currency"):
-        table = " currencies "
-    else:
-        return [], entity_fph + " is not a stewarded type"
+    if etype == "namespace":
+        tbl = "namespaces"
+    if etype == "currency":
+        tbl = "currencies"
 
-    select_str = "SELECT stewards_fph_list " \
-               + "FROM" + table \
-               + "WHERE entity_fph = ?"
+    select_str = "SELECT stewards_fph_list FROM " + tbl \
+               + " WHERE entity_fph = ?"
 
-    update_str = "UPDATE" + table \
-               + "SET stewards_fph_list = ? " \
-               + "WHERE entity_fph = ?" \
-               + "(stewards_fph_list, entity_fph)"
+    update_str = "UPDATE " + tbl \
+               + " SET stewards_fph_list = ?" \
+               + " WHERE entity_fph = ? (stewards_fph_list, entity_fph)"
+
+    print("select_str: ", end="")
+    print(select_str)
+    print("update_str: ", end="")
+    print(update_str)
 
     with sqlite3.connect(ENTITIES_DB) as conn:
         cursor = conn.cursor()
@@ -2885,37 +2892,33 @@ def list_stewards(entity_fph):
 # List *namespace* stewardships of a *primid*:
 
 def list_namespace_stewardships(primid_fph):
-
     if not re_fph.match(primid_fph):
         return [], primid_fph + " is not an FPH"
-
     with sqlite3.connect(ENTITIES_DB) as conn:
         cursor = conn.cursor()
-
         cursor.execute(
             "SELECT nstewardships_fph_list FROM primids WHERE entity_fph = ?",
             (primid_fph,)
         )
         result = cursor.fetchone()
-    if result is None:
-        nstewardships_fph_list = []
-        nstewardships_fph_blob = pickle.dumps(nstewardships_fph_list)
-        cursor.execute(
-            "UPDATE primids SET nstewardships_fph_list = ? " \
-            + "WHERE entity_fph = ?",
-            (nstewardships_fph_blob, primid_fph)
-        )
-        conn.commit()
+        if result is None:
+            nstewardships_fph_list = []
+        else:
+            nstewardships_fph_blob = result[0]
+            nstewardships_fph_list = pickle.loads(nstewardships_fph_blob)
+            if not (primid_fph in nstewardships_fph_list):
+                # At the very least, the *primid* is a steward of the
+                # *namespace* with which it shares an identifier:
+                nstewardships_fph_list.append(primid_fph)
+                nstewardships_fph_blob = pickle.dumps(nstewardships_fph_list)
+                cursor.execute(
+                    "UPDATE primids SET nstewardships_fph_list = ? " \
+                    + "WHERE entity_fph = ?",
+                    (nstewardships_fph_blob, primid_fph)
+                )
+                conn.commit()
         cursor.close()
-        return [], "Primid " + primid_fph + " has no namespace stewardships."
-    else:
-        cursor.close()
-        nstewardships_fph_blob = result[0]
-        nstewardships_fph_list = pickle.loads(nstewardships_fph_blob)
-        nstewardships = []
-        for nstewardhip_fph in nstewardships_fph_list:
-            nstewardships.append(nstewardhip_fph)
-    return nstewardships, ""
+    return nstewardships_fph_list, ""
 
 #------------------------------------------------------------------------------
 # List *currency* stewardships of a *primid*:
@@ -2948,6 +2951,11 @@ def list_currency_stewardships(primid_fph):
         conn.commit()
         cursor.close()
     return cstewardships_fph_list, ""
+
+
+
+
+
 
 #==============================================================================
 # List existing namespaces, specifying optionally a parent namespace.

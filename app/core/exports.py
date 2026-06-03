@@ -108,7 +108,7 @@ def list_account_payments(account_id):
         return [], m
     if not account_fph:
         [], account_id + " is not a registered identifier"
-    print("account = " + account_fph + " (" + account_hrns + ")\n")
+#    print("account = " + account_fph + " (" + account_hrns + ")\n")
 
     currency_fph, owner_fph, balance, volume, active, \
     account_type, account_category, account_units, \
@@ -262,7 +262,7 @@ def dump_account_payments_csv(account_id, show_header_row = False):
     hub_mode = get_hub_mode()
 
     payment_rows, m = list_account_payments(account_id)
-    print(payment_rows)
+#    print(payment_rows)
 
     if hub_mode == "slate":
         currency_fph, owner_fph, balance, volume, active, \
@@ -390,7 +390,7 @@ def dump_currency_payments(currency_id):
     currency_fph, currency_hrns, etypes, m = identify_entity(currency_id)
     if m:
         return [], "Invalid currency"
-    print("currency = " + currency_fph + " (" + currency_hrns + ")\n")
+#    print("currency = " + currency_fph + " (" + currency_hrns + ")\n")
 
     with sqlite3.connect(PAYMENTS_DB) as conn:
         cursor = conn.cursor()

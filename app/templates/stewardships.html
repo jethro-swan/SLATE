@@ -2,39 +2,32 @@
 
 {% block content %}
 
-{% for identity in identities %}<!-- list of dictionaries -->
-
-  <div class="header">
-    <b>{{ identity.hrns }}</b> ({{ identity.type }})
-  </div>
-  <br /><br />
-  <hr />
-
-  <b>stewardships</b>
-  <br /><br />
-
-  <table>
-    <tr>
-      <th>stewarded entity</th>
-      <th>entity type</th>
-    </tr>
-    {% for stewardship in stewardships %}
-    <tr>
-      <td class="compact2">
-        <a href="/stewardship/{{ stewardship.fph }}">
-          <b>{{ stewardship.hrns }}</b>
-        </a>
-      </td>
-      <td>
-        {{ stewardship.etype }}
-      </td>
-    </tr>
-    {% endfor %}
-  </table>
-
-  <hr />
-
+<table>
+  <tr>
+    <th>namespace</th>
+    <th>currency</th>
+  </tr>
+  {% for s_row in stewardships_tabulated %}
+  <tr>
+    {% if s_row.n %}
+    <td class="compact2">
+      <a href="/namespace/stewards/{{ s_row.fph }}">{{ s_row.hrns }}</a>
+    </td>
+    {% else %}
+    <td></td>
+    {% endif %}
+    {% if s_row.c %}
+    <td class="compact2">
+      <a href="/currency/stewards/{{ s_row.fph }}">{{ s_row.hrns }}</a>
+    </td>
+    {% else %}
+    <td></td>
+    {% endif %}
+  </tr>
 {% endfor %}
+</table>
+
+<hr />
 
 <br /><br />
 <p class="shout">
