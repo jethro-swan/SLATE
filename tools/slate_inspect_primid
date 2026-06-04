@@ -19,6 +19,8 @@ if not ("primid" in etypes):
 active, administrator, ahids_fph_list, accounts_fph_list, pmap, \
 nstewardships_list, cstewardships_list, \
 m = get_primid_properties(identifier_fph)
+print(nstewardships_list)
+print(cstewardships_list)
 # set up table:
 primid_table = PrettyTable()
 primid_table.align = "l"
