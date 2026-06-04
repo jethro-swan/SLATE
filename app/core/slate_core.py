@@ -2697,156 +2697,156 @@ def get_primid(ahid_id):
 #==============================================================================
 # Add a stewardship to a *primid* and a steward to a *namespace* or *currency*:
 
-def add_namespace_stewardship(entity_fph, steward_fph):
-    if not re_fph.match(steward_fph):
-        return steward_fph + " is not an FPH"
-    if not re_fph.match(entity_fph):
-        return entity_fph + " is not an FPH"
-    if not entity_type_is_registered(steward_fph, "primid"):
-        return steward_fph + " is not a primid."
-    if not entity_type_is_registered(entity_fph, "namespace"):
-        return "namespace not registered for " + entity_fph
-    errors = ""
-    with sqlite3.connect(ENTITIES_DB) as conn:
-        cursor = conn.cursor()
-        # Add the stewarded entity's FPH to the *primid*'s stewardships list:
-        cursor.execute(
-            "SELECT nstewardships_fph_list FROM primids WHERE entity_fph = ?",
-            (steward_fph,)
-        )
-        result = cursor.fetchone()
-        stewardship_has_been_registered_already = False
-        if result is None:
-            nstewardships_fph_list = []
-        else:
-            nstewardships_fph_list = pickle.loads(result[0])
-            if entity_fph in nstewardships_fph_list:
-                stewardship_has_been_registered_already = True
-        nstewardships_fph_list.append(entity_fph)
-        nstewardships_fph_blob = pickle.dumps(nstewardships_fph_list)
-        cursor.execute(
-            "UPDATE primids SET nstewardships_fph_list = ? " \
-            + "WHERE entity_fph = ?",
-            (nstewardships_fph_blob, steward_fph)
-        )
-        # Add the steward's FPH to the *namespace*:
-        cursor.execute(stewards_select_str, (entity_fph,))
-        result = cursor.fetchone()
-        if result is None:
-            stewards_fph_list = []
-        else:
-            stewards_fph_list = pickle.loads(result[0])
-            if steward_fph in stewards_fph_list:
-                if not stewardship_has_been_registered_already:
-                    # Remove the inconsistent steward from entity:
-                    nstewardships_fph_list.remove(entity_fph)
-                    cursor.execute(
-                        "UPDATE primids SET nstewardships_fph_list = ? " \
-                        + "WHERE entity_fph = ?",
-                        (stewardships_fph_blob, steward_fph)
-                    )
-                    errors += "Inconsistency found:\n" \
-                           + "Steward " + steward_fph + " (" \
-                           + fph_to_hrns(steward_fph) + ") has already been " \
-                           + "registered for entity " + entity_fph + " (" \
-                           + fph_to_hrns(entity_fph) + ") but stewardship " \
-                           + "of entity " + entity_fph + " has not been " \
-                           + "registered for steward " + steward_fph + "."
-            else:
-                if stewardship_has_been_registered_already:
-                    # Remove the inconsistent stewardship from steward:
-                    stewards_fph_list.remove(steward_fph)
-                    errors += "Inconsistency found:\n" \
-                           + "Stewardship of entity " + entity_fph + " (" \
-                           + fph_to_hrns(entity_fph) + ") has already been " \
-                           + "registered for steward " + steward_fph + " (" \
-                           + fph_to_hrns(steward_fph) + ") but steward " \
-                           + steward_fph + " has not already been " \
-                           + "registered for entity " + entity_fph + "."
-        stewards_fph_list.append(steward_fph)
-        stewards_fph_blob = pickle.dumps(stewards_fph_list)
-        cursor.execute(stewards_update_str, (stewards_fph_blob, entity_fph))
-        conn.commit()
-        cursor.close()
-    return errors
+#def add_namespace_stewardship(entity_fph, steward_fph):
+#    if not re_fph.match(steward_fph):
+#        return steward_fph + " is not an FPH"
+#    if not re_fph.match(entity_fph):
+#        return entity_fph + " is not an FPH"
+#    if not entity_type_is_registered(steward_fph, "primid"):
+#        return steward_fph + " is not a primid."
+#    if not entity_type_is_registered(entity_fph, "namespace"):
+#        return "namespace not registered for " + entity_fph
+#    errors = ""
+#    with sqlite3.connect(ENTITIES_DB) as conn:
+#        cursor = conn.cursor()
+#        # Add the stewarded entity's FPH to the *primid*'s stewardships list:
+#        cursor.execute(
+#            "SELECT nstewardships_fph_list FROM primids WHERE entity_fph = ?",
+#            (steward_fph,)
+#        )
+#        result = cursor.fetchone()
+#        stewardship_has_been_registered_already = False
+#        if result is None:
+#            nstewardships_fph_list = []
+#        else:
+#            nstewardships_fph_list = pickle.loads(result[0])
+#            if entity_fph in nstewardships_fph_list:
+#                stewardship_has_been_registered_already = True
+#        nstewardships_fph_list.append(entity_fph)
+#        nstewardships_fph_blob = pickle.dumps(nstewardships_fph_list)
+#        cursor.execute(
+#            "UPDATE primids SET nstewardships_fph_list = ? " \
+#            + "WHERE entity_fph = ?",
+#            (nstewardships_fph_blob, steward_fph)
+#        )
+#        # Add the steward's FPH to the *namespace*:
+#        cursor.execute(stewards_select_str, (entity_fph,))
+#        result = cursor.fetchone()
+#        if result is None:
+#            stewards_fph_list = []
+#        else:
+#            stewards_fph_list = pickle.loads(result[0])
+#            if steward_fph in stewards_fph_list:
+#                if not stewardship_has_been_registered_already:
+#                    # Remove the inconsistent steward from entity:
+#                    nstewardships_fph_list.remove(entity_fph)
+#                    cursor.execute(
+#                        "UPDATE primids SET nstewardships_fph_list = ? " \
+#                        + "WHERE entity_fph = ?",
+#                        (stewardships_fph_blob, steward_fph)
+#                    )
+#                    errors += "Inconsistency found:\n" \
+#                           + "Steward " + steward_fph + " (" \
+#                           + fph_to_hrns(steward_fph) + ") has already been " \
+#                           + "registered for entity " + entity_fph + " (" \
+#                           + fph_to_hrns(entity_fph) + ") but stewardship " \
+#                           + "of entity " + entity_fph + " has not been " \
+#                           + "registered for steward " + steward_fph + "."
+#            else:
+#                if stewardship_has_been_registered_already:
+#                    # Remove the inconsistent stewardship from steward:
+#                    stewards_fph_list.remove(steward_fph)
+#                    errors += "Inconsistency found:\n" \
+#                           + "Stewardship of entity " + entity_fph + " (" \
+#                           + fph_to_hrns(entity_fph) + ") has already been " \
+#                           + "registered for steward " + steward_fph + " (" \
+#                           + fph_to_hrns(steward_fph) + ") but steward " \
+#                           + steward_fph + " has not already been " \
+#                           + "registered for entity " + entity_fph + "."
+#        stewards_fph_list.append(steward_fph)
+#        stewards_fph_blob = pickle.dumps(stewards_fph_list)
+#        cursor.execute(stewards_update_str, (stewards_fph_blob, entity_fph))
+#        conn.commit()
+#        cursor.close()
+#    return errors
 
 #==============================================================================
 #
 #
-def modify_currency_stewardship(currency_fph, steward_fph, primid_fph, action):
-    if not re_fph.match(steward_fph):
-        return steward_fph + " is not an FPH"
-    if not re_fph.match(currency_fph):
-        return currency_fph + " is not an FPH"
-    if not entity_type_is_registered(steward_fph, "primid"):
-        return steward_fph + " is not a primid."
-    if not entity_type_is_registered(currency_fph, "currency"):
-        return "currency not registered for " + currency_fph
-    with sqlite3.connect(ENTITIES_DB) as conn:
-        cursor = conn.cursor()
-        # Add the *currency*'s FPH to the *primid*'s stewardships list if and
-        # only if not already there:
-        cursor.execute(
-            "SELECT cstewardships_fph_list FROM primids WHERE entity_fph = ?",
-            (steward_fph,)
-        )
-        result = cursor.fetchone()
-        if result is None: # (should not happen)
-            cstewardships_fph_list = []
-            # At the very least, the *primid* will always be a steward of the
-            # *currency* with which it shares an identifier:
-            cstewardships_fph_list.append(primid_fph)
-        else:
-            cstewardships_fph_list = pickle.loads(result[0])
-        if action == "add":
-            if not (currency_fph in cstewardships_fph_list):
-                cstewardships_fph_list.append(currency_fph)
-        elif action == "remove":
-            if (currency_fph in cstewardships_fph_list):
-                cstewardships_fph_list.remove(currency_fph)
-        else: # (should never get this far)
-            return "Invalid action"
-        cstewardships_fph_blob = pickle.dumps(cstewardships_fph_list)
-        cursor.execute(
-            "UPDATE primids SET cstewardships_fph_list = ? " \
-            + "WHERE entity_fph = ?",
-            (cstewardships_fph_blob, steward_fph)
-        )
-        # Add the *primid*'s FPH to the *currency*'s steward list':
-        cursor.execute(
-            "SELECT stewards_fph_list FROM currencies WHERE entity_fph = ?",
-            (currency_fph,)
-        )
-        result = cursor.fetchone()
-        if result is None: # (should not happen)
-            stewards_fph_list = []
-        else:
-            stewards_fph_list = pickle.loads(result[0])
-        # At the very least, the *primid* will always be a steward of the
-        # *currency* with which it shares an identifier:
-        if not (primid_fph in stewards_fph_list):
-            stewards_fph_list.append(primid_fph)
-        if action == "add":
-            if not (steward_fph in stewards_fph_list):
-                stewards_fph_list.append(steward_fph)
-        else: # action == "remove"
-            if (steward_fph in stewards_fph_list):
-                stewards_fph_list.remove(steward_fph)
-        stewards_fph_blob = pickle.dumps(stewards_fph_list)
-        cursor.execute(
-            "UPDATE currencies SET stewards_fph_list = ? " \
-            + "WHERE entity_fph = ?",
-            (stewards_fph_blob, currency_fph)
-        )
-        conn.commit()
-        cursor.close()
-    return ""
+#def modify_currency_stewardship(currency_fph, steward_fph, primid_fph, action):
+#    if not re_fph.match(steward_fph):
+#        return steward_fph + " is not an FPH"
+#    if not re_fph.match(currency_fph):
+#        return currency_fph + " is not an FPH"
+#    if not entity_type_is_registered(steward_fph, "primid"):
+#        return steward_fph + " is not a primid."
+#    if not entity_type_is_registered(currency_fph, "currency"):
+#        return "currency not registered for " + currency_fph
+#    with sqlite3.connect(ENTITIES_DB) as conn:
+#        cursor = conn.cursor()
+#        # Add the *currency*'s FPH to the *primid*'s stewardships list if and
+#        # only if not already there:
+#        cursor.execute(
+#            "SELECT cstewardships_fph_list FROM primids WHERE entity_fph = ?",
+#            (steward_fph,)
+#        )
+#        result = cursor.fetchone()
+#        if result is None: # (should not happen)
+#            cstewardships_fph_list = []
+#            # At the very least, the *primid* will always be a steward of the
+#            # *currency* with which it shares an identifier:
+#            cstewardships_fph_list.append(primid_fph)
+#        else:
+#            cstewardships_fph_list = pickle.loads(result[0])
+#        if action == "add":
+#            if not (currency_fph in cstewardships_fph_list):
+#                cstewardships_fph_list.append(currency_fph)
+#        elif action == "remove":
+#            if (currency_fph in cstewardships_fph_list):
+#                cstewardships_fph_list.remove(currency_fph)
+#        else: # (should never get this far)
+#            return "Invalid action"
+#        cstewardships_fph_blob = pickle.dumps(cstewardships_fph_list)
+#        cursor.execute(
+#            "UPDATE primids SET cstewardships_fph_list = ? " \
+#            + "WHERE entity_fph = ?",
+#            (cstewardships_fph_blob, steward_fph)
+#        )
+#        # Add the *primid*'s FPH to the *currency*'s steward list':
+#        cursor.execute(
+#            "SELECT stewards_fph_list FROM currencies WHERE entity_fph = ?",
+#            (currency_fph,)
+#        )
+#        result = cursor.fetchone()
+#        if result is None: # (should not happen)
+#            stewards_fph_list = []
+#        else:
+#            stewards_fph_list = pickle.loads(result[0])
+#        # At the very least, the *primid* will always be a steward of the
+#        # *currency* with which it shares an identifier:
+#        if not (primid_fph in stewards_fph_list):
+#            stewards_fph_list.append(primid_fph)
+#        if action == "add":
+#            if not (steward_fph in stewards_fph_list):
+#                stewards_fph_list.append(steward_fph)
+#        else: # action == "remove"
+#            if (steward_fph in stewards_fph_list):
+#                stewards_fph_list.remove(steward_fph)
+#        stewards_fph_blob = pickle.dumps(stewards_fph_list)
+#        cursor.execute(
+#            "UPDATE currencies SET stewards_fph_list = ? " \
+#            + "WHERE entity_fph = ?",
+#            (stewards_fph_blob, currency_fph)
+#        )
+#        conn.commit()
+#        cursor.close()
+#    return ""
 
-def add_currency_stewardship(currency_fph, steward_fph, primid_fph):
-    modify_currency_stewardship(currency_fph, steward_fph, primid_fph, "add")
+#def add_currency_stewardship(currency_fph, steward_fph, primid_fph):
+#    modify_currency_stewardship(currency_fph, steward_fph, primid_fph, "add")
 
-def remove_currency_stewardship(currency_fph, steward_fph, primid_fph):
-    modify_currency_stewardship(currency_fph, steward_fph, primid_fph, "remove")
+#def remove_currency_stewardship(currency_fph, steward_fph, primid_fph):
+#    modify_currency_stewardship(currency_fph, steward_fph, primid_fph, "remove")
 
 #------------------------------------------------------------------------------
 # List stewards of a namespace or currency:
@@ -3589,7 +3589,15 @@ def close_currency(entity_id, steward_id):
 
 #==============================================================================
 #
+# 2026-06-04:
+#
+# The steward and stewradship add/remove sections hould be separated because
+# the entities may be registered within different clades (and therefore in
+# different SQLite files).
 
+
+# A steward is added to or removed from the entity (*namespace* or *currency*):
+#
 def add_or_remove_steward(
         entity_id,          # HRNS or FPH identifier
         entity_type,        # namespace | currency
@@ -3597,7 +3605,6 @@ def add_or_remove_steward(
         auth_steward_id,    # The steward authorizing the change
         other_steward_id    # The steward affected
     ):
-
     if entity_type == "namespace":
         table = "namespaces"
         sc = "n"
@@ -3606,7 +3613,6 @@ def add_or_remove_steward(
         sc = "c"
     else:
         return "Invalid type specified: must be a namespace or currency"
-
     entity_fph, entity_hrns, etypes, m = identify_entity(entity_id)
     # Does the target entity identifer exist?
     if not entity_fph:
@@ -3614,7 +3620,6 @@ def add_or_remove_steward(
     # If so, does it has a *namespace* or *currency* attached to it?
     if not (entity_type in etypes):
         return "Identifier " + entity_hrns + " has no " + entity_type
-
     # Is the authorizing steward a registered *primid*?:
     auth_steward_fph, auth_steward_hrns, p_etypes, \
     m = identify_entity(auth_steward_id)
@@ -3622,7 +3627,6 @@ def add_or_remove_steward(
         return auth_steward_id + " is not a registered identifier"
     if not ("primid" in p_etypes):
         return "Identifier " + auth_steward_id + " has no primid"
-
     # Is the added/removed steward a registered *primid*?:
     other_steward_fph, other_steward_hrns, p_etypes, \
     m = identify_entity(other_steward_id)
@@ -3630,11 +3634,8 @@ def add_or_remove_steward(
         return other_steward_id + " is not a registered identifier"
     if not ("primid" in p_etypes):
         return "Identifier " + other_steward_id + " has no primid"
-
     with sqlite3.connect(ENTITIES_DB) as conn:
         cursor = conn.cursor()
-        # First the steward is added to or removed from the entity (*namespace*
-        # or *currency*):
         cursor.execute(
             "SELECT stewards_fph_list FROM " + table + " WHERE entity_fph = ?",
             (entity_fph,)
@@ -3644,6 +3645,9 @@ def add_or_remove_steward(
             cursor.close()
             return "The entity " + entity_hrns + " has no stewards"
         stewards_fph_list = pickle.loads(result[0])
+        print("auth_steward_fph = " + auth_steward_fph)
+        print("stewards_fph_list = ", end="")
+        print(stewards_fph_list)
         if not (auth_steward_fph in stewards_fph_list):
             cursor.close()
             return auth_steward_hrns + " is not a steward of " + entity_hrns
@@ -3664,15 +3668,60 @@ def add_or_remove_steward(
         else:
             cursor.close()
             return ""
+        print("other_steward_fph = " + other_steward_fph)
+        print("stewards_fph_list = ", end="")
+        print(stewards_fph_list)
         cursor.execute(
             "UPDATE " + table + " SET stewards_fph_list = ? " \
             + "WHERE entity_fph = ?",
             (pickle.dumps(stewards_fph_list), entity_fph)
         )
+        conn.commit()
+        cursor.close()
+        return ""
+    return ""
 
-        # Then the entity (*namespace* or *currency*) is added to or removed
-        # from the target *primid*'s stewardship list:'
-
+# An entity (*namespace* or *currency*) is added to or removed from a *primid*
+# stewardships list:'
+#
+def add_or_remove_stewardship(
+        entity_id,          # HRNS or FPH identifier
+        entity_type,        # namespace | currency
+        operation,          # add | remove
+        auth_steward_id,    # The steward authorizing the change
+        other_steward_id    # The steward affected
+    ):
+    if entity_type == "namespace":
+        table = "namespaces"
+        sc = "n"
+    elif entity_type == "currency":
+        table = "currencies"
+        sc = "c"
+    else:
+        return "Invalid type specified: must be a namespace or currency"
+    entity_fph, entity_hrns, etypes, m = identify_entity(entity_id)
+    # Does the target entity identifer exist?
+    if not entity_fph:
+        return entity_id + " is not a registered identifier"
+    # If so, does it has a *namespace* or *currency* attached to it?
+    if not (entity_type in etypes):
+        return "Identifier " + entity_hrns + " has no " + entity_type
+    # Is the authorizing steward a registered *primid*?:
+    auth_steward_fph, auth_steward_hrns, p_etypes, \
+    m = identify_entity(auth_steward_id)
+    if not auth_steward_fph:
+        return auth_steward_id + " is not a registered identifier"
+    if not ("primid" in p_etypes):
+        return "Identifier " + auth_steward_id + " has no primid"
+    # Is the added/removed steward a registered *primid*?:
+    other_steward_fph, other_steward_hrns, p_etypes, \
+    m = identify_entity(other_steward_id)
+    if not other_steward_fph:
+        return other_steward_id + " is not a registered identifier"
+    if not ("primid" in p_etypes):
+        return "Identifier " + other_steward_id + " has no primid"
+    with sqlite3.connect(ENTITIES_DB) as conn:
+        cursor = conn.cursor()
         cursor.execute(
             "SELECT " + sc + "stewardships_fph_list FROM primids " \
             + "WHERE entity_fph = ?",
@@ -3683,8 +3732,10 @@ def add_or_remove_steward(
             cursor.close()
             return "The primid " + other_steward_hrns + " has no stewardships"
         stewardships_fph_list = pickle.loads(result[0])
+        print("other_steward_fph = " + other_steward_fph)
+        print("stewardships_fph_list = ", end="")
         print(stewardships_fph_list)
-        print(entity_fph)
+#        print(entity_fph)
         if not (entity_fph in stewardships_fph_list):
             cursor.close()
             return entity_hrns + " is not stewarded by " + other_steward_hrns
@@ -3712,40 +3763,46 @@ def add_or_remove_steward(
             + "WHERE entity_fph = ?",
             (pickle.dumps(stewardships_fph_list), other_steward_fph)
         )
-
-        # Only now can the chages be committed:
-
         conn.commit()
         cursor.close()
         return ""
-
     return ""
 
-
-
-
-
-
-
 def add_namespace_steward(entity_id, auth_steward_id, new_steward_id):
-    return add_or_remove_steward(
-        entity_id, "namespace", "add", auth_steward_id, new_steward_id
-    )
+    m = add_or_remove_steward(
+            entity_id, "namespace", "add", auth_steward_id, new_steward_id
+        )
+    n = add_or_remove_stewardship(
+            entity_id, "namespace", "add", auth_steward_id, new_steward_id
+        )
+    return m + n
 
-def remove_namespace_steward(entity_id, auth_steward_id, removed_steward_id):
-    return add_or_remove_steward(
-        entity_id, "namespace", "remove", auth_steward_id, removed_steward_id
-    )
+def remove_namespace_steward(entity_id, auth_steward_id, other_steward_id):
+    m = add_or_remove_steward(
+            entity_id, "namespace", "remove", auth_steward_id, other_steward_id
+        )
+    n = add_or_remove_stewardship(
+            entity_id, "namespace", "remove", auth_steward_id, other_steward_id
+        )
+    return m + n
 
 def add_currency_steward(entity_id, auth_steward_id, new_steward_id):
-    return add_or_remove_steward(
-        entity_id, "currency", "add", auth_steward_id, new_steward_id
-    )
+    m = add_or_remove_steward(
+            entity_id, "currency", "add", auth_steward_id, new_steward_id
+        )
+    n = add_or_remove_stewardship(
+            entity_id, "currency", "add", auth_steward_id, new_steward_id
+        )
+    return m + n
 
-def remove_currency_steward(entity_id, auth_steward_id, removed_steward_id):
-    return add_or_remove_steward(
-        entity_id, "currency", "remove", auth_steward_id, removed_steward_id
-    )
+def remove_currency_steward(entity_id, auth_steward_id, other_steward_id):
+    m = add_or_remove_steward(
+            entity_id, "currency", "remove", auth_steward_id, other_steward_id
+        )
+    n = add_or_remove_stewardship(
+            entity_id, "currency", "remove", auth_steward_id, other_steward_id
+        )
+    return m + n
 
 
 def set_currency_parameter(currency_id, parameter, ctype, steward_id):

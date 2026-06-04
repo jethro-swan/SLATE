@@ -10,19 +10,8 @@ from app.core.slate_core import remove_namespace_steward
 from app.core.slate_core import remove_currency_steward
 from app.core.slate_core import list_namespace_stewardships
 from app.core.slate_core import list_currency_stewardships
-from app.core.slate_core import modify_currency_stewardship
 from app.core.slate_core import set_currency_parameter
 
-
-
-
-
-entity_id = "bb.cc"
-steward1 = "bb.cc"
-steward2 = "dd.cc"
-steward3 = "ee.cc"
-
-entity_fph, entity_hrns, etypes, m = identify_entity(entity_id)
 
 
 def show_namespace_stewards(namespace_id):
@@ -49,6 +38,9 @@ def show_namespace_stewardships(steward_id):
 
 def show_currency_stewards(currency_id):
     stewards_fph_list, m = list_stewards(currency_id, "currency")
+    if m:
+        print(m)
+        return
     stewards_hrns_list = []
     for steward_fph in stewards_fph_list:
         stewards_hrns_list.append(fph_to_hrns(steward_fph))
@@ -57,6 +49,9 @@ def show_currency_stewards(currency_id):
 
 def show_currency_stewardships(steward_id):
     stewardships_fph_list, m = list_currency_stewardships(steward_id)
+    if m:
+        print(m)
+        return
     stewardships_hrns_list = []
     for stewardhip_fph in stewardships_fph_list:
         stewardships_hrns_list.append(fph_to_hrns(stewardhip_fph))
@@ -138,10 +133,4 @@ show_namespace_stewardships("dd.cc")
 show_namespace_stewardships("dd.cc")
 
 
-
-
-
-
-#m = set_currency_parameter(currency_id, parameter, ctype, steward_id)
-#if m:
-#    print(m)
+add_namespace_steward("dd.cc", "dd.cc", "bb.cc")

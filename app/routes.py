@@ -57,10 +57,17 @@ from app.core.slate_core import hrns_to_name_and_namespace
 from app.core.slate_core import authenticate_primid_email
 from app.core.slate_core import get_hub_mode
 from app.core.slate_core import get_version
-#from app.core.slate_core import add_stewardship, remove_steward
-from app.core.slate_core import add_currency_stewardship
-from app.core.slate_core import add_namespace_stewardship
-from app.core.slate_core import remove_currency_stewardship
+# 206-06-04
+#from app.core.slate_core import add_currency_stewardship
+#from app.core.slate_core import add_namespace_stewardship
+#from app.core.slate_core import remove_currency_stewardship
+from app.core.slate_core import add_currency_steward
+from app.core.slate_core import add_namespace_steward
+from app.core.slate_core import remove_currency_steward
+#####################
+
+
+
 #from app.core.slate_core import remove_namespace_stewardship
 from app.core.slate_core import random_filename
 #from app.core.slate_core import get_config
