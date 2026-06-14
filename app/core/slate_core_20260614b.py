@@ -499,11 +499,16 @@ def register_identifier(identifier_hrns):
     if not re_hrns.match(identifier_hrns):
         return ""
     name, parent_hrns = split_hrns(identifier_hrns)
+#    print(":: name : parent = " + name + " : " + parent_hrns)
     parent_fph, m = hrns_to_fph(parent_hrns)
+#    print(":: parent_fph = " + parent_fph)
     identifier_fph, m = hrns_to_fph(identifier_hrns)
     if m:
+#        print("G")
+#        print(m)
         delete_fph_from_map(identifier_fph)
         return ""
+    print(":: identifier_fph = " + identifier_fph)
 
     # NB The HRNS:FPH pair are added to the HRNS<>FPH map, but the FPH will be
     #    added to the  identifiers.entities_registered  table only if the
@@ -658,6 +663,10 @@ def set_entity_type(identifier_id, entity_type, value):
         return "Identifier " + identifier_id + " is not registered"
     if entity_type in etypes:
         return entity_type + " already registered for " + identifier_id
+#    if m:
+#        print("Cannot set " + identifier_id + " (" + entity_hrns + ") type")
+#    if not re_fph.match(identifier_fph):
+#        return "Invalid FPH: " + identifier_fph
     # The valid entity types are:
     vetypes = ["namespace", "currency", "account", "primid", "ahid"]
     if not (entity_type in vetypes):
@@ -672,7 +681,14 @@ def set_entity_type(identifier_id, entity_type, value):
         result = cursor.fetchone()
         if result is None:
             cursor.close()
+            print(":::: Identifier " + entity_fph + " is not registered")
             return "Identifier " + entity_fph + " is not registered"
+#        u = "UPDATE entities_registered SET " + entity_type + " = ? " \
+#            + "WHERE entity_fph = ?"
+#        cursor.execute(
+#            u, (int(value), identifier_fph)
+#        )
+
         cursor.execute(
             "UPDATE entities_registered SET " + entity_type + " = ? " \
             + "WHERE entity_fph = ?", (int(value), entity_fph)
@@ -763,8 +779,33 @@ def register_general_entity_set(identifier_fph):
     return ""
 
 
+
+
 def register_entity_type(identifier_fph, entity_type):
-    return set_entity_type(identifier_fph, entity_type, True)
+    # TESTSTUFF
+    print("\n\n")
+    id_fph, id_hrns, etypes, m = identify_entity(identifier_fph)
+    if id_fph:
+        print("(1) Identifiier " + id_hrns + " (" + id_fph + ") is registered.")
+    else:
+        print("(1) Identifiier " + id_fph + " is NOT registered.")
+        return "Identifiier " + id_fph + " is NOT registered."
+    print(":: " + entity_type + " for " + id_hrns + " (" + id_fph + ")")
+    m = set_entity_type(identifier_fph, entity_type, True)
+    if m:
+        print(":: Problem setting " + entity_type + " for " + identifier_fph)
+        return m
+    id_fph, id_hrns, etypes, m = identify_entity(identifier_fph)
+    if id_fph:
+        print("(2) Identifiier " + id_hrns + " (" + id_fph + ") is registered.")
+    else:
+        print("(2) Identifiier " + id_fph + " is NOT registered.")
+        return "Identifiier " + id_fph + " is NOT registered."
+    print("\n\n")
+    return ""
+
+
+#    return set_entity_type(identifier_fph, entity_type, True)
 
 def deregister_entity_type(identifier_fph, entity_type):
     return set_entity_type(identifier_fph, entity_type, False)
@@ -1141,6 +1182,10 @@ def new_primid(
     # The PNSR of this identifier is overwritten with its FPH because it has a
     # *primid* registered to it, making it the root of a private *namespace*
     # tree.
+#    if not record_private_namespace_root(primid_fph, primid_fph):
+#        print("Unable to record primid FPH as PNSR")
+#        errors += "Unable to record primid FPH as PNSR\n"
+#        return "", "", "", errors
     record_private_namespace_root(primid_fph, primid_fph)
 
     # This *primid* will be the owner of a an *account* sharing the same
@@ -1225,6 +1270,33 @@ def new_primid(
             primid_hrns,    # *account* HRNS combines *ahid* & *currency*; and
             currency_fph    # *currency* was created immediately before this.
         )
+    print(
+        "\nNew pairing: " + primid_hrns + "|" + currency_hrns \
+        + " (" + account_fph + ")"
+    )
+
+    # A second new *ahid*|*currency* pairing-indexed *account* is created with
+    # this *primid* as its owner, where the *ahid* and *currency* both share
+    # the same identifier as the *primid*:
+#    account_fph, account_hrns, \
+#    m = new_pairing(
+#            primid_fph,     # *ahid* belongs to *primid* and shares identifier;
+#            primid_hrns,    # *account* HRNS combines *ahid* & *currency*; and
+#            primid_fph      # *currency* was created immediately before this.
+#        )
+#    print(
+#        "\nNew pairing: " + primid_hrns + "|" + primid_hrns \
+#        + "(" + account_fph + ")"
+#    )
+#    print("Boodnok")
+    # The *primid*'s root '*namespace* (private) must now be created, using the
+    # newly created *currency as its default and this *primid* as its initial
+    # steward.
+#    namespace_fph, namespace_hrns, \
+#    m = new_namespace(username, parent_fph, currency_fph, primid_fph, True)
+#    if m:
+#        print(m)
+#    print("P3")
     return primid_fph, primid_hrns, access_token, errors
 
 # Although the initial access token is generated automatically here, it may be
@@ -1348,12 +1420,16 @@ def new_namespace(nsname, parent_id, currency_id, steward_id, private=False):
     if not ("currency" in etypes):
         return "", "", currency_id + " is not a currency"
 
+#    print(":: nsname = " + nsname)
+#    print(":: parent_id = " + parent_id)
     if not re_slatename.match(nsname):
+        print(":: " + nsname + " is not a valid name")
         return "", "", nsname + " is not a valid name"
     # The substrate is a special case of parent *namespace* (nameless). No
     # entity other than a *namespace* can be created with the substrate as its
     # parent.
     if parent_id == SUBSTRATE_FPH:
+        print(":: parent is substrate")
         parent_hrns = ""
         parent_fph = parent_id
         etype = "namespace"
@@ -1361,26 +1437,78 @@ def new_namespace(nsname, parent_id, currency_id, steward_id, private=False):
     else:
         parent_fph, parent_hrns, etypes, m = identify_entity(parent_id)
         if not parent_fph: # parent *namespace* identifier is not registered
+            print(":: Parent namespace does not exist")
             return "", "", "Parent namespace does not exist"
         namespace_hrns = nsname + NSS + parent_hrns # tentative HRNS
+    print("::: namespace HRNS = " + namespace_hrns)
     namespace_fph, namespace_hrns_, etypes, m = identify_entity(namespace_hrns)
+    print("::: namespace_fph = " + namespace_fph)
+    print("::: namespace_hrns_ = " + namespace_hrns_)
+    print("::: etypes: ", end="")
+    print(etypes)
     if m:
         print("::: m: " + m)
     # The *namespace* identifier must be registered if it does not exist already:
     if not namespace_fph:
+        print(": registering identifier " + namespace_hrns)
         namespace_fph = register_identifier(namespace_hrns)
+
+
+    ##### TESTSTUFF ###########################################################
+    print("\n" + "#"*120)
+    print("Testing for registration of " + namespace_hrns)
+    _fph, _hrns_, _etypes, m = identify_entity(namespace_hrns)
+    if m:
+        print(m)
+    if _fph:
+        print("Identifier " + namespace_hrns + " is registered")
+        print("etypes = ", end="")
+        print(etypes)
+    else:
+        print("Identifier " + namespace_hrns + " is NOT registered")
+    print("#"*120 + "\n")
+    ############################################################################
 
     # If this identifier already has a *namespace* associated with it, no
     # further action is required:
     if ("namespace" in etypes):
+        print("namespace already registered for " + namespace_hrns)
         return namespace_fph, namespace_hrns, ""
 
+    print(":::: registering namespace for identifier " + namespace_hrns)
     m = register_entity_type(namespace_fph, "namespace")
     if m:
+        print("+"*20)
         print(m)
+    print(
+        ":: Identifier " + namespace_fph + " should now have namespace " \
+        + " registered, so let's check:"
+    )
     ns_fph, ns_hrns, netypes, m = identify_entity(namespace_fph)
     if m:
         print(m)
+    print(":: namespace " + ns_hrns + " has netypes: ", end="")
+    print(netypes)
+    #
+    ##### TESTSTUFF ###########################################################
+    print("\n" + "#"*120)
+    print("Testing for registration of " + namespace_hrns)
+    _fph, _hrns_, _etypes, m = identify_entity(namespace_hrns)
+    if m:
+        print(m)
+    if _fph:
+        print("Identifier " + namespace_hrns + " is registered")
+        print("etypes = ", end="")
+        print(etypes)
+    else:
+        print("Identifier " + namespace_hrns + " is NOT registered")
+    print("#"*120 + "\n")
+    ############################################################################
+
+
+
+
+
 
     # TEMPORARY FUDGE (should not be needed) ##################################
     with sqlite3.connect(ENTITIES_DB) as conn:
@@ -1393,6 +1521,8 @@ def new_namespace(nsname, parent_id, currency_id, steward_id, private=False):
         if not (result is None):
             return namespace_fph, namespace_hrns, ""
     ###########################################################################
+
+    print(": namespace steward = " + steward_hrns + " (" + steward_fph + ")")
 
     with sqlite3.connect(ENTITIES_DB) as conn:
         cursor = conn.cursor()
@@ -1410,6 +1540,7 @@ def new_namespace(nsname, parent_id, currency_id, steward_id, private=False):
         )
         conn.commit()
         cursor.close()
+#    print("namespace " + namespace_hrns + " registered")
     return namespace_fph, namespace_hrns, ""
 
 # The version below was saved at 2026-05-21
@@ -1436,7 +1567,9 @@ def new_namespace_(
         if not parent_fph: # parent *namespace* identifier is not registered
             return "", "", "Parent namespace does not exist"
         namespace_hrns = nsname + NSS + parent_hrns # tentative HRNS
+#    print("New namespace: " + namespace_hrns)
     namespace_fph, namespace_hrns_, etypes, m = identify_entity(namespace_hrns)
+#    print("New namespace: " + namespace_hrns)
     if not namespace_fph:
         # The *namespace* identifier is registered if it does not exist already:
         namespace_fph = register_identifier(namespace_hrns)
@@ -1451,13 +1584,25 @@ def new_namespace_(
     if not ("currency" in etypes):
         return "", "", currency_id + " is not a currency"
 
+#    print(
+#        "creating namespace: " + namespace_hrns \
+#        + "\nwith default currency: " + currency_hrns \
+#        + "\ninitial steward: " +  steward_hrns
+#    )
+
+#    if ("namespace" in etypes):
+#        # The identifier of an existing *namespace* cannot be used for another.#
+#
+#        # Temporary check:
     with sqlite3.connect(ENTITIES_DB) as conn:
         cursor = conn.cursor()
         cursor.execute(
             "SELECT * FROM namespaces WHERE entity_fph = ?",
             (namespace_fph,)
         )
+#        cursor.close()
         result = cursor.fetchone()
+#        print(result)
         if result is None:
             cursor.execute(
                 "INSERT INTO namespaces (" \
@@ -1479,7 +1624,11 @@ def new_namespace_(
             return namespace_fph, namespace_hrns, \
             namespace_hrns + " exists already (namespace)"
 
-    # We can now register a *namespace* for this identifier:
+
+
+
+#        return "", "", namespace_hrns + " exists already (namespace)"
+#    else:
     m = register_entity_type(namespace_fph, "namespace")
     if m:
         print(m)
@@ -1493,6 +1642,62 @@ def new_namespace_(
         return "", "", steward_id + " is not a registered identifier (15)"
     if not ("primid" in etypes):
         return "", "", steward_hrns + " has no registered primid"
+    # We can now register a *namespace* for this identifier:
+#    print("N1")
+
+
+#    with sqlite3.connect(ENTITIES_DB) as conn:
+#        cursor = conn.cursor()
+#        cursor.execute(
+#            "SELECT * FROM namespaces WHERE entity_fph = ?",
+#            (parent_fph,)
+#        )
+#        print("N2")
+#        result = cursor.fetchone()
+#        if result is None:
+#            print("N3")
+#            cursor.execute(
+#                "INSERT INTO namespaces (" \
+#                + "entity_fph, " \
+#                + "stewards_fph_list, " \
+#                + "default_currency_fph, " \
+#                + "private" \
+#                + ") VALUES (?, ?, ?, ?)",
+#                (
+#                    namespace_fph,
+#                    pickle.dumps([steward_fph]),
+#                    currency_fph,
+#                    private
+#                )
+#            )
+#            conn.commit()
+#        cursor.close()
+
+    #
+#    with sqlite3.connect(ENTITIES_DB) as conn:
+#        cursor = conn.cursor()
+#        cursor.execute(
+#            "INSERT INTO namespaces (" \
+#            + "entity_fph, " \
+#            + "stewards_fph_list, " \
+#            + "default_currency_fph, " \
+#            + "private" \
+#            + ") VALUES (?, ?, ?, ?)",
+#            (
+#                namespace_fph,
+#                pickle.dumps([steward_fph]),
+#                currency_fph,
+#                private
+#            )
+#        )
+#        print("N2: ", end="")
+#        print(namespace_fph)
+#        conn.commit()
+#        cursor.close()
+
+
+
+
     return namespace_fph, namespace_hrns, ""
 
 #-------------------------------------------------------------------------------
@@ -1511,20 +1716,24 @@ def build_ancestor_chain(root_id, steward_id, *ns_list):
     if not ("namespace" in etypes):
         return [], root_id + " is not a namespace"
     parent_fph = root_fph
+    print("Groucho")
     steward_ph, steward_hrns, etypes, m = identify_entity(steward_id)
     if m:
         return [], m
     if not ("primid" in etypes):
         return [], steward_id + " is not a primid"
+    print("Chico")
     active, open, sandbox, private, owner_fph, currency_fph, stewards_list, \
     m = get_namespace_properties(parent_fph)
     if m:
         print(m)
+        print("Spaulding")
         return [], m
     #
     # The initial steward must be one of those of the root *namespace*.
     if not (steward_id in stewards_list):
         return [], steward_hrns + " is not among those of the root namespace"
+    print("Harpo")
     ns_fph_list = []
     for ns_name in ns_list:
         # These intermediate *namespaces* are private to the root *namespace*'s
@@ -1532,9 +1741,19 @@ def build_ancestor_chain(root_id, steward_id, *ns_list):
         ns_fph, ns_hrns, \
         m = new_namespace(ns_name, parent_fph, currency_fph, steward_fph, True)
         if m:
+            print("Gummo")
             return [], m # exit early
+        print(ns_fph)
         ns_fph_list.append(ns_fph)
+        print("Zeppo")
     return ns_fph_list, "" # Return empty string if completed successfully.
+
+
+
+
+
+
+
 
 #==============================================================================
 ## A new currency is added:
@@ -1737,13 +1956,16 @@ def new_account(
             )
         )
         conn.commit()
+#        print("table = " + table)
         cursor.execute(
             "SELECT accounts_fph_list FROM " + table + " WHERE entity_fph = ?",
             (owner_fph,)
         )
         result = cursor.fetchone()
         accounts_fph_list = pickle.loads(result[0])
+        #print(accounts_fph_list)
         accounts_fph_list.append(account_fph)
+        #print(accounts_fph_list)
         accounts_fph_blob = pickle.dumps(accounts_fph_list)
         cursor.execute(
             "UPDATE " + table + " SET accounts_fph_list = ?" \
@@ -1784,7 +2006,10 @@ def get_namespace_properties(namespace_id):
         )
         result = cursor.fetchone()
         cursor.close()
+#    print(namespace_fph)
     if result is None:
+#        m = "Namespace " + fph_to_hrns(namespace_fph) + " not found"
+#        m = "Namespace " + namespace_hrns + " not found"
         m = "Namespace " + namespace_fph + " not found"
         return False, False, False, False, "", "", [], m
     else:
@@ -1796,6 +2021,8 @@ def get_namespace_properties(namespace_id):
         stewards_fph_blob = result[5]
         currency_fph = result[6]
         stewards_list = pickle.loads(stewards_fph_blob)
+#        print("stewards_list = ",   end="")
+#        print(stewards_list)
     return active, open, sandbox, private, \
            owner_fph, currency_fph, stewards_list, ""
 
@@ -2422,6 +2649,13 @@ def account_status(account_fph):
 #==============================================================================
 ## Sum the balances of *accounts* with similar properties:
 
+# owner_id                  May be either an *ahid* or a *primid*
+# account_category          May only be "money" or
+#
+# In all cases
+#   account_type = scalar
+#   a
+
 def sum_account_balances(
         owner_id,
         account_category,
@@ -2446,17 +2680,59 @@ def sum_account_balances(
         balance_sum[c] = volume_sum[c] = 0
 
     accounts_fph_list, m = list_accounts(owner_fph, "ahid")
+#    print("\naccounts:")
     for account_fph in accounts_fph_list:
         print(fph_to_hrns(account_fph))
         currency_fph, owner_fph, balance, volume, active, \
         type, category, units, metrical_equivalence, dimensions, \
         m = get_account_properties(account_fph)
+#        print(
+#            account_fph + " : " + integer_to_money_format(balance) + " \t " \
+#            + account_category + " " + account_units \
+#             + " " + account_metrical_equivalence
+#        )
         print(category + " & " + account_category)
         if category == account_category:
             print("category match")
             balance_sum[category] += balance
             volume_sum[category] += volume
+#    print()
     return balance_sum, volume_sum, ""
+
+#    with sqlite3.connect(ENTITIES_DB) as conn:
+#        cursor = conn.cursor()
+##        cursor.execute(
+##            "SELECT balance, volume FROM accounts WHERE account_owner_fph = ?",
+##            (owner_fph,)
+##        )
+#        cursor.execute(
+#            "SELECT balance, volume FROM accounts WHERE " \
+#            + "account_owner_fph = ? AND " \
+#            + "account_type = 'scalar' AND " \
+#            + "account_category = ? AND " \
+#            + "account_units = ? AND " \
+#            + "account_metrical_equivalence = ? AND " \
+#            + "account_dimensions = ?;",
+#            (owner_fph, category, units, metrical_equivalence, dimensions)
+#        )
+#        results = cursor.fetchall()
+#        cursor.close()
+#    if results is None:
+#        return 0, 0, "No accounts"
+#    #print(results)
+#    for result in results:
+#        #print(result)
+#        print(integer_to_money_format(result[0]))
+#        print(integer_to_money_format(result[1]))
+#        balance_sum += result[0]
+#        volume_sum += result[1]
+#    return balance_sum, volume_sum, ""
+
+
+
+
+
+
 
 #==============================================================================
 ##
@@ -2535,6 +2811,161 @@ def get_primid(ahid_id):
     active, primid_fph, accounts_fph_list, m = get_ahid_properties(ahid_id)
     return primid_fph
 
+
+#==============================================================================
+# Add a stewardship to a *primid* and a steward to a *namespace* or *currency*:
+
+#def add_namespace_stewardship(entity_fph, steward_fph):
+#    if not re_fph.match(steward_fph):
+#        return steward_fph + " is not an FPH"
+#    if not re_fph.match(entity_fph):
+#        return entity_fph + " is not an FPH"
+#    if not entity_type_is_registered(steward_fph, "primid"):
+#        return steward_fph + " is not a primid."
+#    if not entity_type_is_registered(entity_fph, "namespace"):
+#        return "namespace not registered for " + entity_fph
+#    errors = ""
+#    with sqlite3.connect(ENTITIES_DB) as conn:
+#        cursor = conn.cursor()
+#        # Add the stewarded entity's FPH to the *primid*'s stewardships list:
+#        cursor.execute(
+#            "SELECT nstewardships_fph_list FROM primids WHERE entity_fph = ?",
+#            (steward_fph,)
+#        )
+#        result = cursor.fetchone()
+#        stewardship_has_been_registered_already = False
+#        if result is None:
+#            nstewardships_fph_list = []
+#        else:
+#            nstewardships_fph_list = pickle.loads(result[0])
+#            if entity_fph in nstewardships_fph_list:
+#                stewardship_has_been_registered_already = True
+#        nstewardships_fph_list.append(entity_fph)
+#        nstewardships_fph_blob = pickle.dumps(nstewardships_fph_list)
+#        cursor.execute(
+#            "UPDATE primids SET nstewardships_fph_list = ? " \
+#            + "WHERE entity_fph = ?",
+#            (nstewardships_fph_blob, steward_fph)
+#        )
+#        # Add the steward's FPH to the *namespace*:
+#        cursor.execute(stewards_select_str, (entity_fph,))
+#        result = cursor.fetchone()
+#        if result is None:
+#            stewards_fph_list = []
+#        else:
+#            stewards_fph_list = pickle.loads(result[0])
+#            if steward_fph in stewards_fph_list:
+#                if not stewardship_has_been_registered_already:
+#                    # Remove the inconsistent steward from entity:
+#                    nstewardships_fph_list.remove(entity_fph)
+#                    cursor.execute(
+#                        "UPDATE primids SET nstewardships_fph_list = ? " \
+#                        + "WHERE entity_fph = ?",
+#                        (stewardships_fph_blob, steward_fph)
+#                    )
+#                    errors += "Inconsistency found:\n" \
+#                           + "Steward " + steward_fph + " (" \
+#                           + fph_to_hrns(steward_fph) + ") has already been " \
+#                           + "registered for entity " + entity_fph + " (" \
+#                           + fph_to_hrns(entity_fph) + ") but stewardship " \
+#                           + "of entity " + entity_fph + " has not been " \
+#                           + "registered for steward " + steward_fph + "."
+#            else:
+#                if stewardship_has_been_registered_already:
+#                    # Remove the inconsistent stewardship from steward:
+#                    stewards_fph_list.remove(steward_fph)
+#                    errors += "Inconsistency found:\n" \
+#                           + "Stewardship of entity " + entity_fph + " (" \
+#                           + fph_to_hrns(entity_fph) + ") has already been " \
+#                           + "registered for steward " + steward_fph + " (" \
+#                           + fph_to_hrns(steward_fph) + ") but steward " \
+#                           + steward_fph + " has not already been " \
+#                           + "registered for entity " + entity_fph + "."
+#        stewards_fph_list.append(steward_fph)
+#        stewards_fph_blob = pickle.dumps(stewards_fph_list)
+#        cursor.execute(stewards_update_str, (stewards_fph_blob, entity_fph))
+#        conn.commit()
+#        cursor.close()
+#    return errors
+
+#==============================================================================
+#
+#
+#def modify_currency_stewardship(currency_fph, steward_fph, primid_fph, action):
+#    if not re_fph.match(steward_fph):
+#        return steward_fph + " is not an FPH"
+#    if not re_fph.match(currency_fph):
+#        return currency_fph + " is not an FPH"
+#    if not entity_type_is_registered(steward_fph, "primid"):
+#        return steward_fph + " is not a primid."
+#    if not entity_type_is_registered(currency_fph, "currency"):
+#        return "currency not registered for " + currency_fph
+#    with sqlite3.connect(ENTITIES_DB) as conn:
+#        cursor = conn.cursor()
+#        # Add the *currency*'s FPH to the *primid*'s stewardships list if and
+#        # only if not already there:
+#        cursor.execute(
+#            "SELECT cstewardships_fph_list FROM primids WHERE entity_fph = ?",
+#            (steward_fph,)
+#        )
+#        result = cursor.fetchone()
+#        if result is None: # (should not happen)
+#            cstewardships_fph_list = []
+#            # At the very least, the *primid* will always be a steward of the
+#            # *currency* with which it shares an identifier:
+#            cstewardships_fph_list.append(primid_fph)
+#        else:
+#            cstewardships_fph_list = pickle.loads(result[0])
+#        if action == "add":
+#            if not (currency_fph in cstewardships_fph_list):
+#                cstewardships_fph_list.append(currency_fph)
+#        elif action == "remove":
+#            if (currency_fph in cstewardships_fph_list):
+#                cstewardships_fph_list.remove(currency_fph)
+#        else: # (should never get this far)
+#            return "Invalid action"
+#        cstewardships_fph_blob = pickle.dumps(cstewardships_fph_list)
+#        cursor.execute(
+#            "UPDATE primids SET cstewardships_fph_list = ? " \
+#            + "WHERE entity_fph = ?",
+#            (cstewardships_fph_blob, steward_fph)
+#        )
+#        # Add the *primid*'s FPH to the *currency*'s steward list':
+#        cursor.execute(
+#            "SELECT stewards_fph_list FROM currencies WHERE entity_fph = ?",
+#            (currency_fph,)
+#        )
+#        result = cursor.fetchone()
+#        if result is None: # (should not happen)
+#            stewards_fph_list = []
+#        else:
+#            stewards_fph_list = pickle.loads(result[0])
+#        # At the very least, the *primid* will always be a steward of the
+#        # *currency* with which it shares an identifier:
+#        if not (primid_fph in stewards_fph_list):
+#            stewards_fph_list.append(primid_fph)
+#        if action == "add":
+#            if not (steward_fph in stewards_fph_list):
+#                stewards_fph_list.append(steward_fph)
+#        else: # action == "remove"
+#            if (steward_fph in stewards_fph_list):
+#                stewards_fph_list.remove(steward_fph)
+#        stewards_fph_blob = pickle.dumps(stewards_fph_list)
+#        cursor.execute(
+#            "UPDATE currencies SET stewards_fph_list = ? " \
+#            + "WHERE entity_fph = ?",
+#            (stewards_fph_blob, currency_fph)
+#        )
+#        conn.commit()
+#        cursor.close()
+#    return ""
+
+#def add_currency_stewardship(currency_fph, steward_fph, primid_fph):
+#    modify_currency_stewardship(currency_fph, steward_fph, primid_fph, "add")
+
+#def remove_currency_stewardship(currency_fph, steward_fph, primid_fph):
+#    modify_currency_stewardship(currency_fph, steward_fph, primid_fph, "remove")
+
 #------------------------------------------------------------------------------
 # List stewards of a namespace or currency:
 
@@ -2588,6 +3019,8 @@ def list_namespace_stewardships(primid_id):
         else:
             nstewardships_fph_blob = result[0]
             nstewardships_fph_list = pickle.loads(nstewardships_fph_blob)
+            print("> nstewardships_fph_list = ", end="")
+            print(nstewardships_fph_list)
             if not (primid_fph in nstewardships_fph_list):
                 # At the very least, the *primid* is a steward of the
                 # *namespace* with which it shares an identifier:
@@ -2637,6 +3070,11 @@ def list_currency_stewardships(primid_id):
         cursor.close()
     return cstewardships_fph_list, ""
 
+
+
+
+
+
 #==============================================================================
 # List existing namespaces, specifying optionally a parent namespace.
 
@@ -2676,11 +3114,13 @@ def list_active_namespaces(ancestor_namespace_id = ""): # FPH or HRNS
     # remaining active namespaces will have to be identified.
 
     if results is None:
+        #namespace_fph_list = [SUBSTRATE_FPH]
         return  [], "" #
 
     namespace_fph_list = []
     for result in results:
         namespace_fph = result[0]
+        #print(namespace_fph)
         if re_fph.match(namespace_fph):
             namespace_hrns = fph_to_hrns(namespace_fph)
             branch = namespace_hrns.replace(NSS + ancestor_hrns, "")
@@ -2928,10 +3368,12 @@ def new_pairing(
     r_ahid_fph, r_ahid_hrns, r_ahid_etypes, m = identify_entity(ahid_hrns)
     if m:
         print(m)
+#        print(">"*40)
     if not ("ahid" in r_ahid_etypes):
         # A new *ahid* is created:
         ahid_name, parent_hrns = split_hrns(ahid_hrns)
         ahid_fph, ahid_hrns, m = new_ahid(ahid_name, parent_hrns, primid_fph)
+#        print("ahid_hrns = " + ahid_hrns)
         if not ("namespace" in r_ahid_etypes):
             # A new *namespace* is created
             # (a) sharing the parent *namespace* of the new *ahid*
@@ -2947,6 +3389,7 @@ def new_pairing(
             parent_currency_fph, stewards_list, \
             m = get_namespace_properties(parent_fph)
             # Its new child *namespace* is created
+#            print("ahid_name = " + ahid_name)
             namespace_fph, namespace_hrns, \
             m = new_namespace(
                     ahid_name,
@@ -2955,6 +3398,8 @@ def new_pairing(
                     primid_fph,             # The *primid* is initial steward.
                     False                   # This is a public *namespace*.
                 )
+#            print("namespace_hrns = " + namespace_hrns)
+#            print("namespace_fph = " + namespace_fph)
     else:
         ahid_fph = r_ahid_fph
         ahid_hrns = r_ahid_hrns
@@ -3079,14 +3524,20 @@ def retrieve_pairing_account_fph(ahid_id, currency_id):
 
 def complete_parent_namespace(identifier_hrns, primid_id):
     if primid_id == "":
+        print("primid does not exist")
         s_fph, m = hrns_to_fph("cc")
+#        s_fph, m = hrns_to_fph("adm.cc")
     else:
+#        print("primid exists")
         s_fph, s_hrns, etype, m = identify_entity(primid_id)
+        #s_fph, s_hrns, etype, m = identify_entity(primid_fph)
     c_fph, m = hrns_to_fph("cc")
     entity_fph, entity_hrns, etype, m = identify_entity(identifier_hrns)
     if entity_fph: # the entity exists already
+#        print("entity exists already")
         return entity_fph
     if not re_hrns.match(identifier_hrns):
+        print("invalid HRNS")
         return ""
     parent_namespace_chain_incomplete = True
     chain_links = []
@@ -3095,12 +3546,14 @@ def complete_parent_namespace(identifier_hrns, primid_id):
     while not parent_fph:
         parent_fph, parent_hrns, etype, m = identify_entity(parent_hrns_)
         name, parent_hrns = split_hrns(parent_hrns_)
+        print(name)
         chain_links.append(name)
         parent_hrns_ = parent_hrns
     ns_fph = parent_fph
     chain_links.pop()
     while len(chain_links) > 0:
         ns_name = chain_links.pop()
+        print(ns_name)
         ns_fph, ns_hrns, \
         m = new_namespace(ns_name, ns_fph, c_fph, s_fph, False)
     return ns_fph
@@ -3127,11 +3580,18 @@ def set_activity_status_flag(entity_id, entity_type, active, steward_id):
         return steward_id + " is not a registered identifier"
     if not ("primid" in p_etypes):
         return "Identifier " + steward_hrns + " has no login identity"
+
     entity_fph, entity_hrns, etypes, m = identify_entity(entity_id)
     if not entity_fph:
         return entity_id + " is not a registered identifier"
     if not (entity_type in etypes):
         return "Identifier " + entity_hrns + " has no " + entity_type
+
+#    print("active_state = " + str(active_state))
+#    print("entity_hrns = " + entity_hrns)
+#    print("steward_hrns = " + steward_hrns)
+
+
     with sqlite3.connect(ENTITIES_DB) as conn:
         cursor = conn.cursor()
         cursor.execute(
@@ -3145,13 +3605,21 @@ def set_activity_status_flag(entity_id, entity_type, active, steward_id):
         stewards_fph_list = pickle.loads(result[0])
         if not (steward_fph in stewards_fph_list):
             cursor.close()
+#            print(steward_hrns + " is not a steward of " + entity_hrns)
             return steward_hrns + " is not a steward of " + entity_hrns
+
+#        print("active_state = " + str(active_state))
+#        print("entity_hrns = " + entity_hrns)
+#        print("steward_hrns = " + steward_hrns)
+#        print("table = " + table)
+
         cursor.execute(
             "UPDATE " + table + " SET active = ? WHERE entity_fph = ?",
             (active_state, entity_fph)
         )
         conn.commit()
         cursor.close()
+
     return ""
 
 
@@ -3171,26 +3639,35 @@ def deactivate_namespace(entity_id, steward_id):
 #
 
 def set_open_status_flag(entity_id, entity_type, open, steward_id):
+
     if entity_type == "namespace":
         table = "namespaces"
     elif entity_type == "currency":
         table = "currencies"
     else:
         return "Invalid type specified: must be a namespace or currency"
+
     if open:
         open_state = 1
     else:
         open_state = 0
+
     steward_fph, steward_hrns, p_etypes, m = identify_entity(steward_id)
     if not steward_fph:
+#        print(steward_id + " is not a registered identifier")
         return steward_id + " is not a registered identifier"
     if not ("primid" in p_etypes):
+#        print("Identifier " + steward_id + " has no login identity")
         return "Identifier " + steward_id + " has no login identity"
+
     entity_fph, entity_hrns, etypes, m = identify_entity(entity_id)
     if not entity_fph:
+#        print(entity_id + " is not a registered identifier")
         return entity_id + " is not a registered identifier"
     if not (entity_type in etypes):
+#        print("Identifier " + entity_hrns + " has no " + entity_type)
         return "Identifier " + entity_hrns + " has no " + entity_type
+
     with sqlite3.connect(ENTITIES_DB) as conn:
         cursor = conn.cursor()
         cursor.execute(
@@ -3200,11 +3677,14 @@ def set_open_status_flag(entity_id, entity_type, open, steward_id):
         result = cursor.fetchone()
         if result is None: # (should never happen)
             cursor.close()
+#            print("The entity " + entity_hrns + " has no stewardships")
             return "The entity " + entity_hrns + " has no stewardships"
         stewards_fph_list = pickle.loads(result[0])
         if not (steward_fph in stewards_fph_list):
             cursor.close()
+#            print(steward_hrns + " is not a steward of " + entity_hrns)
             return steward_hrns + " is not a steward of " + entity_hrns
+#        print(entity_type + " " + entity_hrns + " set to " + str(open_state))
         cursor.execute(
             "UPDATE " + table + " SET open = ? WHERE entity_fph = ?",
             (open_state, entity_fph)
@@ -3283,6 +3763,9 @@ def add_or_remove_steward(
             cursor.close()
             return "The entity " + entity_hrns + " has no stewards"
         stewards_fph_list = pickle.loads(result[0])
+        print("auth_steward_fph = " + auth_steward_fph)
+        print("stewards_fph_list = ", end="")
+        print(stewards_fph_list)
         if not (auth_steward_fph in stewards_fph_list):
             cursor.close()
             return auth_steward_hrns + " is not a steward of " + entity_hrns
@@ -3303,6 +3786,9 @@ def add_or_remove_steward(
         else:
             cursor.close()
             return ""
+        print("other_steward_fph = " + other_steward_fph)
+        print("stewards_fph_list = ", end="")
+        print(stewards_fph_list)
         cursor.execute(
             "UPDATE " + table + " SET stewards_fph_list = ? " \
             + "WHERE entity_fph = ?",
@@ -3364,6 +3850,10 @@ def add_or_remove_stewardship(
             cursor.close()
             return "The primid " + other_steward_hrns + " has no stewardships"
         stewardships_fph_list = pickle.loads(result[0])
+        print("other_steward_fph = " + other_steward_fph)
+        print("stewardships_fph_list = ", end="")
+        print(stewardships_fph_list)
+#        print(entity_fph)
         if not (entity_fph in stewardships_fph_list):
             cursor.close()
             return entity_hrns + " is not stewarded by " + other_steward_hrns
@@ -3384,6 +3874,8 @@ def add_or_remove_stewardship(
         else:
             cursor.close()
             return ""
+        print(stewardships_fph_list)
+        print(entity_fph)
         cursor.execute(
             "UPDATE primids SET " + sc + "stewardships_fph_list = ? " \
             + "WHERE entity_fph = ?",

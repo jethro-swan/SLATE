@@ -98,6 +98,7 @@ ns_hrns = "bb.cc"
 for n in ["zz", "yy", "xx", "ww", "vv", "uu"]:
     ns_fph, ns_hrns, m = new_namespace(n, ns_hrns, "cc", "bb.cc")
     ns.append(ns_hrns)
+    print(">>>>> " + ns_hrns)
 for i in range(len(ns)):
     print(ns[i])
 print(bool(is_ancestor(ns[4], ns[0])))

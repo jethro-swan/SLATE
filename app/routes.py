@@ -2115,9 +2115,9 @@ def create_namespace():
         namespace_name = form.namespace_name.data
         # Check whether an entity with the proposed HRNS exists already.
         proposed_hrns = namespace_name + "." + parent_hrns
-        if hrns_exists_already(proposed_hrns):
-            flash(proposed_hrns + " is already registered")
-            return redirect("/create_namespace")
+#        if hrns_exists_already(proposed_hrns):
+#            flash(proposed_hrns + " is already registered")
+#            return redirect("/create_namespace")
 
         namespace_fph, namespace_hrns,\
         m = new_namespace(
@@ -2128,6 +2128,11 @@ def create_namespace():
                 primid_fph,
                 True
             )
+        if m:
+            flash(m)
+            return redirect("/create_namespace")
+
+
         flash(
             "A new namespace has been created, identified as \n" \
             + namespace_hrns

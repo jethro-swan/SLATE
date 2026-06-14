@@ -100,24 +100,15 @@ print("creating quasi-TLD root namespace set")
 tld_fph_list, errors = create_quasitld_set(False)
 
 # Create the following seed *currencies* with  "cc"  as the initial steward.
-steward_fph, m = hrns_to_fph("cc")
+#steward_fph, m = hrns_to_fph("cc")
 clist = ["kwh.cc", "hrs.cc"]
 for c in clist:
     cname, c_parent_ns_hrns = split_hrns(c)
     parent_namespace_fph, m = hrns_to_fph(c_parent_ns_hrns)
     currency_fph, currency_hrns, \
     m = new_currency(
-            cname,
-            parent_namespace_fph,
-            steward_fph,
-            "",
-            "",
-            cname,
-            "scalar",
-            "money",
-            "unspecified",
-            "lt",
-            "unspecified"
+            cname, parent_namespace_fph, "adm.cc", "", "", cname,
+            "scalar", "money", "unspecified", "lt", "unspecified"
         )
     if m:
         print(m)

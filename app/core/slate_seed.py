@@ -84,6 +84,13 @@ from app.core.cctld_list import *
 # - When the initial *primid* is created, an *account*, a *namespace*, an
 #   *ahid* and a *currency* are created with the same identifier.
 
+#print("\nSUBSTRATE_FPH = " + SUBSTRATE_FPH)
+#SUBSTRATE_FPH2 = nshash("")
+#if SUBSTRATE_FPH == SUBSTRATE_FPH2:
+#    print("SUBSTRATE_FPH is consistent\n\n")
+#print("nshash(\"\") = " + nshash(""))
+
+
 def create_substrate():
     # The substrate is unique in that
     # (a) its parent has no HRNS
@@ -145,9 +152,9 @@ def create_seed_entities():
     # the parent *namespace* of all "root" *namespace* (such as "cc"). This
     # will already have been added to the FPH>HRNS map (at the point of its
     # creation (see fph_hrns_maps.py).
-    substrate_hrns = ""
+    #substrate_hrns = ""
 
-    # First the common proprties entries are created:
+    # First the common properties entries are created:
 
     #--------------------------------------------------------------------------
     # Seed *namespace*: "cc"
@@ -158,8 +165,8 @@ def create_seed_entities():
     # The seed *primid* is registered inn order to allow ist use as a steward,
     # but unlike other *primid* it has to be created separately and has minimal
     # recorded properties.
-    seed_primid_hrns  = "cc"    # The identifier HRNS of the seed *primid*
-#    seed_primid_hrns  = "adm.cc"    # The identifier HRNS of the seed *primid*
+#    seed_primid_hrns  = "cc"    # The identifier HRNS of the seed *primid*
+    seed_primid_hrns  = "adm.cc"    # The identifier HRNS of the seed *primid*
     seed_primid_fph = register_identifier(seed_primid_hrns)
     m = register_entity_type(seed_primid_fph, "primid")
     print("Registering " + seed_primid_hrns)
@@ -205,8 +212,8 @@ def create_seed_entities():
     stewards_fph_list = []
     stewards_fph_list.append(seed_primid_fph)
     stewards_fph_blob = pickle.dumps(stewards_fph_list)
-    print("stewards_fph_list: ", end="")
-    print(stewards_fph_list)
+#    print(":::::: stewards_fph_list: ", end="")
+#    print(stewards_fph_list)
 
     #--------------------------------------------------------------------------
     # Seed *namespace*:
@@ -225,7 +232,6 @@ def create_seed_entities():
                 + "owner_fph" \
             + ") VALUES (?, ?, ?, ?, ?, ?, ?)",
             (
-#                seed_account_fph,   # *account* FPH
                 seed_namespace_fph, # *account* FPH
                 1,                  # active
                 0,                  # sandbox
@@ -345,30 +351,18 @@ def create_seed_entities():
     # The seed *ahid* and *currency* specific properties are added:
 
         cursor.execute(
-            "INSERT INTO ahids (" \
-            + "entity_fph, "  \
-            + "primid_fph , "  \
-            + "accounts_fph_list"  \
-            + ") VALUES (?, ?, ?)",
-            (
-                seed_ahid_fph,
-                seed_primid_fph,
-                pickle.dumps([seed_account_fph])
-            )
+            "INSERT INTO ahids (entity_fph, primid_fph , accounts_fph_list)"  \
+            + " VALUES (?, ?, ?)",
+            (seed_ahid_fph, seed_primid_fph, pickle.dumps([seed_account_fph]))
         )
 
         # NB: The following may not be needed, given that the *currency* and
         #     *account* FPH are both stored in the "accounts" table, but for
         #     the time being there is no need to remove this step.
         cursor.execute(
-            "INSERT INTO currency_accounts (" \
-                + "currency_fph, " \
-                + "account_fph " \
-            + ") VALUES (?, ?)",
-            (
-                seed_currency_fph,
-                seed_account_fph
-            )
+            "INSERT INTO currency_accounts (currency_fph, account_fph) " \
+            + "VALUES (?, ?)",
+            (seed_currency_fph, seed_account_fph)
         )
         conn.commit()
         cursor.close()
@@ -399,17 +393,8 @@ def create_root_namespace(name):
 
     currency_fph, currency_hrns, \
     m = new_currency(
-            name,
-            SUBSTRATE_FPH,
-            "cc",               # Initial steward is that of the substrate, etc.
-            "",                 # "prefix"
-            "h",                # suffix
-            "hrs",              # default *account* name
-            "scalar",           # account_type
-            "money",            # category
-            "",                 # units
-            "",                 # metrical_equivalence
-            ""                  # dimensions
+            name, SUBSTRATE_FPH, "adm.cc", "", "h", "hrs",
+            "scalar", "money", "", "", ""
         )
     if m:
         print(m)
@@ -420,7 +405,7 @@ def create_root_namespace(name):
             name,
             SUBSTRATE_FPH,
             currency_fph,       # initial *currency*
-            "cc"                # Initial steward
+            "adm.cc"            # Initial steward
         )
     if m:
         print(m)
@@ -452,11 +437,10 @@ def create_quasitld_set(full = False):
     cctld_list_here.append("clapton")
     cctld_list_here.append("team")
 
-
-
-    # These are recreated here in case it is necessary to callthis function
+    # These are recreated here in case it is necessary to call this function
     # before create_seed_entities( ).
-    seed_primid_fph = nshash("cc")
+    seed_steward_fph = nshash("adm.cc")
+#    seed_primid_fph = nshash("adm.cc")
 #    seed_primid_fph = nshash("adm.cc")
     seed_currency_fph = nshash("cc")
 
@@ -465,12 +449,7 @@ def create_quasitld_set(full = False):
     for tld in cctld_list_here:
         print(tld)
         namespace_fph, namespace_hrns, \
-        m = new_namespace(
-                tld,
-                SUBSTRATE_FPH,
-                seed_currency_fph,
-                seed_primid_fph
-            )
+        m = new_namespace(tld, SUBSTRATE_FPH, "cc", "adm.cc")
         if m:
             print(m)
         # These root *namespaces* are all public so return no PNSR.
@@ -492,7 +471,7 @@ def create_sandbox_root_set():
     fph_of = {}
     for s in ["s", "a", "b", "c", "d", "e", "f", "g", "h", "i", "j"]:
         namespace_fph, namespace_hrns, \
-        m = new_namespace(s, s_fph, seed_currency_fph, seed_primid_fph)
+        m = new_namespace(s, s_fph, "cc", "adm.cc")
         if m:
             print(s + ": ", end="")
             print(m)
@@ -511,22 +490,12 @@ def create_sandbox_root_set():
 def create_sandbox_space():
 
     # The sandbox/demo *namespaces* "sand.box.cc" is created:
-#    sandbox_fph = complete_parent_namespace("sand.box.cc", "cc")
-
-
-
-#    box_fph, box_hrns, m = new_namespace("box", "cc", "cc", "adm.cc", False)
-    box_fph, box_hrns, m = new_namespace("box", "cc", "cc", "cc", False)
+    box_fph, box_hrns, \
+    m = new_namespace("box", "cc", "cc", "adm.cc", False)
     print("box.cc HRNS = " + box_hrns)
-
-#    sandbox_fph, sandbox_hrns, \
-#    m = new_namespace("sand", box_fph, "cc", "adm.cc", False)
     sandbox_fph, sandbox_hrns, \
-    m = new_namespace("sand", box_fph, "cc", "cc", False)
+    m = new_namespace("sand", box_fph, "cc", "adm.cc", False)
     print("sand.box.cc HRNS = " + sandbox_hrns)
-
-
-#    print("sandbox_fph = " + sandbox_fph)
 
     cc_fph, m = hrns_to_fph("cc")
     print("cc_fph = " + cc_fph)
@@ -536,7 +505,7 @@ def create_sandbox_space():
     # hrs.box.cc
     currency_fph, currency_hrns, \
     m = new_currency(
-            "hrs", sandbox_fph, cc_fph, "", "h", "hrs",
+            "hrs", sandbox_fph, "adm.cc", "", "h", "hrs",
             account_type="scalar", category="money", units="unspecified",
             metrical_equivalence="lt", dimensions="unspecified"
         )
@@ -544,7 +513,7 @@ def create_sandbox_space():
     # g£.box.cc
     currency_fph, currency_hrns, \
     m = new_currency(
-            "g£", sandbox_fph, cc_fph, "£", "", "hrs",
+            "g£", sandbox_fph, "adm.cc", "£", "", "hrs",
             account_type="scalar", category="money", units="unspecified",
             metrical_equivalence="lt", dimensions="unspecified"
         )
@@ -552,7 +521,7 @@ def create_sandbox_space():
     # cc.sand.box.cc
     currency_fph, currency_hrns, \
     m = new_currency(
-            "cc", sandbox_fph, cc_fph, "", "", "",
+            "cc", sandbox_fph, "adm.cc", "", "", "",
             account_type="scalar", category="money", units="unspecified",
             metrical_equivalence="lt", dimensions="unspecified"
         )

@@ -118,6 +118,7 @@ for identifier in identifiers_list:
     if m: # (this should never happen)
         print(m)
     if clade_root_provided and (pnsr != clade_root_fph):
+        print("Groucho")
         continue
     parent_fph = get_parent(identifier_fph)
     table_row = []  # one row fot each identifier

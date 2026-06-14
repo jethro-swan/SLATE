@@ -22,7 +22,7 @@ def show_namespace_stewards(namespace_id):
     stewards_hrns_list = []
     for steward_fph in stewards_fph_list:
         stewards_hrns_list.append(fph_to_hrns(steward_fph))
-    print("stewards of " + namespace_id + " are : ", end="")
+    print("namespace stewards of " + namespace_id + " are : ", end="")
     print(stewards_hrns_list)
 
 def show_namespace_stewardships(steward_id):
@@ -33,7 +33,7 @@ def show_namespace_stewardships(steward_id):
     stewardships_hrns_list = []
     for stewardship_fph in stewardships_fph_list:
         stewardships_hrns_list.append(fph_to_hrns(stewardship_fph))
-    print("stewardships of " + steward_id + " are: ", end="")
+    print("namespace stewardships of " + steward_id + " are: ", end="")
     print(stewardships_hrns_list)
 
 def show_currency_stewards(currency_id):
@@ -44,7 +44,7 @@ def show_currency_stewards(currency_id):
     stewards_hrns_list = []
     for steward_fph in stewards_fph_list:
         stewards_hrns_list.append(fph_to_hrns(steward_fph))
-    print("stewards of " + currency_id + " are: ", end="")
+    print("currency stewards of " + currency_id + " are: ", end="")
     print(stewards_hrns_list)
 
 def show_currency_stewardships(steward_id):
@@ -55,10 +55,16 @@ def show_currency_stewardships(steward_id):
     stewardships_hrns_list = []
     for stewardhip_fph in stewardships_fph_list:
         stewardships_hrns_list.append(fph_to_hrns(stewardhip_fph))
-    print("stewardships of " + steward_id + ": ", end="")
+    print("currency stewardships of " + steward_id + ": ", end="")
     print(stewardships_hrns_list)
 
 
+print("-"*120)
+show_namespace_stewards("bb.cc")
+show_namespace_stewardships("bb.cc")
+show_currency_stewards("bb.cc")
+show_currency_stewardships("bb.cc")
+print("-"*120)
 
 show_namespace_stewards("bb.cc")
 show_namespace_stewardships("bb.cc")

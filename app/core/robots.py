@@ -107,7 +107,7 @@ def create_robots_db():
 
 
 #number_of_robots = 100
-#robot_parent = "sand.box.cc"
+robot_parent = "sand.box.cc"
 
 def create_robots(number_of_robots=10, robot_parent="sand.box.cc"):
 
@@ -128,8 +128,10 @@ def create_robots(number_of_robots=10, robot_parent="sand.box.cc"):
             name = "r" + str(i).zfill(d)
 #            ahid_fph, ahid_hrns, \
 #            m = new_ahid(name, robot_parent, "adm.cc", robot=True)
+#            ahid_fph, ahid_hrns, \
+#            m = new_ahid(name, robot_parent, "adm.cc", robot=True)
             ahid_fph, ahid_hrns, \
-            m = new_ahid(name, robot_parent, "cc", robot=True)
+            m = new_ahid(name, "sand.box.cc", "adm.cc", robot=True)
             if m:
                 print(m)
                 continue
