@@ -84,13 +84,6 @@ from app.core.cctld_list import *
 # - When the initial *primid* is created, an *account*, a *namespace*, an
 #   *ahid* and a *currency* are created with the same identifier.
 
-#print("\nSUBSTRATE_FPH = " + SUBSTRATE_FPH)
-#SUBSTRATE_FPH2 = nshash("")
-#if SUBSTRATE_FPH == SUBSTRATE_FPH2:
-#    print("SUBSTRATE_FPH is consistent\n\n")
-#print("nshash(\"\") = " + nshash(""))
-
-
 def create_substrate():
     # The substrate is unique in that
     # (a) its parent has no HRNS
@@ -165,7 +158,6 @@ def create_seed_entities():
     # The seed *primid* is registered inn order to allow ist use as a steward,
     # but unlike other *primid* it has to be created separately and has minimal
     # recorded properties.
-#    seed_primid_hrns  = "cc"    # The identifier HRNS of the seed *primid*
     seed_primid_hrns  = "adm.cc"    # The identifier HRNS of the seed *primid*
     seed_primid_fph = register_identifier(seed_primid_hrns)
     m = register_entity_type(seed_primid_fph, "primid")
@@ -205,15 +197,12 @@ def create_seed_entities():
     pmap = {}
     pmap[seed_ahid_hrns] = {}
     pmap[seed_ahid_hrns][seed_currency_fph] = seed_account_fph
-#    pmap[seed_ahid_hrns][seed_currency_fph] = seed_account_fph
     print("pmap: ", end="")
     print(pmap)
 
     stewards_fph_list = []
     stewards_fph_list.append(seed_primid_fph)
     stewards_fph_blob = pickle.dumps(stewards_fph_list)
-#    print(":::::: stewards_fph_list: ", end="")
-#    print(stewards_fph_list)
 
     #--------------------------------------------------------------------------
     # Seed *namespace*:
