@@ -1,0 +1,34 @@
+#!/home/slate/SLATE/venv/bin/python3
+
+from prettytable import PrettyTable
+
+from app.core.configdb import create_config_map
+from app.core.configdb import get_config
+#from app.core.configdb import delete_config_key_from_map
+#from app.core.configdb import set_config
+from app.core.configdb import read_config_file_to_map
+from app.core.dbm_functions import dbm_keys
+from app.core.constants import CONFIG_MAP
+
+
+
+# The hub configuration map is populated from the ~/hub_config file.
+create_config_map()
+read_config_file_to_map()
+
+# The configuration values are displayed:
+#for k in dbm_keys(CONFIG_MAP):
+#    print(k + " : " + str(get_config(k)))
+#print()
+
+config_table = PrettyTable()
+config_table.align = "l"
+config_table.field_names = ["label", "value"]
+table_rows = []
+for k in dbm_keys(CONFIG_MAP):
+    table_row = []
+    table_row.append(k)
+    table_row.append(str(get_config(k)))
+    table_rows.append(table_row)
+config_table.add_rows(table_rows[0:])
+print(config_table)

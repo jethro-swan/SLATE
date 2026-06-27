@@ -9,7 +9,8 @@
 #------------------------------------------------------------------------------
 
 # This is the URL of the host, needed for the creation of QR-coded invitations:
-hub_url = https://locus01.lrc.org.uk
+hub_url = https://locus02.lrc.org.uk
+#hub_url = https://locus01.lrc.org.uk
 
 # The operational mode of this hub:
 hub_mode = slate

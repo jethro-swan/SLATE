@@ -71,7 +71,7 @@ def read_config_file_to_map():
         cfl = cfl.strip()
         if (not cfl) or re_comment.match(cfl):   # comment line or empty line
             continue
-        print(cfl)
+#        print(cfl)
         cf = cfl.split("=")
         set_config(cf[0].strip(), cf[1].strip())
 

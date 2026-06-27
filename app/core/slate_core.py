@@ -19,17 +19,11 @@ from app.core.common import filename_timestamp as timestamp
 from app.core.common import ledger_timestamp
 from app.core.common import nshash
 from app.core.common import unixtime_str
-#from app.core.payments import ah_payment
 
 from app.core.display import integer_to_money_format
-#from app.core.messaging import send_message
 
 from app.core.fph_hrns_maps import hrns_to_fph, fph_to_hrns, create_maps
 from app.core.fph_hrns_maps import delete_fph_from_map
-#from app.core.fph_hrns_maps import get_parent
-#from app.core.fph_hrns_maps import record_parent
-#from app.core.fph_hrns_maps import record_private_namespace_root
-#from app.core.fph_hrns_maps import get_private_namespace_root
 
 from app.core.dbm_functions import dbm_store, dbm_fetch, dbm_delete, dbm_keys
 from app.core.dbm_functions import dbm_create_map
@@ -42,14 +36,9 @@ from app.core.unix_functions import fcopy
 
 from app.core.cctld_list import *
 
-#from app.core.regexp_list import re_pvalue
-#from app.core.regexp_list import re_pairaccountname
+from app.core.logging import log_event
 
 #------------------------------------------------------------------------------
-# In NESTS the FPH has so far been formed as the hash of the FIP, but making it
-# the hash of the HRNS instead will simplify compatibility between SLATE and
-# NESTS and speed up the HRNS to FPH mapping without having any signifcant
-# impact on the FPH to HRNS and FPH to FIP mappings.
 
 def create_db(dbpath):
     if os.path.exists(dbpath):
@@ -657,7 +646,12 @@ def set_entity_type(identifier_id, entity_type, value):
     if not entity_fph:
         return "Identifier " + identifier_id + " is not registered"
     if entity_type in etypes:
-        return entity_type + " already registered for " + identifier_id
+        log_event(
+            "activity",
+            "registration",
+            entity_type + " already registered for " + identifier_id
+        )
+        return ""
     # The valid entity types are:
     vetypes = ["namespace", "currency", "account", "primid", "ahid"]
     if not (entity_type in vetypes):

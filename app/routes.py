@@ -1889,9 +1889,16 @@ def create_currency():
         currency_name = form.currency_name.data
         # Check whether an entity with the proposed HRNS exists already.
         proposed_hrns = currency_name + "." + namespace_hrns
-        if hrns_exists_already(proposed_hrns):
-            flash(proposed_hrns + " is already registered")
+        c_fph, c_hrns, etypes, m = identify_entity(proposed_hrns)
+#        if m:
+#            flash(m)
+        if ("currency" in etypes):
+            flash("Currency" + c_hrns + " exists already")
             return redirect("/create_currency")
+
+#        if hrns_exists_already(proposed_hrns):
+#            flash(proposed_hrns + " is already registered")
+#            return redirect("/create_currency")
 
         currency_fph, currency_hrns, \
         m = new_currency(
@@ -2023,17 +2030,17 @@ def create_pairing(owner_fph = ""):
         m = get_currency_properties(currency_fph)
 
         # Devstuff #########################
-        print("form ahid = " + ahid_hrns)
-        print("currency = " + currency_hrns)
+#        print("\nform ahid = " + ahid_hrns)
+#        print("currency = " + currency_hrns)
         ####################################
 
         account_fph, account_hrns, \
         m = new_pairing(working_identity_fph, ahid_hrns, currency_hrns)
 
         # Devstuff ############################################################
-        print("account_fph = " + account_fph)
-        account_fph, account_hrns, etypes, m = identify_entity(account_fph)
-        print("account = " + account_hrns)
+#        print("account_fph = " + account_fph)
+#        account_fph, account_hrns, etypes, m = identify_entity(account_fph)
+#        print("account = " + account_hrns)
         #######################################################################
 
 
