@@ -3487,3 +3487,137 @@ def set_currency_parameter(currency_id, parameter, ctype, steward_id):
     else:
         return ""
     return ""
+
+
+
+# List the clades within the ancestry of an identifier
+def list_ancestors_fph(entity_id):
+    entity_fph, entity_hrns, etypes, m = identify_entity(entity_id)
+    if not entity_fph:
+        return [], [], "Invalid identifier"
+    ancestors = []  # list of ancestors
+    clades = []     # list of clades (PNSR) within those ancestors
+    with sqlite3.connect(IDENTIFIERS_DB) as conn:
+        cursor = conn.cursor()
+        digging_through_ancestry = True
+        while digging_through_ancestry:
+            cursor.execute(
+                "SELECT parent_fph, pnsr_fph FROM entities_registered " \
+                + "WHERE entity_fph = ?",
+                (entity_fph,)
+            )
+            result = cursor.fetchone()
+            if (result is None) \
+            or (result[0] is None) \
+            or (result[0] == SUBSTRATE_FPH): # no more ancestors
+                break
+            else:
+                parent_fph = result[0]  # the parent FPH
+                ancestors.append(parent_fph)
+                entity_fph = parent_fph # ready to dig another level
+                pnsr_fph = result[1]    # the PNSR (clade) FPH
+                if not (pnsr_fph in clades):
+                    clades.append(pnsr_fph)
+        digging_through_ancestry = False
+        cursor.close()
+    return ancestors, clades, ""
+
+def most_recent_clade(entity_id):
+    ancestors, clades, m = list_ancestors_fph(entity_id)
+    if m:
+        return "", m
+    if len(clades) > 0:
+        return clades[0], ""
+    else:
+        return "", ""
+
+def most_distant_clade(entity_id):
+    ancestors, clades, m = list_ancestors_fph(entity_id)
+    if m:
+        return "", m
+    if len(clades) > 0:
+        return clades[-1], ""
+    else:
+        return "", ""
+
+def most_recent_concestor(entity1_id, entity2_id):
+    entity1_fph, entity1_hrns, etypes, m = identify_entity(entity1_id)
+    if m:
+        return "", "", "", m
+    entity2_fph, entity2_hrns, etypes, m = identify_entity(entity2_id)
+    if m:
+        return "", "", "", m
+    ancestors1 = entity1_hrns.split(NSS)
+    ancestors2 = entity2_hrns.split(NSS)
+    depth = min(len(ancestors1), len(ancestors2))
+    concestor = []
+    while (ancestors1[-1] == ancestors2[-1]) and (depth > 1):
+        n1 = ancestors1.pop()
+        n2 = ancestors2.pop()
+        concestor.append(n1)
+        depth -= 1
+    concestor.reverse()
+    # The abbreviated HRNS returned are the residue of the ancestral chains
+    # following removal of their concestor:
+    return NSS.join(ancestors1), NSS.join(ancestors2), NSS.join(concestor), ""
+
+
+def get_list_concestor(hrns_list):
+    splits_list = []
+    for hrns in hrns_list:
+        splits_list.append(hrns.split(NSS))
+    # Find length of shortest HRNS in order to ensure that no attempt is made to
+    # operate on an empty list:
+    l = []
+    for i in range(len(splits_list)):
+        l.append(len(splits_list[i]))
+    l_min = min(l)
+    depth = l_min - 1
+    if l_min == 1: # the most recent concestor is the SUBSTRATE (a valid result)
+        return "" # HRNS of SUBSTRATE
+    concestor = []
+    while depth:
+        depth -= 1
+        # Compare the most distant ancestors
+        c = splits_list[0][-1]
+        for h in range(len(splits_list)): # each HRNS split-list
+            if splits_list[h][-1] != c:
+                break
+        # At each iteration, the most distant ancestor common to all HRNS lists
+        # is appended to the concestor and removed from all the HRNS lists.
+        concestor.append(c)
+        for h in range(len(splits_list)): # each HRNS split-list
+            splits_list[h].pop()
+    concestor.reverse()
+    return NSS.join(concestor)
+
+
+def prune_payment_pair_hrns(currency_id, payer_ahid_id):
+    currency_hrns_short, payer_ahid_hrns_short, concestor_hrns, \
+    m = most_recent_concestor(currency_id, payer_ahid_id)
+    return currency_hrns_short, payer_ahid_hrns_short, concestor_hrns
+
+# Display an HRNS with the specified concestor removed:
+def _hrns_strip_concestor(entity_id, concestor_id):
+    entity_fph, entity_hrns, etypes, m = identify_entity(entity_id)
+    if not entity_fph:
+        return "", "invalid entity_id" # invalid entity_id
+    concestor_fph, concestor_hrns, etypes, m = identify_entity(concestor_id)
+    if not concestor_fph:
+        return "", "invalid concestor_id"
+    return entity_hrns.replace(concestor_hrns, "").strip(NSS), ""
+
+def hrns_strip_concestor(entity_hrns, concestor_hrns):
+    return entity_hrns.replace(concestor_hrns, "").strip(NSS), ""
+
+# If and only if the identifier lies within a private *namespace* tree (clade),
+# the clade HRNS is removed from the identifier HRNS to abbreviate the display.
+def display_hrns_local(entity_id):
+    entity_fph, entity_hrns, etypes, m = identify_entity(entity_id)
+    if not entity_fph:
+        return "", "", "invalid entity_id" # invalid entity_id
+    clade_fph, m = most_recent_clade(entity_id)
+    if clade_fph == entity_fph:
+        return entity_hrns, entity_hrns, ""
+    clade_hrns = fph_to_hrns(clade_fph)
+    return entity_hrns.replace(clade_hrns, "").strip(NSS), clade_hrns, ""

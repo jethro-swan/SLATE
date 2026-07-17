@@ -1,4 +1,4 @@
-#!/home/john/NESTS/SLATE/venv/bin/python3
+#!/home/slate/SLATE/venv/bin/python3
 
 from faker import Faker
 import random

@@ -19,7 +19,9 @@ parent_fph, m = hrns_to_fph("cc")
 primid_fph, m = hrns_to_fph("bb.cc")
 
 nslist = ["uk.cc", "mon.uk.cc", "chep.mon.uk.cc"]
-clist = ["kwh.cc", "hrs.cc", "kwh.uk.cc", "hrs.mon.uk.cc", "h.chep.mon.uk.cc"]
+#clist = ["kwh.cc", "hrs.cc", "kwh.uk.cc", "hrs.mon.uk.cc", "h.chep.mon.uk.cc"]
+#clist = ["kwh.cc", "hrs.cc", "h.hnrs.cc", "m.hrs.cc", "kwh.uk.cc"]
+clist = ["kwh.cc", "hrs.cc", "kwh.uk.cc"]
 
 for ns in nslist:
     nsname, parent_hrns = split_hrns(ns)
@@ -66,7 +68,7 @@ print("="*80)
 print("Running test entity identification loop")
 print("-"*80)
 for ahid_hrns in ["ah1.bb.cc", "ah2.bb.cc", "ah3.bb.cc", "ah4.bb.cc"]:
-    for currency_hrns in ["cc", "hrs.cc", "kwh.cc"]:
+    for currency_hrns in ["h.hrs.cc", "m.hrs.cc", "hrs.cc", "kwh.cc"]:
         p_fph = new_pairing("bb.cc", ahid_hrns, currency_hrns)
         print(p_fph)
 print("="*80)
@@ -89,7 +91,7 @@ display_random_selection = True
 test_payments = True
 
 ahid_hrns_list = ["ah1.bb.cc", "ah2.bb.cc", "ah3.bb.cc", "ah4.bb.cc"]
-currency_hrns_list = ["cc", "hrs.cc", "kwh.cc"]
+currency_hrns_list = ["h.hrs.cc", "m.hrs.cc", "hrs.cc", "kwh.cc"]
 
 if test_entity_identification:
     print("="*80)

@@ -30,9 +30,9 @@ def create_config_map():
 
 def get_config(config_key):
     config_value = dbm_fetch(CONFIG_MAP, config_key).strip()
-    if config_value == "FALSE":
+    if config_value.upper() == "FALSE":
         return False
-    elif config_value == "TRUE":
+    elif config_value.upper() == "TRUE":
         return True
     else:
         return config_value
@@ -64,6 +64,7 @@ def set_config(config_key, config_value):
 #------------------------------------------------------------------------------
 
 def read_config_file_to_map():
+    errors = ""
     re_comment = re.compile(r"^#.*$")
     with open(CONFIG, "r") as cf:
         cflines = cf.readlines()
@@ -73,6 +74,10 @@ def read_config_file_to_map():
             continue
 #        print(cfl)
         cf = cfl.split("=")
+        if (len(cf) != 2):
+            errors += "Invalid entry: " + cfl + "\n"
+            continue
         set_config(cf[0].strip(), cf[1].strip())
+    return errors
 
 #------------------------------------------------------------------------------

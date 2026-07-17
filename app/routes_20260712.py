@@ -57,21 +57,13 @@ from app.core.slate_core import hrns_to_name_and_namespace
 from app.core.slate_core import authenticate_primid_email
 from app.core.slate_core import get_hub_mode
 from app.core.slate_core import get_version
-# 2026-06-04
+# 206-06-04
 #from app.core.slate_core import add_currency_stewardship
 #from app.core.slate_core import add_namespace_stewardship
 #from app.core.slate_core import remove_currency_stewardship
 from app.core.slate_core import add_currency_steward
 from app.core.slate_core import add_namespace_steward
 from app.core.slate_core import remove_currency_steward
-# 2026-07-12
-from app.core.slate_core import display_hrns_local
-from app.core.slate_core import list_ancestors_fph, most_recent_clade
-# 2026-07-14
-from app.core.slate_core import prune_payment_pair_hrns
-from app.core.slate_core import get_list_concestor
-from app.core.slate_core import hrns_strip_concestor
-
 #####################
 
 
@@ -781,21 +773,13 @@ def toggle_more():
 
 
 
-#==============================================================================
-# The HOME SCREEN
 
-@app.route(
-    "/home_ahp/<payer_ahid_fph>/<p_currency_fph>/<concestor_fph>" \
-    + "/<payer_balance>", methods=["GET", "POST"]
-)
+
+@app.route("/home_ahp/<payer_ahid_fph>/<p_currency_fph>/<payer_balance>",
+           methods=["GET", "POST"])
 @app.route("/home_ahc", methods=["GET", "POST"])
 @login_required
-def home_ahc(
-        payer_ahid_fph=None,
-        p_currency_fph=None,
-        concestor_fph=None,
-        payer_balance=None
-    ):
+def home_ahc(payer_ahid_fph=None, p_currency_fph=None, payer_balance=None):
 
     page = "home_ahc"
     session["previous_page"] = page
@@ -834,32 +818,6 @@ def home_ahc(
             flash("Invalid currency: " + p_currency_hrns)
             show_payment_form = False
 
-    if not (session["display_concestor_hrns"] is None):
-        concestor_hrns = session["display_concestor_hrns"]
-        display_concestor_hrns = session["display_concestor_hrns"]
-    else:
-        concestor_hrns = ""
-        display_concestor_hrns = ""
-
-    if not (concestor_fph is None):
-        concestor_fph, concestor_hrns, concestor_etypes, \
-        m = identify_entity(concestor_fph)
-#        print("\nslug concestor_hrns = " + concestor_hrns)
-#        print("slug concestor_fph = " + concestor_fph)
-#        if not concestor_fph:
-#            show_payment_form = False
-        session["display_concestor_hrns"] = concestor_hrns
-        display_concestor_hrns = concestor_hrns
-
-#    else:
-#        if not (session["display_concestor_hrns"] is None):
-#            concestor_hrns = session["display_concestor_hrns"]
-#            display_concestor_hrns = session["display_concestor_hrns"]
-#        else:
-#            concestor_hrns = ""
-#            display_concestor_hrns = ""
-#            session["display_concestor_hrns"] = concestor_hrns
-
     if not (payer_balance is None):
         #if not payer_balance.isnumeric():
         if not re_bvalue.match(payer_balance):
@@ -868,17 +826,14 @@ def home_ahc(
     else:
         show_payment_form = False
 
-    # If a dataset import is in progress, do not allow any FPH>HRNS or HRNS>FPH
-    # mapping operations to be initiated by a browser refresh. Instead, display a
-    # holding page.
+    # If a dataset import if in progress, do not allow any FPH>HRNS or
+    # HRNS>FPH mapping operations to be initiated by a browser refresh.
+    # Instead, display a holding page.
     if os.path.exists(IMPORTING):
         return redirect("/hold")
 
     # Hub operational mode (read from environment variable HUB_MODE)
     hub_mode = get_hub_mode()
-
-    sandbox_clade_hrns = get_config("sandbox_clade_hrns")
-
 
     if hub_mode != "slate":
         flash("Operational mode invalid for this endpoint")
@@ -958,21 +913,6 @@ def home_ahc(
 
             if currency_active:
                 p_row = {}
-                currency_local_hrns, \
-                m = hrns_strip_concestor(currency_hrns, concestor_hrns)
-                ahid_local_hrns, \
-                m = hrns_strip_concestor(ahid_hrns, concestor_hrns)
-
-#                print(currency_hrns + " | " + ahid_hrns)
-
-#                print("currency_local_hrns = " + currency_local_hrns)
-#                print("ahid_local_hrns = " + ahid_local_hrns)
-
-                # The displayed HRNS are stored separately from the full HRNS
-                # because the latter are used in subsequent sorting operations.
-                p_row["currency_hrns_displayed"] = currency_local_hrns
-                p_row["ahid_hrns_displayed"] = ahid_local_hrns
-                #
                 p_row["currency_hrns"] = currency_hrns
                 p_row["ahid_hrns"] = ahid_hrns
                 p_row["ahid_fph"], m = hrns_to_fph(ahid_hrns)
@@ -1003,10 +943,6 @@ def home_ahc(
         if not(currency in currencies_list):
             currencies_list.append(currency)
     currencies_list.sort()
-
-    # In order to dertermine the concestor of all entities within the home page
-    # table, another list is needed:
-    all_entities_hrns = currencies_list # starting with the *currencies* ...
     ahid_lists_dict = {}
     for currency in currencies_list:
         ahid_lists_dict[currency] = []
@@ -1014,8 +950,6 @@ def home_ahc(
             ahid = row["ahid_hrns"]
             if not(ahid in ahid_lists_dict[currency]):
                 ahid_lists_dict[currency].append(ahid)
-                if not (ahid in all_entities_hrns):
-                    all_entities_hrns.append(ahid)
         ahid_lists_dict[currency].sort()
     p_rows2 = []
     for currency in currencies_list:
@@ -1031,57 +965,30 @@ def home_ahc(
                         currency_displayed_already[currency] = True
                     p_rows2.append(row)
 
-#    print("all_entities_hrns = ", end="")
-#    print(all_entities_hrns)
-    if not concestor_hrns:
-        concestor_hrns = get_list_concestor(all_entities_hrns)
-        display_concestor_hrns = concestor_hrns
-
-#        print("concestor = " + concestor_hrns)
-        concestor_fph, m = hrns_to_fph(concestor_hrns)
-
-    currency_hrns_short, payer_ahid_hrns_short, \
-    concestor_hrns = prune_payment_pair_hrns(p_currency_hrns, payer_ahid_hrns)
-
     form = SpecifyPayeeAccountHolderForm()
     if form.validate_on_submit():
-        payee_id = form.payee_ahid.data.strip(NSS)
-        # If the concestor HRNS is available, the payee entered may be either
-        # truncated (concestor HRNS stripped) or complete.
-#        print("(1) payee_ahid_id = " + payee_id)
-#        print("concestor_hrns = " + concestor_hrns)
-        if re_hrns.match(payee_id):
-            if concestor_hrns:
-                payee_ahid_id = payee_id + NSS + concestor_hrns
-            else:
-                payee_ahid_id = payee_id
-#        print("(2) payee_ahid_id = " + payee_ahid_id)
         payee_ahid_fph, payee_ahid_hrns, etypes, \
-        m = identify_entity(payee_ahid_id) # HRNS or FPH
-
-
-
-#        payee_ahid_fph, payee_ahid_hrns, etypes, \
-#        m = identify_entity(form.payee_ahid.data) # HRNS or FPH
+        m = identify_entity(form.payee_ahid.data) # HRNS or FPH
         if m:
             flash(m)
             return redirect(
+                #"/pay_to_ahid/" + payer_ahid_fph + "/" + currency_fph
                 "/home_ahp/" + payer_ahid_fph + "/" + currency_fph + "/" \
-                + concestor_fph + "/" + payer_balance
+                + payer_balance
             )
         if payee_ahid_fph == "":
             flash("The specified account-holder does not exist")
             return redirect(
+                #"/pay_to_ahid/" + payer_ahid_fph + "/" + currency_fph
                 "/home_ahp/" + payer_ahid_fph + "/" + currency_fph + "/" \
-                + concestor_fph + "/" + payer_balance
+                + payer_balance
             )
-
-
         if not get_ahid_primid(payee_ahid_hrns):
             flash("The payee specified is not an account-holder")
             return redirect(
+                #"/pay_to_ahid/" + payer_ahid_fph + "/" + currency_fph
                 "/home_ahp/" + payer_ahid_fph + "/" + currency_fph + "/" \
-                + concestor_fph + "/" + payer_balance
+                + payer_balance
             )
 
         amount = int(round(float(form.amount.data)*100))
@@ -1132,14 +1039,6 @@ def home_ahc(
         show_payment_form = show_payment_form,
         p_currency_hrns = p_currency_hrns,
         payer_ahid_hrns = payer_ahid_hrns,
-#        p_currency_displayed_hrns = p_currency_displayed_hrns,
-#        payer_ahid_displayed_hrns = payer_ahid_displayed_hrns,
-        currency_hrns_short = currency_hrns_short,
-        payer_ahid_hrns_short = payer_ahid_hrns_short,
-        concestor_hrns = concestor_hrns,
-        display_concestor_hrns = display_concestor_hrns,
-        concestor_fph = concestor_fph,
-#        payment_clade_displayed_hrns = payment_clade_displayed_hrns,
         payer_balance = payer_balance,
         number_of_messages = number_of_messages,
         number_of_indelible_messages = number_of_indelible_messages

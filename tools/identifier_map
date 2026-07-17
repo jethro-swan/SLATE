@@ -1,0 +1,112 @@
+#!/home/slate/SLATE/venv/bin/python3
+
+import sqlite3
+import sys
+import argparse
+from prettytable import PrettyTable
+
+
+from app.core.constants import MAP_DB
+from app.core.fph_hrns_maps import hrns_to_fph, fph_to_hrns
+from app.core.fph_hrns_maps import delete_fph_from_map
+from app.core.fph_hrns_maps import update_mapping
+from app.core.fph_hrns_maps import move_namespace
+from app.core.fph_hrns_maps import hrns_exists_already
+from app.core.slate_core import identify_entity
+
+
+def show_help():
+    print(
+        "l                       List the identifier mappings.\n" \
+        + "r <id>                  Remove an HRNS<>FPH mapping.\n" \
+        + "c <id>                  Check that identifier is in map.\n" \
+        + "m <hrns 1> <hrns 2>     Change an HRNS>FPH mapping.\n"
+    )
+
+list_mappings = False
+check_identifier = False
+remove_mapping = False
+modify_mapping = False
+
+if len(sys.argv) == 1:
+    show_help()
+    sys.exit()
+
+elif len(sys.argv) == 2:
+    if sys.argv[1] == "l":
+        list_mappings = True
+    else:
+        show_help()
+        sys.exit()
+
+elif len(sys.argv) == 3:
+    id = sys.argv[2]
+    if sys.argv[1] == "c":
+        check_identifier = True
+    elif sys.argv[1] == "r":
+        remove_mapping = True
+    else:
+        show_help()
+        sys.exit()
+
+elif len(sys.argv) == 4:
+    hrns_1 = sys.argv[2]
+    hrns_2 = sys.argv[3]
+    if sys.argv[1] == "m":
+        modify_mapping = True
+    else:
+        show_help()
+        sys.exit()
+
+else:
+    show_help()
+    sys.exit()
+
+
+if modify_mapping:
+    # Does the current HRNS exist?
+    id1_fph, id1_hrns, etypes, m = identify_entity(hrns_1)
+    if id1_fph:
+        id2_fph, id2_hrns, etypes, m = identify_entity(hrns_2)
+        if not id2_fph:
+            print("Identifier " + hrns_2 + " (" + id2_fph + ") exists already")
+            sys.exit()
+        else:
+            print("Changing " + hrns_1 + " to " + hrns_2)
+            print("Not yet implmented/tested")
+            sys.exit()
+    else:
+        print("Identifier HRNS " + hrns_1 + " does not exist")
+        sys.exit()
+
+elif list_mappings:
+    print("Listing mappings")
+    print("Not yet implmented/tested")
+    sys.exit()
+
+elif check_identifier:
+    id_fph, id_hrns, etypes, m = identify_entity(id)
+    if id_fph:
+        print("Identifier " + id_hrns + " (" + id_fph + ") in entities map")
+    else:
+        print("Identifier " + id_hrns + " (" + id_fph + ") in entities map")
+
+
+
+
+        print("Identifier " + id + " does not exist")
+        sys.exit()
+    else:
+        print("Checking identifier " + id_hrns + " (" + id_fph + ")")
+        print("Not yet implmented/tested")
+        sys.exit()
+
+elif remove_mapping:
+    id_fph, id_hrns, etypes, m = identify_entity(id)
+    if id_fph:
+        print("Identifier " + id + " does not exist")
+        sys.exit()
+    else:
+        print("Removing mapping for " + id_hrns + " (" + id_fph + ")")
+        print("Not yet implmented/tested")
+        sys.exit()

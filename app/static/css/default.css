@@ -132,6 +132,22 @@ div.header {
   width: 100%;
 }
 
+div.header2 {
+  display: block;
+  color:#008000;
+  background: none;
+  padding-left: 0px;
+  padding-right: 0px;
+  padding-top: 2px;
+  padding-bottom: 2px;
+  margin-left: 0px;
+  margin-right: 0px;
+  margin-top: 1px;
+  margin-bottom: 1px;
+  float: left;
+  width: 100%;
+}
+
 div.form-box {
   display: block;
   border-width: 0px;

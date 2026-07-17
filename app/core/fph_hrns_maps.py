@@ -5,9 +5,9 @@ from app.core.unix_functions import fcopy
 from app.core.regexp_list import re_fph, re_hrns
 from app.core.constants import DB_DIR
 from app.core.constants import MAP_BKP_DIR
-from app.core.constants import FPH_TO_HRNS_MAP, HRNS_C_FPH_MAP
-from app.core.constants import FPH_PARENT_MAP
-from app.core.constants import FPH_HRNS_MAP
+#from app.core.constants import FPH_TO_HRNS_MAP, HRNS_C_FPH_MAP
+#from app.core.constants import FPH_PARENT_MAP
+#from app.core.constants import FPH_HRNS_MAP
 from app.core.constants import MAP_DB
 
 from app.core.constants import PNSR_MAP

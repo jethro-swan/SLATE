@@ -17,11 +17,11 @@ hub_mode = slate
 #hub_mode = nests
 
 # This is the default lifespan of a QR-coded invitation (in seconds):
-qr_lifespan = 31536000
+qr_code_lifespan = 31536000
 
 # This is the email address appearing as the sender when issuing an access
 # recovery link:
-hub_email = server@lrc.org.uk
+hub_email_account = server@lrc.org.uk
 
 # If the following is TRUE, all accounts of the same category (typically those
 # of a metrically equivalent type) belong to a specified user can be summed and
@@ -35,20 +35,37 @@ intracategory_account_summation = TRUE
 # ugly and therefore generally hidden from the user, but if the following is
 # TRUE they will be displayed:
 display_account_identifiers = FALSE
-#
+
 # If the following is TRUE, the user may specify a less ugly identifier for
 # such *accounts*:
-allow_pairing_account_naming = FALSE
+specify_account_name = FALSE
+
+# If the following is TRUE, the HRNS of the clade (private *namespace* tree)
+# will be masked from the HRNS of each entity. This is intended to be helpful
+# when introducing new users in the (probable) situation where all entities are
+# within the same clade, but it might cause confusion for using operating among
+# multiple clades. Therefore it will be ignored unless the following parameter
+# (training_wheels) is also TRUE.
+hide_clade_hrns = TRUE
+
+# If the following is TRUE, most features will be hidden from the user
+# interface:
+training_wheels = TRUE
+
+sandbox_clade_hrns = "cc"
 
 # If the following is TRUE, a payment may be made directly from an *account* to
 # another *account* (without having to specify an *ahid* and *currency*):
-allow_account_to_account_payment = TRUE
+interaccount_payment_allowed = TRUE
 
 # If the following is TRUE, the user may import a CSV dataset:
 allow_user_dataset_csv_import = TRUE
 
 # If the following is TRUE, vector currency support is enabled:
-enable_vector_currency_support = TRUE
+vector_currency_support_enabled = TRUE
+
+# If the following is TRUE, interactive robots ill be active:
+robots_enabled = TRUE
 
 # Different hosts may expose different user interfaces. The options are:
 # slate - used typically for basic open money applications
@@ -64,4 +81,8 @@ scatter_plotting = TRUE
 
 show_more_link = FALSE
 
-create_currency_form_full = FALSE
+currency_creation_form_full = FALSE
+
+votes_enabled = FALSE
+
+counts_enabled = FALSE

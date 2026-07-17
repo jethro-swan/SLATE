@@ -14,7 +14,9 @@ from app.core.constants import CONFIG_MAP
 
 # The hub configuration map is populated from the ~/hub_config file.
 create_config_map()
-read_config_file_to_map()
+errors = read_config_file_to_map()
+if errors:
+    print(errors)
 
 # The configuration values are displayed:
 #for k in dbm_keys(CONFIG_MAP):
@@ -25,7 +27,11 @@ config_table = PrettyTable()
 config_table.align = "l"
 config_table.field_names = ["label", "value"]
 table_rows = []
+keys_sorted = []
 for k in dbm_keys(CONFIG_MAP):
+    keys_sorted.append(k)
+keys_sorted.sort()
+for k in keys_sorted:
     table_row = []
     table_row.append(k)
     table_row.append(str(get_config(k)))

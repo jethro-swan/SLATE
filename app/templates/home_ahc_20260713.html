@@ -10,17 +10,7 @@ grid, each column identifying a *currency* and each rows identifing an *ahid*
 one *account* in any *currency*. This enable the *accounts* to be hidden.
 --------------------------------------------------------------------------- -->
 
-{% if display_concestor_hrns %}
-<div class="header2">
-Working within namespace <b>{{ display_concestor_hrns }}</b>
-</div>
-{% endif %}
-
 {% if show_payment_form %}
-<p>
-Paying from <b>{{ payer_ahid_hrns_short }}</b> in currency
-<b>{{ currency_hrns_short }}</b>
-</p>
 <!-- payment form -->
 <form action="" method="post" novalidate>
 {{ form.hidden_tag() }}
@@ -82,6 +72,7 @@ Paying from <b>{{ payer_ahid_hrns_short }}</b> in currency
 <br />
 {% endif %}
 
+
 <table>
   <tr>
     <td class="h" colspan="2"><b>currency</b></td>
@@ -95,12 +86,10 @@ Paying from <b>{{ payer_ahid_hrns_short }}</b> in currency
     <td align="left" rowspan="{{ p_row.currency_count }}" colspan="2">
       {% if p_row.primid_currency_steward %}
       <a href="/currency/{{ p_row.currency_fph }}">
-        <!-- {{ p_row.currency_hrns }} -->
-        {{ p_row.currency_hrns_displayed }}
+        {{ p_row.currency_hrns }}
       </a>
       {% else %}
-        <!-- {{ p_row.currency_hrns }} -->
-        {{ p_row.currency_hrns_displayed }}
+        {{ p_row.currency_hrns }}
       {% endif %}
     </td>
     {% endif %}
@@ -112,10 +101,9 @@ Paying from <b>{{ payer_ahid_hrns_short }}</b> in currency
       </a>
       -->
       <a href="/home_ahp/{{
-        p_row.ahid_fph }}/{{ p_row.currency_fph }}/{{ concestor_fph }}/{{
+        p_row.ahid_fph }}/{{ p_row.currency_fph }}/{{
         p_row.p_balance }}">
-        <!-- {{ p_row.ahid_hrns }} -->
-        {{ p_row.ahid_hrns_displayed }}
+        {{ p_row.ahid_hrns }}
       </a>
     </td>
     <!--

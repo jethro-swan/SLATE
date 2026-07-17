@@ -1,4 +1,4 @@
-#!/home/john/NESTS/SLATE/venv/bin/python3
+#!/home/slate/SLATE/venv/bin/python3
 
 # This is a temporary test file for the FPH<>HRNS mapping.
 # It has shown almost all of the functions below to be working as expected ...
