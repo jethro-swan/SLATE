@@ -18,6 +18,7 @@ from app.core.constants import NSS
 from app.core.constants import PAYMENTS_DB
 from app.core.constants import SLATE_TEMP, IMPORT_QUEUE, IMPORTING
 from app.core.constants import QR_CODES
+from app.core.constants import SUBSTRATE_FPH
 
 #from app.core.constants import SLATE_EXPORT, SLATE_IMPORT
 
@@ -784,6 +785,8 @@ def toggle_more():
 #==============================================================================
 # The HOME SCREEN
 
+# For v0.2.94 - identify clade before displaying home screen
+
 @app.route(
     "/home_ahp/<payer_ahid_fph>/<p_currency_fph>/<concestor_fph>" \
     + "/<payer_balance>", methods=["GET", "POST"]
@@ -834,31 +837,35 @@ def home_ahc(
             flash("Invalid currency: " + p_currency_hrns)
             show_payment_form = False
 
-    if not (session["display_concestor_hrns"] is None):
-        concestor_hrns = session["display_concestor_hrns"]
-        display_concestor_hrns = session["display_concestor_hrns"]
+    # If a valid concestor HRNS is is found in the session dictionary, this is
+    # used initially:
+    if ("concestor_hrns" in session.keys()) \
+    and not (session["concestor_hrns"] is None):
+        concestor_hrns = session["concestor_hrns"]
+        concestor_fph, m = hrns_to_fph(concestor_hrns)
+        print(
+            "(1) concestor_hrns = " + concestor_hrns \
+            + " found in session[\"concestor_hrns\"]"
+        )
     else:
         concestor_hrns = ""
-        display_concestor_hrns = ""
-
-    if not (concestor_fph is None):
-        concestor_fph, concestor_hrns, concestor_etypes, \
+        concestor_fph = SUBSTRATE_FPH
+        print(
+            "(2) concestor_hrns not found in session[\"concestor_hrns\"] so " \
+            + "concestor_hrns set to \"\""
+        )
+    # If a valid concestor FPH is provided in the slug, this will be used instead:
+    if not (concestor_fph is None): # from slug
+        concestor_fph, concestor_hrns, etypes, \
         m = identify_entity(concestor_fph)
-#        print("\nslug concestor_hrns = " + concestor_hrns)
-#        print("slug concestor_fph = " + concestor_fph)
-#        if not concestor_fph:
-#            show_payment_form = False
-        session["display_concestor_hrns"] = concestor_hrns
-        display_concestor_hrns = concestor_hrns
+        if m:
+            print(":::: " + m)
+        if concestor_fph: # valid identifier
+            session["concestor_hrns"] = concestor_hrns
+            concestor_fph, m = hrns_to_fph(concestor_hrns)
+            print("(3) concestor_hrns = " + concestor_hrns + " (found in slug)")
 
-#    else:
-#        if not (session["display_concestor_hrns"] is None):
-#            concestor_hrns = session["display_concestor_hrns"]
-#            display_concestor_hrns = session["display_concestor_hrns"]
-#        else:
-#            concestor_hrns = ""
-#            display_concestor_hrns = ""
-#            session["display_concestor_hrns"] = concestor_hrns
+    print(":: concestor = " + concestor_hrns + " (" + concestor_fph + ")")
 
     if not (payer_balance is None):
         #if not payer_balance.isnumeric():
@@ -963,10 +970,10 @@ def home_ahc(
                 ahid_local_hrns, \
                 m = hrns_strip_concestor(ahid_hrns, concestor_hrns)
 
-#                print(currency_hrns + " | " + ahid_hrns)
+                print(currency_hrns + " | " + ahid_hrns)
 
-#                print("currency_local_hrns = " + currency_local_hrns)
-#                print("ahid_local_hrns = " + ahid_local_hrns)
+                print("currency_local_hrns = " + currency_local_hrns)
+                print("ahid_local_hrns = " + ahid_local_hrns)
 
                 # The displayed HRNS are stored separately from the full HRNS
                 # because the latter are used in subsequent sorting operations.
@@ -1031,51 +1038,84 @@ def home_ahc(
                         currency_displayed_already[currency] = True
                     p_rows2.append(row)
 
-#    print("all_entities_hrns = ", end="")
-#    print(all_entities_hrns)
-    if not concestor_hrns:
-        concestor_hrns = get_list_concestor(all_entities_hrns)
-        display_concestor_hrns = concestor_hrns
+    print()
+    print("p_rows2 = ", end="")
+    print(p_rows2)
+    print()
 
-#        print("concestor = " + concestor_hrns)
-        concestor_fph, m = hrns_to_fph(concestor_hrns)
+    print("all_entities_hrns = ", end="")
+    print(all_entities_hrns)
+    concestor_hrns = get_list_concestor(all_entities_hrns)
+    print(
+        "> concestor_hrns = " + concestor_hrns + " (from list of identifiers)"
+    )
+    concestor_fph, m = hrns_to_fph(concestor_hrns)
+    print("> concestor_fph  = " + concestor_fph)
+    session["concestor_hrns"] = concestor_hrns
 
-    currency_hrns_short, payer_ahid_hrns_short, \
-    concestor_hrns = prune_payment_pair_hrns(p_currency_hrns, payer_ahid_hrns)
+    print("p_currency_hrns = " + p_currency_hrns)
+    print("payer_ahid_hrns = " + payer_ahid_hrns)
+    currency_hrns_short, payer_ahid_hrns_short, pp_concestor_hrns, \
+    m = prune_payment_pair_hrns(p_currency_hrns, payer_ahid_hrns)
+    if m:
+        print(m)
+
+    print(
+        "currency_hrns_short   = " + currency_hrns_short \
+        + "\npayer_ahid_hrns_short = " + payer_ahid_hrns_short \
+        + "\npp_concestor_hrns     = " + pp_concestor_hrns
+    )
+#    print(">>> pp_concestor_fph  = " + concestor_fph)
+#    print(">>> pp_concestor_hrns = " + pp_concestor_hrns)
 
     form = SpecifyPayeeAccountHolderForm()
     if form.validate_on_submit():
         payee_id = form.payee_ahid.data.strip(NSS)
-        # If the concestor HRNS is available, the payee entered may be either
-        # truncated (concestor HRNS stripped) or complete.
-#        print("(1) payee_ahid_id = " + payee_id)
-#        print("concestor_hrns = " + concestor_hrns)
-        if re_hrns.match(payee_id):
-            if concestor_hrns:
-                payee_ahid_id = payee_id + NSS + concestor_hrns
+        # If the payee *ahid* is identified by FPH, validation is the only
+        # requirement:
+        if re_fph.match(payee_id): # payee specified by FPH
+            payee_ahid_fph, payee_ahid_hrns, etypes,
+            m = identify_entity(payee_ahid_id)
+            if not (payee_ahid_fph and ("ahid" in etypes)):
+                flash(payee_ahid_id + " is a valid payee")
+                return redirect(
+                    "/home_ahp/" + payer_ahid_fph + "/" + currency_fph + "/" \
+                    + concestor_fph + "/" + payer_balance
+                )
+        # If the payee *ahid* is not identified by FPH, it must be by HRNS:
+        elif not re_hrns.match(payee_id):
+            flash("Invalid payee: " + payee_id)
+            return redirect(
+                "/home_ahp/" + payer_ahid_fph + "/" + currency_fph + "/" \
+                + concestor_fph + "/" + payer_balance
+            )
+        # If the concestor HRNS is presented, the payee *ahid* identifier may
+        # be either truncated (concestor HRNS stripped) or complete.
+        elif concestor_hrns:
+            # The HRNS entered may be either truncated (relative to the local
+            # concestor) or full (relative to the SUBSTRATE).
+            payee_ahid_hrns_c = payee_id + NSS + concestor_hrns
+            payee_ahid_hrns_f = payee_id
+            # Check that either payee HRNS is valid:
+            payee_ahid_fph_c, payee_ahid_hrns, etypes_c, \
+            m = identify_entity(payee_ahid_hrns_c) # concestor appended
+            payee_ahid_fph_f, payee_ahid_hrns, etypes_f, \
+            m = identify_entity(payee_ahid_hrns_f) # concestor not appended
+            if payee_ahid_fph_c and ("ahid" in etypes_c):
+                payee_ahid_hrns = payee_ahid_hrns_c
+            elif payee_ahid_fph_f and ("ahid" in etypes_f):
+                payee_ahid_hrns = payee_ahid_hrns_f
             else:
-                payee_ahid_id = payee_id
-#        print("(2) payee_ahid_id = " + payee_ahid_id)
-        payee_ahid_fph, payee_ahid_hrns, etypes, \
-        m = identify_entity(payee_ahid_id) # HRNS or FPH
-
-
-
-#        payee_ahid_fph, payee_ahid_hrns, etypes, \
-#        m = identify_entity(form.payee_ahid.data) # HRNS or FPH
-        if m:
-            flash(m)
+                flash(payee_ahid_id + " is not a valid payee")
+                return redirect(
+                    "/home_ahp/" + payer_ahid_fph + "/" + currency_fph \
+                    + "/" + concestor_fph + "/" + payer_balance
+                )
+        else:
             return redirect(
-                "/home_ahp/" + payer_ahid_fph + "/" + currency_fph + "/" \
-                + concestor_fph + "/" + payer_balance
+                "/home_ahp/" + payer_ahid_fph + "/" + currency_fph \
+                + "/" + concestor_fph + "/" + payer_balance
             )
-        if payee_ahid_fph == "":
-            flash("The specified account-holder does not exist")
-            return redirect(
-                "/home_ahp/" + payer_ahid_fph + "/" + currency_fph + "/" \
-                + concestor_fph + "/" + payer_balance
-            )
-
 
         if not get_ahid_primid(payee_ahid_hrns):
             flash("The payee specified is not an account-holder")
@@ -1124,6 +1164,7 @@ def home_ahc(
         working_identity_fph = working_identity_fph,
         working_identity_hrns = working_identity_hrns,
         working_identity_type = working_identity_type,
+#        p_rows = p_rows,
         p_rows = p_rows2,
         pmap_t = pmap_t,
         form = form,
@@ -1132,18 +1173,435 @@ def home_ahc(
         show_payment_form = show_payment_form,
         p_currency_hrns = p_currency_hrns,
         payer_ahid_hrns = payer_ahid_hrns,
-#        p_currency_displayed_hrns = p_currency_displayed_hrns,
-#        payer_ahid_displayed_hrns = payer_ahid_displayed_hrns,
         currency_hrns_short = currency_hrns_short,
         payer_ahid_hrns_short = payer_ahid_hrns_short,
         concestor_hrns = concestor_hrns,
-        display_concestor_hrns = display_concestor_hrns,
         concestor_fph = concestor_fph,
-#        payment_clade_displayed_hrns = payment_clade_displayed_hrns,
         payer_balance = payer_balance,
         number_of_messages = number_of_messages,
         number_of_indelible_messages = number_of_indelible_messages
     )
+
+
+
+
+#
+#==============================================================================
+# The HOME SCREEN
+
+# v0.2.93 version - almost working (clade masking requires browser refresh)
+
+@app.route(
+    "/home_ahp/<payer_ahid_fph>/<p_currency_fph>/<concestor_fph>" \
+    + "/<payer_balance>", methods=["GET", "POST"]
+)
+@app.route("/home_ahc", methods=["GET", "POST"])
+@login_required
+def home_ahc_(
+#def home_ahc(
+        payer_ahid_fph=None,
+        p_currency_fph=None,
+        concestor_fph=None,
+        payer_balance=None
+    ):
+
+    page = "home_ahc"
+    session["previous_page"] = page
+
+    if not ("show_top_menu" in session.keys()):
+        show_top_menu = False
+        session["show_top_menu"] = show_top_menu
+    show_top_menu = session["show_top_menu"]
+
+    show_payment_form = True
+
+    if (payer_ahid_fph is None):
+        payer_ahid_fph = ""
+        payer_ahid_hrns = ""
+        p_etypes = []
+        show_payment_form = False
+    else:
+        payer_ahid_fph, payer_ahid_hrns, p_etypes, \
+        m = identify_entity(payer_ahid_fph)
+        if not ("ahid" in p_etypes):
+            flash("Invalid payer: " + p_currency_hrns)
+            show_payment_form = False
+
+    if (p_currency_fph is None):
+        p_currency_fph = ""
+        p_currency_hrns = ""
+        c_etypes = []
+        show_payment_form = False
+    else:
+        p_currency_fph, p_currency_hrns, c_etypes, \
+        m = identify_entity(p_currency_fph)
+        if not p_currency_fph:
+            flash("Unregistered currency identifier")
+            show_payment_form = False
+        elif not ("currency" in c_etypes):
+            flash("Invalid currency: " + p_currency_hrns)
+            show_payment_form = False
+
+    # If a valid concestor HRNS is is found in the session dictionary, this is
+    # used initially:
+    if ("concestor_hrns" in session.keys()) \
+    and not (session["concestor_hrns"] is None):
+        concestor_hrns = session["concestor_hrns"]
+        concestor_fph, m = hrns_to_fph(concestor_hrns)
+        print(
+            "(1) concestor_hrns = " + concestor_hrns \
+            + " found in session[\"concestor_hrns\"]"
+        )
+    else:
+        concestor_hrns = ""
+        concestor_fph = SUBSTRATE_FPH
+        print(
+            "(2) concestor_hrns not found in session[\"concestor_hrns\"] so " \
+            + "concestor_hrns set to \"\""
+        )
+    # If a valid concestor FPH is provided in the slug, this will be used instead:
+    if not (concestor_fph is None): # from slug
+        concestor_fph, concestor_hrns, etypes, \
+        m = identify_entity(concestor_fph)
+        if m:
+            print(":::: " + m)
+        if concestor_fph: # valid identifier
+            session["concestor_hrns"] = concestor_hrns
+            concestor_fph, m = hrns_to_fph(concestor_hrns)
+            print("(3) concestor_hrns = " + concestor_hrns + " (found in slug)")
+
+    print(":: concestor = " + concestor_hrns + " (" + concestor_fph + ")")
+
+    if not (payer_balance is None):
+        #if not payer_balance.isnumeric():
+        if not re_bvalue.match(payer_balance):
+            flash("Invalid balance value: " + payer_balance)
+            show_payment_form = False
+    else:
+        show_payment_form = False
+
+    # If a dataset import is in progress, do not allow any FPH>HRNS or HRNS>FPH
+    # mapping operations to be initiated by a browser refresh. Instead, display a
+    # holding page.
+    if os.path.exists(IMPORTING):
+        return redirect("/hold")
+
+    # Hub operational mode (read from environment variable HUB_MODE)
+    hub_mode = get_hub_mode()
+
+    sandbox_clade_hrns = get_config("sandbox_clade_hrns")
+
+
+    if hub_mode != "slate":
+        flash("Operational mode invalid for this endpoint")
+        return redirect("/home_ahc")
+
+    if show_payment_form:
+        page = "home_ahp"
+    else:
+        page = "home_ahc"
+
+    if "previous_page" in session: # already active
+        previous_page = session["previous_page"]
+    else: # initializing
+        previous_page = "home_ahc"
+    session["previous_page"] = page
+
+    group = "home" # Used to control top menu behaviour.
+
+    namespace_steward = False
+    currency_steward = False
+    paying = False
+    logged_in = current_user.is_authenticated
+
+    primid_fph, primid_hrns, etypes, \
+    m = identify_entity(current_user.get_id())
+
+    # In slate mode, the working *identity* is always the *primid*.
+    working_identity_fph = primid_fph
+    working_identity_hrns = primid_hrns
+    working_identity_type = "primid"
+
+    nstewardships_list, m = list_namespace_stewardships(primid_fph)
+    cstewardships_list, m = list_currency_stewardships(primid_fph)
+
+    pmap_t, m = retrieve_pmap(primid_fph)
+
+    # List all *ahid*:
+    ahid_list = []
+    for ahid_hrns in pmap_t.keys():
+        ahid_list.append(ahid_hrns)
+
+    number_of_messages, \
+    number_of_indelible_messages = message_count(primid_fph, hub_mode)
+
+    p_rows = []
+
+    # First count the number of occurrences of each *currency*:
+    currency_count = {}
+    for ahid_hrns in pmap_t.keys():
+        for currency_hrns in pmap_t[ahid_hrns].keys():
+            if currency_hrns in currency_count.keys():
+                currency_count[currency_hrns] += 1
+            else:
+                currency_count[currency_hrns] = 1
+    currency_displayed_already = {}
+    for currency_hrns in currency_count.keys():
+        currency_displayed_already[currency_hrns] = False
+
+    for ahid_hrns in pmap_t.keys():
+        for currency_hrns in pmap_t[ahid_hrns].keys():
+
+            account_fph = pmap_t[ahid_hrns][currency_hrns]
+
+            account_currency_fph, account_owner_fph, \
+            account_balance, account_volume, account_active, \
+            account_type, account_category, account_units, \
+            account_metrical_equivalence, account_dimensions, \
+            m = get_account_properties(account_fph)
+
+            if fph_to_hrns(account_currency_fph) != currency_hrns:
+                continue # (This should never happen)
+
+            currency_fph, currency_hrns, currency_active, open, private, \
+            sandbox, type, category, units, metrical_equivalence, dimensions, \
+            prefix, suffix, default_account_name, stewards_list, \
+            m = get_currency_properties(account_currency_fph)
+
+            if currency_active:
+                p_row = {}
+                currency_local_hrns, \
+                m = hrns_strip_concestor(currency_hrns, concestor_hrns)
+                ahid_local_hrns, \
+                m = hrns_strip_concestor(ahid_hrns, concestor_hrns)
+
+                print(currency_hrns + " | " + ahid_hrns)
+
+                print("currency_local_hrns = " + currency_local_hrns)
+                print("ahid_local_hrns = " + ahid_local_hrns)
+
+                # The displayed HRNS are stored separately from the full HRNS
+                # because the latter are used in subsequent sorting operations.
+                p_row["currency_hrns_displayed"] = currency_local_hrns
+                p_row["ahid_hrns_displayed"] = ahid_local_hrns
+                #
+                p_row["currency_hrns"] = currency_hrns
+                p_row["ahid_hrns"] = ahid_hrns
+                p_row["ahid_fph"], m = hrns_to_fph(ahid_hrns)
+                p_row["account_fph"] = account_fph
+                p_row["account_owner_fph"] = account_owner_fph
+                p_row["account_owner_hrns"] = fph_to_hrns(account_owner_fph)
+                p_row["balance"] = integer_to_money_format(account_balance)
+                p_row["p_balance"] = integer_to_money_s_format(account_balance)
+                p_row["isneg"] = (account_balance < 0)
+                p_row["prefix"] = prefix
+                p_row["suffix"] = suffix
+                #p_row["volume"] = integer_to_money_format(account_volume)
+                if currency_fph in cstewardships_list:
+                    p_row["primid_currency_steward"] = True
+                else:
+                    p_row["primid_currency_steward"] = False
+                p_row["currency_fph"] = currency_fph
+                p_row["pairing_selected"] = False
+                if (currency_hrns == p_currency_hrns):
+                    if (ahid_hrns == payer_ahid_hrns):
+                        p_row["pairing_selected"] = True
+                p_rows.append(p_row)
+
+    # Sorting by *currency* and *ahid* (quick and dirty method)
+    currencies_list = []
+    for row in p_rows:
+        currency = row["currency_hrns"]
+        if not(currency in currencies_list):
+            currencies_list.append(currency)
+    currencies_list.sort()
+
+    # In order to dertermine the concestor of all entities within the home page
+    # table, another list is needed:
+    all_entities_hrns = currencies_list # starting with the *currencies* ...
+    ahid_lists_dict = {}
+    for currency in currencies_list:
+        ahid_lists_dict[currency] = []
+        for row in p_rows:
+            ahid = row["ahid_hrns"]
+            if not(ahid in ahid_lists_dict[currency]):
+                ahid_lists_dict[currency].append(ahid)
+                if not (ahid in all_entities_hrns):
+                    all_entities_hrns.append(ahid)
+        ahid_lists_dict[currency].sort()
+    p_rows2 = []
+    for currency in currencies_list:
+        for ahid in ahid_lists_dict[currency]:
+            for row in p_rows:
+                if (row["currency_hrns"] == currency) and \
+                   (row["ahid_hrns"] == ahid):
+                    if currency_displayed_already[currency]:
+                        row["blank_currency_cell"] = True
+                    else:
+                        row["blank_currency_cell"] = False
+                        row["currency_count"] = currency_count[currency]
+                        currency_displayed_already[currency] = True
+                    p_rows2.append(row)
+
+    print()
+    print("p_rows2 = ", end="")
+    print(p_rows2)
+    print()
+
+    print("all_entities_hrns = ", end="")
+    print(all_entities_hrns)
+    concestor_hrns = get_list_concestor(all_entities_hrns)
+    print(
+        "> concestor_hrns = " + concestor_hrns + " (from list of identifiers)"
+    )
+    concestor_fph, m = hrns_to_fph(concestor_hrns)
+    print("> concestor_fph  = " + concestor_fph)
+    session["concestor_hrns"] = concestor_hrns
+
+    print("p_currency_hrns = " + p_currency_hrns)
+    print("payer_ahid_hrns = " + payer_ahid_hrns)
+    currency_hrns_short, payer_ahid_hrns_short, pp_concestor_hrns, \
+    m = prune_payment_pair_hrns(p_currency_hrns, payer_ahid_hrns)
+    if m:
+        print(m)
+
+    print(
+        "currency_hrns_short   = " + currency_hrns_short \
+        + "\npayer_ahid_hrns_short = " + payer_ahid_hrns_short \
+        + "\npp_concestor_hrns     = " + pp_concestor_hrns
+    )
+#    print(">>> pp_concestor_fph  = " + concestor_fph)
+#    print(">>> pp_concestor_hrns = " + pp_concestor_hrns)
+
+    form = SpecifyPayeeAccountHolderForm()
+    if form.validate_on_submit():
+        payee_id = form.payee_ahid.data.strip(NSS)
+        # If the payee *ahid* is identified by FPH, validation is the only
+        # requirement:
+        if re_fph.match(payee_id): # payee specified by FPH
+            payee_ahid_fph, payee_ahid_hrns, etypes,
+            m = identify_entity(payee_ahid_id)
+            if not (payee_ahid_fph and ("ahid" in etypes)):
+                flash(payee_ahid_id + " is a valid payee")
+                return redirect(
+                    "/home_ahp/" + payer_ahid_fph + "/" + currency_fph + "/" \
+                    + concestor_fph + "/" + payer_balance
+                )
+        # If the payee *ahid* is not identified by FPH, it must be by HRNS:
+        elif not re_hrns.match(payee_id):
+            flash("Invalid payee: " + payee_id)
+            return redirect(
+                "/home_ahp/" + payer_ahid_fph + "/" + currency_fph + "/" \
+                + concestor_fph + "/" + payer_balance
+            )
+        # If the concestor HRNS is presented, the payee *ahid* identifier may
+        # be either truncated (concestor HRNS stripped) or complete.
+        elif concestor_hrns:
+            # The HRNS entered may be either truncated (relative to the local
+            # concestor) or full (relative to the SUBSTRATE).
+            payee_ahid_hrns_c = payee_id + NSS + concestor_hrns
+            payee_ahid_hrns_f = payee_id
+            # Check that either payee HRNS is valid:
+            payee_ahid_fph_c, payee_ahid_hrns, etypes_c, \
+            m = identify_entity(payee_ahid_hrns_c) # concestor appended
+            payee_ahid_fph_f, payee_ahid_hrns, etypes_f, \
+            m = identify_entity(payee_ahid_hrns_f) # concestor not appended
+            if payee_ahid_fph_c and ("ahid" in etypes_c):
+                payee_ahid_hrns = payee_ahid_hrns_c
+            elif payee_ahid_fph_f and ("ahid" in etypes_f):
+                payee_ahid_hrns = payee_ahid_hrns_f
+            else:
+                flash(payee_ahid_id + " is not a valid payee")
+                return redirect(
+                    "/home_ahp/" + payer_ahid_fph + "/" + currency_fph \
+                    + "/" + concestor_fph + "/" + payer_balance
+                )
+        else:
+            return redirect(
+                "/home_ahp/" + payer_ahid_fph + "/" + currency_fph \
+                + "/" + concestor_fph + "/" + payer_balance
+            )
+
+        if not get_ahid_primid(payee_ahid_hrns):
+            flash("The payee specified is not an account-holder")
+            return redirect(
+                "/home_ahp/" + payer_ahid_fph + "/" + currency_fph + "/" \
+                + concestor_fph + "/" + payer_balance
+            )
+
+        amount = int(round(float(form.amount.data)*100))
+        annotation = form.annotation.data
+
+        m = ah_payment(
+                payer_ahid_hrns,
+                payee_ahid_hrns,
+                p_currency_hrns,
+                amount,
+                annotation
+            )
+        if m:
+            flash(m)
+        else:
+            flash(
+                integer_to_money_s_format(amount) \
+                + " paid from " + payer_ahid_hrns \
+                + " to " + payee_ahid_hrns \
+                + " in " + p_currency_hrns
+            )
+            if annotation:
+                flash("(" + annotation + ")")
+
+        return redirect("/home_ahc")
+
+    return render_template(
+        "home_ahc.html",
+        title = "Home",
+        page = page,
+        group = group,
+        hub_mode = "slate",
+        version = get_version(),
+        show_csv_import_link = get_config("show_dataset_csv_import_link"),
+        development_mode = development_mode,
+        logged_in = logged_in,
+        primid_type = "login identity",
+        primid_fph = primid_fph,
+        primid_hrns = primid_hrns,
+        working_identity_fph = working_identity_fph,
+        working_identity_hrns = working_identity_hrns,
+        working_identity_type = working_identity_type,
+#        p_rows = p_rows,
+        p_rows = p_rows2,
+        pmap_t = pmap_t,
+        form = form,
+        show_top_menu = show_top_menu,
+        display_in_from_lines = False,
+        show_payment_form = show_payment_form,
+        p_currency_hrns = p_currency_hrns,
+        payer_ahid_hrns = payer_ahid_hrns,
+        currency_hrns_short = currency_hrns_short,
+        payer_ahid_hrns_short = payer_ahid_hrns_short,
+        concestor_hrns = concestor_hrns,
+        concestor_fph = concestor_fph,
+        payer_balance = payer_balance,
+        number_of_messages = number_of_messages,
+        number_of_indelible_messages = number_of_indelible_messages
+    )
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 #==============================================================================

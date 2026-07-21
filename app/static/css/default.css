@@ -102,9 +102,6 @@ li.messages_indelible {
   margin-left: -10px; margin-top: 0px; margin-bottom: 5px;
 }
 
-
-
-
 .pgrey { color: #808080; }
 
 a { text-decoration:none; }
@@ -113,6 +110,23 @@ a:visited { color:#006000; }
 a:active { color:#008400; }
 a:hover { color:#20a020; }
 
+div.concestor {
+  display: block;
+  color:#008000;
+  border-width: 1px;
+  border-style: solid;
+  border-color: #c8e0c8;
+  background: #c8e0c8;
+  padding-left: 4px;
+  padding-right: 4px;
+  padding-top: 2px;
+  padding-bottom: 2px;
+  margin-left: 0px;
+  margin-right: 0px;
+  margin-top: 1px;
+  margin-bottom: 1px;
+  float: left;
+}
 
 div.header {
   display: block;
@@ -126,22 +140,6 @@ div.header {
   padding-bottom: 2px;
   margin-left: 4px;
   margin-right: 4px;
-  margin-top: 1px;
-  margin-bottom: 1px;
-  float: left;
-  width: 100%;
-}
-
-div.header2 {
-  display: block;
-  color:#008000;
-  background: none;
-  padding-left: 0px;
-  padding-right: 0px;
-  padding-top: 2px;
-  padding-bottom: 2px;
-  margin-left: 0px;
-  margin-right: 0px;
   margin-top: 1px;
   margin-bottom: 1px;
   float: left;

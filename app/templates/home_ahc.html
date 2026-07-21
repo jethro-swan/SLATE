@@ -10,10 +10,12 @@ grid, each column identifying a *currency* and each rows identifing an *ahid*
 one *account* in any *currency*. This enable the *accounts* to be hidden.
 --------------------------------------------------------------------------- -->
 
-{% if display_concestor_hrns %}
-<div class="header2">
-Working within namespace <b>{{ display_concestor_hrns }}</b>
+{% if concestor_hrns %}
+<div class="clear-both">
+<div class="concestor">
+Working within namespace <b>{{ concestor_hrns }}</b>
 </div>
+<div class="clear-both"><!-- menu row 1 -->
 {% endif %}
 
 {% if show_payment_form %}
@@ -79,7 +81,6 @@ Paying from <b>{{ payer_ahid_hrns_short }}</b> in currency
   </tr>
 </table>
 </form>
-<br />
 {% endif %}
 
 <table>

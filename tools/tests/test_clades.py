@@ -5,6 +5,7 @@ from app.core.slate_core import most_recent_clade
 from app.core.slate_core import most_recent_concestor
 from app.core.slate_core import get_list_concestor
 from app.core.slate_core import hrns_strip_concestor
+from app.core.slate_core import prune_payment_pair_hrns
 from app.core.slate_core import fph_to_hrns
 
 test_hrns_1 = "cc"
@@ -45,7 +46,7 @@ print("most recent clade: " + nearest_clade)
 
 print()
 
-id1, id2, concestor, m = most_recent_concestor(test_hrns_1, test_hrns_2)
+id1, id2, concestor, m = most_recent_concestor(test_hrns_3, test_hrns_4)
 print("truncated id1: ", end="")
 print(id1)
 print("truncated id2: ", end="")
@@ -68,3 +69,19 @@ for entity_hrns in test_hrns_list:
         print(m)
     else:
         print("entity_hrns_local = " + entity_hrns_local)
+
+print()
+print("prune_payment_pair_hrns( )")
+for l in range(1, len(test_hrns_list)):
+    hrns1 = test_hrns_list[l-1]
+    hrns2 = test_hrns_list[l]
+    print(hrns1 + " | " + hrns2 + " >>> ", end="")
+    currency_hrns_short, payer_ahid_hrns_short, concestor_hrns, \
+    m = prune_payment_pair_hrns(hrns1, hrns2)
+    if m:
+        print(m)
+    print(
+        currency_hrns_short + " | " \
+        + payer_ahid_hrns_short + " | " \
+        + concestor_hrns
+    )

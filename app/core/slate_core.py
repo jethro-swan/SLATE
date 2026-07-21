@@ -3595,7 +3595,7 @@ def get_list_concestor(hrns_list):
 def prune_payment_pair_hrns(currency_id, payer_ahid_id):
     currency_hrns_short, payer_ahid_hrns_short, concestor_hrns, \
     m = most_recent_concestor(currency_id, payer_ahid_id)
-    return currency_hrns_short, payer_ahid_hrns_short, concestor_hrns
+    return currency_hrns_short, payer_ahid_hrns_short, concestor_hrns, m
 
 # Display an HRNS with the specified concestor removed:
 def _hrns_strip_concestor(entity_id, concestor_id):
