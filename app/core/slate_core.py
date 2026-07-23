@@ -3608,7 +3608,11 @@ def _hrns_strip_concestor(entity_id, concestor_id):
     return entity_hrns.replace(concestor_hrns, "").strip(NSS), ""
 
 def hrns_strip_concestor(entity_hrns, concestor_hrns):
-    return entity_hrns.replace(concestor_hrns, "").strip(NSS), ""
+    entity_hrns_l = entity_hrns.split(NSS)
+    concestor_hrns_l = concestor_hrns.split(NSS)
+    for i in range(len(concestor_hrns_l)):
+        entity_hrns_l.pop()
+    return NSS.join(entity_hrns_l), ""
 
 # If and only if the identifier lies within a private *namespace* tree (clade),
 # the clade HRNS is removed from the identifier HRNS to abbreviate the display.

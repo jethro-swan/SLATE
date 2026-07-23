@@ -258,6 +258,15 @@ def create_seed_entities():
         conn.commit()
         cursor.close()
 
+    # Create a universal *currency" cc.cc
+    currency_fph, currency_hrns, \
+    m = new_currency(
+            "cc", seed_namespace_fph, "adm.cc", "", "", "",
+            account_type="scalar", category="money", units="unspecified",
+            metrical_equivalence="lt", dimensions="unspecified"
+        )
+    print("Universal currency " + currency_hrns + " has been created")
+
     #--------------------------------------------------------------------------
     # Seed *primid*:
 
@@ -382,7 +391,8 @@ def create_root_namespace(name):
 
     currency_fph, currency_hrns, \
     m = new_currency(
-            name, SUBSTRATE_FPH, "adm.cc", "", "h", "hrs",
+#            name, SUBSTRATE_FPH, "adm.cc", "", "h", "hrs",
+            name, seed_namespace_fph, "adm.cc", "", "h", "hrs",
             "scalar", "money", "", "", ""
         )
     if m:
@@ -432,6 +442,7 @@ def create_quasitld_set(full = False):
 #    seed_primid_fph = nshash("adm.cc")
 #    seed_primid_fph = nshash("adm.cc")
     seed_currency_fph = nshash("cc")
+#    seed_currency_fph = nshash("cc")
 
     errors = "\n"
     tld_fph_list = []
@@ -447,6 +458,12 @@ def create_quasitld_set(full = False):
         tld_fph_list.append(namespace_fph)
 
     return tld_fph_list, errors
+
+
+#
+
+
+
 
 # A set of single-letter sandbox root *namespaces* is created:
 def create_sandbox_root_set():
@@ -474,6 +491,11 @@ def create_sandbox_root_set():
 
 
 
+
+
+
+
+
 #==============================================================================
 
 def create_sandbox_space():
@@ -492,12 +514,6 @@ def create_sandbox_space():
     # Some sandbox/demo *currencies* are created:
     #
     # hrs.box.cc
-    currency_fph, currency_hrns, \
-    m = new_currency(
-            "hrs", sandbox_fph, "adm.cc", "", "h", "hrs",
-            account_type="scalar", category="money", units="unspecified",
-            metrical_equivalence="lt", dimensions="unspecified"
-        )
     #
     # g£.box.cc
     currency_fph, currency_hrns, \

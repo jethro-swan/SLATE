@@ -14,14 +14,16 @@ test_hrns_3 = "uu.vv.ww.xx.yy.zz.bb.cc"
 test_hrns_4 = "xx.yy.zz.bb.cc"
 test_hrns_5 = "vv.ww.xx.yy.zz.bb.cc"
 test_hrns_6 = "ww.xx.yy.zz.bb.cc"
+test_hrns_7 = "cc.cc"
 
 test_hrns_list = [
 #    test_hrns_1,
-#    test_hrns_2,
+    test_hrns_2,
     test_hrns_3,
     test_hrns_4,
     test_hrns_5,
-    test_hrns_6
+    test_hrns_6,
+    test_hrns_7
 ]
 
 
@@ -53,6 +55,18 @@ print("truncated id2: ", end="")
 print(id2)
 print("concestor: ", end="")
 print(concestor)
+
+id1, id2, concestor, m = most_recent_concestor(test_hrns_6, test_hrns_7)
+print("truncated id1: ", end="")
+print(id1)
+print("truncated id2: ", end="")
+print(id2)
+print("concestor: ", end="")
+print(concestor)
+
+
+
+
 
 print()
 print("test_hrns_list = ", end="")

@@ -841,19 +841,15 @@ def home_ahc(
     # used initially:
     if ("concestor_hrns" in session.keys()) \
     and not (session["concestor_hrns"] is None):
+        concestor_hrns_not_yet_recorded = False
         concestor_hrns = session["concestor_hrns"]
         concestor_fph, m = hrns_to_fph(concestor_hrns)
-        print(
-            "(1) concestor_hrns = " + concestor_hrns \
-            + " found in session[\"concestor_hrns\"]"
-        )
     else:
+        concestor_hrns_not_yet_recorded = True
+
         concestor_hrns = ""
         concestor_fph = SUBSTRATE_FPH
-        print(
-            "(2) concestor_hrns not found in session[\"concestor_hrns\"] so " \
-            + "concestor_hrns set to \"\""
-        )
+
     # If a valid concestor FPH is provided in the slug, this will be used instead:
     if not (concestor_fph is None): # from slug
         concestor_fph, concestor_hrns, etypes, \
@@ -863,9 +859,6 @@ def home_ahc(
         if concestor_fph: # valid identifier
             session["concestor_hrns"] = concestor_hrns
             concestor_fph, m = hrns_to_fph(concestor_hrns)
-            print("(3) concestor_hrns = " + concestor_hrns + " (found in slug)")
-
-    print(":: concestor = " + concestor_hrns + " (" + concestor_fph + ")")
 
     if not (payer_balance is None):
         #if not payer_balance.isnumeric():
@@ -970,10 +963,10 @@ def home_ahc(
                 ahid_local_hrns, \
                 m = hrns_strip_concestor(ahid_hrns, concestor_hrns)
 
-                print(currency_hrns + " | " + ahid_hrns)
+#                print("\nconcestor_hrns = " + concestor_hrns)
+#                print("currency_hrns = " + currency_hrns)
+#                print("currency_local_hrns = " + currency_local_hrns)
 
-                print("currency_local_hrns = " + currency_local_hrns)
-                print("ahid_local_hrns = " + ahid_local_hrns)
 
                 # The displayed HRNS are stored separately from the full HRNS
                 # because the latter are used in subsequent sorting operations.
@@ -1011,6 +1004,10 @@ def home_ahc(
             currencies_list.append(currency)
     currencies_list.sort()
 
+#    print("p_rows = ", end="")
+#    print(p_rows)
+
+
     # In order to dertermine the concestor of all entities within the home page
     # table, another list is needed:
     all_entities_hrns = currencies_list # starting with the *currencies* ...
@@ -1038,35 +1035,17 @@ def home_ahc(
                         currency_displayed_already[currency] = True
                     p_rows2.append(row)
 
-    print()
-    print("p_rows2 = ", end="")
-    print(p_rows2)
-    print()
+#    print("all_entities_hrns = ", end="")
+#    print(all_entities_hrns)
 
-    print("all_entities_hrns = ", end="")
-    print(all_entities_hrns)
     concestor_hrns = get_list_concestor(all_entities_hrns)
-    print(
-        "> concestor_hrns = " + concestor_hrns + " (from list of identifiers)"
-    )
     concestor_fph, m = hrns_to_fph(concestor_hrns)
-    print("> concestor_fph  = " + concestor_fph)
     session["concestor_hrns"] = concestor_hrns
 
-    print("p_currency_hrns = " + p_currency_hrns)
-    print("payer_ahid_hrns = " + payer_ahid_hrns)
     currency_hrns_short, payer_ahid_hrns_short, pp_concestor_hrns, \
     m = prune_payment_pair_hrns(p_currency_hrns, payer_ahid_hrns)
     if m:
         print(m)
-
-    print(
-        "currency_hrns_short   = " + currency_hrns_short \
-        + "\npayer_ahid_hrns_short = " + payer_ahid_hrns_short \
-        + "\npp_concestor_hrns     = " + pp_concestor_hrns
-    )
-#    print(">>> pp_concestor_fph  = " + concestor_fph)
-#    print(">>> pp_concestor_hrns = " + pp_concestor_hrns)
 
     form = SpecifyPayeeAccountHolderForm()
     if form.validate_on_submit():
@@ -1147,6 +1126,10 @@ def home_ahc(
                 flash("(" + annotation + ")")
 
         return redirect("/home_ahc")
+
+    if concestor_hrns_not_yet_recorded:
+        return redirect("/home_ahc")
+
 
     return render_template(
         "home_ahc.html",

@@ -80,8 +80,146 @@ def create_payments_db(owner_fph):
         conn.commit()
         cursor.close()
 
+
 #==============================================================================
-# Make payment from one account to another (specified by FPH):
+# Add to an *account* of type "count" (specified by FPH).
+#
+# *currency* type: scalar
+# *currency* category: integer
+
+def change_count(payer_fph, account_fph, amount, annotation):
+
+    target_account_currency_fph, account_owner_fph, \
+    account_balance, account_volume, account_active, \
+    account_type, account_category, account_units, \
+    account_metrical_equivalence, account_dimensions, \
+    m = get_account_properties(account_fph)
+    if m:
+        return m
+    if not account_active:
+        return "Target account " + account_fph + " is inactive"
+
+    active, administrator, \
+    ahids_fph_list, accounts_fph_list, pmap, \
+    nstewardships_fph_list, cstewardships_fph_list, \
+    m = get_primid_properties(payer_id)
+    if m:
+        return m
+    user_of_currency = False
+    for account_fph in accounts_fph_list:
+        currency_fph, m = get_account_currency(account_fph)
+        if currency_fph == target_account_currency_fph:
+            user_of_currency = True
+            break
+    if not user_of_currency:
+        return "Invalid currency for this user"
+
+    with sqlite3.connect(ENTITIES_DB) as conn:
+        cursor = conn.cursor()
+        # The payer balances are adjusted:
+        cursor.execute(
+            "UPDATE accounts SET account_balance = ?, volume = ? " \
+            + "WHERE entity_fph = ?",
+            (account_balance + amount, account_volume + amount, account_fph)
+        )
+        conn.commit()
+        cursor.close()
+
+    #--------------------------------------------------------------------------
+    # Then the payment is recorded in the journal:
+
+    payment_timestamp = ledger_timestamp()
+
+    #date_and_time = ledger_timestamp()
+    with sqlite3.connect(COUNTS_DB) as conn:
+        cursor = conn.cursor()
+        cursor.execute(
+            "INSERT INTO counts (" \
+            + "timestamp, " \
+            + "payer_fph, " \
+            + "payee_fph, " \
+            + "currency_fph, " \
+            + "amount, " \
+            + "payee_balance, " \
+            + "annotation " \
+            + ") VALUES (?, ?, ?, ?, ?, ?)",
+            (
+                payment_timestamp,
+                payee_account_fph,
+                currency_fph,
+                amount,
+                payee_account_balance,
+                annotation
+            )
+        )
+        conn.commit()
+        cursor.close()
+
+    payee_account_owner_hrns = fph_to_hrns(payee_account_owner_fph)
+
+#    subject_line = payer_account_owner_hrns
+
+    message_body = annotation
+    ## TO DO:
+    # Add fields to table to accommodate the special case of payments:
+    # e.g.
+    #   payer_account
+    #   payee_account
+    #   currency
+    #   amount
+    #   annotation
+    m = send_message(
+            payment_timestamp,          # message timestamp
+#            payer_account_owner_fph,    # sender_id
+            payee_account_owner_fph,    # recipient_id
+            "payment",                  # category
+            "",                         # subject prefix string
+            subject_line,               # subject
+            "",                         # stewardship_id (n/a)
+            0,                          # longevity (indefinite)
+            "",                         # expiry_datetime (no expiry)
+#            payer_account_fph,          # string
+            payee_account_fph,          # string
+            "",                         # payer_ahid_fph unused in this mode
+            "",                         # payee_ahid_fph unused in this mode
+            "",                         # currency_fph unused in this mode
+            amount,                     # integer
+            message_body,               #
+            False,                      # indelibility
+            False                       # broadcast
+        )
+#    if m:
+#        print("Problem in  send_message( )  function")
+#        print(m)
+
+    return ""
+
+
+def increase_count(payer_fph, account_fph, amount, annotation):
+    if amount > 1:
+        amount = 1
+    return change_count(payer_fph, account_fph, amount, annotation)
+
+def decrease_count(payer_fph, account_fph, amount, annotation):
+    if amount > 1:
+        amount = -1
+    return change_count(payer_fph, account_fph, amount, annotation)
+
+
+
+
+
+
+#==============================================================================
+# Make payment from one *account* to another (specified by FPH).
+#
+# *currency* type: scalar
+# *currency* category: money
+#
+# The *currency* type and *category* type are determined from the *account*s
+# (both of which must be in the same *currency*).
+#
+# The *currency* type here is "zero_sum" (a.k.a. "money").
 
 def payment(payer_account_fph, payee_account_fph, amount, annotation):
 
@@ -223,7 +361,6 @@ def payment(payer_account_fph, payee_account_fph, amount, annotation):
     return ""
 
 #==============================================================================
-
 
 #==============================================================================
 # To make a payment using *ahid*|*currency* pairs

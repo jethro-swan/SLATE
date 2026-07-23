@@ -141,7 +141,7 @@ def qrencode_invitation(currency_id, namespace_id, inviter_id):
     #    hub_url = config["hub_url"]
     #else:
     #    return ""
-    qr_lifespan = int(get_config("qr_lifespan"))
+    qr_lifespan = int(get_config("qr_code_lifespan"))
     hub_url = get_config("hub_url")
 
     qr_expiry_time = str(unixtime_int() + qr_lifespan*1000000000)

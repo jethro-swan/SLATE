@@ -68,7 +68,7 @@ print("="*80)
 print("Running test entity identification loop")
 print("-"*80)
 for ahid_hrns in ["ah1.bb.cc", "ah2.bb.cc", "ah3.bb.cc", "ah4.bb.cc"]:
-    for currency_hrns in ["h.hrs.cc", "m.hrs.cc", "hrs.cc", "kwh.cc"]:
+    for currency_hrns in ["cc.cc", "h.hrs.cc", "m.hrs.cc", "hrs.cc", "kwh.cc"]:
         p_fph = new_pairing("bb.cc", ahid_hrns, currency_hrns)
         print(p_fph)
 print("="*80)
@@ -90,8 +90,20 @@ display_random_selection = True
 #test_payments = False
 test_payments = True
 
-ahid_hrns_list = ["ah1.bb.cc", "ah2.bb.cc", "ah3.bb.cc", "ah4.bb.cc"]
-currency_hrns_list = ["h.hrs.cc", "m.hrs.cc", "hrs.cc", "kwh.cc"]
+ahid_hrns_list = [
+    "ah1.bb.cc",
+    "ah2.bb.cc",
+    "ah3.bb.cc",
+    "ah4.bb.cc"
+]
+currency_hrns_list = [
+    "cc.cc",
+    "h.hrs.cc",
+    "m.hrs.cc",
+    "hrs.cc",
+    "kwh.cc",
+    "ta.cc"
+]
 
 if test_entity_identification:
     print("="*80)
