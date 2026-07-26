@@ -1,0 +1,182 @@
+#!/home/slate/SLATE/venv/bin/python3
+
+# 2026-03-30:
+#
+# Add optional parameters to limit output to (e.g.)
+# - identifiers belonging to a specified *primid"
+# - identifiers within a specified *namespace*
+# - identifiers within a specified *namespace* tree
+# and to summarize certain data such as (e.g.)
+# - total number of identifiers
+# - number of identifiers within a specified *namespace*
+# - number of identifiers within a specified *namespace* tree
+
+import sqlite3
+import sys
+import argparse
+from prettytable import PrettyTable
+from app.core.constants import IDENTIFIERS_DB, ENTITIES_DB, SUBSTRATE_FPH
+from app.core.fph_hrns_maps import hrns_to_fph, fph_to_hrns
+#from app.core.fph_hrns_maps import get_parent
+from app.core.slate_core import get_parent
+#from app.core.fph_hrns_maps import get_private_namespace_root
+from app.core.slate_core import get_private_namespace_root
+from app.core.slate_core import get_entity_types
+from app.core.slate_core import identify_entity
+
+ap = argparse.ArgumentParser(
+        description = "List the entity types associated with each " \
+                    + "registered identifier. Optionally, the following " \
+                    + "can also be displayed:\n" \
+                    + "  - The parent (namespace) identifier\n" \
+                    + "  - The root of the private namespace tree (clade) " \
+                    + "    in which the identifier sits.\n"
+     )
+#if len(sys.argv) == 1:
+#    ap.print_help(sys.stderr)
+#    sys.exit(1)
+ap.add_argument(
+    "-p", "--show-parent", dest = "show_parent", action = "store_true",
+    default = False,
+    help = "Show the parent (namespace) FPH of the identifier."
+)
+ap.add_argument(
+    "-c", "--show-clade-root", dest = "show_clade_root", action = "store_true",
+    default = False,
+    help = "Show the root (namespace) FPH of the clade."
+)
+ap.add_argument(
+    "-R", "--clade-root", dest = "clade_root_id", action = "store",
+    default = None,
+    help = "Show only identifiers in clade (namespace tree) above root."
+)
+args = ap.parse_args()
+show_parent = args.show_parent
+show_clade_root = args.show_clade_root
+clade_root_id = args.clade_root_id
+
+if clade_root_id is not None:
+    clade_root_provided = True
+#    print("clade_root_id = " + clade_root_id)
+    clade_root_fph, clade_root_hrns, etypes, m = identify_entity(clade_root_id)
+    if not ("primid" in etypes):
+        print(
+            "The specified clade root identifier is not that of a primid. " \
+            + "Therefore the SUBSTRATE will be assumed for the root - i.e. " \
+            + "the entire identifier tree will be displayed."
+        )
+        clade_root_fph = SUBSTRATE_FPH
+        clade_root_hrns = ""
+else:
+    clade_root_provided = False
+    clade_root_fph = SUBSTRATE_FPH
+    clade_root_hrns = ""
+
+print("\nshow_parent = " + str(show_parent))
+print("show_clade_root = " + str(show_clade_root))
+print("clade_root_provided = " + str(clade_root_provided))
+print("clade_root = " + clade_root_fph + " (" + clade_root_hrns + ")\n")
+
+with sqlite3.connect(IDENTIFIERS_DB) as conn:
+    cursor = conn.cursor()
+    # Retrieve the list of entities (FPH):
+    cursor.execute("SELECT entity_fph FROM entities_registered")
+    identifiers_list = cursor.fetchall()
+    cursor.close()
+if identifiers_list is None:
+    print("Cannot retrieve entities")
+    sys.exit(1)
+
+#print("\nidentifiers_list = ", end="")
+#print(identifiers_list)
+#print()
+
+entity_table = PrettyTable()
+entity_table.align = "l"
+
+#entity_table.field_names = ["entity HRNS", "entity FPH"]
+##if show_parent:
+##    entity_table.field_names.append("parent FPH")
+##if show_clade_root:
+##    entity_table.field_names.append("private namespace tree root FPH")
+#entity_table.field_names.append("parent FPH")
+#entity_table.field_names.append("private namespace tree root FPH")
+#entity_table.field_names.append("N")
+#entity_table.field_names.append("C")
+#entity_table.field_names.append("A")
+#entity_table.field_names.append("H")
+#entity_table.field_names.append("P")
+
+entity_table.field_names = ["entity HRNS", "entity FPH"]
+if show_parent:
+    entity_table.field_names.append("parent FPH")
+if show_clade_root:
+    entity_table.field_names.append("private namespace tree root FPH")
+entity_table.field_names.extend(["N", "C", "A", "H", "P"])
+
+#print(entity_table.field_names)
+
+table_rows = []
+for identifier in identifiers_list: # a list of 1-element tuples
+    identifier_fph, identifier_hrns, etypes, m = identify_entity(identifier[0])
+    if m: # (this should never happen)
+        print(m)
+    pnsr = get_private_namespace_root(identifier_fph)
+    if clade_root_provided and (pnsr != clade_root_fph):
+        continue
+    parent_fph = get_parent(identifier_fph)
+    table_row = []  # one row for each identifier
+    table_row.append(identifier_hrns) # column 1: identifier HRNS
+    table_row.append(identifier_fph) # column 2: identifier FPH
+    if show_parent: # Column 3: FPH of parent *namespace*
+        table_row.append(parent_fph)
+    if show_clade_root: # Column 4: private *namespace* root FPH
+        table_row.append(pnsr)
+    if "namespace" in etypes: # Column 5: *namespace* registered?
+        table_row.append("N")
+    else:
+        table_row.append("")
+    if "currency" in etypes: # Column 6: *currency* registered?
+        table_row.append("C")
+    else:
+        table_row.append("")
+    if "account" in etypes: # Column 7: *account* registered?
+        table_row.append("A")
+    else:
+        table_row.append("")
+    if "ahid" in etypes: # Column 8: *ahid* registered?
+        table_row.append("H")
+    else:
+        table_row.append("")
+    if "primid" in etypes: # Column 9: *primid* registered?
+        table_row.append("P")
+    else:
+        table_row.append("")
+    print(table_row)
+    table_rows.append(table_row)
+
+print("\ntable_rows = ")
+for l in table_rows:
+    print(l)
+print()
+
+entity_table.add_rows(table_rows[0:])
+#entity_table.add_rows(table_rows)
+
+print(entity_table)
+
+#print(table_rows)
+
+
+
+
+print(
+    "\n" \
+    + "Entity types registered for each identifier:\n"
+    + "  N = namespace\n" \
+    + "  C = currency\n" \
+    + "  A = account (variable)\n" \
+    + "  H = account-holder identity (ahid)\n" \
+    + "  P = primary identity (primid)\n" \
+    + "  S = secondary identity (secid)\n"
+)

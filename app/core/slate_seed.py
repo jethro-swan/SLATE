@@ -2,7 +2,7 @@ import sqlite3
 import os
 import pickle
 
-from app.core.constants import IDENTIFIERS_DB, ENTITIES_DB
+from app.core.constants import IDENTIFIERS_DB, ENTITIES_DB, MAP_DB
 from app.core.constants import SUBSTRATE_FPH
 from app.core.common import nshash
 from app.core.regexp_list import *
@@ -85,6 +85,22 @@ from app.core.cctld_list import *
 #   *ahid* and a *currency* are created with the same identifier.
 
 def create_substrate():
+
+    # 2026-07-23:
+    # Added in case SUBSTRATE not in map
+    with sqlite3.connect(MAP_DB) as conn:
+        cursor = conn.cursor()
+        cursor.execute(
+            "INSERT INTO fph_hrns_map (fph, hrns) VALUES (?, ?)",
+            (SUBSTRATE_FPH, "")
+        )
+        cursor.execute(
+            "INSERT INTO hrns_fph_map (hrns, fph) VALUES (?, ?)",
+            ("", SUBSTRATE_FPH)
+        )
+        conn.commit()
+        cursor.close()
+
     # The substrate is unique in that
     # (a) its parent has no HRNS
     # (b) it serves as its own parent *namespace*
@@ -105,6 +121,7 @@ def create_substrate():
     print("SUBSTRATE_FPH = " + SUBSTRATE_FPH)
 
     record_private_namespace_root(SUBSTRATE_FPH, "")
+#    record_private_namespace_root(SUBSTRATE_FPH, SUBSTRATE_FPH)
 
 
 def create_seed_entities():

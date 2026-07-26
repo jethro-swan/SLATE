@@ -601,7 +601,7 @@ def get_entity_types(entity_fph):
         return [], "Invalid FPH: " + entity_fph
     entity_hrns = fph_to_hrns(entity_fph)
     if not entity_hrns:
-        return [], entity_fph + " is not a registered identifier"
+        return [], ":: " + entity_fph + " is not a registered identifier"
     with sqlite3.connect(IDENTIFIERS_DB) as conn:
         cursor = conn.cursor()
         cursor.execute(

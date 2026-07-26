@@ -1264,8 +1264,8 @@ def home_ahc_(
         show_payment_form = False
 
     # If a dataset import is in progress, do not allow any FPH>HRNS or HRNS>FPH
-    # mapping operations to be initiated by a browser refresh. Instead, display a
-    # holding page.
+    # mapping operations to be initiated by a browser refresh. Instead, display
+    # a holding page.
     if os.path.exists(IMPORTING):
         return redirect("/hold")
 
