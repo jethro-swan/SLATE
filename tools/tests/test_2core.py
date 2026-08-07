@@ -55,27 +55,27 @@ register_full_entity_set(qq_fph)
 list_etypes(qq_fph)
 
 print("\nCreating test primid\n")
-cthulhu_fph, cthulhu_hrns, access_token, \
+yig_fph, yig_hrns, access_token, \
 m = new_primid(
-        "cthulhu",
+        "yig",
         "cc",
-        "Cthulhu",
-        "cthulhu@rlyeh.net",
+        "yig",
+        "yig@nowt.net",
         "",
-        "yog-sothoth",
+        "rty",
         "987654",
         "kwh.cc"
     )
 
-print("primid_fph: " + cthulhu_fph)
-print("primid_hrns: " + cthulhu_hrns)
+print("primid_fph: " + yig_fph)
+print("primid_hrns: " + yig_hrns)
 print("access_token: " + access_token)
 print("primid creation message:")
 print(m)
 
-cthulhu_fph, cthulhu_hrns, etypes, m = identify_entity(cthulhu_fph)
-print("cthulhu_fph = " + cthulhu_fph)
-print("cthulhu_hrns = " + cthulhu_hrns)
+yig_fph, yig_hrns, etypes, m = identify_entity(yig_fph)
+print("yig_fph = " + yig_fph)
+print("yig_hrns = " + yig_hrns)
 print("etypes = ", end="")
 print(etypes)
 if m:
@@ -88,7 +88,7 @@ print("test account: " + account_fph + " > " + account_hrns)
 
 print("\nCreating test pairing ...\n")
 account_fph, account_hrns, \
-m = new_pairing(cthulhu_hrns, "ah1.cthulhu.cc", "hrs.cc")
+m = new_pairing(yig_hrns, "ah1.yig.cc", "hrs.cc")
 
 print("account_fph = " + account_fph)
 print("account_hrns = " + account_hrns)

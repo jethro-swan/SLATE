@@ -155,10 +155,10 @@ for identifier in identifiers_list: # a list of 1-element tuples
     print(table_row)
     table_rows.append(table_row)
 
-print("\ntable_rows = ")
-for l in table_rows:
-    print(l)
-print()
+#print("\ntable_rows = ")
+#for l in table_rows:
+#    print(l)
+#print()
 
 entity_table.add_rows(table_rows[0:])
 #entity_table.add_rows(table_rows)

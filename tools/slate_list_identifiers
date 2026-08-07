@@ -19,6 +19,7 @@ from app.core.fph_hrns_maps import hrns_to_fph, fph_to_hrns
 from app.core.slate_core import get_parent
 #from app.core.fph_hrns_maps import get_private_namespace_root
 from app.core.slate_core import get_private_namespace_root
+from app.core.slate_core import identify_entity
 from app.core.slate_core import get_entity_types
 
 with sqlite3.connect(IDENTIFIERS_DB) as conn:
@@ -48,12 +49,14 @@ entity_table.field_names = [
                            ]
 table_rows = []
 for identifier in identifiers_list:
-    identifier_fph = identifier[0]
-    identifier_hrns = fph_to_hrns(identifier_fph)
-    etypes, m = get_entity_types(identifier_fph) # list types registered
+    identifier_fph, identifier_hrns, etypes, m = identify_entity(identifier[0])
+
+#    identifier_fph = identifier[0]
+#    identifier_hrns = fph_to_hrns(identifier_fph)
+#    etypes, m = get_entity_types(identifier_fph) # list types registered
     pnsr = get_private_namespace_root(identifier_fph)
-    if m: # (this should never happen)
-        print(m)
+#    if m: # (this should never happen)
+#        print(m)
 
     parent_fph = get_parent(identifier_fph)
 
@@ -111,6 +114,5 @@ print(
     + "  C = currency\n" \
     + "  A = account (variable)\n" \
     + "  H = account-holder identity (ahid)\n" \
-    + "  P = primary identity (primid)\n" \
-    + "  S = secondary identity (secid)\n"
+    + "  P = primary identity (primid)\n"
 )

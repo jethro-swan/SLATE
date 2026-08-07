@@ -1358,8 +1358,8 @@ def new_namespace(nsname, parent_id, currency_id, steward_id, private=False):
             return "", "", "Parent namespace does not exist"
         namespace_hrns = nsname + NSS + parent_hrns # tentative HRNS
     namespace_fph, namespace_hrns_, etypes, m = identify_entity(namespace_hrns)
-    if m:
-        print("::: m: " + m)
+#    if m:
+#        print("::: m: " + m)
     # The *namespace* identifier must be registered if it does not exist already:
     if not namespace_fph:
         namespace_fph = register_identifier(namespace_hrns)
@@ -1535,7 +1535,7 @@ def build_ancestor_chain(root_id, steward_id, *ns_list):
 
 def new_currency(
         currency_name,
-        parent_fph,
+        parent_id,
         initial_steward_id,
         currency_prefix="",
         currency_suffix="",
@@ -1554,7 +1554,8 @@ def new_currency(
         return "", "", initial_steward_hrns + " has no primid registered"
     # The initial *account* in this *currency* is assigned to its initial
     # steward (which must exist already).
-    parent_fph, parent_hrns, etypes, m = identify_entity(parent_fph)
+    parent_fph, parent_hrns, etypes, m = identify_entity(parent_id)
+#    parent_fph, parent_hrns, etypes, m = identify_entity(parent_fph)
     if not parent_fph:
         return "", "", "Parent namespace does not exist"
     if not re_slatename.match(currency_name):
@@ -1645,6 +1646,47 @@ def new_currency(
         cursor.close()
     return currency_fph, currency_hrns, ""
 
+
+
+
+def create_currencies_from_list(initial_steward_id, currency_list):
+    errors = ""
+    currencies_created = []
+    steward_fph, steward_hrns, etypes, m = identify_entity(initial_steward_id)
+    if m:
+        errors += m + "\n"
+        return [], m
+    if not ("primid" in etypes):
+        errors += "Invalid steward " + initial_steward_id
+        return [], m
+    for currency in currency_list: # list of dictionaries
+        currency_name = currency["name"]
+        parent_id = currency["parent"]
+        steward_id = currency["steward"]
+        prefix = currency["prefix"]
+        suffix = currency["suffix"]
+        default_account_name = currency["default_account_name"]
+        account_type = currency["account_type"]
+        category = currency["category"]
+        units = currency["units"]
+        metrical_equivalence = currency["metrical_equivalence"]
+        dimensions = currency["dimensions"]
+        #
+        currency_fph, currency_hrns, \
+        m = new_currency(
+                currency_name, parent_id, initial_steward_id,
+                prefix, suffix, default_account_name,
+                account_type, category, units, metrical_equivalence, dimensions
+            )
+        if m:
+           errors += m + "\n"
+        elif currency_hrns:
+            currencies_created.append(currency_hrns)
+        else:
+            errors += "Unknown error\n"
+    return currencies_created, errors
+
+
 #==============================================================================
 ## A new account is created in a specified currency:
 
@@ -1660,7 +1702,7 @@ def new_account(
     # The *account* name may take either of two forms:
     # (1) that of a typical identifier (if  the *account* is for a "primid") or
     # (2) a form encoded automatically from the identifiers of an *ahid* and
-    #     a *currency* (if  the *account* is for an "ahid"|*currency*)pairing).
+    #     a *currency* (if  the *account* is for an "ahid"|*currency* pairing).
     account_for_primid = False
     account_for_pairing = False
     if re_slatename.match(account_name):
@@ -3011,6 +3053,38 @@ def new_pairing(
         cursor.close()
 
     return account_fph, account_hrns, ""
+
+
+
+
+def create_pairings_from_list(primid_id, ahid_hrns, currency_list):
+    errors = ""
+    invalid_currencies = ""
+    primid_fph, primid_hrns, etypes, m = identify_entity(primid_id)
+    if not ("primid" in etypes):
+        errors += primid_id + " is not a primid\n"
+        return errors, ""
+    ahid_fph, ahid_hrns, etypes, m = identify_entity(ahid_hrns)
+    if not ("ahid" in etypes):
+        errors += ahid_id + " is not an ahid\n"
+        return errors, ""
+    for currency_id in currency_list:
+        currency_fph, currency_hrns, etypes, m = identify_entity(currency_id)
+        if m:
+            errors += m + "\n"
+            currency_list.remove(currency_id)
+        elif not ("currency" in etypes):
+            invalid_currencies += currency_hrns
+            currency_list.remove(currency_id)
+        else:
+            account_fph, account_hrns, \
+            m = new_pairing(primid_id, ahid_hrns, currency_id)
+            if m:
+                errors += m + "\n"
+                currency_list.remove(currency_id)
+    return errors, invalid_currencies
+
+
 
 #=============================================================================
 
