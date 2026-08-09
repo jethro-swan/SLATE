@@ -44,35 +44,30 @@ for line in sys.stdin:
     suffix = field[4].strip("\"")
     default_account_name = field[5].strip("\"")
 
-    parent_namespace_fph, \
-    parent_namespace_hrns, \
-    etype, \
+    parent_namespace_fph, parent_namespace_hrns, etypes, \
     m = identify_entity(parent_ns)
     if m:
         errors.append(line_no + "ERROR: " + m)
     if parent_namespace_fph == "":
         errors.append(line_no + "ERROR: " + currency_name + " is not an entity")
-    elif etype != "namespace":
+    elif not ("namespace" in etypes):
         errors.append(
             line_no + parent_ns + " is " + etype + " (not a namespace)"
         )
 
-    steward_fph, \
-    steward_hrns, \
-    etype, \
+    steward_fph, steward_hrns, etypes, \
     m = identify_entity(steward1)
     if m:
         errors.append(line_no + "ERROR: " + m)
     if steward_fph == "":
         errors.append(line_no + "ERROR: " + steward1 + " is not an entity")
-    elif etype != "primid":
+    elif not ("primid" in etypes):
         errors.append(
             line_no + "ERROR: " + steward1 + " is " + etype \
             + " (not a primary identity)"
         )
 
-    currency_fph, \
-    currency_hrns, \
+    currency_fph, currency_hrns, \
     m = new_currency(
             currency_name,
             parent_namespace_fph,

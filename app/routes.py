@@ -2899,7 +2899,7 @@ def export_account_csv(account_fph):
         flash(account_hrns + " has no registered account")
         return redirect("/home_ahc")
 
-    print("\n\naccount_hrns = " + account_hrns)
+#    print("\n\naccount_hrns = " + account_hrns)
 
     currency_fph, owner_fph, balance, volume, active, \
     account_type, account_category, account_units, \
@@ -2930,13 +2930,13 @@ def export_account_csv(account_fph):
         flash(currency_id + " is not a currency")
         return redirect("/home_ahc")
 
-    print("currency_hrns = " + currency_hrns)
-    print("dump_account_payments_csv(" + account_fph + ", True)")
+#    print("currency_hrns = " + currency_hrns)
+#    print("dump_account_payments_csv(" + account_fph + ", True)")
     csv_file, m = dump_account_payments_csv(account_fph, True)
     if m:
         flash(m)
         return redirect("/home_ahc")
-    print("csv_file = " + csv_file + "\n")
+#    print("csv_file = " + csv_file + "\n")
 
 
 

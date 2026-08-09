@@ -318,6 +318,8 @@ def create_entities_db(owner_fph):
             + "private INTEGER NOT NULL DEFAULT 0, " \
             + "sandbox INTEGER NOT NULL DEFAULT 0, " \
             + "default_currency_fph TEXT DEFAULT '', " \
+            + "reg_currencies_listed INTEGER NOT NULL DEFAULT 0, " \
+            + "reg_currencies_list BLOB, " \
             + "owner_fph TEXT DEFAULT '', " \
             + "stewards_fph_list BLOB" \
             + ");"
@@ -1647,18 +1649,28 @@ def new_currency(
     return currency_fph, currency_hrns, ""
 
 
-
+# Create a set of *currencies* from a list (of dictionaries). This might be
+# used to create a list of community-/domain-specific *currencies*, e.g. for
+# - real-time evaluation of presentations in a conferennce
+# - wildlife surveys
+# -
+# Such a list can be associated with a registration *namespace* (such as that
+# created for a community or conference) to allow the full set of *currencies*
+# to be paired automatically with the new regsitrant in that *namespace*.
+#
+# (See create_pairings_from_list( ) function.)
 
 def create_currencies_from_list(initial_steward_id, currency_list):
     errors = ""
-    currencies_created = []
+    currencies_created_hrns = []
+    currencies_created_fph = []
     steward_fph, steward_hrns, etypes, m = identify_entity(initial_steward_id)
     if m:
         errors += m + "\n"
-        return [], m
+        return [], [], m
     if not ("primid" in etypes):
         errors += "Invalid steward " + initial_steward_id
-        return [], m
+        return [], [], m
     for currency in currency_list: # list of dictionaries
         currency_name = currency["name"]
         parent_id = currency["parent"]
@@ -1681,10 +1693,38 @@ def create_currencies_from_list(initial_steward_id, currency_list):
         if m:
            errors += m + "\n"
         elif currency_hrns:
-            currencies_created.append(currency_hrns)
+            currencies_created_hrns.append(currency_hrns)
+            currencies_created_fph.append(currency_fph)
         else:
             errors += "Unknown error\n"
-    return currencies_created, errors
+    return currencies_created_fph, currencies_created_hrns, errors
+
+
+def add_reg_currency_list_to_namespace(namespace_id, currency_list_fph):
+    namespace_fph, namespace_hrns, etypes, m = identify_entity(namespace_id)
+    if m:
+        return m
+    if not ("namespace" in etypes):
+        return "No namespace registered for indentifier " + namespace_hrns
+    currency_list_blob = pickle.dumps(currency_list_fph)
+    with sqlite3.connect(ENTITIES_DB) as conn:
+        cursor = conn.cursor()
+        cursor.execute(
+            "UPDATE namespaces " \
+            "SET reg_currencies_list = ?, reg_currencies_listed = ? " \
+            "WHERE entity_fph = ?",
+            (currency_list_blob, 1, namespace_fph)
+        )
+        conn.commit()
+        cursor.close()
+    return ""
+
+
+
+
+
+
+
 
 
 #==============================================================================
@@ -3056,6 +3096,14 @@ def new_pairing(
 
 
 
+# Create a set of pairings between a specified *ahid* and each member of a list
+# of *currencies*.
+#
+# Such a list would typically be found upon registration of a new *primid* from
+# the registration *namespace*.
+#
+#
+# (See create_currencies_from_list( ) function.)
 
 def create_pairings_from_list(primid_id, ahid_hrns, currency_list):
     errors = ""
@@ -3083,6 +3131,10 @@ def create_pairings_from_list(primid_id, ahid_hrns, currency_list):
                 errors += m + "\n"
                 currency_list.remove(currency_id)
     return errors, invalid_currencies
+
+
+
+
 
 
 

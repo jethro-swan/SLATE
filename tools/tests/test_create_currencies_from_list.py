@@ -38,16 +38,21 @@ print(currency_list)
 print()
 
 
-currency_list, \
+currency_list_fph, currency_list_hrns, \
 errors = create_currencies_from_list("bb.cc", currency_list)
 
 print("errors: " + errors)
 
-print("currency_list:")
-print(currency_list)
+print("currency_list_hrns:")
+print(currency_list_hrns)
+print()
+print("currency_list_fph:")
+print(currency_list_fph)
 print()
 
 errors, \
-invalid_currencies = create_pairings_from_list("bb.cc", "bb.cc", currency_list)
+invalid_currencies = create_pairings_from_list(
+    "bb.cc", "bb.cc", currency_list_hrns
+)
 
 print("errors: " + errors)

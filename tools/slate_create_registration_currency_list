@@ -1,0 +1,163 @@
+#!/home/slate/SLATE/venv/bin/python3
+
+from app.core.slate_core import create_currencies_from_list
+#from app.core.slate_core import create_pairings_from_list
+from app.core.slate_core import split_hrns
+from app.core.slate_core import identify_entity
+
+
+
+#==============================================================================
+# Set command line options:
+
+ap = argparse.ArgumentParser(
+    description = "Create a set of currencies from an imported file, which " \
+                + "may be:\n" \
+                + " - a CSV file containing a list of HRNS and currency\n" \
+                + "   properties in a file (one currency name per line), " \
+                + "or\n" \
+                + " - a simple list of names (one per line), in which case " \
+                + "   the parent is specified using option -P"
+)
+ap.add_argument(
+    "-a", "--login-identity", dest = "login_identity", action = "store",
+    help = "Login identity of the agent uploading this file"
+)
+ap.add_argument(
+    "-P", "--parent-namespace", dest = "parent_namespace", action = "store",
+    help = "Parent namespace for the new currencies if not specified in " \
+         + "the imported file. Ignored if options -C or -H are used."
+)
+ap.add_argument(
+    "-C", "--csv-list", dest = "csv_list_imported", action = "store_true",
+    help = "Import a list of currency HRNS and specification (one per line)."
+)
+ap.add_argument(
+    "-H", "--hrns-list", dest = "hrns_list_imported", action = "store_true",
+    help = "Import a list of currency HRNS (one per line). In this case the " \
+         + "properties are specified using other options and are common to " \
+         + "all currencies listed."
+)
+ap.add_argument(
+    "-N", "--names-list", dest = "names_list_imported", action = "store_true",
+    help = "Import a list of names only (one per line). In this case the " \
+         + "properties are specified using other options and are common to " \
+         + "all currencies listed."
+)
+ap.add_argument(
+    "-t", "--type", dest = "currency_type", action = "store",
+    default = "scalar",
+    help = "Type common to all currencies listed in import file."
+)
+ap.add_argument(
+    "-c", "--category", dest = "currency_category", action = "store",
+    deafult = "money",
+    help = "Category common to all currencies listed in import file."
+)
+ap.add_argument(
+    "-m", "--metrical-equivalence", dest = "currency_metrical_equivalence",
+    action = "store", default = "lt",
+    help = "Category common to all currencies listed in import file."
+)
+ap.add_argument(
+    "-p", "--prefix", dest = "currency_prefix", action = "store", default = "",
+    help = "Prefix common to all currencies listed in import file."
+)
+ap.add_argument(
+    "-s", "--suffix", dest = "currency_suffix", action = "store", default = "",
+    help = "Suffix common to all currencies listed in import file."
+)
+ap.add_argument(
+    "-r", "--display-report", help = "Display report of entities created",
+    dest = "show_report", action = "store_true"
+)
+args = ap.parse_args()
+
+login_identity = args.login_identity
+parent_namespace = args.parent_namespace
+currency_type = args.currency_type
+currency_category = args.currency_category
+currency_metrical_equivalence = args.currency_metrical_equivalence
+currency_prefix = args.currency_prefix
+currency_suffix = args.currency_suffix
+
+# Boolean values:
+csv_list_imported = args.csv_list_imported
+hrns_list_imported = args.hrns_list_imported
+names_list_imported = args.names_list_imported
+show_report = args.show_report
+
+
+
+
+
+
+
+tfpath = SLATE_TEMP + "/" + random_filename()
+
+#-------------------------------------------------------------------------------
+
+
+
+
+errors = []
+report = []
+
+primid_fph, primid_hrns, etypes, m = identify_entity(args.login_identity)
+
+field_separator = args.field_separator
+if not(field_separator in ["comma", "colon", "semicolon", "tab"]):
+    field_separator = "comma"
+
+if field_separator == "colon":
+    SC = ":"
+elif field_separator == "semicolon":
+    SC = ";"
+elif field_separator == "tab":
+    SC = "\t"
+else:
+    SC = ","
+
+with open(tfpath, "w") as temp_file:
+    for row in sys.stdin:
+        temp_file.write(row)
+
+#report, errors = import_csv_dataset(tfpath, primid_fph)
+
+os.unlink(tfpath)
+
+if args.show_report:
+    for line in report:
+        print(line)
+
+for line in errors:
+    print(line)
+
+
+with open(tfpath, "r") as temp_file:
+   currency_list = temp_file.readlines()
+
+for currency_specification in currency_list:
+    crow = currency_specification.split(SC)
+    currency_hrns = crow[0]
+    name, parent_hrns = split_hrns(currency_hrns)
+    currency["name"] = name
+    currency["parent"] = parent_hrns
+    currency["steward"] = primid_fph
+    currency["prefix"] = crow[1]
+    currency["suffix"] = crow[2]
+    currency["default_account_name"] = name
+    currency["account_type"] = crow[3]
+    currency["category"] = crow[4]
+    currency["units"] = crow[5]
+    currency["metrical_equivalence"] = crow[6]
+    currency["dimensions"] = crow[7]
+    currency_list.append(currency)
+
+print("\ncurrency_list:")
+print(currency_list)
+print()
+
+
+currency_list, \
+errors = create_currencies_from_list(primid_fph, currency_list)

@@ -15,6 +15,7 @@
 #from app.core.slate_core import is_ancestor
 #from app.core.slate_core import _is_ancestor
 
+from prettytable import PrettyTable
 
 
 from app.core.exports import list_currency_payments
@@ -28,8 +29,14 @@ from app.core.exports import dump_account_payments
 from app.core.exports import dump_currency_payments
 
 op_path = "/tmp/SLATE_test_exports/"
-#test_account_fph = "05015e6c4c8cb18c3fff3a18071590b7"
-test_account_fph = "0c94e22da2add5b48acf5b3dfd3c2edb"
+
+# _ah3^bb^cc_&_hrs^cc_.bb.cc
+#test_account_fph = "70a6111337e4bf884c132e49df7cf880"
+# _ah2^bb^cc_&_hrs^cc_.bb.cc
+test_account_fph = "069ee800a1fa2d931a8dd146dd045ad4"
+
+
+
 export_path = "/home/slate/SLATE/app/export/"
 
 def test_list_currency_payments():
@@ -49,8 +56,23 @@ def test_list_account_payments():
     if m:
         print(m)
     else:
-        for payments_row in payments_list:
-            print(payments_row)
+        for row in payments_list:
+            print(len(row))
+        print()
+
+        ptable = PrettyTable()
+        ptable.field_names = [
+            "timestamp",
+            "payment ID",
+            "credit",
+            "debit",
+            "other account holder",
+            "balance",
+            "annotation"
+        ]
+        table_rows = payments_list
+        ptable.add_rows(table_rows[0:])
+        print(ptable)
 
 def test_dump_currency_payments_csv():
     print("\n"*4 + "-"*120)

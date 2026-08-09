@@ -167,16 +167,15 @@ def list_account_payments(account_id):
         annotation = p[7]
         payment_row.append(timestamp)
         payment_row.append(payment_id)
-        if payee_fph == owner_fph:
+        if payee_fph == owner_fph: # credit
             payment_row.append(amount)          # amount received
-            payment_row.append("")
-            payment_row.append(payer_hrns)      # payee HRNS
+            payment_row.append("")              # (no debit)
+            payment_row.append(payer_hrns)      # received from
             payment_row.append(payee_balance)   # account balance
-        elif payer_fph == owner_fph:
-            payment_row.append("")
+        elif payer_fph == owner_fph: # debit
+            payment_row.append("")              # (no payment)
             payment_row.append(amount)          # amount paid
-            payment_row.append(payer_hrns)      # payer HRNS
-            payment_row.append(payee_hrns)      # payer HRNS
+            payment_row.append(payee_hrns)      # paid to
             payment_row.append(payer_balance)   # balance account balance
         else:
             payment_row.append("")
