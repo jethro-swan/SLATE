@@ -439,7 +439,7 @@ def dump_currency_payments_table(currency_id):
             line_no += 1
             errors += str(line_no).zfill(4) + " : " + row
             continue
-        print(row)
+#        print(row)
 #        for i in range(5):
 #            print(row[i])
         table_row = []

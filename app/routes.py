@@ -2920,7 +2920,7 @@ def export_account_csv(account_fph):
         flash("None of your identities owns this account")
         return redirect("/home_ahc")
 
-    print("owner_hrns = " + owner_hrns)
+#    print("owner_hrns = " + owner_hrns)
 
     currency_fph, currency_hrns, etypes, m = identify_entity(currency_fph)
     if m:
