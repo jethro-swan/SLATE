@@ -28,13 +28,28 @@ from app.core.exports import dump_currency_payments_html
 from app.core.exports import dump_account_payments
 from app.core.exports import dump_currency_payments
 
-op_path = "/tmp/SLATE_test_exports/"
+from app.core.constants import FILE_EXPORTS
+
+
+#op_path = "/tmp/SLATE_test_exports/"
+op_path = "/home/slate/SLATE/app/export/"
+
 
 # _ah3^bb^cc_&_hrs^cc_.bb.cc
 #test_account_fph = "70a6111337e4bf884c132e49df7cf880"
 # _ah2^bb^cc_&_hrs^cc_.bb.cc
+test_account_id = "_ah2^bb^cc_&_hrs^cc_.bb.cc"
 test_account_fph = "069ee800a1fa2d931a8dd146dd045ad4"
 
+# kwh.cc
+#test_currency_id = "kwh.cc"
+#test_currency_fph = "e5480077cede4cb401c282adba2c9c46"
+# hrs.cc
+test_currency_id = "hrs.cc"
+#test_currency_fph = "9c53496c3dd5665e8171d4ed3c805a41"
+# m.hrs.cc
+#test_currency_id = "m.hrs.cc"
+#test_currency_fph = "1b3ac05ff4508ce31411e13836121673"
 
 
 export_path = "/home/slate/SLATE/app/export/"
@@ -42,24 +57,33 @@ export_path = "/home/slate/SLATE/app/export/"
 def test_list_currency_payments():
     print("\n"*5 + "-"*120)
     print("Testing list_currency_payments( )\n")
-    payments_list, m = list_currency_payments("hrs.cc")
+    payments_list, m = list_currency_payments(test_currency_id)
     if m:
         print(m)
     else:
-        for payments_row in payments_list:
-            print(payments_row)
+        ptable = PrettyTable()
+        ptable.field_names = [
+            "currency",
+            "payer",
+            "payee",
+            "amount",
+            "annotation",
+            "timestammp",
+            "payment ID",
+            "payer balance",
+            "payee balance"
+        ]
+        table_rows = payments_list
+        ptable.add_rows(table_rows[0:])
+        print(ptable)
 
 def test_list_account_payments():
     print("\n"*4 + "-"*120)
     print("Testing list_account_payments( )\n")
-    payments_list, m = list_account_payments(test_account_fph)
+    payments_list, m = list_account_payments(test_account_id)
     if m:
         print(m)
     else:
-        for row in payments_list:
-            print(len(row))
-        print()
-
         ptable = PrettyTable()
         ptable.field_names = [
             "timestamp",
@@ -77,12 +101,12 @@ def test_list_account_payments():
 def test_dump_currency_payments_csv():
     print("\n"*4 + "-"*120)
     print("Testing dump_currency_payments_csv( )\n")
-    csv_filename, m = dump_currency_payments_csv("hrs.cc", True)
+    csv_filename, m = dump_currency_payments_csv(test_currency_id, True)
     if m:
         print(m)
     else:
         print("csv_filename = " + csv_filename + "\n")
-        csv_filepath = "/home/slate/SLATE/app/export/" + csv_filename
+        csv_filepath = op_path + csv_filename
         with open(csv_filepath, "r") as csvf:
             csv_contents = csvf.readlines()
         for csv_row in csv_contents:
@@ -91,8 +115,8 @@ def test_dump_currency_payments_csv():
 def test_dump_account_payments_csv():
     print("\n"*4 + "-"*120)
     print("Testing dump_account_payments_csv( )\n")
-    csv_filename, m = dump_account_payments_csv(test_account_fph, False)
-    csv_filepath = export_path + csv_filename
+    csv_filename, m = dump_account_payments_csv(test_account_id, False)
+    csv_filepath = op_path + csv_filename
     if m:
         print(m)
     else:
@@ -105,13 +129,11 @@ def test_dump_account_payments_csv():
 def test_dump_currency_payments_html():
     print("\n"*4 + "-"*120)
     print("Testing dump_currency_payments_html( )\n")
-    out_path = op_path + "dump_currency_payments_table.html"
-    html_str = dump_currency_payments_html("hrs.cc", out_path)
-
-    #print("\n" + "-"*120)
-    #print("Testing dump_account_payments( )")
-    #all_payments, m = dump_account_payments(account_fph)
-    #print(all_payments)
+    html_str, m = dump_currency_payments_html(test_currency_id)
+    if m:
+        print(m)
+    else:
+        print(html_str)
 
 def test_dump_currency_payments():
     print("\n"*4 + "-"*120)
@@ -123,7 +145,7 @@ def test_dump_currency_payments_table():
     print("\n"*4 + "-"*120)
     print("Testing dump_currency_payments_table( )\n")
     out_path = op_path + "dump_currency_payments_table"
-    payments_table = dump_currency_payments_table("hrs.cc")
+    payments_table = dump_currency_payments_table(test_currency_id)
     print(payments_table)
 
     #print("\n" + "-"*120)
@@ -132,13 +154,13 @@ def test_dump_currency_payments_table():
     #print(payments_table)
 
 
-#test_list_currency_payments()
+test_list_currency_payments()
 test_list_account_payments()
-#test_dump_currency_payments_csv()
+test_dump_currency_payments_csv()
 test_dump_account_payments_csv()
 #test_dump_currency_payments()
-#test_dump_currency_payments_table()
-#test_dump_currency_payments_html()
+test_dump_currency_payments_table()
+test_dump_currency_payments_html()
 
 
 print("\n" + "-"*120)

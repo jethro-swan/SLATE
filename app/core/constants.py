@@ -11,7 +11,7 @@ SLATE_TEMP          = "/var/slate/active/temp"
 IMPORT_QUEUE        = "/var/slate/active/temp/import_queue"
 IMPORTING           = "/var/slate/active/temp/importing"
 GRAPHS              = "/home/slate/SLATE/app/static/graphs/"
-
+FILE_EXPORTS        = "/home/slate/SLATE/app/export/"
 
 SLATE_MAPS          = SLATE_DATA + "/maps/"      #
 QR_CODES            = "/home/slate/SLATE/app/static/qr/" # QR codes generated
