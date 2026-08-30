@@ -473,7 +473,9 @@ def login():
     form = LoginForm()
     if form.validate_on_submit():
 
-        agent_id = form.identity.data # HRNS or FPH
+#        agent_id = form.identity.data # HRNS or FPH
+        agent_id = form.identity.data.lower() # HRNS or FPH
+        # See app/core/slate_core.py : Note 1
 
         if (agent_id == "") and (email == ""): # neither provided
             flash("Either an identity or an email address must be provided")
@@ -484,7 +486,9 @@ def login():
 
         if agent_id:
             identity_fph, identity_hrns, etypes, \
-            m = identify_entity(form.identity.data)
+            m = identify_entity(agent_id)
+#            identity_fph, identity_hrns, etypes, \
+#            m = identify_entity(form.identity.data)
             if m:
                 flash(m)
                 return redirect(url_for("login"))
@@ -1019,11 +1023,10 @@ def home_ahc(
     currencies_list.sort()
 
     # TESTSTUFF
-    for row in p_rows:
-        if p_row["primid_currency_steward"]:
-            print(p_row["currency_hrns"])
-#    print("p_rows = ", end="")
-#    print(p_rows)
+#    for row in p_rows:
+#        if p_row["primid_currency_steward"]:
+#            print(">>> " + p_row["currency_hrns"])
+
 
 
     # In order to determine the concestor of all entities within the home page
@@ -1067,7 +1070,9 @@ def home_ahc(
 
     form = SpecifyPayeeAccountHolderForm()
     if form.validate_on_submit():
-        payee_id = form.payee_ahid.data.strip(NSS)
+#        payee_id = form.payee_ahid.data.strip(NSS)
+        payee_id = form.payee_ahid.data.strip(NSS).lower()
+        # See app/core/slate_core.py : note 1 (2026-08-30)
         # If the payee *ahid* is identified by FPH, validation is the only
         # requirement:
         if re_fph.match(payee_id): # payee specified by FPH

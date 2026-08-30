@@ -34,7 +34,11 @@ keys_sorted.sort()
 for k in keys_sorted:
     table_row = []
     table_row.append(k)
-    table_row.append(str(get_config(k)))
+    config_value = str(get_config(k))
+    if config_value in ["False", "True"]:
+        config_value = config_value.lower()
+#    table_row.append(str(get_config(k)))
+    table_row.append(config_value)
     table_rows.append(table_row)
 config_table.add_rows(table_rows[0:])
 print(config_table)

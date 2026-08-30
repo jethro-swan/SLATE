@@ -39,11 +39,27 @@ from app.core.unix_functions import fcopy
 
 from app.core.cctld_list import *
 
-#from app.core.logging import log_event
+#==============================================================================
+# TD-DO NOTES:
+#
+# Note 1:   The use of .lower() to force all identifier names to lower case is
+#           an unsatisfactory temporary measure intended to accommodate those
+#           whose devices support or encourage case-insensitive sloppiness. A
+#           more complete solution will have to be implemented to accommodate
+#           some non-Latin character sets.
+#
+#           It may also be desirable to make this behaviour an optional default
+#           assigned per *namespace* by its stewards.
+#
+#
+#==============================================================================
 
 
 
-#------------------------------------------------------------------------------
+
+
+
+#==============================================================================
 # Log an event:
 #
 def log_event(category, summary, details):
@@ -96,20 +112,20 @@ def check_auth_hash(pwd, pwd_hash):
 # (1) For "normal" passwords:
 
 #exclusion_list = "\"\'"
-nonalnum_characters = "!#$%&()*+,-./:;<=>?@[\]^_`{|}~"
+nonalnum_characters = "!#$%&()*+,-./:;<=>?@[]^_`{|}~"
 
 def list_password_characters():
     return "The password may contain the following characters:\n" \
            + "   upper case letters\n" \
            + "   lower case letters\n" \
            + "   numbers\n" \
-           + "   !#$%&()*+,-./:;<=>?@\[\]^_`{|}~\n" \
+           + "   !#$%&()*+,-./:;<=>?@[]^_`{|}~\n" \
            + "and must contain at least one of each type."  \
            + "It must be at least 16 characters in length."
 
 # Regular expression to validate such a password:
 pwd_regexp = r"((?=.*\d)(?=.*[a-z])(?=.*[A-Z])" \
-           + r"(?=.*[!#$%&()*+,-./:;<=>?@[\]^_`{|}~]).{16,})"
+           + r"(?=.*[!#$%&()*+,-./:;<=>?@[]^_`{|}~]).{16,})"
 re_pwd = re.compile(pwd_regexp)
 
 def password_valid(password):
@@ -126,7 +142,7 @@ def generate_password(min_length):
     n_alphac = min_length - n_pchars - n_digits
     valid_chars = string.ascii_letters \
                 + string.digits \
-                + "!#$%&()*+,-./:;<=>?@\[\]^_`{|}~"
+                + "!#$%&()*+,-./:;<=>?@[]^_`{|}~"
     pwd = []
     for i in range(pwd_length):
         pwd.append(random.choice(valid_chars))
@@ -944,7 +960,8 @@ def deregister_entity_type(identifier_fph, entity_type):
 def identify_entity(entity_id): # HRNS or FPH
     if (entity_id is None) or (not isinstance(entity_id, str)):
         return "", "", [], "Invalid identifier"
-    entity_id = entity_id.strip()
+#    entity_id = entity_id.strip()
+    entity_id = entity_id.strip().lower() # See Note 1
     if entity_id == SUBSTRATE_FPH: # a unique exception
         return entity_id, "", list("namespace",), ""
     if re_fph.match(entity_id): # this is an FPH string?
@@ -1242,7 +1259,7 @@ def new_primid(
     ):
     errors = ""
     # The *primid* cannot be created with an invalid username:
-    username = username.lower()
+    username = username.lower() # See note 1 (2026-08-30)
     if not re_slatename.match(username):
         errors += "Invalid name provided\n"
         return "", "", "", errors
@@ -1411,7 +1428,7 @@ def new_ahid(
         primid_id,
         robot=False     # If newly created, the *ahid* is made a robot.
     ):
-    ahidname = ahidname.lower()
+    ahidname = ahidname.lower() # See note 1 (2026-08-30)
     if not re_slatename.match(ahidname):
         return "", "", "Invalid name provided"
     primid_fph, primid_hrns, etypes, m = identify_entity(primid_id)
@@ -1518,6 +1535,7 @@ def new_namespace(nsname, parent_id, currency_id, steward_id, private=False):
     if not ("currency" in etypes):
         return "", "", currency_id + " is not a currency"
 
+    nsname = nsname.lower() # See note 1 (2026-08-30)
     if not re_slatename.match(nsname):
         return "", "", nsname + " is not a valid name"
     # The substrate is a special case of parent *namespace* (nameless). No
@@ -1591,6 +1609,7 @@ def new_namespace_(
         steward_id,
         private=False
     ):
+    nsname = nsname.lower() # See note 1 (2026-08-30)
     if not re_slatename.match(nsname):
         return "", "", nsname + " is not a valid name"
     # The substrate is a special case of parent *namespace* (nameless). No
@@ -1734,6 +1753,7 @@ def new_currency(
 #    parent_fph, parent_hrns, etypes, m = identify_entity(parent_fph)
     if not parent_fph:
         return "", "", "Parent namespace does not exist"
+    currency_name = currency_name.lower() # See note 1 (2026-08-30)
     if not re_slatename.match(currency_name):
         return "", "", currency_name + " is not a valid name"
     # If no other name is specified, new *accounts* in this *currency* are
@@ -1919,6 +1939,7 @@ def new_account(
     #     a *currency* (if  the *account* is for an "ahid"|*currency* pairing).
     account_for_primid = False
     account_for_pairing = False
+    account_name = account_name.lower() # See note 1 (2026-08-30)
     if re_slatename.match(account_name):
         account_for_primid = True
     elif re_pan1.match(account_name):
@@ -3118,6 +3139,7 @@ def _is_ancestor(entity_id, ancestor_id):
         return False
 
 def is_in_private_namespace(entity_hrns, pn_id):
+    entity_hrns = entity_hrns.lower() # See note 1 (2026-08-30)
     pn_fph, pn_hrns, etype, m = identify_entity(pn_id)
     return is_ancestor(entity_hrns, pn_hrns) or (entity_hrns == pn_hrns)
 
@@ -3179,6 +3201,7 @@ def new_pairing(
         print(m)
     if not ("ahid" in r_ahid_etypes):
         # A new *ahid* is created:
+        ahid_hrns = ahid_hrns.lower() # See note 1 (2026-08-30)
         ahid_name, parent_hrns = split_hrns(ahid_hrns)
         ahid_fph, ahid_hrns, m = new_ahid(ahid_name, parent_hrns, primid_fph)
         if not ("namespace" in r_ahid_etypes):
