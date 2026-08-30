@@ -5,8 +5,8 @@ import sys
 #from app.core.list_namespaces import build_namepace_list
 from app.core.fph_hrns_maps import hrns_to_fph
 #from app.core.auth import pin_random_ord, pin_prompt_message
-from app.core.auth import pin_subset_prompt
-
+#from app.core.auth import pin_subset_prompt
+from app.core.slate_core import pin_subset_prompt
 
 # Flask components: -----------------------------------------------------------
 

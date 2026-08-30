@@ -72,6 +72,10 @@ from app.core.slate_core import list_ancestors_fph, most_recent_clade
 from app.core.slate_core import prune_payment_pair_hrns
 from app.core.slate_core import get_list_concestor
 from app.core.slate_core import hrns_strip_concestor
+# 2026-08-30
+from app.core.slate_core import pin_subset_prompt
+from app.core.slate_core import check_auth_hash
+from app.core.slate_core import authenticate_pin
 
 #####################
 
@@ -92,6 +96,7 @@ from app.core.payments import ah_payment
 #from app.core.slate_core import import_csv_dataset
 from app.core.slate_core import is_ancestor, is_in_private_namespace
 from app.core.slate_core import get_ahid_primid
+from app.core.slate_core import log_event
 
 from app.core.csv_import_dataset import import_csv_dataset
 
@@ -110,11 +115,11 @@ from app.core.slate_login import get_auth_data
 from app.core.slate_login import register_authenticated_login
 
 ##from app.core.auth import pin_random_ord, pin_prompt_message
-from app.core.auth import pin_subset_prompt
-from app.core.auth import check_auth_hash
-from app.core.auth import authenticate_pin
+#from app.core.auth import pin_subset_prompt
+#from app.core.auth import check_auth_hash
+#from app.core.auth import authenticate_pin
 
-from app.core.logging import log_event
+#from app.core.logging import log_event
 
 from app.core.payments import payment
 
@@ -913,6 +918,15 @@ def home_ahc(
     nstewardships_list, m = list_namespace_stewardships(primid_fph)
     cstewardships_list, m = list_currency_stewardships(primid_fph)
 
+    # TESTSTUFF
+    print("\nnstewardships_list:")
+    for fph in nstewardships_list:
+        print(fph + " : " + fph_to_hrns(fph))
+    #
+    print("\ncstewardships_list:")
+    for fph in cstewardships_list:
+        print(fph + " : " + fph_to_hrns(fph))
+
     pmap_t, m = retrieve_pmap(primid_fph)
 
     # List all *ahid*:
@@ -1004,11 +1018,15 @@ def home_ahc(
             currencies_list.append(currency)
     currencies_list.sort()
 
+    # TESTSTUFF
+    for row in p_rows:
+        if p_row["primid_currency_steward"]:
+            print(p_row["currency_hrns"])
 #    print("p_rows = ", end="")
 #    print(p_rows)
 
 
-    # In order to dertermine the concestor of all entities within the home page
+    # In order to determine the concestor of all entities within the home page
     # table, another list is needed:
     all_entities_hrns = currencies_list # starting with the *currencies* ...
     ahid_lists_dict = {}

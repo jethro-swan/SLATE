@@ -16,7 +16,8 @@ from app.core.slate_login import register_authenticated_login
 from app.core.slate_login import deregister_authenticated_login
 from app.core.slate_login import check_authenticated_login
 from app.core.slate_login import get_auth_data
-from app.core.auth import check_auth_hash
+#from app.core.auth import check_auth_hash
+from app.core.slate_core import check_auth_hash
 
 from app import app
 

@@ -18,7 +18,7 @@ from app.core.fph_hrns_maps import hrns_to_fph, fph_to_hrns, create_maps
 from app.core.dbm_functions import dbm_store, dbm_fetch, dbm_delete, dbm_keys
 from app.core.dbm_functions import dbm_create_map
 
-from app.core.auth import auth_hash
+#from app.core.auth import auth_hash
 
 from app.core.regexp_list import *
 
@@ -30,6 +30,7 @@ from app.core.slate_core import list_currencies_in_common_by_hrns
 from app.core.slate_core import identify_entity
 from app.core.slate_core import get_hub_mode
 from app.core.slate_core import get_account_properties
+from app.core.slate_core import auth_hash
 
 #from app.core.display import integer_to_money_format
 from app.core.display import integer_to_money_s_format
@@ -39,7 +40,7 @@ from app import app
 #==============================================================================
 # Create a list of payments made in the specified *currency*:
 
-def list_currency_payments(currency_id):
+def list_currency_payments_(currency_id):
 
     currency_fph, currency_hrns, etypes, m = identify_entity(currency_id)
     if m:
@@ -100,9 +101,117 @@ def list_currency_payments(currency_id):
         payments_list.append(payment_row)
     return payments_list, ""
 
+#==============================================================================
+# Return a list of payments made in the specified *currency*:
+
+def list_currency_payments(currency_id):
+
+    print("EXECUTING list_currency_payments(currency_id)")
+
+    currency_fph, currency_hrns, etypes, m = identify_entity(currency_id)
+    if m:
+        return [], m
+    if not currency_fph:
+        [], currency_id + "is not a registered identifier"
+    if not ("currency" in etypes):
+        return [], currency_hrns + " has no registered currency"
+
+    # Hub operational mode (read from environment variable HUB_MODE)
+    hub_mode = get_hub_mode()
+
+    with sqlite3.connect(PAYMENTS_DB) as conn:
+        cursor = conn.cursor()
+        # Read transactions for specified currency:
+        cursor.execute(
+            "SELECT " \
+            + "timestamp, " \
+            + "payment_id, " \
+            + "payer_fph, " \
+            + "payee_fph, " \
+            + "amount, " \
+            + "payer_balance, " \
+            + "payee_balance, " \
+            + "annotation " \
+            + "FROM payments WHERE currency_fph = ?",
+            (currency_fph,)
+        )
+        all_payments = cursor.fetchall()
+        cursor.close()
+    if all_payments is None:
+        print("aaargghh! "*10)
+        return [], ""
+    payments_list = []
+    print("all_payments:")
+    print(all_payments)
+    for payment in all_payments:
+        print("::: ", end="")
+        print(payment)
+        payment_row = []
+        p = list(payment)
+        timestamp = p[0]
+        payment_id = str(p[1])
+        payer_hrns = fph_to_hrns(p[2])          # *account* or *ahid*
+        payee_hrns = fph_to_hrns(p[3])          # *account* or *ahid*
+        amount = integer_to_money_s_format(p[4])
+        payer_balance = integer_to_money_s_format(p[5])
+        payee_balance = integer_to_money_s_format(p[6])
+        annotation = p[7]
+        if hub_mode == "slate":
+            payment_row.append(currency_hrns)   # currency HRNS
+        payment_row.append(payer_hrns)          # payer *ahid* HRNS
+        payment_row.append(payee_hrns)          # payee  *ahid* HRNS
+        payment_row.append(amount)              # amount paid
+        payment_row.append(annotation)          # annotation
+        payment_row.append(timestamp)           # timestamp
+        #payment_row.append(str(p[1]).zfill(8)) # payment number
+        payment_row.append(payment_id)          # payment number
+        payment_row.append(payer_balance)       # payer balance
+        payment_row.append(payee_balance)       # payee balance
+        payments_list.append(payment_row)
+
+    print()
+    print("*"*120)
+    print(payments_list)
+    print("*"*120)
+    print()
+
+    return payments_list, ""
 
 #==============================================================================
-# Create a list of payments made to or from the specified *account*:
+# Return a list of dictionaries to display all payments made with a specified
+# *currency*:
+
+def dump_currency_payments(currency_id):
+
+    currency_fph, currency_hrns, etypes, m = identify_entity(currency_id)
+
+    with sqlite3.connect(PAYMENTS_DB) as conn:
+        cursor = conn.cursor()
+
+        # Read transactions for specified currency:
+        cursor.execute(
+            "SELECT payment_id, payer_fph, payee_fph, amount, annotation " \
+            + "FROM payments WHERE currency_fph = ?",
+            (currency_fph,)
+        )
+        payments = cursor.fetchall()
+        cursor.close()
+        if payments is None:
+            return [], "No payments yet in currency " + currency_hrns
+        all_payments = []
+        for payment in payments:
+            p = {}
+            p["payment_id"] = results[0]
+            p["payer_fph"] = results[1]
+            p["payee_fph"] = results[2]
+            p["amount"] = results[3]
+            p["annotation"] = results[4]
+            all_payments.append(p)
+        return all_payments, ""     # Returned as a list of dictionaries for
+                                    # convenience of processin by Jinja2.
+
+#==============================================================================
+# Return a list of payments made to or from the specified *account*:
 
 def list_account_payments(account_id):
     account_fph, account_hrns, etypes, m = identify_entity(account_id)
@@ -189,8 +298,8 @@ def list_account_payments(account_id):
     return payments_list, ""
 
 #==============================================================================
-# Export a CSV listing of all payments made in a specified *currency*
-# (Complete and working)
+# Export a CSV file listing of all payments made in a specified *currency*,
+# returning the path to that file:
 
 def dump_currency_payments_csv(currency_id, show_header_row = True):
 
@@ -244,7 +353,8 @@ def dump_currency_payments_csv(currency_id, show_header_row = True):
     return csv_filename, ""
 
 #==============================================================================
-# Export a CSV listing of all payments made to or from a specified *account*
+# Export a CSV file listing of all payments made to or from a specified
+# *account*, returning the path to that file:
 
 def dump_account_payments_csv(account_id, show_header_row = False):
 
@@ -299,7 +409,9 @@ def dump_account_payments_csv(account_id, show_header_row = False):
 
     return csv_filename, ""
 
-#------------------------------------------------------------------------------
+#==============================================================================
+# Export an HTML listing of all payments made to or from a specified *account*:
+
 def dump_currency_payments_html(currency_id):
     payment_rows, m = list_currency_payments(currency_id)
     if m:
@@ -346,7 +458,7 @@ def dump_currency_payments_html(currency_id):
     return html_str, ""
 
 #==============================================================================
-#
+# List all payments made to or from a specified *account* as a list:
 
 def dump_account_payments(account_fph):
 
@@ -387,7 +499,7 @@ def dump_account_payments(account_fph):
                                     # convenience of processin by Jinja2.
 
 #==============================================================================
-#
+# List all payments made within a specified *currency*
 
 def dump_currency_payments(currency_id):
 
@@ -422,7 +534,8 @@ def dump_currency_payments(currency_id):
                                     # convenience of processin by Jinja2.
 
 #==============================================================================
-##
+# List all payments made within a specified *currency* as a string containing
+# a table:
 
 def dump_currency_payments_table(currency_id):
 
@@ -442,16 +555,8 @@ def dump_currency_payments_table(currency_id):
             "payer balance",
             "payee balance"
         ]
-        table_rows = payments_list
+        table_rows = payments_list[0]
         ptable.add_rows(table_rows[0:])
         print(ptable)
-
-
-#------------------------------------------------------------------------------
-#def dump_currency_payments(currency_fph):
-
-#    payments_table = dump_currency_payments_table(currency_fph)
-
-#    return payments_table
 
 #==============================================================================

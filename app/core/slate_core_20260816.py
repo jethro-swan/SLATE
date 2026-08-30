@@ -4,9 +4,6 @@ import os
 import pickle
 from pathlib import Path
 from string import ascii_lowercase
-import datetime
-import os
-from app.core.constants import SLATE_LOGS, LOG_DATETIME_FMT
 
 from app.core.constants import DB_DIR, DB_BKP_DIR
 from app.core.constants import IDENTIFIERS_DB, ENTITIES_DB, PAYMENTS_DB
@@ -31,7 +28,7 @@ from app.core.fph_hrns_maps import delete_fph_from_map
 from app.core.dbm_functions import dbm_store, dbm_fetch, dbm_delete, dbm_keys
 from app.core.dbm_functions import dbm_create_map
 
-#from app.core.auth import auth_hash, check_auth_hash, generate_access_token
+from app.core.auth import auth_hash, check_auth_hash, generate_access_token
 
 from app.core.regexp_list import *
 
@@ -39,178 +36,9 @@ from app.core.unix_functions import fcopy
 
 from app.core.cctld_list import *
 
-#from app.core.logging import log_event
-
-
+from app.core.logging import log_event
 
 #------------------------------------------------------------------------------
-# Log an event:
-#
-def log_event(category, summary, details):
-    if category not in set(["access",
-                            "activity",
-                            "auth",
-                            "debug",
-                            "error",
-                            "tests"
-                           ]):
-        return False
-    timestamp = datetime.datetime.now().strftime(LOG_DATETIME_FMT)
-    with open(SLATE_LOGS + category + ".log", "a") as log_file:
-        log_file.write(timestamp + "   " + summary + " \t")
-        log_file.write(details + "\n")
-    return True
-
-#
-def log_self_repair(entity_id, message):
-    entity_fph, entity_hrns, etypes, m = identify_entity(entity_id)
-    log_event(
-        "error",
-        message,
-        entity_hrns + " : " +  message
-    )
-
-#==============================================================================
-# Used to authenticate both passwords and recovery details (email addresses or
-# phone numbers).
-
-def auth_hash(password):
-    hash_bytes = bcrypt.hashpw(password.encode("utf-8"), bcrypt.gensalt())
-    return hash_bytes.decode("utf-8")
-
-def check_auth_hash(pwd, pwd_hash):
-    try:
-        pw_auth = bcrypt.checkpw(pwd.encode("utf-8"), pwd_hash.encode("utf-8"))
-    except Exception as exception:
-        log_event("errors", "auth_hash( )", exception)
-#        print(exception)
-        return False
-    else:
-        return pw_auth
-
-#def authenticate_cli_access(fph, auth_code):
-#    properties = get_properties(fph)
-#    pwd_hash_decoded = properties["auth"]["cli_password_hash"].decode("utf-8")
-#    return check_auth_hash(auth_code, pwd_hash_decoded)
-
-# (1) For "normal" passwords:
-
-#exclusion_list = "\"\'"
-nonalnum_characters = "!#$%&()*+,-./:;<=>?@[\]^_`{|}~"
-
-def list_password_characters():
-    return "The password may contain the following characters:\n" \
-           + "   upper case letters\n" \
-           + "   lower case letters\n" \
-           + "   numbers\n" \
-           + "   !#$%&()*+,-./:;<=>?@\[\]^_`{|}~\n" \
-           + "and must contain at least one of each type."  \
-           + "It must be at least 16 characters in length."
-
-# Regular expression to validate such a password:
-pwd_regexp = r"((?=.*\d)(?=.*[a-z])(?=.*[A-Z])" \
-           + r"(?=.*[!#$%&()*+,-./:;<=>?@[\]^_`{|}~]).{16,})"
-re_pwd = re.compile(pwd_regexp)
-
-def password_valid(password):
-    return re_pwd.match(password)
-
-# Generate password of at least 16 characters:
-def generate_password(min_length):
-    if min_length < 16:
-        min_length = 16
-    max_length = 32
-    pwd_length = random.randint(min_length, max_length)
-    n_pchars = random.randint(2, 5)
-    n_digits = random.randint(2, 5)
-    n_alphac = min_length - n_pchars - n_digits
-    valid_chars = string.ascii_letters \
-                + string.digits \
-                + "!#$%&()*+,-./:;<=>?@\[\]^_`{|}~"
-    pwd = []
-    for i in range(pwd_length):
-        pwd.append(random.choice(valid_chars))
-    return "".join(pwd)
-
-
-
-# (2) For "URL-safe" passwords:
-
-def list_url_safe_password_characters():
-    return "The password may contain the following characters:\n" \
-           + "   upper case letters\n" \
-           + "   lower case letters\n" \
-           + "   numbers\n" \
-           + "   '-' or '_'\n" \
-           + "and must contain at least one of each type.\n" \
-           + "It must be at least 16 characters in length."
-
-# Regular expression to validate such a password:
-re_urls_pwd = re.compile(r"((?=.*\d)(?=.*[a-z])(?=.*[A-Z])(?=.*[_-]).{16,})")
-
-def url_safe_password_valid(password):
-    return re_urls_pwd.match(password)
-
-# Generate URL-safe password of at least 16 characters:
-def generate_url_safe_password(n):
-    if n < 16:
-        n = 16
-    pw = secrets.token_urlsafe(n)
-    while not password_valid(pw):
-        pw = secrets.token_urlsafe(n)
-    return pw
-
-#==============================================================================
-# Generate an access toke:
-
-def generate_access_token():
-    # An access token is generated:
-    ri = random.randint(0,9999999)
-    return nshash(str(random.randint(0,ri)*random.randint(0,9999999)))
-
-# This is used mainly for command line (over SSH) access.
-
-#==============================================================================
-# PIN authetication functions:
-
-def pin_subset_prompt(): # used in app/forms.py
-
-    # Generate an array of three random digits, increasing and non-repeating:
-    psi = [] # list of digit positions
-    psi.append(random.randrange(1,4))
-    psi.append(random.randrange(psi[0]+1,5))
-    psi.append(random.randrange(psi[1]+1,6))
-
-    pin_subset_indices = ""
-    pin_subset_indices += str(psi[0] + 1)
-    pin_subset_indices += str(psi[1] + 1)
-    pin_subset_indices += str(psi[2] + 1)
-
-    # Then generate a prompt message for PIN subset entry:
-    message = "Please enter digits "
-    message += pin_subset_indices[0] + ", "
-    message += pin_subset_indices[1] + " and "
-    message += pin_subset_indices[2] + " of your PIN."
-
-    return message, pin_subset_indices # strings
-
-def authenticate_pin( # used in app/routes.py
-        pin_from_db,        # string: PIN retrived from database
-        pin_subset_entered, # string: subset of pin digits entered in login form
-        pin_subset_indices  # list: positions of the digits in the PIN subset
-    ):
-    pin_stored = pin_from_db
-    pin_subset_entered = pin_subset_entered
-    pin_subset_indices = pin_subset_indices
-    pin_subset_used = ""
-    for d in range(len(pin_subset_indices)): # the subset digit positions
-        pin_subset_used += pin_stored[int(pin_subset_indices[int(d)])-1]
-    validated = False
-    if pin_subset_used.strip() == pin_subset_entered.strip():
-        validated = True
-    return validated
-
-#==============================================================================
 
 def create_db(dbpath):
     if os.path.exists(dbpath):
@@ -2784,7 +2612,7 @@ def get_primid(ahid_id):
     return primid_fph
 
 #------------------------------------------------------------------------------
-# List stewards of a *namespace* or *currency*:
+# List stewards of a namespace or currency:
 
 def list_stewards(entity_id, etype):
     entity_fph, entity_hrns, etypes, m = identify_entity(entity_id)
@@ -2794,24 +2622,25 @@ def list_stewards(entity_id, etype):
         return [], entity_hrns + " has no registered " + etype
     if etype == "namespace":
         tbl = "namespaces"
-    elif etype == "currency":
+    if etype == "currency":
         tbl = "currencies"
-    else:
-        return [], "Invalid entity type"
     select_str = "SELECT stewards_fph_list FROM " + tbl \
                + " WHERE entity_fph = ?"
+    update_str = "UPDATE " + tbl \
+               + " SET stewards_fph_list = ?" \
+               + " WHERE entity_fph = ? (stewards_fph_list, entity_fph)"
     with sqlite3.connect(ENTITIES_DB) as conn:
         cursor = conn.cursor()
-        cursor.execute(
-            "SELECT stewards_fph_list FROM " + tbl + " WHERE entity_fph = ?",
-            (entity_fph,)
-        )
+        cursor.execute(select_str, (entity_fph,))
         result = cursor.fetchone()
-        cursor.close()
         if result is not None:
             stewards_fph_list = pickle.loads(result[0])
         else:
             stewards_fph_list = []
+            stewards_fph_blob = pickle.dumps(stewards_fph_list)
+            cursor.execute(update_str, (entity_fph, stewards_fph_blob))
+            conn.commit()
+        cursor.close()
     return stewards_fph_list, ""
 
 #------------------------------------------------------------------------------
@@ -3578,22 +3407,9 @@ def add_or_remove_steward(
         )
         result = cursor.fetchone()
         if result is None: # (should never happen)
-            stewards_fph_list = []  # Self-repair
-            log_self_repair(entity_id, "Missing stewards list created")
-        else:
-            stewards_fph_list = pickle.loads(result[0])
-        # At the very least, the entity must have a steward *primid* with which
-        # it shares an identifier:
-        if not (entity_fph in stewards_fph_list):
-            stewards_fph_list.append(entity_fph)
-            cursor.execute(
-                "UPDATE " + table + " SET stewards_fph_list = ? " \
-                + "WHERE entity_fph = ?",
-                (pickle.dumps(stewards_fph_list), entity_fph)
-            )
-            conn.commit()
-        # Any further operations must be authorized by one of the existing
-        # stewards:
+            cursor.close()
+            return "The entity " + entity_hrns + " has no stewards"
+        stewards_fph_list = pickle.loads(result[0])
         if not (auth_steward_fph in stewards_fph_list):
             cursor.close()
             return auth_steward_hrns + " is not a steward of " + entity_hrns
@@ -3609,16 +3425,11 @@ def add_or_remove_steward(
                 cursor.close()
                 return other_steward_hrns + " is not a steward of " \
                        + entity_type + " " + entity_hrns
-            elif other_steward_fph == entity_fph:
-                cursor.close()
-                return "The primid " + entity_hrns \
-                       + " must always remain a steward of the " \
-                       + entity_type + " " + entity_hrns
             else:
                 stewards_fph_list.remove(other_steward_fph)
         else:
             cursor.close()
-            return "Invalid operation: " + operation
+            return ""
         cursor.execute(
             "UPDATE " + table + " SET stewards_fph_list = ? " \
             + "WHERE entity_fph = ?",
@@ -3626,7 +3437,8 @@ def add_or_remove_steward(
         )
         conn.commit()
         cursor.close()
-        return "" # success
+        return ""
+    return ""
 
 # An entity (*namespace* or *currency*) is added to or removed from a *primid*
 # stewardships list:'
@@ -3638,14 +3450,28 @@ def add_or_remove_stewardship(
         auth_steward_id,    # The steward authorizing the change
         other_steward_id    # The steward affected
     ):
-
+    if entity_type == "namespace":
+        table = "namespaces"
+        sc = "n"
+    elif entity_type == "currency":
+        table = "currencies"
+        sc = "c"
+    else:
+        return "Invalid type specified: must be a namespace or currency"
+    entity_fph, entity_hrns, etypes, m = identify_entity(entity_id)
+    # Does the target entity identifer exist?
+    if not entity_fph:
+        return entity_id + " is not a registered identifier"
+    # If so, does it have a *namespace* or *currency* attached to it?
+    if not (entity_type in etypes):
+        return "Identifier " + entity_hrns + " has no " + entity_type
     # Is the authorizing steward a registered *primid*?:
-    auth_fph, auth_hrns, p_etypes, m = identify_entity(auth_steward_id)
-    if not auth_fph:
-        return auth_id + " is not a registered identifier"
+    auth_steward_fph, auth_steward_hrns, p_etypes, \
+    m = identify_entity(auth_steward_id)
+    if not auth_steward_fph:
+        return auth_steward_id + " is not a registered identifier"
     if not ("primid" in p_etypes):
-        return "Identifier " + auth_hrns + " has no primid"
-
+        return "Identifier " + auth_steward_id + " has no primid"
     # Is the added/removed steward a registered *primid*?:
     other_steward_fph, other_steward_hrns, p_etypes, \
     m = identify_entity(other_steward_id)
@@ -3653,39 +3479,17 @@ def add_or_remove_stewardship(
         return other_steward_id + " is not a registered identifier"
     if not ("primid" in p_etypes):
         return "Identifier " + other_steward_id + " has no primid"
-
-    # Does the target entity identifer exist?
-    entity_fph, entity_hrns, entity_etypes, m = identify_entity(entity_id)
-    if not entity_fph:
-        return entity_id + " is not a registered identifier"
-    # If so, does it have a *namespace* or *currency* attached to it?
-    if not (entity_type in entity_etypes):
-        return "Identifier " + entity_hrns + " has no " + entity_type
-
-    if entity_type == "namespace":
-        stewardships_col = "nstewardships_fph_list"
-    elif entity_type == "currency":
-        stewardships_col = "cstewardships_fph_list"
-    else:
-        return "Invalid type specified: must be a namespace or currency"
-
     with sqlite3.connect(ENTITIES_DB) as conn:
         cursor = conn.cursor()
         cursor.execute(
-            "SELECT " + stewardships_col + " FROM primids " \
+            "SELECT " + sc + "stewardships_fph_list FROM primids " \
             + "WHERE entity_fph = ?",
             (other_steward_fph,)
         )
         result = cursor.fetchone()
         if result is None: # (should never happen)
             cursor.close()
-            log_event(
-                "error",
-                "No stewardships found for primid " + other_steward_hrns,
-                "The primid " + other_steward_hrns + " has no stewardships " \
-                + "(which should be an impossible situation)."
-            )
-            return "primid " + other_steward_hrns + " has no stewardships"
+            return "The primid " + other_steward_hrns + " has no stewardships"
         stewardships_fph_list = pickle.loads(result[0])
         if not (entity_fph in stewardships_fph_list):
             cursor.close()
@@ -3693,15 +3497,11 @@ def add_or_remove_stewardship(
         if operation == "add":
             if entity_fph in stewardships_fph_list:
                 cursor.close()
-                return  entity_hrns + " already stewarded by " \
-                        + other_steward_hrns
+                return entity_hrns + " already has " + other_steward_hrns \
+                                   + " among its stewards"
             else:
                 stewardships_fph_list.append(entity_fph)
         elif operation == "remove":
-            if entity_fph == other_steward_fph:
-                cursor.close()
-                return entity_hrns + " must always be within stewardship of " \
-                       + "a primid with which it shares its identifier"
             if not (entity_fph in stewardships_fph_list):
                 cursor.close()
                 return entity_hrns + " is not among the stewardships of " \
@@ -3710,79 +3510,48 @@ def add_or_remove_stewardship(
                 stewardships_fph_list.remove(entity_fph)
         else:
             cursor.close()
-            return "Invalid operation: " + operation
+            return ""
         cursor.execute(
-            "UPDATE primids SET " + stewardships_col + " = ? " \
+            "UPDATE primids SET " + sc + "stewardships_fph_list = ? " \
             + "WHERE entity_fph = ?",
             (pickle.dumps(stewardships_fph_list), other_steward_fph)
         )
         conn.commit()
         cursor.close()
-        return "" # success
+        return ""
+    return ""
 
 def add_namespace_steward(entity_id, auth_steward_id, new_steward_id):
-    print(
-        "adding primid " + new_steward_id \
-        + " as steward of namespace " + entity_id
-    )
     m = add_or_remove_steward(
             entity_id, "namespace", "add", auth_steward_id, new_steward_id
         )
-    print(
-        "adding namespace " + entity_id \
-        + " to stewardships of primid " + new_steward_id
-    )
     n = add_or_remove_stewardship(
             entity_id, "namespace", "add", auth_steward_id, new_steward_id
         )
     return m + "\n" + n
 
 def remove_namespace_steward(entity_id, auth_steward_id, other_steward_id):
-    print(
-        "removing primid " + other_steward_id \
-        + " as steward of namespace " + entity_id
-    )
     m = add_or_remove_steward(
             entity_id, "namespace", "remove", auth_steward_id, other_steward_id
         )
-    print(
-        "removing namespace " + entity_id \
-        + " from stewardship of primid " + other_steward_id
-    )
     n = add_or_remove_stewardship(
             entity_id, "namespace", "remove", auth_steward_id, other_steward_id
         )
     return m + "\n" + n
 
 def add_currency_steward(entity_id, auth_steward_id, new_steward_id):
-    print(
-        "adding primid " + new_steward_id \
-        + " as steward of currency " + entity_id
-    )
     m = add_or_remove_steward(
             entity_id, "currency", "add", auth_steward_id, new_steward_id
         )
-    print(
-        "removing currency " + entity_id \
-        + " from stewardship of primid " + new_steward_id
-    )
     n = add_or_remove_stewardship(
             entity_id, "currency", "add", auth_steward_id, new_steward_id
         )
     return m + "\n" + n
 
 def remove_currency_steward(entity_id, auth_steward_id, other_steward_id):
-    print(
-        "removing primid " + other_steward_id \
-        + " as steward of currency " + entity_id
-    )
     m = add_or_remove_steward(
             entity_id, "currency", "remove", auth_steward_id, other_steward_id
         )
-    print(
-        "removing currency " + entity_id \
-        + " from stewardship of primid " + other_steward_id
-    )
     n = add_or_remove_stewardship(
             entity_id, "currency", "remove", auth_steward_id, other_steward_id
         )

@@ -18,7 +18,7 @@ from app.core.fph_hrns_maps import hrns_to_fph, fph_to_hrns, create_maps
 from app.core.dbm_functions import dbm_store, dbm_fetch, dbm_delete, dbm_keys
 from app.core.dbm_functions import dbm_create_map
 
-from app.core.auth import auth_hash
+#from app.core.auth import auth_hash
 
 from app.core.regexp_list import *
 
@@ -34,8 +34,9 @@ from app.core.slate_core import retrieve_pairing_account_fph
 from app.core.slate_core import new_pairing
 from app.core.slate_core import select_db_filepath
 from app.core.slate_core import ahid_is_robot
-
-from app.core.logging import log_event
+from app.core.slate_core import log_event
+from app.core.slate_core import auth_hash
+#from app.core.logging import log_event
 
 #from app.core.robots import ahid_is_robot
 

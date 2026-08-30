@@ -70,6 +70,7 @@ show_namespace_stewards("bb.cc")
 show_namespace_stewardships("bb.cc")
 show_namespace_stewardships("dd.cc")
 show_namespace_stewardships("ee.cc")
+
 m = add_or_remove_steward("bb.cc", "namespace", "add", "bb.cc", "dd.cc")
 show_namespace_stewards("bb.cc")
 show_namespace_stewardships("bb.cc")

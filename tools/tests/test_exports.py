@@ -1,22 +1,6 @@
 #!/home/slate/SLATE/venv/bin/python3
 
-#from app.core.slate_core import register_identifier
-#from app.core.slate_core import get_entity_types
-#from app.core.slate_core import set_entity_type
-#from app.core.slate_core import register_full_entity_set
-#from app.core.slate_core import register_entity_type
-#from app.core.slate_core import deregister_entity_type
-#from app.core.slate_core import identify_entity
-#from app.core.slate_core import new_primid
-#from app.core.slate_core import new_account
-#from app.core.slate_core import new_pairing
-#from app.core.slate_core import new_namespace
-#from app.core.slate_core import complete_parent_namespace
-#from app.core.slate_core import is_ancestor
-#from app.core.slate_core import _is_ancestor
-
 from prettytable import PrettyTable
-
 
 from app.core.exports import list_currency_payments
 from app.core.exports import list_account_payments
@@ -54,6 +38,8 @@ test_currency_id = "hrs.cc"
 
 export_path = "/home/slate/SLATE/app/export/"
 
+html_filepath = export_path + "currency_payments_export.html"
+
 def test_list_currency_payments():
     print("\n"*5 + "-"*120)
     print("Testing list_currency_payments( )\n")
@@ -61,6 +47,9 @@ def test_list_currency_payments():
     if m:
         print(m)
     else:
+        print("payments_list:")
+        print(payments_list)
+        print()
         ptable = PrettyTable()
         ptable.field_names = [
             "currency",
@@ -112,14 +101,33 @@ def test_dump_currency_payments_csv():
         for csv_row in csv_contents:
             print(csv_row.strip())
 
+
+
+def test_dump_currency_payments():
+    print("\n"*4 + "-"*120)
+    print("Testing dump_currency_payments( )\n")
+    csv_filename, m = dump_currency_payments(test_currency_id, True)
+#    if m:
+#        print(m)
+#    else:
+#        print("csv_filename = " + csv_filename + "\n")
+#        csv_filepath = op_path + csv_filename
+#        with open(csv_filepath, "r") as csvf:
+#            csv_contents = csvf.readlines()
+#        for csv_row in csv_contents:
+#            print(csv_row.strip())
+
+
+
+
 def test_dump_account_payments_csv():
     print("\n"*4 + "-"*120)
     print("Testing dump_account_payments_csv( )\n")
     csv_filename, m = dump_account_payments_csv(test_account_id, False)
-    csv_filepath = op_path + csv_filename
     if m:
         print(m)
     else:
+        csv_filepath = op_path + csv_filename
         print("csv_filename = " + csv_filename + "\n")
         with open(csv_filepath, "r") as csvf:
             csv_contents = csvf.readlines()
@@ -144,14 +152,9 @@ def test_dump_currency_payments():
 def test_dump_currency_payments_table():
     print("\n"*4 + "-"*120)
     print("Testing dump_currency_payments_table( )\n")
-    out_path = op_path + "dump_currency_payments_table"
-    payments_table = dump_currency_payments_table(test_currency_id)
+#    out_path = op_path + "dump_currency_payments_table"
+    payments_table, m = dump_currency_payments_table(test_currency_id)
     print(payments_table)
-
-    #print("\n" + "-"*120)
-    #print("Testing dump_currency_payments( )")
-    #payments_table = dump_currency_payments(currency_fph)
-    #print(payments_table)
 
 
 test_list_currency_payments()
@@ -159,8 +162,8 @@ test_list_account_payments()
 test_dump_currency_payments_csv()
 test_dump_account_payments_csv()
 #test_dump_currency_payments()
-test_dump_currency_payments_table()
-test_dump_currency_payments_html()
+#test_dump_currency_payments_table()
+#test_dump_currency_payments_html()
 
 
 print("\n" + "-"*120)

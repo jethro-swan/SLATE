@@ -4,7 +4,7 @@ import os
 import pickle
 from pathlib import Path
 from prettytable import PrettyTable
-# see ttps://learnpython.com/blog/print-table-in-python/
+# see https://learnpython.com/blog/print-table-in-python/
 
 from app.core.constants import ENTITIES_DB, PAYMENTS_DB, DB_DIR, DB_BKP_DIR
 #from .constants import SLATE_EXPORT, SLATE_IMPORT
@@ -39,10 +39,12 @@ from app import app
 #==============================================================================
 # Create a list of payments made in the specified *currency*:
 
-def list_currency_payments(currency_id):
+#def list_currency_payments(currency_id):
+def list_currency_payments_(currency_id):
 
-    currency_fph, currency_hrns, etypes, \
-    m = identify_entity(currency_id)
+    print("EXECUTING list_currency_payments(currency_id)")
+
+    currency_fph, currency_hrns, etypes, m = identify_entity(currency_id)
     if m:
         return [], m
     if not currency_fph:
@@ -72,9 +74,14 @@ def list_currency_payments(currency_id):
         all_payments = cursor.fetchall()
         cursor.close()
     if all_payments is None:
+#        print("aaargghh! "*10)
         return [], ""
     payments_list = []
+    print("all_payments:")
+    print(all_payments)
     for payment in all_payments:
+        print("::: ", end="")
+        print(payment)
         payment_row = []
         p = list(payment)
         timestamp = p[0]
@@ -97,6 +104,14 @@ def list_currency_payments(currency_id):
         payment_row.append(payer_balance)       # payer balance
         payment_row.append(payee_balance)       # payee balance
         payments_list.append(payment_row)
+
+    print()
+    print("*"*120)
+    print(payments_list)
+    print("*"*120)
+    print()
+
+
 
     return payments_list, ""
 
@@ -517,11 +532,14 @@ def dump_account_payments_csv(account_id, show_header_row = False):
 #==============================================================================
 ##
 
-def dump_currency_payments_table(currency_identifier, output_file_path):
+def dump_currency_payments_table(currency_id, output_file_path):
 
-    payment_rows = list_currency_payments(currency_identifier)
+    payment_rows, m = list_currency_payments(currency_id)
+    if m:
+        print(m)
+        return "", m
+
     payments_table = PrettyTable()
-    #print(payments_table)
     payments_table.align = "l"
     payments_table.field_names = [
                                     "payment number",
@@ -542,13 +560,15 @@ def dump_currency_payments_table(currency_identifier, output_file_path):
 
     payments_table.add_rows(table_rows[1:])
 
+    print()
+    print(payments_table)
+    print()
 
+#    if output_file_path and os.path.exists(output_file_path):
+#        with open(output_file_path, "w") as table_f:
+#            table_f.write(text_table)
 
-    if output_file_path and os.path.exists(output_file_path):
-        with open(output_file_path, "w") as table_f:
-            table_f.write(text_table)
-
-    return payments_table
+    return payments_table, ""
 
 #------------------------------------------------------------------------------
 def dump_currency_payments(currency_fph):
@@ -558,8 +578,11 @@ def dump_currency_payments(currency_fph):
     return
 
 #------------------------------------------------------------------------------
-def dump_currency_payments_html(currency_identifier, output_file_path):
-    payment_rows = list_currency_payments(currency_identifier)
+#def dump_currency_payments_html(currency_identifier, output_file_path):
+def dump_currency_payments_html(currency_identifier):
+    payment_rows, m = list_currency_payments(currency_identifier)
+    if m:
+        return "", m
 
     html_str = "<table class=\"dump_table\">\n" \
              + "<tr>" \
@@ -571,29 +594,38 @@ def dump_currency_payments_html(currency_identifier, output_file_path):
              + "</tr>\n"
     for row in payment_rows:
         html_str = []
-        html_str += "<tr>"
+        html_str += "<tr>\n"
         # payment ID:
-        html_str += "<td>" + row[0] + "</td>"
+        html_str += "\t<td>" + row[0] + "</td>\n"
         # payer HRNS (with link to FPH):
-        html_str += "<td><a href=\"" + row[1] + "\">" \
+        html_str += "\t<td><a href=\"" + row[1] + "\">\n" \
                  + fph_to_hrns(row[1]) \
                  + "\"></td>"
         # payee HRNS (with link to FPH):
-        html_str += "<td><a href=\"" + row[2] + "\">" \
+        html_str += "\t<td><a href=\"" + row[2] + "\">\n" \
                  + fph_to_hrns(row[2]) \
                  + "\"></td>"
         # amount paid
-        html_str += "<td>" + row[3] + "></td>"
+        html_str += "\t<td>" + row[3] + "></td>\n"
         # annotation
-        html_str += "<td>" + row[4] + "></td>"
+        html_str += "\t<td>" + row[4] + "></td>\n"
         html_str += "</tr>\n"
     html_str += "</table>\n"
 
-    if output_file_path and os.path.exists(output_file_path):
-        with open(output_file_path, "w") as html_f:
-            html_f.write(html_str)
+    print()
+    print(html_str)
+    print()
 
-    return html_str
+#    if output_file_path:
+#        if os.path.exists(op_path):
+#            with open(output_file_path, "w") as html_f:
+#                html_f.write(html_str)
+#            m = ""
+#        else:
+#            m = "Path " + op_path + " does not exist"
+
+#    return html_str, m
+    return html_str, ""
 
 #==============================================================================
 #
