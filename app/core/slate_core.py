@@ -1242,6 +1242,7 @@ def new_primid(
     ):
     errors = ""
     # The *primid* cannot be created with an invalid username:
+    username = username.lower()
     if not re_slatename.match(username):
         errors += "Invalid name provided\n"
         return "", "", "", errors
@@ -1410,6 +1411,7 @@ def new_ahid(
         primid_id,
         robot=False     # If newly created, the *ahid* is made a robot.
     ):
+    ahidname = ahidname.lower()
     if not re_slatename.match(ahidname):
         return "", "", "Invalid name provided"
     primid_fph, primid_hrns, etypes, m = identify_entity(primid_id)
