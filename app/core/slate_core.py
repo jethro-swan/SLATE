@@ -2716,8 +2716,8 @@ def get_ahid_properties(ahid_id):
     ahid_fph, ahid_hrns, etypes, m = identify_entity(ahid_id)
     if not ahid_fph:
         return False, "", [], "No entity registered for " + ahid_id
-    if not ("account" in etypes):
-        return False, "", [], "No account registered for " + ahid_hrns
+    if not ("ahid" in etypes):
+        return False, "", [], "No ahid registered for " + ahid_hrns
     with sqlite3.connect(ENTITIES_DB) as conn:
         cursor = conn.cursor()
         cursor.execute(
@@ -2731,7 +2731,7 @@ def get_ahid_properties(ahid_id):
         result = cursor.fetchone()
         cursor.close()
     if result is None:
-        return False, "", [], "secid not found"
+        return False, "", [], "ahid not found: " + ahid_hrns
     active = bool(result[0])
     primid_fph = result[1]
     accounts_fph_list = pickle.loads(result[2])
@@ -3521,8 +3521,6 @@ def add_or_remove_steward(
     if not ("primid" in s_etypes):
         return "Identifier " + other_steward_id + " has no primid"
 
-    print("Harpo")
-
     # Check validity of entity type:
     if entity_type == "namespace":
         table = "namespaces"
@@ -3538,8 +3536,6 @@ def add_or_remove_steward(
         stewards_list, m = get_currency_properties(entity_id)
     else:
         return "Type must be namespace or currency"
-
-    print("Zeppo")
 
     # If the *primid* sharing the identifier of the target entity is not among
     # its stewards it will have to be added:

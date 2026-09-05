@@ -923,13 +923,13 @@ def home_ahc(
     cstewardships_list, m = list_currency_stewardships(primid_fph)
 
     # TESTSTUFF
-    print("\nnstewardships_list:")
-    for fph in nstewardships_list:
-        print(fph + " : " + fph_to_hrns(fph))
+#    print("\nnstewardships_list:")
+#    for fph in nstewardships_list:
+#        print(fph + " : " + fph_to_hrns(fph))
     #
-    print("\ncstewardships_list:")
-    for fph in cstewardships_list:
-        print(fph + " : " + fph_to_hrns(fph))
+#    print("\ncstewardships_list:")
+#    for fph in cstewardships_list:
+#        print(fph + " : " + fph_to_hrns(fph))
 
     pmap_t, m = retrieve_pmap(primid_fph)
 
