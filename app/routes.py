@@ -382,8 +382,8 @@ def register():
             return redirect("/register")
         flash(
             "A login identity, an account-holder identity, a currency and a " \
-            + "namespace have been created using the identifier "
-            + primid_hrns + "."
+            + "namespace have been created using this identifier: "
+            + primid_hrns
         )
 
         currency_fph, currency_hrns, active, open, private, sandbox, \
@@ -1153,7 +1153,6 @@ def home_ahc(
     if concestor_hrns_not_yet_recorded:
         return redirect("/home_ahc")
 
-
     return render_template(
         "home_ahc.html",
         title = "Home",
@@ -1188,10 +1187,6 @@ def home_ahc(
         number_of_indelible_messages = number_of_indelible_messages
     )
 
-
-
-
-#
 #==============================================================================
 # The HOME SCREEN
 

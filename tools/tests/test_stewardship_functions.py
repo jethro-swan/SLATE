@@ -71,48 +71,65 @@ show_namespace_stewardships("bb.cc")
 show_namespace_stewardships("dd.cc")
 show_namespace_stewardships("ee.cc")
 
+m = add_or_remove_steward("bb.cc", "namespace", "add", "bb.cc", "bb.cc")
+show_namespace_stewards("bb.cc")
+show_namespace_stewardships("bb.cc")
+show_namespace_stewardships("dd.cc")
+show_namespace_stewardships("ee.cc")
+
 m = add_or_remove_steward("bb.cc", "namespace", "add", "bb.cc", "dd.cc")
 show_namespace_stewards("bb.cc")
 show_namespace_stewardships("bb.cc")
 show_namespace_stewardships("dd.cc")
 show_namespace_stewardships("ee.cc")
+
 m = add_or_remove_steward("bb.cc", "namespace", "add", "bb.cc", "ee.cc")
 show_namespace_stewards("bb.cc")
 show_namespace_stewardships("bb.cc")
 show_namespace_stewardships("dd.cc")
 show_namespace_stewardships("ee.cc")
+
 m = add_or_remove_steward("bb.cc", "namespace", "remove", "bb.cc", "dd.cc")
 show_namespace_stewards("bb.cc")
 show_namespace_stewardships("bb.cc")
 show_namespace_stewardships("dd.cc")
 show_namespace_stewardships("ee.cc")
+
 m = add_or_remove_steward("bb.cc", "namespace", "remove", "bb.cc", "ee.cc")
 show_namespace_stewards("bb.cc")
 show_namespace_stewardships("bb.cc")
 show_namespace_stewardships("dd.cc")
 show_namespace_stewardships("ee.cc")
+
 print("-"*120)
+
 show_namespace_stewards("bb.cc")
 show_namespace_stewardships("bb.cc")
 show_namespace_stewardships("dd.cc")
 show_namespace_stewardships("ee.cc")
+
 print("\nadd_namespace_steward ...")
+
 m = add_namespace_steward("bb.cc", "bb.cc", "dd.cc")
 show_namespace_stewards("bb.cc")
 show_namespace_stewardships("bb.cc")
 show_namespace_stewardships("dd.cc")
 show_namespace_stewardships("ee.cc")
+
 m = add_namespace_steward("bb.cc", "bb.cc", "ee.cc")
 show_namespace_stewards("bb.cc")
 show_namespace_stewardships("bb.cc")
 show_namespace_stewardships("dd.cc")
 show_namespace_stewardships("ee.cc")
+
 print("\nremove_namespace_steward ...")
+
 m = remove_namespace_steward("bb.cc", "bb.cc", "dd.cc")
 show_namespace_stewards("bb.cc")
 show_namespace_stewardships("bb.cc")
 show_namespace_stewardships("dd.cc")
 show_namespace_stewardships("ee.cc")
+
 m = remove_namespace_steward("bb.cc", "bb.cc", "ee.cc")
 show_namespace_stewards("bb.cc")
 show_namespace_stewardships("bb.cc")

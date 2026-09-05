@@ -19,7 +19,8 @@ from app.core.slate_core import new_namespace
 from app.core.slate_core import new_currency
 from app.core.slate_core import identify_entity
 from app.core.slate_core import complete_parent_namespace
-from app.core.auth import auth_hash
+#from app.core.auth import auth_hash
+from app.core.slate_core import auth_hash
 from app.core.cctld_list import *
 
 #==============================================================================
