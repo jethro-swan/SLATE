@@ -40,11 +40,11 @@ from app.core.slate_core import new_currency
 from app.core.slate_core import new_account
 from app.core.slate_core import account_status
 #from app.core.slate_core import entity_is_active
-from app.core.slate_core import list_namespace_stewardships
-from app.core.slate_core import list_currency_stewardships
+#from app.core.slate_core import list_namespace_stewardships
+#from app.core.slate_core import list_currency_stewardships
 #from app.core.slate_core import list_namespace_stewards
 #from app.core.slate_core import list_currency_stewards
-from app.core.slate_core import list_stewards
+#from app.core.slate_core import list_stewards
 from app.core.slate_core import retrieve_primid_access_details
 from app.core.slate_core import list_agent_accounts
 from app.core.slate_core import list_ahids
@@ -62,9 +62,15 @@ from app.core.slate_core import get_version
 #from app.core.slate_core import add_currency_stewardship
 #from app.core.slate_core import add_namespace_stewardship
 #from app.core.slate_core import remove_currency_stewardship
-from app.core.slate_core import add_currency_steward
-from app.core.slate_core import add_namespace_steward
-from app.core.slate_core import remove_currency_steward
+#from app.core.slate_core import add_currency_steward
+#from app.core.slate_core import add_namespace_steward
+#from app.core.slate_core import remove_currency_steward
+# 2026-09-07:
+from app.core.stewardship import add_currency_steward
+from app.core.stewardship import add_namespace_steward
+from app.core.stewardship import remove_currency_steward
+from app.core.stewardship import list_namespace_stewardships
+from app.core.stewardship import list_currency_stewardships
 # 2026-07-12
 from app.core.slate_core import display_hrns_local
 from app.core.slate_core import list_ancestors_fph, most_recent_clade
