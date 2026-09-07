@@ -2,16 +2,6 @@
 
 from app.core.slate_core import fph_to_hrns
 from app.core.slate_core import identify_entity
-#from app.core.slate_core import list_stewards
-#from app.core.slate_core import add_or_remove_steward
-#from app.core.slate_core import add_or_remove_stewardship
-#from app.core.slate_core import add_namespace_steward
-#from app.core.slate_core import add_currency_steward
-#from app.core.slate_core import remove_namespace_steward
-#from app.core.slate_core import remove_currency_steward
-#from app.core.slate_core import list_namespace_stewardships
-#from app.core.slate_core import list_currency_stewardships
-#from app.core.slate_core import set_currency_parameter
 
 from app.core.stewardship import add_or_remove_steward
 from app.core.stewardship import add_or_remove_stewardship

@@ -20,8 +20,6 @@ from app.core.constants import SLATE_TEMP, IMPORT_QUEUE, IMPORTING
 from app.core.constants import QR_CODES
 from app.core.constants import SUBSTRATE_FPH
 
-#from app.core.constants import SLATE_EXPORT, SLATE_IMPORT
-
 from app.core.fph_hrns_maps import hrns_to_fph, fph_to_hrns
 from app.core.fph_hrns_maps import hrns_exists_already
 
@@ -39,12 +37,6 @@ from app.core.slate_core import new_namespace
 from app.core.slate_core import new_currency
 from app.core.slate_core import new_account
 from app.core.slate_core import account_status
-#from app.core.slate_core import entity_is_active
-#from app.core.slate_core import list_namespace_stewardships
-#from app.core.slate_core import list_currency_stewardships
-#from app.core.slate_core import list_namespace_stewards
-#from app.core.slate_core import list_currency_stewards
-#from app.core.slate_core import list_stewards
 from app.core.slate_core import retrieve_primid_access_details
 from app.core.slate_core import list_agent_accounts
 from app.core.slate_core import list_ahids
@@ -58,38 +50,22 @@ from app.core.slate_core import hrns_to_name_and_namespace
 from app.core.slate_core import authenticate_primid_email
 from app.core.slate_core import get_hub_mode
 from app.core.slate_core import get_version
-# 2026-06-04
-#from app.core.slate_core import add_currency_stewardship
-#from app.core.slate_core import add_namespace_stewardship
-#from app.core.slate_core import remove_currency_stewardship
-#from app.core.slate_core import add_currency_steward
-#from app.core.slate_core import add_namespace_steward
-#from app.core.slate_core import remove_currency_steward
-# 2026-09-07:
+from app.core.slate_core import display_hrns_local
+from app.core.slate_core import list_ancestors_fph, most_recent_clade
+from app.core.slate_core import prune_payment_pair_hrns
+from app.core.slate_core import get_list_concestor
+from app.core.slate_core import hrns_strip_concestor
+from app.core.slate_core import pin_subset_prompt
+from app.core.slate_core import check_auth_hash
+from app.core.slate_core import authenticate_pin
+
 from app.core.stewardship import add_currency_steward
 from app.core.stewardship import add_namespace_steward
 from app.core.stewardship import remove_currency_steward
 from app.core.stewardship import list_namespace_stewardships
 from app.core.stewardship import list_currency_stewardships
-# 2026-07-12
-from app.core.slate_core import display_hrns_local
-from app.core.slate_core import list_ancestors_fph, most_recent_clade
-# 2026-07-14
-from app.core.slate_core import prune_payment_pair_hrns
-from app.core.slate_core import get_list_concestor
-from app.core.slate_core import hrns_strip_concestor
-# 2026-08-30
-from app.core.slate_core import pin_subset_prompt
-from app.core.slate_core import check_auth_hash
-from app.core.slate_core import authenticate_pin
 
-#####################
-
-
-
-#from app.core.slate_core import remove_namespace_stewardship
 from app.core.slate_core import random_filename
-#from app.core.slate_core import get_config
 
 from app.core.configdb import get_config
 from app.core.qrcode import qrencode_invitation
@@ -97,9 +73,7 @@ from app.core.qrcode import qrencode_invitation
 from app.core.slate_core import retrieve_pmap
 from app.core.slate_core import new_pairing
 from app.core.slate_core import retrieve_pairing_account_fph
-#from app.core.slate_core import ah_payment
 from app.core.payments import ah_payment
-#from app.core.slate_core import import_csv_dataset
 from app.core.slate_core import is_ancestor, is_in_private_namespace
 from app.core.slate_core import get_ahid_primid
 from app.core.slate_core import log_event
@@ -120,18 +94,9 @@ from app.core.regexp_list import re_qrfilename
 from app.core.slate_login import get_auth_data
 from app.core.slate_login import register_authenticated_login
 
-##from app.core.auth import pin_random_ord, pin_prompt_message
-#from app.core.auth import pin_subset_prompt
-#from app.core.auth import check_auth_hash
-#from app.core.auth import authenticate_pin
-
-#from app.core.logging import log_event
-
 from app.core.payments import payment
 
-#from app.core.exports import list_account_payments
 from app.core.exports import dump_account_payments_csv
-#from app.core.exports import list_currency_payments
 from app.core.exports import dump_currency_payments_csv
 
 from app.core.uploads import csv_create_namespaces
@@ -139,8 +104,6 @@ from app.core.uploads import csv_create_identities
 from app.core.uploads import csv_create_currencies
 from app.core.uploads import csv_create_accounts
 
-#from app.core.messaging import display_colour_subject_prefix
-#from app.core.messaging import category_display_colour
 from app.core.messaging import create_messages_db
 from app.core.messaging import send_message
 from app.core.messaging import fetch_messages
@@ -159,29 +122,16 @@ from app.core.display import etype_to_adtype
 
 from app.core.csv_import import import_minimal_payment_set_as_csv
 
-#from app.site_configuration import site_config
-
-#from app import bcrypt # added 2024-11-10
-
-#, authenticate_web_access
-#from app.core.auth import set_web_password_hash
-
-
 # Flask components: -----------------------------------------------------------
 
 from flask import render_template, render_template_string
 from flask import flash, redirect, url_for
 from flask import session, g, request
-#from flask import Flask, session, g, request
-#from flask_mailman import Mail, EmailMessage
-#from flask_mailman import EmailMessage
 from flask_login import LoginManager, current_user, login_user, logout_user
 from flask_login import login_required
 from flask import send_file
-#from flask import send_from_directory
 from app import app
 
-#from app import mail # from __init__.py
 
 from app.models import User
 
