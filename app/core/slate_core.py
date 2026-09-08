@@ -63,6 +63,10 @@ from app.core.cctld_list import *
 #           Pending resolution, fph_list = list(set(fph_list)) provides an
 #           acceptable solution at small scales.
 #
+# Note 3:   This file contains far too many definitions, but in the shorter it
+#           seems best to leave it as it is because of the risk of introducing
+#           circular imports.
+#
 #==============================================================================
 
 
@@ -88,6 +92,7 @@ def log_event(category, summary, details):
         log_file.write(details + "\n")
     return True
 
+#==============================================================================
 #
 def log_self_repair(entity_id, message):
     entity_fph, entity_hrns, etypes, m = identify_entity(entity_id)
@@ -187,7 +192,7 @@ def generate_url_safe_password(n):
     return pw
 
 #==============================================================================
-# Generate an access toke:
+# Generate an access token:
 
 def generate_access_token():
     # An access token is generated:
@@ -237,6 +242,7 @@ def authenticate_pin( # used in app/routes.py
     return validated
 
 #==============================================================================
+#
 
 def create_db(dbpath):
     if os.path.exists(dbpath):
@@ -251,6 +257,8 @@ def create_db(dbpath):
     os.chmod(dbpath, 0o660)
 
 #==============================================================================
+#
+
 def create_hubs_db():
 
     # This database is kept separate from the others because it needs to be
@@ -318,6 +326,7 @@ def get_hub_mode():
 #    return get_config("hub_mode")
 
 #==============================================================================
+#
 
 def get_parent(entity_fph):
     with sqlite3.connect(IDENTIFIERS_DB) as conn:
@@ -387,10 +396,8 @@ def is_in_active_tree(entity_id):
     return in_active_tree
 
 
-
-
 #==============================================================================
-## Choose the working database file for the *namespace*:
+# Choose the working database file for the *namespace*:
 
 def select_db_filepath(db_name, owner_fph):
     # Is the database name valid?
@@ -409,7 +416,8 @@ def select_entities_db_filepath(entity_fph):
     pnsr = get_private_namespace_root(entity_fph)
     # If the PNSR (FPH) has been provided, assume public *namespace*.
     if isinstance(pnsr_fph, str) and re_fph.match(pnsr_fph):
-        DB = DB_DIR + owner_fph + "_entities.db"
+        #DB = DB_DIR + owner_fph + "_entities.db"
+        DB = DB_DIR + pnsr + "_entities.db"
     else:
         DB = DB_DIR + "_entities.db"
     return DB
@@ -751,11 +759,11 @@ def register_identifier(identifier_hrns):
     return identifier_fph
 
 #==============================================================================
-## Is the identifier registered?
+# Is the identifier registered?
 
-## NB: This will require a separate database given that the ENTITIES_DB is
-##     now going to be divided such that private *namespace*s sit alongside the
-##     public *namespace*.
+# NB: This will require a separate database given that the ENTITIES_DB is
+#     now going to be divided such that private *namespace*s sit alongside the
+#     public *namespace*.
 
 def identifier_unregistered(identifier_id):
     if re_hrns.match(identifier_id):
@@ -831,10 +839,8 @@ def get_entity_types(entity_fph):
             entity_types.append("ahid")
         return entity_types, ""
     else:
-#        entity_hrns = fph_to_hrns(entity_fph)
         return [], "No types registered for identifier " + entity_fph \
                    + " (" + entity_hrns + ")"
-#        return [], ""
 
 #=============================================================================
 # Set, register or deregister an *entity* type for a specified identifier FPH:
@@ -964,8 +970,8 @@ def deregister_entity_type(identifier_fph, entity_type):
     return set_entity_type(identifier_fph, entity_type, False)
 
 #==============================================================================
-## Entities may be identified either by HRNS or by FPH. Given that these are
-## very different in structure, they may be identified automatically:
+# Entities may be identified either by HRNS or by FPH. Given that these are
+# very different in structure, they may be identified automatically:
 
 def identify_entity(entity_id): # HRNS or FPH
     if (entity_id is None) or (not isinstance(entity_id, str)):
@@ -1067,7 +1073,7 @@ def entity_is_active(entity_id, entity_type):
     return bool(result[0]), ""
 
 #==============================================================================
-## Check whether a *namespace* or *currency* is private:
+# Check whether a *namespace* or *currency* is private:
 
 def privacy(entity_id, entity_type):
     entity_fph, entity_hrns, etypes, m = identify_entity(entity_id)
@@ -1092,7 +1098,7 @@ def privacy(entity_id, entity_type):
     return bool(result[0]), ""
 
 #==============================================================================
-## Get owner of entity:
+# Get owner of entity:
 
 def get_owner(entity_id, entity_type):
     entity_fph, entity_hrns, etypes, m = identify_entity(entity_id)
@@ -1113,7 +1119,7 @@ def get_owner(entity_id, entity_type):
     return result[0]
 
 #==============================================================================
-## List all *accounts* in the specified *currency*:
+# List all *accounts* in the specified *currency*:
 
 def list_currency_accounts(currency_id):
     currency_fph, currency_hrns, etypes, m = identify_entity(currency_id)
@@ -1137,7 +1143,7 @@ def list_currency_accounts(currency_id):
         return []
 
 #==============================================================================
-## Update the *primid* contact details:
+# Update the *primid* contact details:
 
 def update_primid_contact_details(
         primid_fph,
@@ -1188,7 +1194,7 @@ def update_primid_contact_details(
     return errors
 
 #==============================================================================
-## Update the *primid* access details:
+# Update the *primid* access details:
 
 def update_primid_access_details(
         primid_fph,
@@ -1226,7 +1232,7 @@ def update_primid_access_details(
     return errors
 
 #==============================================================================
-## Retrieve the *primid* access details:
+# Retrieve the *primid* access details:
 
 def retrieve_primid_access_details(primid_id):
     primid_fph, primid_hrns, etypes, m = identify_entity(primid_id)
@@ -1437,7 +1443,7 @@ def new_primid(
 # updated by the *primid* at any time.
 
 #==============================================================================
-## A new *ahid* is created:
+# A new *ahid* is created:
 
 ### THIS may not be needed, given that in  new_pairing( )  a new *ahid*
 ###      entity is created directly.
@@ -1535,7 +1541,7 @@ def ahid_is_robot(ahid_id):
 
 
 #==============================================================================
-## A new *namespace* is created:
+# A new *namespace* is created:
 
 ## TO DO:
 ## (1) Add "private" to the parameters list.
@@ -1693,7 +1699,6 @@ def new_currency(
     # The initial *account* in this *currency* is assigned to its initial
     # steward (which must exist already).
     parent_fph, parent_hrns, etypes, m = identify_entity(parent_id)
-#    parent_fph, parent_hrns, etypes, m = identify_entity(parent_fph)
     if not parent_fph:
         return "", "", "Parent namespace does not exist"
     currency_name = currency_name.lower() # See note 1 (2026-08-30)
@@ -1856,16 +1861,8 @@ def add_reg_currency_list_to_namespace(namespace_id, currency_list_fph):
         cursor.close()
     return ""
 
-
-
-
-
-
-
-
-
 #==============================================================================
-## A new account is created in a specified currency:
+# A new account is created in a specified *currency*:
 
 def new_account(
         account_name, parent_id,    # identifier
@@ -1974,7 +1971,7 @@ def new_account(
     return account_fph, account_hrns, ""
 
 #==============================================================================
-##
+#
 
 def get_namespace_properties(namespace_id):
     namespace_fph, namespace_hrns, etypes, m = identify_entity(namespace_id)
@@ -2012,9 +2009,8 @@ def get_namespace_properties(namespace_id):
            owner_fph, currency_fph, stewards_fph_list, ""
 
 #==============================================================================
-## Set the default *currency* for the *namespace*. This will usually be set
-## only when the *namespace* is created but can be changed subsequently if
-## required.
+# Set the default *currency* for the *namespace*. This will usually be set only
+# when the *namespace* is created but can be changed subsequently if required.
 
 def set_default_currency(namespace_id, currency_id):
     currency_fph, currency_hrns, etypes, m = identify_entity(currency_id)
@@ -2036,7 +2032,7 @@ def set_default_currency(namespace_id, currency_id):
     return ""
 
 #------------------------------------------------------------------------------
-##
+#
 
 def get_default_currency(namespace_id):
     entity_fph, entity_hrns, etypes, m = identify_entity(namespace_id)
@@ -2058,7 +2054,7 @@ def get_default_currency(namespace_id):
         return result[0]
 
 #==============================================================================
-##
+#
 
 def get_currency_properties(currency_id):
     currency_fph, currency_hrns, etypes, m = identify_entity(currency_id)
@@ -2108,7 +2104,7 @@ def get_currency_properties(currency_id):
            stewards_list, ""
 
 #==============================================================================
-##
+#
 
 def get_currency_name(currency_fph):
     hrns = fph_to_hrns(currency_fph)
@@ -2119,7 +2115,7 @@ def get_currency_name(currency_fph):
         return hrnsa[0]
 
 #==============================================================================
-## List the *identity*'s *accounts*:
+# List the *identity*'s *accounts*:
 #
 # This will list all *accounts* belonging to an *ahid* or "primid", the
 # *account* itself identifying its *currency*.
@@ -2152,31 +2148,7 @@ def list_accounts(identity_id, identity_etype):
     return accounts_fph_list, ""
 
 #==============================================================================
-## List the *identity*'s *accounts* in a specified *currency*:
-#
-# This will list all *accounts* in a specified *currency* belonging to a
-# *primid*, *ahid* or "primid".
-
-def list_id_accounts_in_currency(identity_id, identity_etype, currency_id):
-    currency_fph, currency_hrns, etypes, m = identify_entity(identity_id)
-    if not currency_fph:
-        return [], currency_id + " is not a registered identifier (4)"
-    if not ("currency" in etypes):
-        return [], "No currency is registered for " + currency_hrns
-    accounts_fph_list, m = list_accounts(identity_id, identity_etype)
-    if m:
-        return [], m
-    accounts_in_currency = []
-    for account_fph in accounts_fph_list:
-        account_currency_fph, m = get_account_currency(account_fph)
-        if m:
-            return [], m
-        if account_currency_fph == currency_fph:
-            accounts_in_currency.append(account_fph)
-    return accounts_in_currency, ""
-
-#==============================================================================
-## List the *primid*'s accounts: #
+# List the *primid*'s accounts: #
 
 def list_primid_accounts(primid_fph):
     with sqlite3.connect(ENTITIES_DB) as conn:
@@ -2187,8 +2159,6 @@ def list_primid_accounts(primid_fph):
         )
         result = cursor.fetchone()
         if result is None:
-#            accounts_fph_list = []
-#            accounts_fph_blob = pickle.dumps(accounts_fph_list)
             accounts_fph_blob = pickle.dumps([])
             cursor.execute(
                 "UPDATE primids SET accounts_fph_list = ? WHERE entity_fph = ?",
@@ -2199,13 +2169,11 @@ def list_primid_accounts(primid_fph):
             return [], "The primid " + primid_fph + " has no accounts."
         else:
             cursor.close()
-#            accounts_fph_blob = result[0]
-#            accounts_fph_list = pickle.loads(accounts_fph_blob)
             accounts_fph_list = pickle.loads(result[0])
         return accounts_fph_list, ""    # list + message
 
 #==============================================================================
-## List the *ahid*'s accounts: #
+# List the *ahid*'s accounts: #
 
 def list_ahid_accounts(ahid_fph):
     ahid_fph, ahid_hrns, etypes, m = identify_entity(ahid_fph)
@@ -2221,8 +2189,6 @@ def list_ahid_accounts(ahid_fph):
         )
         result = cursor.fetchone()
         if result is None:
-#            accounts_fph_list = []
-#            accounts_fph_blob = pickle.dumps(accounts_fph_list)
             accounts_fph_blob = pickle.dumps([])
             cursor.execute(
                 "UPDATE ahids SET accounts_fph_list = ? WHERE entity_fph = ?",
@@ -2233,17 +2199,14 @@ def list_ahid_accounts(ahid_fph):
             return [], "The ahid " + ahid_fph + " has no accounts."
         else:
             cursor.close()
-#            accounts_fph_blob = result[0]
-#            accounts_fph_list = pickle.loads(accounts_fph_blob)
             accounts_fph_list = pickle.loads(result[0])
         return accounts_fph_list, ""    # list + message
 
 #==============================================================================
-##
+#
 #
 # NB  The two functions above may be combined into a single function:
 
-#def list_agent_accounts(agent_fph, etype):
 def list_agent_accounts(agent_fph):
 
     if entity_type_is_registered(agent_fph, "ahid"):
@@ -2255,7 +2218,6 @@ def list_agent_accounts(agent_fph):
         if m:
             return [], m
     else:
-        #accounts_fph_list = []
         m = agent_fph + " is not an identity of either type"
         if m:
             return [], m
@@ -2264,7 +2226,7 @@ def list_agent_accounts(agent_fph):
 
 
 #==============================================================================
-## Get the currency of an account: KEEP
+# Get the currency of an account: KEEP
 
 def get_account_currency(account_id):
     account_fph, account_hrns, etypes, m = identify_entity(account_id)
@@ -2374,8 +2336,37 @@ def list_id_accounts_in_currency(identity_id, identity_etype, currency_id):
         accounts_fph_list.append(account_fph)
     return accounts_fph_list, ""
 
+### 2026-09-07: Two definitions, above and below. Which is better?
+
 #==============================================================================
-## List the *primid*'s *account*s' *currencies*:
+# List the *identity*'s *accounts* in a specified *currency*:
+#
+# This will list all *accounts* in a specified *currency* belonging to a
+# *primid*, *ahid* or "primid".
+
+def list_id_accounts_in_currency(identity_id, identity_etype, currency_id):
+    currency_fph, currency_hrns, etypes, m = identify_entity(identity_id)
+    if not currency_fph:
+        return [], currency_id + " is not a registered identifier (4)"
+    if not ("currency" in etypes):
+        return [], "No currency is registered for " + currency_hrns
+    accounts_fph_list, m = list_accounts(identity_id, identity_etype)
+    if m:
+        return [], m
+    accounts_in_currency = []
+    for account_fph in accounts_fph_list:
+        account_currency_fph, m = get_account_currency(account_fph)
+        if m:
+            return [], m
+        if account_currency_fph == currency_fph:
+            accounts_in_currency.append(account_fph)
+    return accounts_in_currency, ""
+
+
+
+
+#==============================================================================
+# List the *primid*'s *account*s' *currencies*:
 #
 # For a specified *primid*, return a list the *currencies* in which it has an
 # *account*
@@ -2387,11 +2378,8 @@ def list_primid_currencies(primid_fph): # in which a *primid* has accounts
         currencies_fph_list.append(get_account_currency(account_fph))
     return currencies_fph_list
 
-
-
-
 #==============================================================================
-## List the *ahid*'s *account*s' *currencies*:
+# List the *ahid*'s *account*s' *currencies*:
 #
 # For specified *ahid*, return a list the *currencies* in which it has an
 # *account*
@@ -2441,22 +2429,6 @@ def list_child_namespaces(namespace_fph):
     return namespace_fph_list # list
 
 #==============================================================================
-# List all namespaces:
-
-def list_active_namespaces():
-    with sqlite3.connect(ENTITIES_DB) as conn:
-        cursor = conn.cursor()
-        cursor.execute("SELECT entity_fph FROM namespaces WHERE active = 1")
-        result_list = cursor.fetchall()
-        cursor.close()
-    if result_list is None:
-        return []
-    active_namespaces = []
-    for namespace in result_list:
-        active_namespaces.append(result[0])
-    return active_namespaces, ""
-
-#==============================================================================
 # List all currencies named within the specified namespace:
 
 def list_currencies_in_namespace(namespace_fph = ""):
@@ -2466,6 +2438,7 @@ def list_currencies_in_namespace(namespace_fph = ""):
 
 #==============================================================================
 # List all primids named within the specified namespace:
+
 def list_primids_in_namespace(namespace_fph = ""):
 
     return primid_fph_list # list
@@ -2495,6 +2468,7 @@ def list_all_namespaces():
         namespaces.append(result[0])
     return namespaces
 
+#==============================================================================
 # List all currencies:
 
 def list_all_currencies():
@@ -2551,7 +2525,7 @@ def move_entity(entity_fph, destination_namespace_fph):
 
 
 #==============================================================================
-## List the FPH of the currencies in which two agents both have an account:
+# List the FPH of the currencies in which two agents both have an account:
 
 def list_currencies_in_common_by_fph(a1_fph, a2_fph):
     return list(set(list_currencies(a1_fph)) & set(list_currencies(a2_fph)))
@@ -2563,7 +2537,7 @@ def list_currencies_in_common_by_hrns(a1_fph, a2_fph):
         print(fph_to_hrns(currency_fph))
 
 #==============================================================================
-##
+#
 
 def get_account_properties(account_id):
     account_fph, account_hrns, etypes, m = identify_entity(account_id)
@@ -2619,7 +2593,7 @@ def get_account_properties(account_id):
 
 
 #==============================================================================
-## Retrive the status of an account:
+# Retrive the status of an account:
 
 def account_status(account_fph):
     currency_fph, owner_fph, balance, volume, active, \
@@ -2633,7 +2607,7 @@ def account_status(account_fph):
 
 
 #==============================================================================
-## Sum the balances of *accounts* with similar properties:
+# Sum the balances of *accounts* with similar properties:
 
 def sum_account_balances(
         owner_id,
@@ -2672,7 +2646,7 @@ def sum_account_balances(
     return balance_sum, volume_sum, ""
 
 #==============================================================================
-##
+#
 
 def get_primid_properties(primid_id):
     primid_fph, primid_hrns, etypes, m = identify_entity(primid_id)
@@ -2797,6 +2771,23 @@ def list_active_namespaces(ancestor_namespace_id = ""): # FPH or HRNS
                 namespace_fph_list.append(namespace_fph)
 
     return namespace_fph_list, ""
+
+### 2026-09-07: Two definitions, above and below. Which is better?
+
+# List all namespaces:
+
+def list_active_namespaces():
+    with sqlite3.connect(ENTITIES_DB) as conn:
+        cursor = conn.cursor()
+        cursor.execute("SELECT entity_fph FROM namespaces WHERE active = 1")
+        result_list = cursor.fetchall()
+        cursor.close()
+    if result_list is None:
+        return []
+    active_namespaces = []
+    for namespace in result_list:
+        active_namespaces.append(result[0])
+    return active_namespaces, ""
 
 
 #==============================================================================
@@ -2923,7 +2914,6 @@ def split_hrns(identifier_hrns):
     parent_hrns = NSS.join(names).strip(NSS)
     return name, parent_hrns
 
-
 #==============================================================================
 # Create a random filename:
 
@@ -2951,7 +2941,6 @@ def is_ancestor(entity_hrns, ancestor_id):
 
 # ... used here primarily to determine whether the parent *namespace* for new
 # entities is the private *namespace* of the importing *primid*.
-
 
 # Alternative version ...
 
@@ -3129,8 +3118,6 @@ def new_pairing(
         cursor.close()
 
     return account_fph, account_hrns, ""
-
-
 
 # Create a set of pairings between a specified *ahid* and each member of a list
 # of *currencies*.
