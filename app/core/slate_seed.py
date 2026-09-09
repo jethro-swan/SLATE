@@ -125,6 +125,15 @@ def create_substrate():
 #    record_private_namespace_root(SUBSTRATE_FPH, SUBSTRATE_FPH)
 
 
+
+seed_namespace_hrns = "cc"      # Seed *namespace*
+seed_primid_hrns = "adm.cc"     # Seed *namespace*
+seed_currency_hrns = "cc.cc"    # Seed *currency*
+seed_ahid_hrns = "cc.cc"        # Seed *currency*
+seed_account_hrns = "cc.cc"     # Seed *account*
+
+
+
 def create_seed_entities():
 
     # (In due course, the default values for the following will be read from a
@@ -181,36 +190,74 @@ def create_seed_entities():
     m = register_entity_type(seed_primid_fph, "primid")
     print("Registering " + seed_primid_hrns)
 
-    seed_entity_hrns  = "cc"    # The identifier HRNS shared by all other
-                                # seed entities.
-    seed_ahid_hrns = seed_currency_hrns = seed_entity_hrns
-    print("Registering " + seed_entity_hrns)
-    seed_entity_fph = register_identifier(seed_entity_hrns)
-    print("seed entity: " + seed_currency_hrns + " = " + seed_entity_fph)
+#    seed_entity_hrns  = "cc"    # The identifier HRNS shared by all other
+#                                # seed entities.
+
+#    seed_namespace_hrns = "cc"      # Seed *namespace*
+#    seed_currency_hrns = "cc.cc"    # Seed *currency*
+#    seed_ahid_hrns = "cc.cc"        # Seed *currency*
+#    seed_account_hrns = "cc.cc"     # Seed *account*
+
+#    seed_ahid_hrns = seed_currency_hrns = seed_entity_hrns
+#    print("Registering " + seed_entity_hrns)
+#    seed_entity_fph = register_identifier(seed_entity_hrns)
+#    print("seed entity: " + seed_currency_hrns + " = " + seed_entity_fph)
+
+#    seed_namespace_hrns = "cc"      # Seed *namespace*
+    seed_namespace_fph = register_identifier(seed_namespace_hrns)
+    m = register_entity_type(seed_namespace_fph, "namespace")
+    if m:
+        print(m)
+    print("Registered " + seed_namespace_hrns + " as seed namespace")
+
+#    seed_currency_hrns = "cc.cc"    # Seed *currency*
+    seed_currency_fph = register_identifier(seed_currency_hrns)
+    m = register_entity_type(seed_currency_fph, "currency")
+    if m:
+        print(m)
+    print("Registered " + seed_currency_hrns + " as seed currency")
+
+#    seed_ahid_hrns = "cc.cc"        # Seed *currency*
+    seed_ahid_fph = register_identifier(seed_ahid_hrns)
+    m = register_entity_type(seed_ahid_fph, "ahid")
+    if m:
+        print(m)
+    print("Registered " + seed_ahid_hrns + " as seed ahid")
+
+#    seed_account_hrns = "cc.cc"     # Seed *account*
+    seed_account_fph = register_identifier(seed_account_hrns)
+    m = register_entity_type(seed_account_fph, "account")
+    if m:
+        print(m)
+    print("Registered " + seed_account_hrns + " as seed account")
 
     # ??? Although a *primid* is registered for the seed entity identifier, the
     # corresponding *namespace* is treated as public (an exception):
-    record_private_namespace_root(seed_entity_fph, "")
-    if m:
-        print(m)
-    m = register_entity_type(seed_entity_fph, "ahid")
-    if m:
-        print(m)
-    m = register_entity_type(seed_entity_fph, "namespace")
-    if m:
-        print(m)
-    m = register_entity_type(seed_entity_fph, "currency")
-    if m:
-        print(m)
-    m = register_entity_type(seed_entity_fph, "account")
-    if m:
-        print(m)
-    print("Registered " + seed_entity_hrns)
+#    record_private_namespace_root(seed_entity_fph, "")
+#    if m:
+#        print(m)
+#    m = register_entity_type(seed_entity_fph, "ahid")
+#    m = register_entity_type(seed_ahid_fph, "ahid")
+#    if m:
+#        print(m)
+#    m = register_entity_type(seed_entity_fph, "namespace")
+#    m = register_entity_type(seed_namespace_fph, "namespace")
+#    if m:
+#        print(m)
+#    m = register_entity_type(seed_entity_fph, "currency")
+#    m = register_entity_type(seed_currency_fph, "currency")
+#    if m:
+#        print(m)
+#    m = register_entity_type(seed_entity_fph, "account")
+#    m = register_account_type(seed_entity_fph, "account")
+#    if m:
+#        print(m)
+#    print("Registered " + seed_entity_hrns)
 
-    seed_namespace_fph = seed_entity_fph
-    seed_currency_fph = seed_entity_fph
-    seed_ahid_fph = seed_entity_fph
-    seed_account_fph = seed_entity_fph
+#    seed_namespace_fph = seed_entity_fph
+#    seed_currency_fph = seed_entity_fph
+#    seed_ahid_fph = seed_entity_fph
+#    seed_account_fph = seed_entity_fph
 
     pmap = {}
     pmap[seed_ahid_hrns] = {}
@@ -467,7 +514,12 @@ def create_quasitld_set(full = False):
     for tld in cctld_list_here:
         print(tld)
         namespace_fph, namespace_hrns, \
-        m = new_namespace(tld, SUBSTRATE_FPH, "cc", "adm.cc")
+        m = new_namespace(
+                tld,
+                SUBSTRATE_FPH,
+                seed_currency_hrns,
+                seed_primid_hrns
+            )
         if m:
             print(m)
         # These root *namespaces* are all public so return no PNSR.
@@ -520,14 +572,26 @@ def create_sandbox_space():
 
     # The sandbox/demo *namespaces* "sand.box.cc" is created:
     box_fph, box_hrns, \
-    m = new_namespace("box", "cc", "cc", "adm.cc", False)
+    m = new_namespace(
+            "box",
+            seed_namespace_hrns,
+            seed_currency_hrns,
+            seed_primid_hrns,
+            False
+        )
     print("box.cc HRNS = " + box_hrns)
     sandbox_fph, sandbox_hrns, \
-    m = new_namespace("sand", box_fph, "cc", "adm.cc", False)
+    m = new_namespace(
+            "sand",
+            box_fph,
+            seed_currency_hrns,
+            seed_primid_hrns,
+            False
+        )
     print("sand.box.cc HRNS = " + sandbox_hrns)
 
-    cc_fph, m = hrns_to_fph("cc")
-    print("cc_fph = " + cc_fph)
+#    cc_fph, m = hrns_to_fph("cc")
+#    print("cc_fph = " + cc_fph)
 
     # Some sandbox/demo *currencies* are created:
     #
@@ -536,7 +600,7 @@ def create_sandbox_space():
     # g£.box.cc
     currency_fph, currency_hrns, \
     m = new_currency(
-            "g£", sandbox_fph, "adm.cc", "£", "", "hrs",
+            "g£", sandbox_fph, seed_primid_hrns, "£", "", "hrs",
             account_type="scalar", category="money", units="unspecified",
             metrical_equivalence="lt", dimensions="unspecified"
         )
@@ -544,7 +608,7 @@ def create_sandbox_space():
     # cc.sand.box.cc
     currency_fph, currency_hrns, \
     m = new_currency(
-            "cc", sandbox_fph, "adm.cc", "", "", "",
+            "cc", sandbox_fph, seed_primid_hrns, "", "", "",
             account_type="scalar", category="money", units="unspecified",
             metrical_equivalence="lt", dimensions="unspecified"
         )

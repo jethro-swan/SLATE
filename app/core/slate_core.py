@@ -16,6 +16,7 @@ import json
 from app.core.constants import SLATE_LOGS, LOG_DATETIME_FMT
 from app.core.constants import DB_DIR, DB_BKP_DIR
 from app.core.constants import IDENTIFIERS_DB, ENTITIES_DB, PAYMENTS_DB
+from app.core.constants import ENTITIES_DB_DIR
 from app.core.constants import HUBS_DB
 from app.core.constants import FPH_TO_HRNS_MAP, HRNS_C_FPH_MAP
 from app.core.constants import SUBSTRATE_FPH
@@ -373,6 +374,8 @@ def get_private_namespace_root(entity_fph):
     else:
         return result[0]
 
+get_pnsr = get_private_namespace_root # alias
+
 
 def record_private_namespace_root(id_fph, private_namespace_root_fph):
     with sqlite3.connect(IDENTIFIERS_DB) as conn:
@@ -396,14 +399,22 @@ def is_in_active_tree(entity_id):
     return in_active_tree
 
 
+
+
+
+
 #==============================================================================
 # Choose the working database file for the *namespace*:
+
+def entity_db_path(entity_id):
+    entity_fph, entity_hrns, etypes, m = identify_entity(entity_id)
+    return ENTITIES_DB_DIR + get_pnsr(entity_fph) + "_entities,db"
 
 def select_db_filepath(db_name, owner_fph):
     # Is the database name valid?
     if not (db_name in ["entities", "payments"]):
         return ""
-    # If the PNSR (FPH) has been provided, assume public namespace.
+    # If the PNSR (FPH) has not been provided, assume public namespace.
     if isinstance(owner_fph, str) and re_fph.match(owner_fph):
         DB = DB_DIR + owner_fph + "_" + db_name + ".db"
     else:
@@ -3569,3 +3580,8 @@ def display_hrns_local(entity_id):
         return entity_hrns, entity_hrns, ""
     clade_hrns = fph_to_hrns(clade_fph)
     return entity_hrns.replace(clade_hrns, "").strip(NSS), clade_hrns, ""
+
+
+
+
+ENTITIES_DB_DIR

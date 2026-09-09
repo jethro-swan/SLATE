@@ -64,6 +64,7 @@ sudo mkdir -p /var/slate/$DATASET
 sudo mkdir -p /var/slate/$DATASET/logs
 sudo mkdir -p /var/slate/$DATASET/{db,maps}
 #sudo mkdir -p /var/slate/$DATASET/{db,maps}/backups
+sudo mkdir -p /var/slate/$DATASET/db/entities
 sudo mkdir -p /var/slate/$DATASET/temp
 sudo mkdir -p /var/slate/$DATASET/imports
 sudo mkdir -p /var/slate/$DATASET/flags
