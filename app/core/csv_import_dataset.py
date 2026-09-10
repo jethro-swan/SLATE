@@ -105,7 +105,13 @@ def import_csv_dataset(fpath, primid_id):
                     primid_fph,
                     "",
                     "",
-                    currency_name # is used for default *account* name
+                    currency_name, # is used for default *account* name
+                    "scalar", # account type
+                    "money", # category
+                    "unspecified", # units
+                    "lt", # metrical_equivalence
+                    "unspecified", # dimensions
+                    True # initially active         
                 )
             if not currency_fph: # *currency* could not be created
                 errors.append(

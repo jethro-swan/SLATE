@@ -31,9 +31,7 @@ def import_minimal_payment_set_as_csv(
 
     errors = ""
 
-    namespace_fph, \
-    namespace_hrns, \
-    etype, \
+    namespace_fph, namespace_hrns, etype, \
     m = identify_entity(namespace_identifier)
     if m:
         errors += m + "\n"
@@ -42,9 +40,7 @@ def import_minimal_payment_set_as_csv(
         errors += namespace_identifier + " is not a namespace\n"
         return [], errors
 
-    currency_fph, \
-    currency_hrns, \
-    etype, \
+    currency_fph, currency_hrns, etype, \
     m = identify_entity(currency_identifier)
     if m:
         errors += m + "\n"

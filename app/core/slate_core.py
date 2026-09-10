@@ -1414,15 +1414,22 @@ def new_primid(
     # (which also serves as its initial steward):
     currency_fph, currency_hrns, \
     m = new_currency(
-            username, parent_fph,   # identifier
-            primid_fph,             # initial steward
-            "", "",                 # prefix | suffix
-            username,               # default *account* name
-            account_type="scalar",
-            category="money",
-            units="unspecified",
-            metrical_equivalence="lt",
-            dimensions="unspecified"
+            username, parent_fph, # identifier
+            primid_fph, # initial steward
+            "", "", # prefix | suffix
+            username, # default *account* name
+            "scalar", # account type
+            "money", # category
+            "unspecified", # units
+            "lt", # metrical_equivalence
+            "unspecified", # dimensions
+            False # initially nactive
+#             ="scalar",
+#            category="money",
+#            units="unspecified",
+#            metrical_equivalence="lt",
+#            dimensions="unspecified",
+#            active=False
         )
 
     # A new *namespace* is created with the same identifier as the *primid*
@@ -1699,7 +1706,8 @@ def new_currency(
         category="money",
         units="",
         metrical_equivalence="",
-        dimensions=""
+        dimensions="",
+        active=True
     ):
     initial_steward_fph, initial_steward_hrns, etypes, \
     m = identify_entity(initial_steward_id)
@@ -1726,9 +1734,13 @@ def new_currency(
         currency_hrns = currency_name
     if identifier_unregistered(currency_hrns):
         currency_fph = register_identifier(currency_hrns)
+
+    # If a *currency* is already registered for this identifier, no further
+    # action is allowable:
     currency_fph, currency_hrns, etypes, m = identify_entity(currency_hrns)
     if ("currency" in etypes):
         return "", "", "Currency " + currency_hrns + " is already registered"
+
     # If it does not exist, a new *namespace* is created with the same
     # identifier as the new *currency* (which is assigned as its default
     # *currency*) and having the same initial steward.
@@ -1765,7 +1777,7 @@ def new_currency(
             + ") VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
             (
                 currency_fph,
-                1, # enabled
+                int(active), # enabled|disable
                 0, # not private
                 currency_prefix,
                 currency_suffix,
@@ -1841,7 +1853,8 @@ def create_currencies_from_list(initial_steward_id, currency_list):
         m = new_currency(
                 currency_name, parent_id, initial_steward_id,
                 prefix, suffix, default_account_name,
-                account_type, category, units, metrical_equivalence, dimensions
+                account_type, category, units, metrical_equivalence,
+                dimensions, True
             )
         if m:
            errors += m + "\n"
