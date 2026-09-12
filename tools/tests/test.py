@@ -1,6 +1,12 @@
 #!/home/slate/SLATE/venv/bin/python3
 #!/usr/bin/env python3
 
+# NB  This is a long obsolete file used in the early days of development. It
+#     has been preserved only as a scrap yard from which parts might be
+#     plundered occasionally.
+
+
+
 # TEMPORARY TEST FILE
 
 import sys, os

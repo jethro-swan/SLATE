@@ -10,8 +10,10 @@ from app.core.slate_core import activate_currency, deactivate_currency
 from app.core.slate_core import activate_namespace, deactivate_namespace
 from app.core.slate_core import open_namespace, close_namespace
 from app.core.slate_core import open_currency, close_currency
-from app.core.slate_core import add_namespace_steward, remove_namespace_steward
-from app.core.slate_core import add_currency_steward, remove_currency_steward
+#from app.core.slate_core import add_namespace_steward, remove_namespace_steward
+#from app.core.slate_core import add_currency_steward, remove_currency_steward
+from app.core.stewardship import add_namespace_steward, remove_namespace_steward
+from app.core.stewardship import add_currency_steward, remove_currency_steward
 from app.core.slate_core import set_currency_parameter
 
 
@@ -166,7 +168,7 @@ if entity_type == "currency":
         activate_currency(currency_id, auth_id)
         sys.exit(1)
     elif disable_entity:
-        deactivate_currency(entity_id, auth_id)
+        deactivate_currency(currency_id, auth_id)
         sys.exit(1)
     else:
         ap.print_help()

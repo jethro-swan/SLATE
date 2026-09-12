@@ -1424,12 +1424,6 @@ def new_primid(
             "lt", # metrical_equivalence
             "unspecified", # dimensions
             False # initially nactive
-#             ="scalar",
-#            category="money",
-#            units="unspecified",
-#            metrical_equivalence="lt",
-#            dimensions="unspecified",
-#            active=False
         )
 
     # A new *namespace* is created with the same identifier as the *primid*
