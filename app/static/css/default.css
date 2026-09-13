@@ -111,13 +111,17 @@ a:active { color:#008400; }
 a:hover { color:#20a020; }
 
 div.concestor {
-  display: block;
-  color:#008000;
+/*  display: block; */
+/*  color:#008000; */
+/*  background: #c8e0c8;
   border-width: 1px;
   border-style: solid;
   border-color: #c8e0c8;
   background: #c8e0c8;
-  padding-left: 4px;
+*/
+  color:#000000;
+  padding-bottom: 4px;
+/*  padding-left: 4px;
   padding-right: 4px;
   padding-top: 2px;
   padding-bottom: 2px;
@@ -125,6 +129,7 @@ div.concestor {
   margin-right: 0px;
   margin-top: 1px;
   margin-bottom: 1px;
+*/
   float: left;
 }
 
