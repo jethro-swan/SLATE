@@ -1353,7 +1353,7 @@ def new_primid(
     # this identifier:
     m = register_entity_type(primid_fph, "primid")
     if m:
-        print(m)
+        log_event("debug", "register_identifier( ) returned error", m)
 
     # The PNSR of this identifier is overwritten with its FPH because it has a
     # *primid* registered to it, making it the root of a private *namespace*
@@ -1432,7 +1432,7 @@ def new_primid(
     namespace_fph, namespace_hrns, \
     m = new_namespace(username, parent_fph, currency_fph, primid_fph, True)
     if m:
-        print(m)
+        log_event("debug", "register_identifier( ) returned error", m)
 
     # Although the *currency* has been created in order to prevent another
     # user from creating one with the same identifier, it is deactivated at
@@ -1487,7 +1487,7 @@ def new_ahid(
     if not ("ahid" in etypes):
         m = register_entity_type(ahid_fph, "ahid")
         if m:
-            print(m)
+            log_event("debug", "register_identifier( ) returned error", m)
         with sqlite3.connect(ENTITIES_DB) as conn:
             cursor = conn.cursor()
             cursor.execute(
@@ -1612,11 +1612,11 @@ def new_namespace(
     # further action is required:
     m = register_entity_type(namespace_fph, "namespace")
     if m:
-        print(m)
+        log_event("debug", "register_identifier( ) returned error", m)
 
     ns_fph, ns_hrns, netypes, m = identify_entity(namespace_fph)
     if m:
-        print(m)
+        log_event("debug", "register_identifier( ) returned error", m)
 
     # TEMPORARY FUDGE (should not be needed) ##################################
     with sqlite3.connect(ENTITIES_DB) as conn:
@@ -1669,7 +1669,7 @@ def build_ancestor_chain(root_id, steward_id, *ns_list):
     active, open, sandbox, private, owner_fph, currency_fph, stewards_list, \
     m = get_namespace_properties(parent_fph)
     if m:
-        print(m)
+        log_event("debug", "register_identifier( ) returned error", m)
         return [], m
     #
     # The initial steward must be one of those of the root *namespace*.
@@ -1749,7 +1749,7 @@ def new_currency(
             )
     m = register_entity_type(currency_fph, "currency")
     if m:
-        print(m)
+        log_event("debug", "register_identifier( ) returned error", m)
     # Now add *currency* specific properties:
     with sqlite3.connect(ENTITIES_DB) as conn:
         cursor = conn.cursor()
@@ -1915,10 +1915,12 @@ def new_account(
     account_fph, account_hrns, etypes, m = identify_entity(account_hrns)
     if ("account" in etypes):
         # The identifier of an existing *account* cannot be used for another.
-        return "", "", account_hrns + " exists already (account)"
+#        return "", "", account_hrns + " exists already (account)"
+        return account_fph, account_hrns, \
+        "Account " + account_hrns + " exists already"
     m = register_entity_type(account_fph, "account")
     if m:
-        print(m)
+        log_event("debug", "register_identifier( ) returned error", m)
 
     currency_fph, currency_hrns, etypes, m = identify_entity(currency_id)
     if not currency_fph:
@@ -1938,7 +1940,7 @@ def new_account(
     account_fph = register_identifier(account_hrns)
     m = register_entity_type(account_fph, "account")
     if m:
-        print(m)
+        log_event("debug", "register_identifier( ) returned error", m)
     # The owner may be either an *ahid* or a *primid".
     owner_fph, owner_hrns, etypes, m = identify_entity(owner_id)
     if not owner_fph:
@@ -1994,7 +1996,7 @@ def new_account(
 def get_namespace_properties(namespace_id):
     namespace_fph, namespace_hrns, etypes, m = identify_entity(namespace_id)
     if m:
-        print(m)
+        log_event("debug", "register_identifier( ) returned error", m)
         return False, False, False, False, "", "", [], m
     # Is a *namespace* registered for this identifier?
     if not ("namespace" in etypes):
@@ -3045,7 +3047,7 @@ def new_pairing(
     # If the *ahid* does not exist already it must be created:
     r_ahid_fph, r_ahid_hrns, r_ahid_etypes, m = identify_entity(ahid_hrns)
     if m:
-        print(m)
+        log_event("debug", "register_identifier( ) returned error", m)
     if not ("ahid" in r_ahid_etypes):
         # A new *ahid* is created:
         ahid_hrns = ahid_hrns.lower() # See note 1 (2026-08-30)

@@ -1,14 +1,12 @@
 #!/home/slate/SLATE/venv/bin/python3
 
-#import sqlite3
-#import pickle
 import random
 
 import sys, os, re, argparse
 import math
 from faker import Faker
 from prettytable import PrettyTable
-#from wonderwords import RandomWord
+from wonderwords import RandomWord
 
 from app.core.fph_hrns_maps import fph_to_hrns, hrns_to_fph
 
@@ -19,7 +17,6 @@ from app.core.slate_core import new_pairing
 from app.core.slate_core import retrieve_pmap
 from app.core.slate_core import complete_parent_namespace
 from app.core.payments import ah_payment
-
 
 #==============================================================================
 # Set command line options:
@@ -58,11 +55,11 @@ ap.add_argument(
     default = 4,
     help = "Maximum length of AHIDs names"
 )
-#ap.add_argument(
-#    "-z", "--pad-zeros", dest = "pad_zeros", action = "store_true",
-#    default = False,
-#    help = "Pad AHID numbers with enough zeros to make consistent column width"
-#)
+ap.add_argument(
+    "-G", "--gibberish", dest = "gibberish", action = "store_true",
+    default = False,
+    help = "Create utter gibberish in the annotations field"
+)
 args = ap.parse_args()
 
 if args.primid_id is None:
@@ -77,7 +74,7 @@ ahid_prefix = args.ahid_prefix
 number_of_ahid = int(args.number_of_ahid)
 use_names = args.use_names
 max_name_length = int(args.max_name_length)
-#pad_zeros = args.pad_zeros
+gibberish = args.gibberish
 
 if ahid_prefix.isalpha():
     ahid_prefix = ahid_prefix.lower()
@@ -95,12 +92,6 @@ print("Currency:           " + currency_id)
 print("AHID prefix:        " + ahid_prefix)
 print("Number of AHIDs:    " + str(number_of_ahid))
 print("Usings names:       " + str(use_names))
-#print("Pad AHID numbers:   " + str(pad_zeros))
-#if pad_zeros:
-#    zpad = math.ceil(math.log10(n_payments))
-#    print(zpad)
-#else:
-#    zpad = 0
 zpad = math.ceil(math.log10(n_payments))
 apad = math.ceil(math.log10(number_of_ahid))
 
@@ -130,18 +121,12 @@ while ahid_count < number_of_ahid:
         ahid_hrns_list.append(ahid_hrns)
         ahid_count += 1
         print(str(ahid_count).zfill(apad) + " : " + ahid_hrns)
-#print("AHID count = " + str(ahid_count))
-#print()
-#print("ahid_hrns_list: ")
-#print(ahid_hrns_list)
 print()
 print("Number of unique AHID = " + str(len(list(set(ahid_hrns_list)))))
 
-
-
-
 for ahid_hrns in ahid_hrns_list:
-    p_fph = new_pairing(primid_id, ahid_hrns, currency_hrns)
+    p_fph, p_hrns, m = new_pairing(primid_id, ahid_hrns, currency_hrns)
+    print(p_fph + ": pairing " + currency_hrns + " with " + ahid_hrns)
 
 pmap, m = retrieve_pmap(primid_hrns)
 
@@ -153,7 +138,14 @@ for n in range(n_payments):
     payer_ahid_hrns = random.choice(ahid_hrns_list)
     payee_ahid_hrns = random.choice(ahid_hrns_list)
     amount = random.randint(0, 100000)
-    annotation = "test B" + str(n).zfill(4)
+
+    if gibberish:
+        rword = RandomWord()
+        rwords = rword.random_words(3) # list
+        annotation = " ".join(rwords)
+    else:
+        annotation = "test" + str(n).zfill(4)
+
     if payer_ahid_hrns != payee_ahid_hrns:
         if display_random_selection:
             print(
