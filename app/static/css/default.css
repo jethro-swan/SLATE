@@ -231,10 +231,16 @@ a.mbp:hover { color:#ffffff; }
 
 /* Low-priority messages */
 a.mbn { text-decoration:none; font-weight:bold; }
+/*
 a.mbn:link { color:#0000C0; }
 a.mbn:visited { color:#0000C0; }
 a.mbn:active { color:#0000C0; }
 a.mbn:hover { color:#0000FF; }
+*/
+a.mbn:link { color:#008000; }
+a.mbn:visited { color:#008000; }
+a.mbn:active { color:#008000; }
+a.mbn:hover { color:#00c000; }
 /*
 a.mbn { text-decoration:none; }
 a.mbn:link { color:#ffffff; }

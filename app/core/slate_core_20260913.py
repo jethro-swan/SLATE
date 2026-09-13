@@ -1423,9 +1423,7 @@ def new_primid(
             "unspecified", # units
             "lt", # metrical_equivalence
             "unspecified", # dimensions
-            False, # initially inactive
-            True, # initiall private
-            False # initially not sandbox
+            False # initially nactive
         )
 
     # A new *namespace* is created with the same identifier as the *primid*
@@ -1703,9 +1701,7 @@ def new_currency(
         units="",
         metrical_equivalence="",
         dimensions="",
-        active=True,
-        private=False,
-        sandbox=False
+        active=True
     ):
     initial_steward_fph, initial_steward_hrns, etypes, \
     m = identify_entity(initial_steward_id)
@@ -1776,12 +1772,12 @@ def new_currency(
             (
                 currency_fph,
                 int(active), # enabled|disable
-                int(private),
+                0, # not private
                 currency_prefix,
                 currency_suffix,
                 default_account_name,
                 pickle.dumps([initial_steward_fph]),
-                int(sandbox),
+                0, # not sandbox
                 account_type,
                 category,
                 units,
@@ -1852,7 +1848,7 @@ def create_currencies_from_list(initial_steward_id, currency_list):
                 currency_name, parent_id, initial_steward_id,
                 prefix, suffix, default_account_name,
                 account_type, category, units, metrical_equivalence,
-                dimensions, True, False, False
+                dimensions, True
             )
         if m:
            errors += m + "\n"

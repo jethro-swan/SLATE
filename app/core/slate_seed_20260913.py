@@ -327,8 +327,8 @@ def create_seed_entities():
     currency_fph, currency_hrns, \
     m = new_currency(
             "cc", seed_namespace_fph, "adm.cc", "", "", "",
-            "scalar", "money", "unspecified", "lt", "unspecified",
-            True, False, False
+            account_type="scalar", category="money", units="unspecified",
+            metrical_equivalence="lt", dimensions="unspecified", active=True
         )
     print("Universal currency " + currency_hrns + " has been created")
 
@@ -456,9 +456,9 @@ def create_root_namespace(name):
 
     currency_fph, currency_hrns, \
     m = new_currency(
+#            name, SUBSTRATE_FPH, "adm.cc", "", "h", "hrs",
             name, seed_namespace_fph, "adm.cc", "", "h", "hrs",
-            "scalar", "money", "unspecified", "lt", "unspecified",
-            True, False, False
+            "scalar", "money", "", "", "", active=True
         )
     if m:
         print(m)
@@ -601,16 +601,16 @@ def create_sandbox_space():
     currency_fph, currency_hrns, \
     m = new_currency(
             "g£", sandbox_fph, seed_primid_hrns, "£", "", "hrs",
-            "scalar", "money", "unspecified", "lt", "unspecified",
-            True, False, False
+            account_type="scalar", category="money", units="unspecified",
+            metrical_equivalence="lt", dimensions="unspecified", active=True
         )
     #
     # cc.sand.box.cc
     currency_fph, currency_hrns, \
     m = new_currency(
             "cc", sandbox_fph, seed_primid_hrns, "", "", "",
-            "scalar", "money", "unspecified", "lt", "unspecified",
-            True, False, False
+            account_type="scalar", category="money", units="unspecified",
+            metrical_equivalence="lt", dimensions="unspecified", active=True
         )
 
 #==============================================================================

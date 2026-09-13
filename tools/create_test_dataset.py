@@ -204,20 +204,11 @@ m = new_primid(
 l_primids.append(steward_fph)
 
 # An initial *currency* is created:
-currency0_fph, \
-currency0_hrns, \
+currency0_fph, currency0_hrns, \
 m = new_currency(
-        "z",
-        s_fph,
-        steward_fph,
-        "",
-        "",
-        "z",
-        "",
-        "",
-        "",
-        "",
-        ""
+        "z", s_fph, steward_fph,
+        "", "", "z", "", "", "", "", "",
+        True, False, False
     )
 l_currencies.append(currency0_fph)
 

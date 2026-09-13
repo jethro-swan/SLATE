@@ -1005,6 +1005,10 @@ def home_ahc(
                         currency_displayed_already[currency] = True
                     p_rows2.append(row)
 
+    # 2026-09-13: Pending disentanglement of p_rows and p_rows2 ...
+    #p_rows = p_rows2 # to feed to template
+
+
     concestor_hrns = get_list_concestor(all_entities_hrns)
     concestor_fph, m = hrns_to_fph(concestor_hrns)
     session["concestor_hrns"] = concestor_hrns
@@ -1012,7 +1016,7 @@ def home_ahc(
     currency_hrns_short, payer_ahid_hrns_short, pp_concestor_hrns, \
     m = prune_payment_pair_hrns(p_currency_hrns, payer_ahid_hrns)
     if m:
-        print(m)
+        log_event("debug", "register_identifier( ) returned error", m)
 
     form = SpecifyPayeeAccountHolderForm()
     if form.validate_on_submit():
