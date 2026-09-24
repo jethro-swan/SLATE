@@ -17,6 +17,7 @@ from app.core.slate_core import new_pairing
 from app.core.slate_core import retrieve_pmap
 from app.core.slate_core import complete_parent_namespace
 from app.core.payments import ah_payment
+from app.core.display import integer_to_money_s_format
 
 #==============================================================================
 # Set command line options:
@@ -30,6 +31,16 @@ ap.add_argument(
     "-n", "--number-of-payments", dest = "n_payments", action = "store",
     default = 100,
     help = "Number of payments"
+)
+ap.add_argument(
+    "-M", "--max-payment", dest = "max_payment", action = "store",
+    default = 100,
+    help = "Maximum amount paid"
+)
+ap.add_argument(
+    "-r", "--round-payment", dest = "round_payment", action = "store_true",
+    default = False,
+    help = "Make payment a round number"
 )
 ap.add_argument(
     "-c", "--currency", dest = "currency_id", action = "store",
@@ -60,6 +71,22 @@ ap.add_argument(
     default = False,
     help = "Create utter gibberish in the annotations field"
 )
+ap.add_argument(
+    "-d", "--display-payment-line", dest = "display_output",
+    action = "store_true", default = False,
+    help = "Display payment (currency | payer | payee | amount | annotation)"
+)
+ap.add_argument(
+    "-e", "--export-csv", dest = "export_csv_lines", action = "store_true",
+    default = False,
+    help = "CSV output lines (currency | payer | payee | amount | annotation)"
+)
+ap.add_argument(
+    "-s", "--export-csv-separator", dest = "export_csv_separator",
+    action = "store", default = "comma",
+    help = "CSV output field separator (comma|semicolon|colon|tab)"
+)
+
 args = ap.parse_args()
 
 if args.primid_id is None:
@@ -69,12 +96,38 @@ else:
     primid_id = args.primid_id
 
 n_payments = int(args.n_payments)
+max_payment = 100*int(args.max_payment)
+round_payment = args.round_payment
+
 currency_id = args.currency_id
+
 ahid_prefix = args.ahid_prefix
+
 number_of_ahid = int(args.number_of_ahid)
 use_names = args.use_names
-max_name_length = int(args.max_name_length)
+if number_of_ahid > 24:
+    min_m = 4 # must be at least 4
+else:
+    min_m = 3
+max_name_length = max(min_m,int(args.max_name_length))
+
 gibberish = args.gibberish
+
+display_output = args.display_output
+
+export_csv_lines = args.export_csv_lines
+
+export_csv_separator = args.export_csv_separator
+if export_csv_separator == "semicolon":
+    cs = ";"
+elif export_csv_separator == "colon":
+    cs = ":"
+elif export_csv_separator == "comma":
+    cs = ","
+elif export_csv_separator == "tab":
+    cs = "\t"
+else:
+     cs = ","
 
 if ahid_prefix.isalpha():
     ahid_prefix = ahid_prefix.lower()
@@ -87,11 +140,15 @@ if use_names:
     fake = Faker()
     Faker.seed(24)
 
-print("Number of payments: " + str(n_payments))
-print("Currency:           " + currency_id)
-print("AHID prefix:        " + ahid_prefix)
-print("Number of AHIDs:    " + str(number_of_ahid))
-print("Usings names:       " + str(use_names))
+if display_output:
+    print("Number of payments: " + str(n_payments))
+    print("Maximum payment:    " + str(max_payment))
+    print("Round payment:      " + str(round_payment))
+    print("Currency:           " + currency_id)
+    print("AHID prefix:        " + ahid_prefix)
+    print("Number of AHIDs:    " + str(number_of_ahid))
+    print("Usings names:       " + str(use_names))
+
 zpad = math.ceil(math.log10(n_payments))
 apad = math.ceil(math.log10(number_of_ahid))
 
@@ -105,7 +162,8 @@ if not currency_fph:
     sys.stderr.write("Specified currency does not exist")
     sys.exit(1)
 
-print()
+if display_output:
+    print()
 
 ahid_hrns_list = []
 ahid_count = 0
@@ -114,54 +172,75 @@ while ahid_count < number_of_ahid:
         name = "longrubbishname"
         while len(name) > max_name_length:
             name = fake.first_name()
-            ahid_hrns = name.lower() + "." + primid_hrns
+        ahid_hrns = name.lower() + "." + primid_hrns
     else:
-        ahid_hrns = ahid_prefix + str(i) + "." + primid_hrns
+        ahid_hrns = ahid_prefix + str(ahid_count) + "." + primid_hrns
     if not (ahid_hrns in ahid_hrns_list):
         ahid_hrns_list.append(ahid_hrns)
         ahid_count += 1
-        print(str(ahid_count).zfill(apad) + " : " + ahid_hrns)
-print()
-print("Number of unique AHID = " + str(len(list(set(ahid_hrns_list)))))
+        if display_output:
+            print(str(ahid_count).zfill(apad) + " : " + ahid_hrns)
+
+if display_output:
+    print("\nNumber of unique AHID = " + str(len(list(set(ahid_hrns_list)))))
 
 for ahid_hrns in ahid_hrns_list:
     p_fph, p_hrns, m = new_pairing(primid_id, ahid_hrns, currency_hrns)
-    print(p_fph + ": pairing " + currency_hrns + " with " + ahid_hrns)
+    if display_output:
+        print(p_fph + ": pairing " + currency_hrns + " with " + ahid_hrns)
 
 pmap, m = retrieve_pmap(primid_hrns)
 
-display_random_selection = True
-test_payments = True
+if display_output:
+    print("="*120)
 
-print("="*80)
-for n in range(n_payments):
+p_count = 0
+looping = True
+while looping:
+    p_count += 1
     payer_ahid_hrns = random.choice(ahid_hrns_list)
     payee_ahid_hrns = random.choice(ahid_hrns_list)
-    amount = random.randint(0, 100000)
+    if round_payment:
+        amount = 100*random.randint(0, round(max_payment/100))
+    else:
+        amount = random.randint(0, max_payment)
 
     if gibberish:
         rword = RandomWord()
         rwords = rword.random_words(3) # list
         annotation = " ".join(rwords)
     else:
-        annotation = "test" + str(n).zfill(4)
+        annotation = "test" + str(p_count).zfill(4)
 
     if payer_ahid_hrns != payee_ahid_hrns:
-        if display_random_selection:
+        if display_output:
             print(
-                currency_hrns + " : " \
-                + payer_ahid_hrns + " > " + payee_ahid_hrns \
-                + " | " + str(amount) \
-                + " | " + annotation
-            )
-        if test_payments:
-            m = ah_payment(
+                "{:>5} | {:>15} | {:>20} | {:>20} | {:10.2f} | {}".format(
+                    p_count,
+                    currency_hrns,
                     payer_ahid_hrns,
                     payee_ahid_hrns,
-                    currency_hrns,
-                    amount,
+                    amount/100,
                     annotation
                 )
-            if m:
-                print(m)
-print("="*80)
+            )
+        elif export_csv_lines:
+            print(
+                currency_hrns + cs + payer_ahid_hrns + cs + payee_ahid_hrns \
+                + cs + integer_to_money_s_format(amount) + cs + annotation
+#                + "," + integer_to_money_s_format(amount) + "," + annotation
+            )
+        m = ah_payment(
+                payer_ahid_hrns,
+                payee_ahid_hrns,
+                currency_hrns,
+                amount,
+                annotation
+            )
+        if m:
+            print(m)
+    if p_count == n_payments:
+        break
+
+if display_output:
+    print("="*120)

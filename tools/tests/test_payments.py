@@ -84,8 +84,8 @@ test_entity_identification = False
 #run_payment_test_loop = False
 run_payment_test_loop = True
 
-#display_random_selection = False
-display_random_selection = True
+#display_payment_line = False
+display_payment_line = True
 
 #test_payments = False
 test_payments = True
@@ -142,7 +142,7 @@ if run_payment_test_loop:
         amount = random.randint(0, 100000)
         annotation = "test B" + str(n).zfill(4)
         if payer_ahid_hrns != payee_ahid_hrns:
-            if display_random_selection:
+            if display_payment_line:
                 print(
                     currency_hrns + " : " \
                     + payer_ahid_hrns + " > " + payee_ahid_hrns \
