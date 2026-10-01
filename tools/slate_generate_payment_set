@@ -127,7 +127,7 @@ elif export_csv_separator == "comma":
 elif export_csv_separator == "tab":
     cs = "\t"
 else:
-     cs = ","
+    cs = ","
 
 if ahid_prefix.isalpha():
     ahid_prefix = ahid_prefix.lower()
@@ -215,7 +215,7 @@ while looping:
     if payer_ahid_hrns != payee_ahid_hrns:
         if display_output:
             print(
-                "{:>5} | {:>15} | {:>20} | {:>20} | {:10.2f} | {}".format(
+                "{:>5} | {:>15} | {:>20} | {:>20} | {:>10.2f} | {}".format(
                     p_count,
                     currency_hrns,
                     payer_ahid_hrns,

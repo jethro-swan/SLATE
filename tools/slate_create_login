@@ -57,24 +57,32 @@ secondary_email_address = args.email_2
 password = args.password
 pin = args.pin
 
-if (login_name is None) or (not re_slatename.match(login_name)):
-    print(login_name + " is not a valid username")
+if (login_name is None):
+    print("\nPlease specify a valid username\n")
+    ap.print_help()
+    sys.exit()
+elif not re_slatename.match(login_name):
+    print(login_name + " is not a valid username\n")
+    ap.print_help()
     sys.exit()
 
 if real_name is None:
     real_name = ""
 
 if currency_hrns is None:
-    print("No currency specified")
+    print("\nNo currency specified\n")
+    ap.print_help()
     sys.exit()
 
 parent_namespace_fph, parent_namespace_hrns, etypes, \
 m = identify_entity(parent_namespace_hrns)
 if not parent_namespace_fph:
-    print("Parent namespace not registered")
+    print("\nParent namespace not registered\n")
+    ap.print_help()
     sys.exit()
 if not ("namespace" in etypes):
-    print("Namespace not registered at " + parent_namespace_hrns)
+    print("\nNamespace not registered at " + parent_namespace_hrns)
+    ap.print_help()
     sys.exit()
 
 if real_name is None:
@@ -83,14 +91,17 @@ if real_name is None:
 currency_fph, currency_hrns, etypes, \
 m = identify_entity(currency_hrns)
 if not currency_fph:
-    print("Currency is not registered")
+    print("\nCurrency is not registered\n")
+    ap.print_help()
     sys.exit()
 if not ("currency" in etypes):
-    print("Currency not registered at " + currency_hrns)
+    print("\nCurrency not registered at " + currency_hrns)
+    ap.print_help()
     sys.exit()
 
 if not re_email.match(primary_email_address):
-    print("Invalid primary email address")
+    print("\nInvalid primary email address\n")
+    ap.print_help()
     sys.exit()
 
 if secondary_email_address is None:
@@ -99,11 +110,12 @@ elif not re_email.match(secondary_email_address):
     secondary_email_address = ""
 
 #if not re_password.match(password):
-#    print("Invalid password")
+#    print("\nInvalid password\n")
 #    sys.exit()
 
 if not re_pin.match(pin):
-    print("Invalid PIN")
+    print("\nInvalid PIN\n")
+    ap.print_help()
     sys.exit()
 
 primid_fph, primid_hrns, access_token, \

@@ -420,6 +420,7 @@ def login():
 
     session["show_top_menu"] = False
     session["show_extended_menu"] = False
+    session["show_turnover"] = False
 
     # Hub operational mode (read from environment variable HUB_MODE)
     hub_mode = get_hub_mode()
@@ -742,6 +743,12 @@ def toggle_menu():
 @login_required
 def toggle_more():
     session["show_extended_menu"] = not session["show_extended_menu"]
+    return redirect("/home_ahc")
+
+@app.route("/toggle_turnover")
+@login_required
+def toggle_turnover():
+    session["show_turnover"] = not session["show_turnover"]
     return redirect("/home_ahc")
 
 
