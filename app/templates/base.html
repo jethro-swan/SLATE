@@ -115,7 +115,7 @@ crossorigin="anonymous"></script>
   <div class="mb"><a class="mb" href="/help">help</a></div>
 {% endif %}
 
-  <!-- Test/development stuff -->
+<!-- Test/development stuff -->
 <div class="footnote">
 &nbsp;&nbsp;v{{ version }}
 </div>
@@ -129,19 +129,21 @@ crossorigin="anonymous"></script>
     <div>
       <a href="/create_namespace">new namespace</a> |
       <a href="/create_currency">new currency</a> |
-      {% if show_csv_import_link %}
-        <a href="/import/dataset">import dataset</a> |
-      {% endif %}
-      <a href="/invitation/generate">invite user</a>
+      <a href="/create_pairing/{{ primid_fph }}">join currency</a>
     </div>
     <div>
-      Login identity = {{ primid_hrns }} |
-      <a href="/create_pairing/{{ primid_fph }}">join currency</a> |
       {% if show_volume %}
       <a href="/toggle_volume">hide volume</a>
       {% else %}
       <a href="/toggle_volume">show volume</a>
       {% endif %}
+      | <a href="/invitation/generate">invite user</a>
+      {% if show_csv_import_link %}
+        | <a href="/import/dataset">import dataset</a>
+      {% endif %}
+    </div>
+    <div>
+      [logged in as <b>{{ primid_hrns }}</b>]
     </div>
   {% endif %}
 
@@ -167,9 +169,6 @@ crossorigin="anonymous"></script>
     </ul>
   {% endif %}
 {% endwith %}
-
-
-
 
 {% block content %}{% endblock %}
 
