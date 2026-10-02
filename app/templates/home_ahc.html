@@ -7,7 +7,8 @@ This interface implements the more tradional behaviour of previous open money
 implementations, identifying *accounts* as a single intersection on a notional
 grid, each column identifying a *currency* and each rows identifing an *ahid*
 (*account-holder identity*). Unlike a *primid*, an *ahid* can have no more than
-one *account* in any *currency*. This enable the *accounts* to be hidden.
+one *account* in any *currency*. This enable the *account* identifiers to be
+hidden.
 --------------------------------------------------------------------------- -->
 
 {% if concestor_hrns %}
@@ -79,6 +80,9 @@ Paying from <b>{{ payer_ahid_hrns_short }}</b> in currency
     <td class="h" colspan="2"><b>currency</b></td>
     <td class="h"><b>account-holder</b></td>
     <td class="h"><b>balance</b></td>
+    {% if show_volume %}
+    <td class="h"><b>volume</b></td>
+    {% endif %}
     <td class="h"><a href="/toggle_menu"><b>+</b></a></td>
   </tr>
   {% for p_row in p_rows %}<!-- list of dictionaries -->
@@ -122,6 +126,11 @@ Paying from <b>{{ payer_ahid_hrns_short }}</b> in currency
     <td align="right">
       {{ p_row.balance }}
     </td>
+    {% if show_volume %}
+    <td align="right">
+      {{ p_row.volume }}
+    </td>
+    {% endif %}
     <td>
       <a href="/journal/{{ p_row.ahid_fph }}/{{ p_row.currency_fph }}">
         {% if p_row.pairing_selected %}

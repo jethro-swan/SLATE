@@ -420,7 +420,7 @@ def login():
 
     session["show_top_menu"] = False
     session["show_extended_menu"] = False
-    session["show_turnover"] = False
+    session["show_volume"] = False
 
     # Hub operational mode (read from environment variable HUB_MODE)
     hub_mode = get_hub_mode()
@@ -745,14 +745,11 @@ def toggle_more():
     session["show_extended_menu"] = not session["show_extended_menu"]
     return redirect("/home_ahc")
 
-@app.route("/toggle_turnover")
+@app.route("/toggle_volume")
 @login_required
-def toggle_turnover():
-    session["show_turnover"] = not session["show_turnover"]
+def toggle_volume():
+    session["show_volume"] = not session["show_volume"]
     return redirect("/home_ahc")
-
-
-
 
 #==============================================================================
 # The HOME SCREEN
@@ -779,6 +776,12 @@ def home_ahc(
         show_top_menu = False
         session["show_top_menu"] = show_top_menu
     show_top_menu = session["show_top_menu"]
+
+    if not ("show_volume" in session.keys()):
+        show_volume = False
+        session["show_volume"] = show_volume
+    show_volume = session["show_volume"]
+#    print("show_volume = " + str(show_volume))
 
     show_payment_form = True
 
@@ -957,6 +960,7 @@ def home_ahc(
                 p_row["account_owner_hrns"] = fph_to_hrns(account_owner_fph)
                 p_row["balance"] = integer_to_money_format(account_balance)
                 p_row["p_balance"] = integer_to_money_s_format(account_balance)
+                p_row["volume"] = integer_to_money_format(account_volume)
                 p_row["isneg"] = (account_balance < 0)
                 p_row["prefix"] = prefix
                 p_row["suffix"] = suffix
@@ -1130,6 +1134,7 @@ def home_ahc(
         pmap_t = pmap_t,
         form = form,
         show_top_menu = show_top_menu,
+        show_volume = show_volume,
         display_in_from_lines = False,
         show_payment_form = show_payment_form,
         p_currency_hrns = p_currency_hrns,
@@ -1650,6 +1655,7 @@ def stewardships():
         hub_mode = "slate",
 #        hub_mode = get_hub_mode(),
         show_top_menu = show_top_menu,
+        show_volume = show_volume,
         version = get_version(),
         show_csv_import_link = get_config("show_dataset_csv_import_link"),
         primid_type = "login identity",
@@ -1659,7 +1665,6 @@ def stewardships():
         stewardships_tabulated = stewardships_tabulated,
         number_of_messages = n_messages,
         number_of_indelible_messages = n_indelible_messages
-
     )
 
 # list stewardships -----------------------------------------------------------

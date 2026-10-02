@@ -136,7 +136,12 @@ crossorigin="anonymous"></script>
     </div>
     <div>
       Login identity = {{ primid_hrns }} |
-      <a href="/create_pairing/{{ primid_fph }}">join currency</a>
+      <a href="/create_pairing/{{ primid_fph }}">join currency</a> |
+      {% if show_volume %}
+      <a href="/toggle_volume">hide volume</a>
+      {% else %}
+      <a href="/toggle_volume">show volume</a>
+      {% endif %}
     </div>
   {% endif %}
 
