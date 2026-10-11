@@ -745,6 +745,7 @@ def toggle_more():
     session["show_extended_menu"] = not session["show_extended_menu"]
     return redirect("/home_ahc")
 
+# Toggle the display of the volume column in the home screen table:
 @app.route("/toggle_volume")
 @login_required
 def toggle_volume():
@@ -1432,6 +1433,8 @@ def journal(ahid_fph, currency_fph):
     previous_page = session["previous_page"] # Ensure correct page sequence
     session["previous_page"] = page
 
+    show_volume = session["show_volume"]
+
     primid_fph, primid_hrns, etypes, \
     m = identify_entity(current_user.get_id())
 
@@ -1459,7 +1462,9 @@ def journal(ahid_fph, currency_fph):
             + "currency_fph, " \
             + "amount, " \
             + "payer_balance, " \
+            + "payer_volume, " \
             + "payee_balance, " \
+            + "payee_volume, " \
             + "annotation " \
             + "FROM payments " \
             + "WHERE (payer_fph = ? OR payee_fph = ?) and (currency_fph = ?)",
@@ -1488,9 +1493,11 @@ def journal(ahid_fph, currency_fph):
         amount = integer_to_money_format(p[5])
         payer_balance_negative = (p[6] < 0)
         payer_balance = integer_to_money_format(p[6])
-        payee_balance_negative = (p[7] < 0)
-        payee_balance = integer_to_money_format(p[7])
-        annotation = p[8]
+        payer_volume = integer_to_money_format(p[7])
+        payee_balance_negative = (p[8] < 0)
+        payee_balance = integer_to_money_format(p[8])
+        payee_volume = integer_to_money_format(p[9])
+        annotation = p[10]
         # The results are now put into a list of dictionaries to be fed to the
         # template:
         journal_row = {}
@@ -1503,18 +1510,21 @@ def journal(ahid_fph, currency_fph):
             journal_row["other_ahid_hrns"] = fph_to_hrns(payee_fph)
             journal_row["balneg"] = payer_balance_negative
             journal_row["balance"] = payer_balance
+            journal_row["volume"] = payer_volume
         elif payee_fph == ahid_fph: # receipt
             journal_row["type"] = "receipt"
             journal_row["amount"] = amount
             journal_row["other_ahid_hrns"] = fph_to_hrns(payer_fph)
             journal_row["balneg"] = payee_balance_negative
             journal_row["balance"] = payee_balance
+            journal_row["volume"] = payee_volume
         else: # this should never happen
             journal_row["type"] = ""
             journal_row["amount"] = ""
             journal_row["other_ahid_hrns"] = ""
             journal_row["balneg"] = ""
             journal_row["balance"] = ""
+            journal_row["volume"] = ""
         journal_row["annotation"] = annotation
 #        journal_rows.append(journal_row)
         journal_rows.insert(0, journal_row)
@@ -1531,6 +1541,7 @@ def journal(ahid_fph, currency_fph):
         hub_mode = "slate",
         version = get_version(),
         show_csv_import_link = get_config("show_dataset_csv_import_link"),
+        show_volume = show_volume,
         primid_type = "login identity",
         primid_fph = primid_fph,
         primid_hrns = primid_hrns,

@@ -1,7 +1,4 @@
 #/usr/bin/bash
 
-SLATE_PID=(`ps ef | grep gunicorn | grep SLATE | grep ' Sl ' | awk '{print $1}'`)
-echo $SLATE_PID
-
-#kill -TERM $SLATE_PID
-
+SLATE_PID=(`ps ax | grep gunicorn | grep slate | awk '{print $1}'`)
+kill -TERM $SLATE_PID

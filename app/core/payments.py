@@ -74,7 +74,9 @@ def create_payments_db(owner_fph):
             + "currency_fph TEXT NOT NULL, " \
             + "amount INTEGER NOT NULL, " \
             + "payer_balance INTEGER NOT NULL, " \
+            + "payer_volume INTEGER NOT NULL, " \
             + "payee_balance INTEGER NOT NULL, " \
+            + "payee_volume INTEGER NOT NULL, " \
             + "annotation TEXT" \
             + ");"
         )
@@ -304,9 +306,11 @@ def payment(payer_account_fph, payee_account_fph, amount, annotation):
             + "currency_fph, " \
             + "amount, " \
             + "payer_balance, " \
+            + "payer_volume, " \
             + "payee_balance, " \
+            + "payee_volume, " \
             + "annotation " \
-            + ") VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+            + ") VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
             (
                 payment_timestamp,
                 payer_account_fph,
@@ -314,7 +318,9 @@ def payment(payer_account_fph, payee_account_fph, amount, annotation):
                 currency_fph,
                 amount,
                 payer_account_balance,
+                payer_account_volume,
                 payee_account_balance,
+                payee_account_volume,
                 annotation
             )
         )
@@ -510,9 +516,11 @@ def ah_payment(
             + "currency_fph, " \
             + "amount, " \
             + "payer_balance, " \
+            + "payer_volume, " \
             + "payee_balance, " \
+            + "payee_volume, " \
             + "annotation" \
-            + ") VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+            + ") VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
             (
                 payment_timestamp,
                 payer_ahid_fph,     # The *ahid* and *account* FPH are stored
@@ -520,7 +528,9 @@ def ah_payment(
                 currency_fph,
                 amount,
                 payer_account_balance,
+                payer_account_volume,
                 payee_account_balance,
+                payee_account_volume,
                 annotation
             )
         )

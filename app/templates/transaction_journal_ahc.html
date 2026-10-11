@@ -10,7 +10,11 @@ in <em>currency</em>: <b>{{ currency_hrns }}</b><br /><br />
 
 <table>
   <tr>
+    {% if show_volume %}
+    <td class="h" colspan="6">
+    {% else %}
     <td class="h" colspan="5">
+    {% endif %}
       <b>Payments made/received</b> (most recent first)
     </td>
   </tr>
@@ -19,6 +23,9 @@ in <em>currency</em>: <b>{{ currency_hrns }}</b><br /><br />
     <td class="h"><b>in</b></td>
     <td class="h"><b>out</b></td>
     <td class="h"><b>balance</b></td>
+    {% if show_volume %}
+    <td class="h"><b>volume</b></td>
+    {% endif %}
     <td class="h"><b>annotation</b></td>
   </tr>
   {% for row in journal_rows %}
@@ -43,6 +50,9 @@ in <em>currency</em>: <b>{{ currency_hrns }}</b><br /><br />
     <td></td>
     {% endif %}
     <td align="right">{{ row.balance }}</td>
+    {% if show_volume %}
+    <td align="right">{{ row.volume }}</td>
+    {% endif %}
     <td align="left">{{ row.annotation }}</td>
   </tr>
   {% endfor %}

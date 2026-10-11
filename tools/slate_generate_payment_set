@@ -72,7 +72,7 @@ ap.add_argument(
     help = "Create utter gibberish in the annotations field"
 )
 ap.add_argument(
-    "-d", "--display-payment-line", dest = "display_output",
+    "-d", "--display-payment-lines", dest = "display_output",
     action = "store_true", default = False,
     help = "Display payment (currency | payer | payee | amount | annotation)"
 )
@@ -86,6 +86,11 @@ ap.add_argument(
     action = "store", default = "comma",
     help = "CSV output field separator (comma|semicolon|colon|tab)"
 )
+ap.add_argument(
+    "-z", "--zealous", dest = "zealous_output", action = "store_true",
+    default = False,
+    help = "List additional output"
+)
 
 args = ap.parse_args()
 
@@ -96,6 +101,11 @@ else:
     primid_id = args.primid_id
 
 n_payments = int(args.n_payments)
+if n_payments < 1:
+    sys.stderr.write("\nThe number of payments must be at least 1\n\n")
+    ap.print_help()
+    sys.exit(1)
+
 max_payment = 100*int(args.max_payment)
 round_payment = args.round_payment
 
@@ -115,6 +125,10 @@ gibberish = args.gibberish
 
 display_output = args.display_output
 
+zealous_output = args.zealous_output
+if zealous_output:
+    display_output = True
+
 export_csv_lines = args.export_csv_lines
 
 export_csv_separator = args.export_csv_separator
@@ -132,16 +146,17 @@ else:
 if ahid_prefix.isalpha():
     ahid_prefix = ahid_prefix.lower()
 else:
-    sys.stderr.write("The AHID prefix must be alphabetic")
+    sys.stderr.write("\nThe AHID prefix must be alphabetic\n\n")
     sys.exit(1)
 
 if use_names:
     # Initialize Faker object
     fake = Faker()
     Faker.seed(24)
+    excluded_words = {"fisting"}
 
-if display_output:
-    print("Number of payments: " + str(n_payments))
+if zealous_output:
+    print("\nNumber of payments: " + str(n_payments))
     print("Maximum payment:    " + str(max_payment))
     print("Round payment:      " + str(round_payment))
     print("Currency:           " + currency_id)
@@ -154,15 +169,15 @@ apad = math.ceil(math.log10(number_of_ahid))
 
 primid_fph, primid_hrns, etypes, m = identify_entity(primid_id)
 if not primid_fph:
-    sys.stderr.write("Specified primid does not exist")
+    sys.stderr.write("Specified primid does not exist\n\n")
     sys.exit(1)
 
 currency_fph, currency_hrns, etypes, m = identify_entity(currency_id)
 if not currency_fph:
-    sys.stderr.write("Specified currency does not exist")
+    sys.stderr.write("\nSpecified currency does not exist\n\n")
     sys.exit(1)
 
-if display_output:
+if zealous_output:
     print()
 
 ahid_hrns_list = []
@@ -178,26 +193,28 @@ while ahid_count < number_of_ahid:
     if not (ahid_hrns in ahid_hrns_list):
         ahid_hrns_list.append(ahid_hrns)
         ahid_count += 1
-        if display_output:
+        if zealous_output:
             print(str(ahid_count).zfill(apad) + " : " + ahid_hrns)
 
-if display_output:
+if zealous_output:
     print("\nNumber of unique AHID = " + str(len(list(set(ahid_hrns_list)))))
+    print()
 
 for ahid_hrns in ahid_hrns_list:
     p_fph, p_hrns, m = new_pairing(primid_id, ahid_hrns, currency_hrns)
-    if display_output:
+    if zealous_output:
         print(p_fph + ": pairing " + currency_hrns + " with " + ahid_hrns)
 
 pmap, m = retrieve_pmap(primid_hrns)
 
-if display_output:
+if zealous_output:
+    print()
     print("="*120)
 
 p_count = 0
 looping = True
 while looping:
-    p_count += 1
+#    p_count += 1
     payer_ahid_hrns = random.choice(ahid_hrns_list)
     payee_ahid_hrns = random.choice(ahid_hrns_list)
     if round_payment:
@@ -208,11 +225,15 @@ while looping:
     if gibberish:
         rword = RandomWord()
         rwords = rword.random_words(3) # list
+        for word in rwords:
+            if word in excluded_words:
+                rwords.remove(word)
         annotation = " ".join(rwords)
     else:
         annotation = "test" + str(p_count).zfill(4)
 
     if payer_ahid_hrns != payee_ahid_hrns:
+        p_count += 1
         if display_output:
             print(
                 "{:>5} | {:>15} | {:>20} | {:>20} | {:>10.2f} | {}".format(
@@ -242,5 +263,5 @@ while looping:
     if p_count == n_payments:
         break
 
-if display_output:
+if zealous_output:
     print("="*120)
