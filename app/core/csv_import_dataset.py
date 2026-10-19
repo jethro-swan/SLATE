@@ -1,4 +1,19 @@
-
+# NESTS/SLATE - a networked tool to support user-created and -stewarded
+# currencies and measures (open money and open measure)
+# Copyright (C) 2026. 2025, 2024, 2023, 2022 John Waters
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU Affero General Public License as published
+# by the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU Affero General Public License for more details.
+#
+# You should have received a copy of the GNU Affero General Public License
+# along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 from app.core.slate_core import identify_entity
 from app.core.slate_core import complete_parent_namespace
@@ -111,7 +126,7 @@ def import_csv_dataset(fpath, primid_id):
                     "unspecified", # units
                     "lt", # metrical_equivalence
                     "unspecified", # dimensions
-                    True # initially active         
+                    True # initially active
                 )
             if not currency_fph: # *currency* could not be created
                 errors.append(
