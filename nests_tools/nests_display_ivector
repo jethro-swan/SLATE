@@ -1,0 +1,189 @@
+#!/home/slate/SLATE/venv/bin/python3
+
+import sys
+import argparse
+
+from prettytable import PrettyTable
+
+from app.core.fph_hrns_maps import hrns_to_fph, fph_to_hrns
+from app.core.slate_core import get_parent
+from app.core.slate_core import get_private_namespace_root
+from app.core.slate_core import identify_entity
+from app.core.slate_core import get_entity_types
+
+# 2026-10-11: Adding vector types
+#
+# As with any other entity types, we need a record of the identifier(s), owner,
+# stewards, etc., so SQLite tables are still used. However, in contrast to
+# *currencies* where each variable instance is an *account*
+
+# An *ivector* has a set of stewards (*primids*) and an owner (the *primid*
+# that first created it). It also has a set of users. In contrast to the case
+# of a *money" (where two *accounts* are adjusted simultaneously by the same
+# scalar value), an *ivector* can only be adjusted/updated by one agent at a
+# time.
+#
+# As with any other *currency* type, all changes are recorded in a journal
+# identifying:
+# - date & time
+# - which agent updated the variable
+# - the update (vector)
+# - the value following the update (vector)
+# - an annotation
+#
+# As with *currencies* of type "money", an error (or disputed update) can be
+# reversed by a subsequent update.
+
+ap = argparse.ArgumentParser(description = "Display an impact vector")
+ap.add_argument(
+    "-v", "--impact-vector-identifier", dest = "ivector_id", action = "store",
+    default = None,
+    help = "Display an impact vector"
+)
+args = ap.parse_args()
+if args.ivector_id is not None:
+    ivector_fph, ivector_hrns, etypes, m = identify_entity(args.ivector_id)
+    if m:
+        print(m)
+    if not ivector_fph:
+        print("\nInvalid ivector identifier: " + args.ivector_id + "\n")
+        ap.print_help()
+        sys.exit()
+    elif not ("ivector" in etypes):
+        print("\nNo ivector is registered to " + ivector_hrns + "\n")
+        ap.print_help()
+        sys.exit()
+    else:
+        print("Impact vector: " + ivector_hrns + " (ivector_fph)")
+        with open(IVECTORS + ivector_fph, "r") as iv:
+            ivector_lines = iv.readlines()
+else:
+#    tfpath = SLATE_TEMP + "/" + random_filename()
+#    with open(tfpath, "w") as temp_file:
+#        for row in sys.stdin:
+#            temp_file.write(row)
+    ivector_lines = []
+    for row in sys.stdin:
+        ivector_lines
+
+# At this point there should be the complete contents of an ivector file in
+# the list ivector_lines[].
+
+# First display the header information in its own table:
+header_table = PrettyTable()
+header_table.align = "l"
+#header_table.field_names = ["property", "value"]
+table_rows = []
+table_row = []
+# Unix timestamp
+table_row.append("unixtime")
+table_row.append(ivector_lines.pop(0))
+table_rows.append(table_row)
+# Date last updated (YYYY-MM-DD)
+table_row.append("date last updated")
+table_row.append(ivector_lines.pop(0))
+table_rows.append(table_row)
+# time last updated (hh:mm:ss.ss)
+table_row.append("time last updated")
+table_row.append(ivector_lines.pop(0))
+table_rows.append(table_row)
+# updated by
+table_row.append("last updated by (FPH)")
+table_row.append(ivector_lines.pop(0))  # Unix timestamp
+table_rows.append(table_row)
+#
+table_row.append("last updated by (HRNS)")
+table_row.append(ivector_lines.pop(0))  # Unix timestamp
+table_rows.append(table_row)
+#
+table_row.append("")
+table_row.append(ivector_lines.pop(0))  # Unix timestamp
+table_rows.append(table_row)
+
+
+print("ivector FPH")
+
+
+
+
+
+
+
+entity_table = PrettyTable()
+entity_table.align = "l"
+entity_table.field_names = ["property", "value", "unit"]
+table_rows = []
+
+
+
+
+
+
+for identifier in identifiers_list:
+    identifier_fph, identifier_hrns, etypes, m = identify_entity(identifier[0])
+
+#    identifier_fph = identifier[0]
+#    identifier_hrns = fph_to_hrns(identifier_fph)
+#    etypes, m = get_entity_types(identifier_fph) # list types registered
+    pnsr = get_private_namespace_root(identifier_fph)
+#    if m: # (this should never happen)
+#        print(m)
+
+    parent_fph = get_parent(identifier_fph)
+
+    table_row = []  # a new row in the table is required for each entity type
+                    # registered for this
+
+    # column 1: identifier HRNS
+    table_row.append(identifier_hrns)
+
+    # column 2: identifier FPH
+    table_row.append(identifier_fph)
+
+    # Column 3: FPH of parent *namespace*
+    table_row.append(parent_fph)
+
+    # Column 4: private *namespace* root FPH
+    table_row.append(pnsr)
+
+    # Column 5: *namespace* registered?
+    if "namespace" in etypes:
+        table_row.append("N")
+    else:
+        table_row.append("")
+    # Column 6: *currency* registered?
+    if "currency" in etypes:
+        table_row.append("C")
+    else:
+        table_row.append("")
+    # Column 7: *account* registered?
+    if "account" in etypes:
+        table_row.append("A")
+    else:
+        table_row.append("")
+    # Column 8: *ahid* registered?
+    if "ahid" in etypes:
+        table_row.append("H")
+    else:
+        table_row.append("")
+    # Column 9: *primid* registered?
+    if "primid" in etypes:
+        table_row.append("P")
+    else:
+        table_row.append("")
+
+    table_rows.append(table_row)
+
+entity_table.add_rows(table_rows[0:])
+
+print(entity_table)
+
+print(
+    "\n" \
+    + "Entity types registered for each identifier:\n"
+    + "  N = namespace\n" \
+    + "  C = currency\n" \
+    + "  A = account (variable)\n" \
+    + "  H = account-holder identity (ahid)\n" \
+    + "  P = primary identity (primid)\n"
+)

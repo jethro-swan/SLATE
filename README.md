@@ -1,13 +1,54 @@
+## Concise history
+
+This project started some time ago as **NESTS**, the [older description]
+(https://nests.lrc.org.uk) of which is very much out of date and in urgent need
+of correction.
+
+Meanwhile [SLATE](https://slate.lrc.org.uk/) was created a way to get up and
+running quickly as means to demonstrate some of the principles of
+[open money](https://openmoney.github.io/specification) payment networks. As
+such [SLATE](https://slate.lrc.org.uk/) was created as a self-contained _Flask_
+application. However, with the gradual addition of a number of command line
+tools and various additions to the core, [SLATE](https://slate.lrc.org.uk/) has
+been evolving into a re-architected [NESTS](https://nests.lrc.org.uk).
+
+## Moving forwards
+
+In the near future the following changes are likely:
+  - The name **NESTS** will be re-allocated to the core components used already
+    both by the **SLATE** _Flask_ application and by the more broadly capable
+    tools being developed using a more eclectic mixture.
+  - The name **SLATE** will (probably) be retained for the _Flask_ application
+    (which is already functionally complete).
+  - For the Python component, a single _venv_ will serve. The path file in the
+    _venv_ directory will change
+    - _from_ /home/slate/SLATE/venv/lib/python3.12/site-packages/slate.pth
+      (/home/slate/SLATE)
+    - _to_ /home/nests/NESTS/venv/lib/python3.12/site-packages/nests.pth
+      (/home/nests/NESTS)
+    and any additional Python interfaces will be identified by name (e.g.
+    "app" will be replaced by "slate")  
+
+This approach will make it convenient to retain the already working SLATE
+instances while the broader NESTS framework is developed.
+
+
+
 ## SLATE (Simple Ledger Application: a Temporary Expedient)
 
 NB: This summary is lagging behind the (still far from complete) description
 given at https://slate.lrc.org.uk/ in may ways, but is ahead of it in others.
 Experimentation during the the development of _SLATE_ has suggested a number of
-acceptable compromises to accelerate the realization of _NESTS_.
+acceptable compromises to accelerate the realization of _NESTS_. Among these is
+the adoption of _SQLite_ to provide more efficient storage.
 
-This is an extremely simple _Flask_ application to support nested
+_SLATE_ is an extremely simple _Flask_ application to support nested
 [open money](https://openmoney.github.io/specification) payment networks, each
-able to support multiple currencies. (NB, that specification is overdue for some fairly minor revisions, most notably the replacement of **secids** by **ahids**.)
+able to support multiple currencies. NB, that specification is overdue for
+some fairly minor revisions, most notably _either_ the replacement of
+**secids** by **ahids** _or_ the redefinition of **secids** to equate them to
+**ahids**. The latter appears to be an acceptable solution, and is certainly
+much simpler.
 
 This is a temporary system to allow networks/islands to form while
 [NESTS](https://nests.lrc.org.uk) is still being developed (its specification
@@ -264,4 +305,4 @@ Instead, it posts a reversing transaction.
 
 ----
 
-Most recently updated: 2025/09/10 (incompletely)
+Most recently updated: 2026/10/11 (incompletely)

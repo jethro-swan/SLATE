@@ -680,7 +680,14 @@ def create_entities_db(owner_fph):
             + "ts_pointer BLOB" \
             + ");"
         )
-        # Create currency_accounts table:  ### PROBABLY NOT NEEDED
+        # Create table of all *accounts* in a particular *currency*:
+        #
+        # PROBABLY NOT NEEDED given that all *accounts* in that *currency* that
+        # have actually used it will be listed in the *currency* journal.
+        #
+        # An the *accounts* in a *currency* might number thousands, so such a
+        # record would be both inefficient and redundant.
+        #
         cursor.execute(
             "CREATE TABLE IF NOT EXISTS currency_accounts (" \
             + "currency_fph TEXT, " \
