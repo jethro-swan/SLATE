@@ -86,3 +86,5 @@ currency_creation_form_full = FALSE
 votes_enabled = FALSE
 
 counts_enabled = FALSE
+
+default_rows_displayed = 10

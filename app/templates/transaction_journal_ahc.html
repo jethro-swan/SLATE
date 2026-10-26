@@ -24,7 +24,13 @@
 
 <p>For <em>account-holder</em>: <b>{{ ahid_hrns }}</b><br />
 in <em>currency</em>: <b>{{ currency_hrns }}</b><br /><br />
-(volume so far: {{ account_volume }})</p>
+(volume so far: {{ account_volume }}) |
+{% if show_all_journal_rows %}
+<a href="/toggle_all_journal_rows">show only most recent journal rows</a>
+{% else %}
+<a href="/toggle_all_journal_rows">show all journal rows</a>
+{% endif %}
+</p>
 
 <table>
   <tr>
@@ -47,6 +53,7 @@ in <em>currency</em>: <b>{{ currency_hrns }}</b><br /><br />
     <td class="h"><b>annotation</b></td>
   </tr>
   {% for row in journal_rows %}
+  {% if row.show %}
   <tr>
     {% if row.type == "receipt" %}
     <td title="{{ row.date }} {{ row.time }}" align="left">
@@ -73,13 +80,15 @@ in <em>currency</em>: <b>{{ currency_hrns }}</b><br /><br />
     {% endif %}
     <td align="left">{{ row.annotation }}</td>
   </tr>
+  {% endif %}
   {% endfor %}
 </table>
 
+{% if plot_filepath %}
 <br />
 <br />
-
 <img src="{{ plot_filepath }}" border="0" />
+{% endif %}
 
 <br />
 <a href="/account/export/{{ account_fph }}">Export as CSV</a>

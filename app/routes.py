@@ -195,6 +195,13 @@ def fph_to_display_type(agent_id):
 
 development_mode = False
 
+# TEST STUFF:
+#@app.route('/get_url')
+#def get_url():
+#    full_url = request.url
+#    return f'The full URL is: {full_url}'
+
+
 
 # registration ----------------------------------------------------------------
 @app.route("/register", methods = ["GET", "POST"])
@@ -770,6 +777,25 @@ def toggle_more():
 def toggle_volume():
     session["show_volume"] = not session["show_volume"]
     return redirect("/home_ahc")
+
+# Toggle the display of the full set of rows in the journal screen table:
+@app.route("/toggle_all_journal_rows")
+@login_required
+def toggle_all_journal_rows():
+    if "all_journal_rows" in session:
+        session["all_journal_rows"] = not session["all_journal_rows"]
+#        print("all_journal_rows = " + str(session["all_journal_rows"]))
+    else:
+        session["all_journal_rows"] = False
+    if ("journal_ahid" in session) and ("journal_currency" in session):
+        ahid_fph = session["journal_ahid"]
+        currency_fph = session["journal_currency"]
+#        print("ahid_fph = " + ahid_fph)
+#        print("currency_fph = " + currency_fph)
+        return redirect("/journal/" + ahid_fph + "/" + currency_fph)
+    else:
+#        print("Session stuff missing")
+        return redirect("/home_ahc")
 
 #==============================================================================
 # The HOME SCREEN
@@ -1442,6 +1468,12 @@ def journal(ahid_fph, currency_fph):
         flash("Invalid currency")
         return redirect("/home_ahc")
 
+    session["journal_ahid"] = ahid_fph
+    session["journal_currency"] = currency_fph
+
+#    print("\njournal_ahid = " + session["journal_ahid"])
+#    print("journal_currency = " + session["journal_currency"])
+
     # Hub operational mode (read from environment variable HUB_MODE)
     hub_mode = get_hub_mode()
 
@@ -1451,6 +1483,18 @@ def journal(ahid_fph, currency_fph):
 
     previous_page = session["previous_page"] # Ensure correct page sequence
     session["previous_page"] = page
+
+#    full_url = request.url #
+    if "current_url" in session:
+        session["previous_url"] = session["current_url"]
+    session["current_url"] = request.url
+
+    if "all_journal_rows" in session:
+        show_all_journal_rows = session["all_journal_rows"]
+    else:
+        show_all_journal_rows = False
+
+    default_rows_displayed = get_config("default_rows_displayed")
 
     show_volume = session["show_volume"]
 
@@ -1504,6 +1548,8 @@ def journal(ahid_fph, currency_fph):
 
     plot_points = []
 
+    rows_displayed = int(default_rows_displayed)
+
     journal_rows = []
     for payment in all_payments:
         p = list(payment)
@@ -1544,6 +1590,8 @@ def journal(ahid_fph, currency_fph):
             plot_points.append((payer_balance,payer_volume ))
 #            x_bal.append(payer_balance)
 #            y_vol.append(payer_volume)
+            # Display?
+            journal_row["show"] = (rows_displayed > 0) or show_all_journal_rows
         elif payee_fph == ahid_fph: # receipt
             journal_row["type"] = "receipt"
             journal_row["amount"] = amount
@@ -1555,6 +1603,8 @@ def journal(ahid_fph, currency_fph):
             plot_points.append((payee_balance,payee_volume ))
 #            x_bal.append(payee_balance)
 #            y_vol.append(payee_volume)
+            # Display?
+            journal_row["show"] = (rows_displayed > 0) or show_all_journal_rows
         else: # this should never happen
             journal_row["type"] = ""
             journal_row["amount"] = ""
@@ -1564,6 +1614,10 @@ def journal(ahid_fph, currency_fph):
             journal_row["volume"] = ""
         journal_row["annotation"] = annotation
         journal_rows.insert(0, journal_row)
+
+        rows_displayed -= 1
+#        if rows_displayed == 0:
+#            break
 
 #    print("\nplot_points:")
 #    for plot_point in plot_points:
@@ -1598,6 +1652,7 @@ def journal(ahid_fph, currency_fph):
         account_fph = account_fph,
         account_volume = integer_to_money_format(account_volume),
         plot_filepath = url_for("static", filename="graphs/" + plot_filename),
+        show_all_journal_rows = show_all_journal_rows,
         number_of_messages = number_of_messages,
         number_of_indelible_messages = number_of_indelible_messages
     )
