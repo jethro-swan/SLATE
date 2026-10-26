@@ -19,7 +19,6 @@
 
 from app.core.slate_core import list_currency_accounts
 from app.core.slate_core import get_account_currency
-from app.core.slate_core import get_account_specific_properties
 from app.core.slate_core import identify_entity
 from app.core.slate_core import random_filename
 
@@ -33,9 +32,95 @@ from bokeh.io import export_png
 from bokeh.io import export_svg
 
 
+
+def create_balvol_plot(plot_points): # list of (balance, volume) tuples
+
+    X_width = 400 # pixels
+    Y_height = 400 # pixels
+    X0 = X_width // 2
+#    Y_step = 10 # pixels
+
+    bal_min = bal_max = 0
+    pp2 = []
+    for plot_point in plot_points:
+        bal = int(100*float(plot_point[0]))
+        vol = int(100*float(plot_point[1]))
+        bal_min = min(bal_min, bal)
+        bal_max = max(bal_max, bal)
+        pp2.append((bal, vol))
+
+    bal_lim = max(abs(bal_min), abs(bal_max))
+    if bal_lim == 0:
+        return "" # unable to plot graph
+
+    bal_scale = X0/bal_lim
+
+    plot_filename = random_filename() + ".svg"
+    plot_path = GRAPHS + plot_filename
+
+    pp3 = [(0, 0)] # Start at the origin (0, 0)
+    y = 0
+    for p in pp2:
+        x = round(p[0]*bal_scale)
+        y = p[1]
+        pp3.append((x, y))
+    v_max = pp3[-1][1] # the y value of the last element in the list
+    v_scale = Y_height/v_max
+    with open(plot_path, "w") as pf:
+        pf.write('<?xml version="1.0" standalone="no"?>')
+        pf.write(
+            '<svg xmlns="http://www.w3.org/2000/svg" version="1.1" ' \
+            + 'width="' + str(X_width) + '" height="' + str(Y_height) + '">'
+        )
+        pf.write(
+            '<style>' \
+            + '  text {' \
+            + '   font-family: Verdana,Helvetica,sans-serif;' \
+            + '   font-weight: normal;' \
+            + '   font-size:0.8em;' \
+            + '  } ' \
+            + '</style>'
+        )
+        # Add y-axis:
+        pf.write(
+            '<line x1="' + str(X0) + '" y1="0" ' \
+            + 'x2="' + str(X0) + '" y2="' + str(Y_height) + '" ' \
+            + 'style="stroke:black;stroke-width:1" />'
+        )
+        pf.write(
+            '<text x="' + str(X0 + 10) + '" y="10" ' \
+            + '>volume</text>'
+        )
+        # Add x-axis:
+        pf.write(
+            '<line x1="0" y1="' + str(Y_height) + '" ' \
+            + 'x2="' + str(X_width) + '" y2="' + str(Y_height) + '" ' \
+            + 'style="stroke:black;stroke-width:1" />'
+        )
+        pf.write(
+            '<text x="' + str(X0 + 100) + '" y="' + str(Y_height - 8) + '" ' \
+            + '>balance</text>'
+        )
+        p_from = pp3.pop()
+        while len(pp3) > 0:
+            p_to = pp3.pop()
+            x_from = str(p_from[0] + X0)
+            y_from = str(Y_height - round(p_from[1]*v_scale))
+            x_to = str(p_to[0] + X0)
+            y_to = str(Y_height - round(p_to[1]*v_scale))
+            pf.write(
+                '<line x1="' + x_from + '" y1="' + y_from + '" ' \
+                + 'x2="' + x_to + '" y2="' + y_to + '" ' \
+                + 'style="stroke:black;stroke-width:2" />'
+            )
+            p_from = p_to
+        pf.write('</svg>')
+
+    return plot_filename
+
 def currency_balance_graphs(currency_id):
-    currency_fph, currency_hrns, etype, m = identify_entity(currency_id)
-    if etype != "currency":
+    currency_fph, currency_hrns, etypes, m = identify_entity(currency_id)
+    if not ("currency" in etypes):
         return "", ""
 
     account_fph_list = list_currency_accounts(currency_fph)

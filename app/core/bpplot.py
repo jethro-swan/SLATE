@@ -19,7 +19,7 @@
 
 from app.core.slate_core import list_currency_accounts
 from app.core.slate_core import get_account_currency
-from app.core.slate_core import get_account_specific_properties
+#from app.core.slate_core import get_account_properties
 from app.core.slate_core import identify_entity
 from app.core.slate_core import random_filename
 
@@ -35,23 +35,20 @@ import sqlite3
 
 def account_balance_oscillation(ahid_hrns, currency_hrns):
 
-    ahid_fph, ahid_hrns, etype, m = identify_entity(ahid_hrns)
-    if etype != "ahid":
+    ahid_fph, ahid_hrns, etypes, m = identify_entity(ahid_hrns)
+    if not ("ahid" in etypes):
         return "", ""
 
-    currency_fph, currency_hrns, etype, m = identify_entity(currency_hrns)
-    if etype != "currency":
+    currency_fph, currency_hrns, etypes, m = identify_entity(currency_hrns)
+    if not ("currency"in etypes):
         return "", ""
 
     with sqlite3.connect(PAYMENTS_DB) as conn:
         cursor = conn.cursor()
         # Read transactions for specified currency:
         cursor.execute(
-            """
-            SELECT payer_fph, payee_fph, amount
-            FROM payments
-            WHERE currency_fph = ? AND (payer_fph = ? OR payee_fph = ?)
-            """,
+            "SELECT payer_fph, payee_fph, amount FROM payments " \
+            "WHERE currency_fph = ? AND (payer_fph = ? OR payee_fph = ?)",
             (currency_fph, ahid_fph, ahid_fph)
         )
         all_payments = cursor.fetchall()

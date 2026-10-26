@@ -1,5 +1,6 @@
 # NESTS/SLATE - a networked tool to support user-created and -stewarded
 # currencies and measures (open money and open measure)
+#
 # Copyright (C) 2026. 2025, 2024, 2023, 2022 John Waters
 #
 # This program is free software: you can redistribute it and/or modify
@@ -81,9 +82,9 @@ from app.core.cctld_list import *
 #           Pending resolution, fph_list = list(set(fph_list)) provides an
 #           acceptable solution at small scales.
 #
-# Note 3:   This file contains far too many definitions, but in the shorter it
-#           seems best to leave it as it is because of the risk of introducing
-#           circular imports.
+# Note 3:   This file contains far too many function definitions, but in the
+#           shorter term it seems best to leave it as it is because of the risk
+#           of introducing circular imports.
 #
 #==============================================================================
 
@@ -260,7 +261,7 @@ def authenticate_pin( # used in app/routes.py
     return validated
 
 #==============================================================================
-#
+# Create an empty SQLite database file:
 
 def create_db(dbpath):
     if os.path.exists(dbpath):
@@ -275,7 +276,7 @@ def create_db(dbpath):
     os.chmod(dbpath, 0o660)
 
 #==============================================================================
-#
+# Create the common replicated database identifying hubs:
 
 def create_hubs_db():
 
@@ -331,6 +332,13 @@ def _get_hub_mode():
     else:
         return "slate"
 
+# NB, this is now obsolescent (or possibly obsolete).
+
+def get_hub_mode():
+    return "slate"    # TEMPORARY FUDGE!
+#    return get_config("hub_mode")
+
+#==============================================================================
 # Get version number:
 def get_version():
     with open(VERSION, "r") as v_file:
@@ -338,13 +346,7 @@ def get_version():
     return version
 
 #==============================================================================
-#
-def get_hub_mode():
-    return "slate"    # TEMPORARY FUDGE!
-#    return get_config("hub_mode")
-
-#==============================================================================
-#
+# Identify the parent *namespace* of an entity:
 
 def get_parent(entity_fph):
     with sqlite3.connect(IDENTIFIERS_DB) as conn:
@@ -362,6 +364,7 @@ def get_parent(entity_fph):
     else:
         return result[0]
 
+# Record the parent *namespace* of an entity:
 
 def record_parent(id_fph, parent_fph):
     with sqlite3.connect(IDENTIFIERS_DB) as conn:
@@ -374,6 +377,7 @@ def record_parent(id_fph, parent_fph):
         conn.commit()
         cursor.close()
 
+# Identify the private *namespace* root (clade) of an entity:
 
 def get_private_namespace_root(entity_fph):
     with sqlite3.connect(IDENTIFIERS_DB) as conn:
@@ -393,6 +397,7 @@ def get_private_namespace_root(entity_fph):
 
 get_pnsr = get_private_namespace_root # alias
 
+# Record the private *namespace* root (clade) of an entity:
 
 def record_private_namespace_root(id_fph, private_namespace_root_fph):
     with sqlite3.connect(IDENTIFIERS_DB) as conn:
@@ -404,6 +409,7 @@ def record_private_namespace_root(id_fph, private_namespace_root_fph):
         conn.commit()
         cursor.close()
 
+# Identify whether the entity within which the specfied entity sits is active:
 
 def is_in_active_tree(entity_id):
     entity_fph, entity_hrns, etypes, m = identify_entity(entity_id)
@@ -414,11 +420,6 @@ def is_in_active_tree(entity_id):
             in_active_tree = False
             break
     return in_active_tree
-
-
-
-
-
 
 #==============================================================================
 # Choose the working database file for the *namespace*:
@@ -466,7 +467,7 @@ def select_payments_db_filepath(entity_fph):
     return DB
 
 #==============================================================================
-## Create the SQLite indentifiers database
+# Create the SQLite indentifiers database
 
 def create_identifiers_db():
 

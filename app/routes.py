@@ -75,6 +75,13 @@ from app.core.slate_core import hrns_strip_concestor
 from app.core.slate_core import pin_subset_prompt
 from app.core.slate_core import check_auth_hash
 from app.core.slate_core import authenticate_pin
+from app.core.slate_core import retrieve_pmap
+from app.core.slate_core import new_pairing
+from app.core.slate_core import retrieve_pairing_account_fph
+from app.core.slate_core import is_ancestor, is_in_private_namespace
+from app.core.slate_core import get_ahid_primid
+from app.core.slate_core import log_event
+from app.core.slate_core import random_filename
 
 from app.core.stewardship import add_currency_steward
 from app.core.stewardship import add_namespace_steward
@@ -82,18 +89,10 @@ from app.core.stewardship import remove_currency_steward
 from app.core.stewardship import list_namespace_stewardships
 from app.core.stewardship import list_currency_stewardships
 
-from app.core.slate_core import random_filename
-
 from app.core.configdb import get_config
 from app.core.qrcode import qrencode_invitation
 
-from app.core.slate_core import retrieve_pmap
-from app.core.slate_core import new_pairing
-from app.core.slate_core import retrieve_pairing_account_fph
 from app.core.payments import ah_payment
-from app.core.slate_core import is_ancestor, is_in_private_namespace
-from app.core.slate_core import get_ahid_primid
-from app.core.slate_core import log_event
 
 from app.core.csv_import_dataset import import_csv_dataset
 
@@ -138,6 +137,9 @@ from app.core.display import integer_to_money_url_format
 from app.core.display import etype_to_adtype
 
 from app.core.csv_import import import_minimal_payment_set_as_csv
+
+from app.core.bgraph import create_balvol_plot
+
 
 # Flask components: -----------------------------------------------------------
 
@@ -1493,6 +1495,15 @@ def journal(ahid_fph, currency_fph):
         flash("There are no journal entries to display")
         return redirect("/home_ahc")
 
+#    print("\nall_payments:")
+#    for p in all_payments:
+#        print(p)
+#    print()
+
+#    x_bal = y_vol = []
+
+    plot_points = []
+
     journal_rows = []
     for payment in all_payments:
         p = list(payment)
@@ -1514,9 +1525,10 @@ def journal(ahid_fph, currency_fph):
         payee_balance_negative = (p[8] < 0)
         payee_balance = integer_to_money_format(p[8])
         payee_volume = integer_to_money_format(p[9])
+
         annotation = p[10]
         # The results are now put into a list of dictionaries to be fed to the
-        # template:
+        # template and used to create the balance:volume plot:
         journal_row = {}
         journal_row["date"] = p_date
         journal_row["time"] = p_time
@@ -1528,6 +1540,10 @@ def journal(ahid_fph, currency_fph):
             journal_row["balneg"] = payer_balance_negative
             journal_row["balance"] = payer_balance
             journal_row["volume"] = payer_volume
+            # For plot:
+            plot_points.append((payer_balance,payer_volume ))
+#            x_bal.append(payer_balance)
+#            y_vol.append(payer_volume)
         elif payee_fph == ahid_fph: # receipt
             journal_row["type"] = "receipt"
             journal_row["amount"] = amount
@@ -1535,6 +1551,10 @@ def journal(ahid_fph, currency_fph):
             journal_row["balneg"] = payee_balance_negative
             journal_row["balance"] = payee_balance
             journal_row["volume"] = payee_volume
+            # For plot:
+            plot_points.append((payee_balance,payee_volume ))
+#            x_bal.append(payee_balance)
+#            y_vol.append(payee_volume)
         else: # this should never happen
             journal_row["type"] = ""
             journal_row["amount"] = ""
@@ -1543,8 +1563,15 @@ def journal(ahid_fph, currency_fph):
             journal_row["balance"] = ""
             journal_row["volume"] = ""
         journal_row["annotation"] = annotation
-#        journal_rows.append(journal_row)
         journal_rows.insert(0, journal_row)
+
+#    print("\nplot_points:")
+#    for plot_point in plot_points:
+#        print(plot_point)
+#    print()
+    plot_filename = create_balvol_plot(plot_points)
+#    print(plot_filename)
+
 
     number_of_messages, \
     number_of_indelible_messages = message_count(primid_fph, hub_mode)
@@ -1570,6 +1597,7 @@ def journal(ahid_fph, currency_fph):
         journal_rows = journal_rows,
         account_fph = account_fph,
         account_volume = integer_to_money_format(account_volume),
+        plot_filepath = url_for("static", filename="graphs/" + plot_filename),
         number_of_messages = number_of_messages,
         number_of_indelible_messages = number_of_indelible_messages
     )

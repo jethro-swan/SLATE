@@ -1,5 +1,6 @@
 # NESTS/SLATE - a networked tool to support user-created and -stewarded
 # currencies and measures (open money and open measure)
+#
 # Copyright (C) 2026. 2025, 2024, 2023, 2022 John Waters
 #
 # This program is free software: you can redistribute it and/or modify
