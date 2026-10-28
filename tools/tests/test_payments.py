@@ -3,16 +3,21 @@
 import sqlite3
 import pickle
 import random
+import math
 
 from app.core.fph_hrns_maps import fph_to_hrns, hrns_to_fph
 
 from app.core.slate_core import new_namespace, new_currency, new_primid
 from app.core.slate_core import split_hrns
-
 from app.core.slate_core import new_pairing
 from app.core.slate_core import retrieve_pmap
+from app.core.slate_core import retrieve_pairing_account_fph
 from app.core.slate_core import complete_parent_namespace
+from app.core.slate_core import get_account_properties
+
 from app.core.payments import ah_payment
+
+limit_psize = False
 
 parent_fph, m = hrns_to_fph("cc")
 
@@ -139,7 +144,21 @@ if run_payment_test_loop:
         payer_ahid_hrns = random.choice(ahid_hrns_list)
         payee_ahid_hrns = random.choice(ahid_hrns_list)
         currency_hrns = random.choice(currency_hrns_list)
-        amount = random.randint(0, 100000)
+
+        if limit_psize:
+            account_fph, primid_fph, \
+            m = retrieve_pairing_account_fph(payer_ahid_hrns, currency_hrns)
+            currency_fph, owner_fph, balance, volume, active, \
+            account_type, account_category, account_units, \
+            account_metrical_equivalence, account_dimensions, \
+            m = get_account_properties(account_fph)
+            limit = round(math.sqrt(abs(int(balance))))
+            amount = random.randint(0, 100000)
+            while amount > limit:
+                amount = random.randint(0, 100000)
+        else:
+            amount = random.randint(0, 100000)
+
         annotation = "test B" + str(n).zfill(4)
         if payer_ahid_hrns != payee_ahid_hrns:
             if display_payment_line:

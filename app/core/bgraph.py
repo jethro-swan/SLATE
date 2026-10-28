@@ -34,11 +34,15 @@ from bokeh.io import export_svg
 
 
 def create_balvol_plot(plot_points): # list of (balance, volume) tuples
+    margin = 10 # pixels -- offset
     X_Y_ratio = 4.7
     X_width = 400 # pixels
-    Y_height = round(X_width/X_Y_ratio) # pixels
+#    Y_height = round(X_width/X_Y_ratio) # pixels
 #    Y_height = round(2*X_width/X_Y_ratio) # pixels
     X0 = X_width // 2
+#    Y_height = round(X_width/X_Y_ratio) # pixels
+    Y_height = X0 # pixels
+
 #    Y_step = 10 # pixels
 
     bal_min = bal_max = 0
@@ -68,51 +72,47 @@ def create_balvol_plot(plot_points): # list of (balance, volume) tuples
     v_max = pp3[-1][1] # the y value of the last element in the list
     v_scale = Y_height/v_max
     with open(plot_path, "w") as pf:
-        pf.write('<?xml version="1.0" standalone="no"?>')
         pf.write(
-            '<svg xmlns="http://www.w3.org/2000/svg" version="1.1" ' \
-            + 'width="' + str(X_width) + '" height="' + str(Y_height) + '">'
-        )
-        pf.write(
-            '<style>' \
+            '<?xml version="1.0" standalone="no"?> ' \
+            + '<svg xmlns="http://www.w3.org/2000/svg" version="1.1" ' \
+            + 'width="' + str(margin + X_width + margin) + '" ' \
+            + 'height="' + str(margin + Y_height) + '"> ' \
+            + '<style>' \
             + '  text {' \
             + '   font-family: Verdana,Helvetica,sans-serif;' \
             + '   font-weight: normal;' \
             + '   font-size:0.8em;' \
             + '  } ' \
-            + '</style>'
-        )
-        # Add y-axis:
-        pf.write(
-            '<line x1="' + str(X0) + '" y1="0" ' \
-            + 'x2="' + str(X0) + '" y2="' + str(Y_height) + '" ' \
-            + 'style="stroke:black;stroke-width:1" />'
-        )
-        pf.write(
-            '<text x="' + str(X0 + 10) + '" y="10" ' \
-            + '>volume</text>'
-        )
-        # Add x-axis:
-        pf.write(
-            '<line x1="0" y1="' + str(Y_height) + '" ' \
-            + 'x2="' + str(X_width) + '" y2="' + str(Y_height) + '" ' \
-            + 'style="stroke:black;stroke-width:1" />'
-        )
-        pf.write(
-            '<text x="' + str(X0 + 150) + '" y="' + str(Y_height - 8) + '" ' \
+            + '</style> ' \
+            + '<line x1="' + str(margin + X0) + '" y1="0" ' \
+            + 'x2="' + str(margin + X0) + '" ' \
+            + 'y2="' + str(margin + Y_height) + '" ' \
+            + 'style="stroke:black;stroke-width:1" /> ' \
+            + '<text x="' + str(margin + X0 + 10) + '" ' \
+            + 'y="' + str(margin + 10) + '" ' \
+            + '>volume</text> '
+            + '<line x1="' + str(margin) + '" ' \
+            + 'y1="' + str(margin + Y_height) + '" ' \
+            + 'x2="' + str(margin + X_width) + '" ' \
+            + 'y2="' + str(margin + Y_height) + '" ' \
+            + 'style="stroke:black;stroke-width:1" /> ' \
+            + '<text x="' + str(margin + X0 + 150) + '" ' \
+            + 'y="' + str(margin + Y_height - 8) + '" ' \
             + '>balance</text>'
         )
         p_from = pp3.pop()
         while len(pp3) > 0:
             p_to = pp3.pop()
-            x_from = str(p_from[0] + X0)
-            y_from = str(Y_height - round(p_from[1]*v_scale))
-            x_to = str(p_to[0] + X0)
-            y_to = str(Y_height - round(p_to[1]*v_scale))
+            x_from = str(margin + p_from[0] + X0)
+            y_from = str(margin + Y_height - round(p_from[1]*v_scale))
+            x_to = str(margin + p_to[0] + X0)
+            y_to = str(margin + Y_height - round(p_to[1]*v_scale))
             pf.write(
-                '<line x1="' + x_from + '" y1="' + y_from + '" ' \
+                '<circle cx="' + x_from + '" cy="' + y_from + '" r="3" /> ' \
+                + '<circle cx="' + x_to + '" cy="' + y_to + '" r="3" /> ' \
+                + '<line x1="' + x_from + '" y1="' + y_from + '" ' \
                 + 'x2="' + x_to + '" y2="' + y_to + '" ' \
-                + 'style="stroke:black;stroke-width:2" />'
+                + 'style="stroke:black;stroke-width:1" />'
             )
             p_from = p_to
         pf.write('</svg>')
