@@ -1496,22 +1496,22 @@ def new_ahid(
     ahidname = ahidname.lower() # See note 1 (2026-08-30)
     if not re_slatename.match(ahidname):
         return "", "", "Invalid name provided"
-    primid_fph, primid_hrns, etypes, m = identify_entity(primid_id)
+    primid_fph, primid_hrns, p_etypes, m = identify_entity(primid_id)
     if not primid_fph:
         return "", "", "The identifier " + primid_id + " is invalid"
-    if not ("primid" in etypes):
+    if not ("primid" in p_etypes):
         return "", "", "The identifier " + primid_hrns + " has no primid"
-    parent_fph, parent_hrns, etypes, m = identify_entity(parent_id)
+    parent_fph, parent_hrns, n_etypes, m = identify_entity(parent_id)
     if not parent_fph:
         return "", "", m # parent is invalid
-    if not ("namespace" in etypes):
+    if not ("namespace" in n_etypes):
         return "", "", "Parent namespace not registered"
     ahid_hrns = ahidname + NSS + parent_hrns
     # Does this *ahid*'s identifier exist already?
     if identifier_unregistered(ahid_hrns):
         ahid_fph = register_identifier(ahid_hrns)
-    ahid_fph, ahid_hrns, etypes, m = identify_entity(ahid_hrns)
-    if not ("ahid" in etypes):
+    ahid_fph, ahid_hrns, h_etypes, m = identify_entity(ahid_hrns)
+    if not ("ahid" in h_etypes):
         m = register_entity_type(ahid_fph, "ahid")
         if m:
             log_event("debug", "register_identifier( ) returned error", m)
@@ -1529,10 +1529,12 @@ def new_ahid(
             )
             conn.commit()
             cursor.close()
-    if not ("namespace" in etypes):
+    #if False:
+    if not ("namespace" in h_etypes):
         # If a new *namespace* is created here
         # (1) the *ahid*'s owner is assigned the initial stewardship, and
         # (2) it is assigned the default *currency* of its parent *namespace*.
+        m = register_entity_type(ahid_fph, "namespace")
         stewards_fph_list = []
         stewards_fph_list.append(primid_fph)
         active, open, sandbox, private, owner_fph, \

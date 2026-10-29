@@ -35,15 +35,9 @@ from bokeh.io import export_svg
 
 def create_balvol_plot(plot_points): # list of (balance, volume) tuples
     margin = 10 # pixels -- offset
-    X_Y_ratio = 4.7
     X_width = 400 # pixels
-#    Y_height = round(X_width/X_Y_ratio) # pixels
-#    Y_height = round(2*X_width/X_Y_ratio) # pixels
     X0 = X_width // 2
-#    Y_height = round(X_width/X_Y_ratio) # pixels
     Y_height = X0 # pixels
-
-#    Y_step = 10 # pixels
 
     bal_min = bal_max = 0
     pp2 = []
@@ -84,7 +78,8 @@ def create_balvol_plot(plot_points): # list of (balance, volume) tuples
             + '   font-size:0.8em;' \
             + '  } ' \
             + '</style> ' \
-            + '<line x1="' + str(margin + X0) + '" y1="0" ' \
+            + '<line x1="' + str(margin + X0) + '" ' \
+            + 'y1="' + str(margin) + '" ' \
             + 'x2="' + str(margin + X0) + '" ' \
             + 'y2="' + str(margin + Y_height) + '" ' \
             + 'style="stroke:black;stroke-width:1" /> ' \

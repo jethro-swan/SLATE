@@ -41,3 +41,4 @@ pip install Faker
 pip install arrow
 pip install pypng
 pip install pyqrcode
+pip install bokeh

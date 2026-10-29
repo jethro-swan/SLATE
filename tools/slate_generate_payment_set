@@ -85,7 +85,7 @@ ap.add_argument(
     help = "Maximum length of AHIDs names"
 )
 ap.add_argument(
-    "-G", "--gibberish", dest = "gibberish", action = "store_true",
+    "-G", "--gibberish", dest = "spout_gibberish", action = "store_true",
     default = False,
     help = "Create utter gibberish in the annotations field"
 )
@@ -144,7 +144,7 @@ else:
     min_m = 3
 max_name_length = max(min_m,int(args.max_name_length))
 
-gibberish = args.gibberish
+spout_gibberish = args.spout_gibberish
 
 limit_psize = args.limit_psize
 
@@ -174,7 +174,7 @@ else:
     sys.stderr.write("\nThe AHID prefix must be alphabetic\n\n")
     sys.exit(1)
 
-if use_names:
+if use_names or spout_gibberish:
     # Initialize Faker object
     fake = Faker()
     Faker.seed(24)
@@ -213,7 +213,7 @@ while ahid_cnt < number_of_ahid:
         while len(name) > max_name_length:
             name = fake.first_name()
 #        ahid_hrns = name.lower() + "." + primid_hrns
-        ahid_mame = name.lower()
+        ahid_name = name.lower()
     else:
 #        ahid_hrns = ahid_prefix + str(ahid_cnt).zfill(apad) + "." + primid_hrns
         ahid_name = ahid_prefix + str(ahid_cnt).zfill(apad)
@@ -270,7 +270,7 @@ while looping:
 #    else:
 #        amount = random.randint(0, max_payment)
 
-    if gibberish:
+    if spout_gibberish:
         rword = RandomWord()
         rwords = rword.random_words(3) # list
         for word in rwords:
