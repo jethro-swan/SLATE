@@ -199,7 +199,10 @@ if not primid_fph:
 
 currency_fph, currency_hrns, etypes, m = identify_entity(currency_id)
 if not currency_fph:
-    sys.stderr.write("\nSpecified currency does not exist\n\n")
+    sys.stderr.write("\n" + currency_id + " is not a registered identifier\n")
+    sys.exit(1)
+elif not ("currency" in etypes):
+    sys.stderr.write("\n" + currency_id + " is not a currency\n")
     sys.exit(1)
 
 if zealous_output:
@@ -282,7 +285,16 @@ while looping:
 
     if payer_ahid_hrns != payee_ahid_hrns:
         p_count += 1
-        if display_output:
+        m = ah_payment(
+                payer_ahid_hrns,
+                payee_ahid_hrns,
+                currency_hrns,
+                amount,
+                annotation
+            )
+        if m:
+            print(m)
+        elif display_output:
             print(
                 "{:>5} | {:>15} | {:>20} | {:>20} | {:>10.2f} | {}".format(
                     p_count,
@@ -297,17 +309,8 @@ while looping:
             print(
                 currency_hrns + cs + payer_ahid_hrns + cs + payee_ahid_hrns \
                 + cs + integer_to_money_s_format(amount) + cs + annotation
-#                + "," + integer_to_money_s_format(amount) + "," + annotation
             )
-        m = ah_payment(
-                payer_ahid_hrns,
-                payee_ahid_hrns,
-                currency_hrns,
-                amount,
-                annotation
-            )
-        if m:
-            print(m)
+
     if p_count == n_payments:
         break
 

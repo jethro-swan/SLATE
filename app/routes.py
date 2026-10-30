@@ -871,7 +871,8 @@ def home_ahc(
         concestor_hrns = ""
         concestor_fph = SUBSTRATE_FPH
 
-    # If a valid concestor FPH is provided in the slug, this will be used instead:
+    # If a valid concestor FPH is provided in the slug, this will be used
+    # instead:
     if not (concestor_fph is None): # from slug
         concestor_fph, concestor_hrns, etypes, \
         m = identify_entity(concestor_fph)
@@ -890,8 +891,8 @@ def home_ahc(
         show_payment_form = False
 
     # If a dataset import is in progress, do not allow any FPH>HRNS or HRNS>FPH
-    # mapping operations to be initiated by a browser refresh. Instead, display a
-    # holding page.
+    # mapping operations to be initiated by a browser refresh. Instead, display
+    # a holding page.
     if os.path.exists(IMPORTING):
         return redirect("/hold")
 
@@ -1616,15 +1617,9 @@ def journal(ahid_fph, currency_fph):
         journal_rows.insert(0, journal_row)
 
         rows_displayed -= 1
-#        if rows_displayed == 0:
-#            break
 
-#    print("\nplot_points:")
-#    for plot_point in plot_points:
-#        print(plot_point)
-#    print()
-    plot_filename = create_balvol_plot(plot_points)
-#    print(plot_filename)
+    plot_filename = create_balvol_plot(plot_points, currency_fph)
+    #plot_filename = create_balvol_plot(plot_points)
 
 
     number_of_messages, \

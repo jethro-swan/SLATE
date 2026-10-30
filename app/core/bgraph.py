@@ -17,12 +17,15 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+import sqlite3
+
 from app.core.slate_core import list_currency_accounts
 from app.core.slate_core import get_account_currency
 from app.core.slate_core import identify_entity
 from app.core.slate_core import random_filename
 
 from app.core.constants import GRAPHS
+from app.core.constants import PAYMENTS_DB
 
 from bokeh.models import ColumnDataSource
 from bokeh.palettes import Bright6
@@ -32,8 +35,52 @@ from bokeh.io import export_png
 from bokeh.io import export_svg
 
 
+# A plot is created from the list of (balance, volume) tuples (assembled in the
+# app/routes.py:journal(ahid_fph, currency_fph) function.)
+# If the currency_fph is also provided, this enables all other *accounts* in
+# the same *currency* to be included as points in the same plot.
+def create_balvol_plot(plot_points, currency_fph=None):
+    plot_other_accounts = False
+    if (currency_fph is not None) and isinstance(currency_fph, str):
+        currency_fph, currency_hrns, etypes, m = identify_entity(currency_fph)
+        plot_other_accounts = True
+        with sqlite3.connect(PAYMENTS_DB) as conn:
+            cursor = conn.cursor()
+            # Read transactions for specified currency:
+            cursor.execute(
+                "SELECT " \
+                + "payer_fph, payer_balance, payer_volume, " \
+                + "payee_fph, payee_balance, payee_volume " \
+                + "FROM payments WHERE currency_fph = ?",
+                (currency_fph,)
+            )
+            all_payments = cursor.fetchall()
+            cursor.close()
+        if all_payments is None:
+            plot_other_accounts = False
+        else:
+            other_accounts = []
+            for row in all_payments:
+                payer_fph = row[0]
+                payer_balance = row[1]
+                payer_volume = row[2]
+                payee_fph = row[3]
+                payee_balance = row[4]
+                payee_volume = row[5]
+                if not ((payer_balance, payer_volume) in other_accounts):
+                    # avoid duplicate tuples
+                    other_accounts.append((payer_balance, payer_volume))
+                if not ((payee_balance, payee_volume) in other_accounts):
+                    # avoid duplicate tuples
+                    other_accounts.append((payee_balance, payee_volume))
 
-def create_balvol_plot(plot_points): # list of (balance, volume) tuples
+#            print("\nother_accounts = ")
+#            print(other_accounts)
+
+#    print("currency_hrns = " + currency_hrns)
+#    print("plot_other_accounts = " + str(plot_other_accounts))
+#    print()
+
     margin = 10 # pixels -- offset
     X_width = 400 # pixels
     X0 = X_width // 2
@@ -47,6 +94,28 @@ def create_balvol_plot(plot_points): # list of (balance, volume) tuples
         bal_min = min(bal_min, bal)
         bal_max = max(bal_max, bal)
         pp2.append((bal, vol))
+
+    print("\nbal_min = " + str(bal_min))
+    print("bal_max = " + str(bal_max))
+
+    # If we are plotting the (balance, volume) values of other *accounts*,
+    # these must be accommodated in the autoscaling without polluting the
+    # *account* in focus.
+    if False:
+    #if plot_other_accounts:
+        pp2a = []
+        for plot_point in other_accounts:
+            bal = int(100*float(plot_point[0]))
+            vol = int(100*float(plot_point[1]))
+            bal_min = min(bal_min, bal)
+            bal_max = max(bal_max, bal)
+            pp2a.append((bal, vol))
+
+    print("bal_min = " + str(bal_min))
+    print("bal_max = " + str(bal_max))
+
+
+
 
     bal_lim = max(abs(bal_min), abs(bal_max))
     if bal_lim == 0:

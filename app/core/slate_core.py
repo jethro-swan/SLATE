@@ -1484,8 +1484,8 @@ def new_primid(
 #==============================================================================
 # A new *ahid* is created:
 
-### THIS may not be needed, given that in  new_pairing( )  a new *ahid*
-###      entity is created directly.
+# In  new_pairing( )  a new *ahid* entity is created directly. However, this
+# function is used in  tools/slate_generate_payment_set
 
 def new_ahid(
         ahidname,
@@ -1511,6 +1511,8 @@ def new_ahid(
     if identifier_unregistered(ahid_hrns):
         ahid_fph = register_identifier(ahid_hrns)
     ahid_fph, ahid_hrns, h_etypes, m = identify_entity(ahid_hrns)
+#    print("h_etypes: ", end="")
+#    print(h_etypes)
     if not ("ahid" in h_etypes):
         m = register_entity_type(ahid_fph, "ahid")
         if m:
@@ -1518,16 +1520,22 @@ def new_ahid(
         with sqlite3.connect(ENTITIES_DB) as conn:
             cursor = conn.cursor()
             cursor.execute(
-                "INSERT INTO ahids (" \
-                + "entity_fph, " \
-                + "primid_fph, " \
-                + "accounts_fph_list, " \
-                + "robot, " \
-                + "active" \
-                + ") VALUES (?, ?, ?, ?, ?)",
-                (ahid_fph, primid_fph, pickle.dumps([]), robot, 1)
+                "SELECT * FROM ahids WHERE entity_fph = ?",
+                (ahid_fph,)
             )
-            conn.commit()
+            result = cursor.fetchone()
+            if result is None:
+                cursor.execute(
+                    "INSERT INTO ahids (" \
+                    + "entity_fph, " \
+                    + "primid_fph, " \
+                    + "accounts_fph_list, " \
+                    + "robot, " \
+                    + "active" \
+                    + ") VALUES (?, ?, ?, ?, ?)",
+                    (ahid_fph, primid_fph, pickle.dumps([]), robot, 1)
+                )
+                conn.commit()
             cursor.close()
     #if False:
     if not ("namespace" in h_etypes):
@@ -1535,26 +1543,37 @@ def new_ahid(
         # (1) the *ahid*'s owner is assigned the initial stewardship, and
         # (2) it is assigned the default *currency* of its parent *namespace*.
         m = register_entity_type(ahid_fph, "namespace")
-        stewards_fph_list = []
-        stewards_fph_list.append(primid_fph)
-        active, open, sandbox, private, owner_fph, \
-        currency_fph, stewards_list, \
+#        stewards_fph_list = []
+#        stewards_fph_list.append(primid_fph)
+#        active, open, sandbox, private, owner_fph, \
+#        currency_fph, stewards_list, \
         m = get_namespace_properties(parent_fph)
         with sqlite3.connect(ENTITIES_DB) as conn:
             cursor = conn.cursor()
             cursor.execute(
-                "INSERT INTO namespaces (" \
-                + "entity_fph, " \
-                + "stewards_fph_list, " \
-                + "default_currency_fph" \
-                + ") VALUES (?, ?, ?)",
-                (
-                    ahid_fph, # same identifier
-                    pickle.dumps(stewards_fph_list),
-                    currency_fph
-                )
+                "SELECT * FROM namespaces WHERE entity_fph = ?",
+                (ahid_fph,)
             )
-            conn.commit()
+            result = cursor.fetchone()
+            if result is None:
+                stewards_fph_list = []
+                stewards_fph_list.append(primid_fph)
+                active, open, sandbox, private, owner_fph, \
+                currency_fph, stewards_list, \
+                m = get_namespace_properties(parent_fph)
+                cursor.execute(
+                    "INSERT INTO namespaces (" \
+                    + "entity_fph, " \
+                    + "stewards_fph_list, " \
+                    + "default_currency_fph" \
+                    + ") VALUES (?, ?, ?)",
+                    (
+                        ahid_fph, # same identifier
+                        pickle.dumps(stewards_fph_list),
+                        currency_fph
+                    )
+                )
+                conn.commit()
             cursor.close()
     return ahid_fph, ahid_hrns, ""
 
@@ -3067,9 +3086,9 @@ def new_pairing(
     # new *account* or *ahid* be created.
     currency_fph, currency_hrns, cetypes, m = identify_entity(currency_id)
     if not currency_fph:
-        return "", currency_id + " is not a registered identifier (12)"
+        return "", "", currency_id + " is not a registered identifier (12)"
     if not ("currency" in cetypes):
-        return "", currency_hrns + " is not a currency"
+        return "", "", currency_hrns + " is not a currency"
     primid_fph, primid_hrns, petypes, m = identify_entity(primid_id)
     if not primid_fph:
         return "", "", primid_id + " is not a registered identifier (13)"
@@ -3239,7 +3258,7 @@ def retrieve_pairing_account_fph(ahid_id, currency_id):
     if not currency_fph:
         return "", "", currency_id + " is not a registered identifier (2)"
     if not ("currency" in etypes):
-        return "", "", currency_fph + " is not a currency"
+        return "", "", currency_hrns + " is not a currency"
     primid_fph = get_ahid_primid(ahid_fph)
     primid_fph, primid_hrns, etypes, m = identify_entity(primid_fph)
     if not primid_fph:
