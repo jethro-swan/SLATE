@@ -515,3 +515,27 @@ input[type="checkbox" i] {
 td.catable {
     background-color: #ffffcc;
 }
+
+<!--
+Source - https://stackoverflow.com/a/66434133
+Posted by Rahul Rahatal, modified by community. See post 'Timeline' for change history
+Retrieved 2026-10-30, License - CC BY-SA 4.0
+-->
+
+#jtcontainer { display: flex; }
+#imgright {
+  width:440;
+  float:left;
+  padding-left:10px;
+}
+#imgbelow {
+  clear:both;
+  width:440;
+  float:left;
+  padding-left:20px;
+}
+
+#journaltbl {
+  padding-right:20px;
+  float:left;
+}

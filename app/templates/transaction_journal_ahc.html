@@ -22,16 +22,39 @@
 
 <h3>Transaction journal</h3>
 
+<div>
 <p>For <em>account-holder</em>: <b>{{ ahid_hrns }}</b><br />
 in <em>currency</em>: <b>{{ currency_hrns }}</b><br /><br />
-(volume so far: {{ account_volume }}) |
+Volume so far = {{ account_volume }} |
+<a href="/account/export/{{ account_fph }}">Export journal as CSV</a>
+</div>
+
+<p>
 {% if show_all_journal_rows %}
-<a href="/toggle_all_journal_rows">show only most recent journal rows</a>
+<a href="/toggle_all_journal_rows">only recent only</a>
 {% else %}
-<a href="/toggle_all_journal_rows">show all journal rows</a>
+<a href="/toggle_all_journal_rows">show all rows</a>
+{% endif %}
+|
+{% if show_plot_beside_table %}
+<a href="/toggle_plot_beside_table">plot below table</a>
+{% else %}
+<a href="/toggle_plot_beside_table">plot next to table</a>
+{% endif %}
+|
+{% if show_volume %}
+<a href="/toggle_volume">hide volume</a>
+{% else %}
+<a href="/toggle_volume">show volume</a>
 {% endif %}
 </p>
 
+{% if show_plot_beside_table %}
+<div id="jtcontainer">
+{% else %}
+<div>
+{% endif %}
+<div id="journaltbl">
 <table>
   <tr>
     {% if show_volume %}
@@ -83,15 +106,21 @@ in <em>currency</em>: <b>{{ currency_hrns }}</b><br /><br />
   {% endif %}
   {% endfor %}
 </table>
+</div>
 
 {% if plot_filepath %}
+{% if show_plot_beside_table %}
+<div id="imgright">
+{% else %}
+<div id="imgbelow">
+{% endif %}
 <br />
 <br />
 <img src="{{ plot_filepath }}" border="0" />
+</div>
 {% endif %}
+</div>
 
-<br />
-<a href="/account/export/{{ account_fph }}">Export as CSV</a>
-<br />
+<div style="clear:both;">
 
 {% endblock %}

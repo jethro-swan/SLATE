@@ -95,8 +95,8 @@ def create_balvol_plot(plot_points, currency_fph=None):
         bal_max = max(bal_max, bal)
         pp2.append((bal, vol))
 
-    print("\nbal_min = " + str(bal_min))
-    print("bal_max = " + str(bal_max))
+#    print("\nbal_min = " + str(bal_min))
+#    print("bal_max = " + str(bal_max))
 
     # If we are plotting the (balance, volume) values of other *accounts*,
     # these must be accommodated in the autoscaling without polluting the
@@ -111,8 +111,8 @@ def create_balvol_plot(plot_points, currency_fph=None):
             bal_max = max(bal_max, bal)
             pp2a.append((bal, vol))
 
-    print("bal_min = " + str(bal_min))
-    print("bal_max = " + str(bal_max))
+#    print("bal_min = " + str(bal_min))
+#    print("bal_max = " + str(bal_max))
 
 
 

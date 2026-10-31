@@ -775,8 +775,29 @@ def toggle_more():
 @app.route("/toggle_volume")
 @login_required
 def toggle_volume():
-    session["show_volume"] = not session["show_volume"]
-    return redirect("/home_ahc")
+#    session["show_volume"] = not session["show_volume"]
+#    return redirect("/home_ahc")
+    if "show_volume" in session:
+        session["show_volume"] = not session["show_volume"]
+    else:
+        session["show_volume"] = False
+    if "page" in session:
+#        print("page = " + session["page"])
+        if session["page"] == "home_ahc":
+            return redirect("/home_ahc")
+        elif session["page"] == "journal":
+            if ("journal_ahid" in session) and ("journal_currency" in session):
+                ahid_fph = session["journal_ahid"]
+#                print("ahid: " + fph_to_hrns(session["journal_ahid"]))
+                currency_fph = session["journal_currency"]
+#                print("currency: " + fph_to_hrns(session["journal_currency"]))
+                return redirect("/journal/" + ahid_fph + "/" + currency_fph)
+            else:
+                return redirect("/home_ahc")
+        else:
+            return redirect("/home_ahc")
+    else:
+        return redirect("/home_ahc")
 
 # Toggle the display of the full set of rows in the journal screen table:
 @app.route("/toggle_all_journal_rows")
@@ -784,18 +805,34 @@ def toggle_volume():
 def toggle_all_journal_rows():
     if "all_journal_rows" in session:
         session["all_journal_rows"] = not session["all_journal_rows"]
-#        print("all_journal_rows = " + str(session["all_journal_rows"]))
     else:
         session["all_journal_rows"] = False
     if ("journal_ahid" in session) and ("journal_currency" in session):
         ahid_fph = session["journal_ahid"]
         currency_fph = session["journal_currency"]
-#        print("ahid_fph = " + ahid_fph)
-#        print("currency_fph = " + currency_fph)
         return redirect("/journal/" + ahid_fph + "/" + currency_fph)
     else:
-#        print("Session stuff missing")
         return redirect("/home_ahc")
+
+# Toggle the display of the plot to the right of or below the journal screen
+# table:
+@app.route("/toggle_plot_beside_table")
+@login_required
+def toggle_plot_beside_table():
+    if "plot_beside_table" in session:
+        session["plot_beside_table"] = not session["plot_beside_table"]
+    else:
+        session["plot_beside_table"] = False
+    if ("journal_ahid" in session) and ("journal_currency" in session):
+        ahid_fph = session["journal_ahid"]
+        currency_fph = session["journal_currency"]
+        return redirect("/journal/" + ahid_fph + "/" + currency_fph)
+    else:
+        return redirect("/home_ahc")
+
+
+
+
 
 #==============================================================================
 # The HOME SCREEN
@@ -1471,6 +1508,7 @@ def journal(ahid_fph, currency_fph):
 
     session["journal_ahid"] = ahid_fph
     session["journal_currency"] = currency_fph
+    session["page"] = "journal"
 
 #    print("\njournal_ahid = " + session["journal_ahid"])
 #    print("journal_currency = " + session["journal_currency"])
@@ -1494,6 +1532,17 @@ def journal(ahid_fph, currency_fph):
         show_all_journal_rows = session["all_journal_rows"]
     else:
         show_all_journal_rows = False
+
+    #
+    if "plot_beside_table" in session:
+        show_plot_beside_table = session["plot_beside_table"]
+    else:
+        show_plot_beside_table = False
+
+
+
+
+
 
     default_rows_displayed = get_config("default_rows_displayed")
 
@@ -1618,8 +1667,10 @@ def journal(ahid_fph, currency_fph):
 
         rows_displayed -= 1
 
+# app/core/bgraph.py
     plot_filename = create_balvol_plot(plot_points, currency_fph)
-    #plot_filename = create_balvol_plot(plot_points)
+# app/core/bgraph2.py -- still under development
+#    plot_filename = create_balvol_plot(currency_fph, ahid_fph)
 
 
     number_of_messages, \
@@ -1646,6 +1697,9 @@ def journal(ahid_fph, currency_fph):
         journal_rows = journal_rows,
         account_fph = account_fph,
         account_volume = integer_to_money_format(account_volume),
+#        imgadjacent = False,
+#        imgadjacent = True,
+        show_plot_beside_table = show_plot_beside_table,
         plot_filepath = url_for("static", filename="graphs/" + plot_filename),
         show_all_journal_rows = show_all_journal_rows,
         number_of_messages = number_of_messages,
