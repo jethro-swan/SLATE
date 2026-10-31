@@ -799,6 +799,21 @@ def toggle_volume():
     else:
         return redirect("/home_ahc")
 
+# Toggle the display of the all *account*s' plots:
+@app.route("/toggle_plot_all")
+@login_required
+def toggle_plot_all():
+    if "plot_all" in session:
+        session["plot_all"] = not session["plot_all"]
+    else:
+        session["plot_all"] = False
+    if ("journal_ahid" in session) and ("journal_currency" in session):
+        ahid_fph = session["journal_ahid"]
+        currency_fph = session["journal_currency"]
+        return redirect("/journal/" + ahid_fph + "/" + currency_fph)
+    else:
+        return redirect("/home_ahc")
+
 # Toggle the display of the full set of rows in the journal screen table:
 @app.route("/toggle_all_journal_rows")
 @login_required
@@ -1510,6 +1525,16 @@ def journal(ahid_fph, currency_fph):
     session["journal_currency"] = currency_fph
     session["page"] = "journal"
 
+    if "plot_filepath" in session:
+        plot_filepath = session["plot_filepath"]
+        if os.path.exists(plot_filepath):
+            os.remove(plot_filepath)
+
+    if "plot_all" in session:
+        plot_all = session["plot_all"]
+    else:
+        plot_all = False
+
 #    print("\njournal_ahid = " + session["journal_ahid"])
 #    print("journal_currency = " + session["journal_currency"])
 
@@ -1538,11 +1563,6 @@ def journal(ahid_fph, currency_fph):
         show_plot_beside_table = session["plot_beside_table"]
     else:
         show_plot_beside_table = False
-
-
-
-
-
 
     default_rows_displayed = get_config("default_rows_displayed")
 
@@ -1588,13 +1608,6 @@ def journal(ahid_fph, currency_fph):
     if all_payments is None:
         flash("There are no journal entries to display")
         return redirect("/home_ahc")
-
-#    print("\nall_payments:")
-#    for p in all_payments:
-#        print(p)
-#    print()
-
-#    x_bal = y_vol = []
 
     plot_points = []
 
@@ -1667,11 +1680,16 @@ def journal(ahid_fph, currency_fph):
 
         rows_displayed -= 1
 
+#    plot_all = True
 # app/core/bgraph.py
-    plot_filename = create_balvol_plot(plot_points, currency_fph)
+#    plot_filename = create_balvol_plot(plot_points, currency_fph)
 # app/core/bgraph2.py -- still under development
-#    plot_filename = create_balvol_plot(currency_fph, ahid_fph)
+#    plot_filepath = create_balvol_plot(currency_fph, ahid_fph)
+    plot_filename, graph_path = create_balvol_plot(
+                                    currency_fph, ahid_fph, plot_all
+                                )
 
+    session["plot_filepath"] =  graph_path + "/" + plot_filename
 
     number_of_messages, \
     number_of_indelible_messages = message_count(primid_fph, hub_mode)
@@ -1700,7 +1718,12 @@ def journal(ahid_fph, currency_fph):
 #        imgadjacent = False,
 #        imgadjacent = True,
         show_plot_beside_table = show_plot_beside_table,
-        plot_filepath = url_for("static", filename="graphs/" + plot_filename),
+        plot_filepath = url_for(
+                            "static",
+                            filename="graphs/" + ahid_fph + "/" + plot_filename
+                        ),
+        plot_all = plot_all,
+#        plot_filepath = plot_filepath,
         show_all_journal_rows = show_all_journal_rows,
         number_of_messages = number_of_messages,
         number_of_indelible_messages = number_of_indelible_messages

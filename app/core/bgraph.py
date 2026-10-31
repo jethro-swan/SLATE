@@ -18,11 +18,16 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 import sqlite3
+import os
 
+from app.core.slate_core import retrieve_pairing_account_fph
+from app.core.slate_core import identify_entity
 from app.core.slate_core import list_currency_accounts
 from app.core.slate_core import get_account_currency
-from app.core.slate_core import identify_entity
 from app.core.slate_core import random_filename
+from app.core.slate_core import get_account_properties
+
+from app.core.display import integer_to_money_format
 
 from app.core.constants import GRAPHS
 from app.core.constants import PAYMENTS_DB
@@ -39,47 +44,69 @@ from bokeh.io import export_svg
 # app/routes.py:journal(ahid_fph, currency_fph) function.)
 # If the currency_fph is also provided, this enables all other *accounts* in
 # the same *currency* to be included as points in the same plot.
-def create_balvol_plot(plot_points, currency_fph=None):
-    plot_other_accounts = False
-    if (currency_fph is not None) and isinstance(currency_fph, str):
-        currency_fph, currency_hrns, etypes, m = identify_entity(currency_fph)
-        plot_other_accounts = True
-        with sqlite3.connect(PAYMENTS_DB) as conn:
-            cursor = conn.cursor()
-            # Read transactions for specified currency:
+
+def create_balvol_plot(currency_id, ahid_id, plot_other_accounts = False):
+    currency_fph, currency_hrns, etypes, m = identify_entity(currency_id)
+    if not (currency_fph and ("currency" in etypes)):
+        return "", ""
+    ahid_fph, ahid_hrns, etypes, m = identify_entity(ahid_id)
+    if not (ahid_fph and ("ahid" in etypes)):
+        return "", ""
+
+    account_fph, primid_fph, \
+    m = retrieve_pairing_account_fph(ahid_hrns, currency_fph)
+
+    account_currency_fph, account_owner_fph, account_balance, account_volume, \
+    account_active, account_type, account_category, account_units, \
+    account_metrical_equivalence, account_dimensions, \
+    m = get_account_properties(account_fph)
+
+    with sqlite3.connect(PAYMENTS_DB) as conn:
+        cursor = conn.cursor()
+        # Read transactions for specified currency:
+        if plot_other_accounts:
             cursor.execute(
-                "SELECT " \
-                + "payer_fph, payer_balance, payer_volume, " \
-                + "payee_fph, payee_balance, payee_volume " \
+                "SELECT payer_fph, payee_fph, payer_balance, " \
+                + "payer_volume, payee_balance, payee_volume " \
                 + "FROM payments WHERE currency_fph = ?",
                 (currency_fph,)
             )
-            all_payments = cursor.fetchall()
-            cursor.close()
-        if all_payments is None:
-            plot_other_accounts = False
         else:
-            other_accounts = []
-            for row in all_payments:
-                payer_fph = row[0]
-                payer_balance = row[1]
-                payer_volume = row[2]
-                payee_fph = row[3]
-                payee_balance = row[4]
-                payee_volume = row[5]
-                if not ((payer_balance, payer_volume) in other_accounts):
-                    # avoid duplicate tuples
-                    other_accounts.append((payer_balance, payer_volume))
-                if not ((payee_balance, payee_volume) in other_accounts):
-                    # avoid duplicate tuples
-                    other_accounts.append((payee_balance, payee_volume))
+            cursor.execute(
+                "SELECT payer_fph, payee_fph, payer_balance, " \
+                + "payer_volume, payee_balance, payee_volume " \
+                + "FROM payments WHERE (payer_fph = ? OR payee_fph = ?) " \
+                + "and (currency_fph = ?)",
+                (ahid_fph, ahid_fph, currency_fph)
+            )
+        all_payments = cursor.fetchall()
+        cursor.close()
+    if all_payments is None:
+        return "", ""
 
-#            print("\nother_accounts = ")
-#            print(other_accounts)
-
-#    print("currency_hrns = " + currency_hrns)
-#    print("plot_other_accounts = " + str(plot_other_accounts))
-#    print()
+    other_plot_points = []
+    own_plot_points = []
+    for payment in all_payments:
+        p = list(payment)
+        payer_fph = p[0]
+        payee_fph = p[1]
+        payer_balance = integer_to_money_format(p[2])
+        payer_volume = integer_to_money_format(p[3])
+        payer_plot_point = (payer_balance, payer_volume)
+        payee_balance = integer_to_money_format(p[4])
+        payee_volume = integer_to_money_format(p[5])
+        payee_plot_point = (payee_balance, payee_volume)
+        if payer_fph == ahid_fph: # payment
+            if not (payer_plot_point in own_plot_points):
+                own_plot_points.append(payer_plot_point)
+        elif payee_fph == ahid_fph: # receipt
+            if not (payee_plot_point in own_plot_points):
+                own_plot_points.append(payee_plot_point)
+        else:
+            if not ((payer_balance, payer_volume) in other_plot_points):
+                other_plot_points.append((payer_balance, payer_volume))
+            if not ((payee_balance, payee_volume) in other_plot_points):
+                other_plot_points.append((payee_balance, payee_volume))
 
     margin = 10 # pixels -- offset
     X_width = 400 # pixels
@@ -88,43 +115,36 @@ def create_balvol_plot(plot_points, currency_fph=None):
 
     bal_min = bal_max = 0
     pp2 = []
-    for plot_point in plot_points:
+    for plot_point in own_plot_points:
         bal = int(100*float(plot_point[0]))
         vol = int(100*float(plot_point[1]))
         bal_min = min(bal_min, bal)
         bal_max = max(bal_max, bal)
         pp2.append((bal, vol))
-
-#    print("\nbal_min = " + str(bal_min))
-#    print("bal_max = " + str(bal_max))
-
     # If we are plotting the (balance, volume) values of other *accounts*,
     # these must be accommodated in the autoscaling without polluting the
     # *account* in focus.
-    if False:
-    #if plot_other_accounts:
+    if plot_other_accounts:
         pp2a = []
-        for plot_point in other_accounts:
+        for plot_point in other_plot_points:
             bal = int(100*float(plot_point[0]))
             vol = int(100*float(plot_point[1]))
             bal_min = min(bal_min, bal)
             bal_max = max(bal_max, bal)
             pp2a.append((bal, vol))
 
-#    print("bal_min = " + str(bal_min))
-#    print("bal_max = " + str(bal_max))
-
-
-
-
     bal_lim = max(abs(bal_min), abs(bal_max))
     if bal_lim == 0:
-        return "" # unable to plot graph
+        return "", "" # unable to plot graph
 
     bal_scale = X0/bal_lim
 
     plot_filename = random_filename() + ".svg"
-    plot_path = GRAPHS + plot_filename
+    graph_path = GRAPHS + ahid_fph + "/"
+    if not os.path.exists(graph_path):
+        os.mkdir(graph_path, 0o770)
+    plot_path = graph_path + plot_filename
+#    plot_path = GRAPHS + ahid_fph + "/" + plot_filename
 
     pp3 = [(0, 0)] # Start at the origin (0, 0)
     y = 0
@@ -132,7 +152,20 @@ def create_balvol_plot(plot_points, currency_fph=None):
         x = round(p[0]*bal_scale)
         y = p[1]
         pp3.append((x, y))
-    v_max = pp3[-1][1] # the y value of the last element in the list
+
+
+    if plot_other_accounts:
+        pp3a = [(0, 0)] # Start at the origin (0, 0)
+        y = 0
+        for p in pp2a:
+            x = round(p[0]*bal_scale)
+            y = p[1]
+            pp3a.append((x, y))
+
+    if plot_other_accounts:
+        v_max = max(pp3[-1][1], pp3a[-1][1])
+    else:
+        v_max = pp3[-1][1] # the y value of the last element in the list
     v_scale = Y_height/v_max
     with open(plot_path, "w") as pf:
         pf.write(
@@ -179,14 +212,28 @@ def create_balvol_plot(plot_points, currency_fph=None):
                 + 'style="stroke:black;stroke-width:1" />'
             )
             p_from = p_to
+        #
+        if plot_other_accounts:
+            p = pp3a.pop()
+            while len(pp3a) > 0:
+                p = pp3a.pop()
+                x = str(margin + p[0] + X0)
+                y = str(margin + Y_height - round(p[1]*v_scale))
+                pf.write(
+                    '<circle cx="' + x + '" cy="' + y + '" ' \
+                    + 'r="3" fill="silver" />'
+                )
+
         pf.write('</svg>')
 
-    return plot_filename
+    return plot_filename, graph_path
+
+#=============================================================================
 
 def currency_balance_graphs(currency_id):
     currency_fph, currency_hrns, etypes, m = identify_entity(currency_id)
     if not ("currency" in etypes):
-        return "", ""
+        return ""
 
     account_fph_list = list_currency_accounts(currency_fph)
 
@@ -197,8 +244,10 @@ def currency_balance_graphs(currency_id):
     b_max = b_min = 0
     v_max = v_min = 0
     for account_fph in account_fph_list:
-        currency_fph, owner_fph, ahid_fph, balance, volume, \
-        m = get_account_specific_properties(account_fph)
+        currency_fph, owner_fph, balance, volume, active, \
+        account_type, account_category, account_units, \
+        account_metrical_equivalence, account_dimensions, \
+        m = get_account_properties(account_fph)
         balances.append(balance)
         volumes.append(volume)
         b_min = min(balance, b_min)

@@ -47,6 +47,12 @@ Volume so far = {{ account_volume }} |
 {% else %}
 <a href="/toggle_volume">show volume</a>
 {% endif %}
+|
+{% if plot_all %}
+<a href="/toggle_plot_all">plot own only</a>
+{% else %}
+<a href="/toggle_plot_all">plot all</a>
+{% endif %}
 </p>
 
 {% if show_plot_beside_table %}
