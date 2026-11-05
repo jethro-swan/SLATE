@@ -19,6 +19,7 @@
 
 import sqlite3
 import os
+import math
 
 from app.core.slate_core import retrieve_pairing_account_fph
 from app.core.slate_core import identify_entity
@@ -39,11 +40,11 @@ from bokeh.plotting import figure
 from bokeh.io import export_png
 from bokeh.io import export_svg
 
-
-# A plot is created from the list of (balance, volume) tuples (assembled in the
-# app/routes.py:journal(ahid_fph, currency_fph) function.)
-# If the currency_fph is also provided, this enables all other *accounts* in
-# the same *currency* to be included as points in the same plot.
+#==============================================================================
+# A plot is created from the list of *accounts* (balance, volume) tuples
+# assembled from ahid_fph and currency_fph provided. If plot_other_accounts is
+# true, all other *accounts* in the same *currency* to be included as points in
+# the same plot.
 
 def create_balvol_plot(currency_id, ahid_id, plot_other_accounts = False):
     currency_fph, currency_hrns, etypes, m = identify_entity(currency_id)
@@ -108,10 +109,14 @@ def create_balvol_plot(currency_id, ahid_id, plot_other_accounts = False):
             if not ((payee_balance, payee_volume) in other_plot_points):
                 other_plot_points.append((payee_balance, payee_volume))
 
-    margin = 10 # pixels -- offset
-    X_width = 400 # pixels
+    margin = 2 # pixels -- offset
+    X_width = 350 # pixels
     X0 = X_width // 2
     Y_height = X0 # pixels
+
+    # TESTSTUFF
+    sd_count = 0
+    sd_sum = 0
 
     bal_min = bal_max = 0
     pp2 = []
@@ -121,6 +126,11 @@ def create_balvol_plot(currency_id, ahid_id, plot_other_accounts = False):
         bal_min = min(bal_min, bal)
         bal_max = max(bal_max, bal)
         pp2.append((bal, vol))
+
+        # TESTSTUFF
+        sd_sum += bal*bal
+        sd_count += 1
+
     # If we are plotting the (balance, volume) values of other *accounts*,
     # these must be accommodated in the autoscaling without polluting the
     # *account* in focus.
@@ -133,9 +143,20 @@ def create_balvol_plot(currency_id, ahid_id, plot_other_accounts = False):
             bal_max = max(bal_max, bal)
             pp2a.append((bal, vol))
 
+        # TESTSTUFF
+        sd_sum += bal*bal
+        sd_count += 1
+        sd = math.sqrt(sd_sum/sd_count)
+
     bal_lim = max(abs(bal_min), abs(bal_max))
     if bal_lim == 0:
         return "", "" # unable to plot graph
+
+    print("\nbal_min = " + str(bal_min))
+    print("bal_max = " + str(bal_min))
+    print("sd_count = " + str(sd_count))
+    print("sd = " + str(sd))
+    print("bal_lim/sd = " + str(bal_lim/sd))
 
     bal_scale = X0/bal_lim
 
@@ -193,7 +214,7 @@ def create_balvol_plot(currency_id, ahid_id, plot_other_accounts = False):
             + 'x2="' + str(margin + X_width) + '" ' \
             + 'y2="' + str(margin + Y_height) + '" ' \
             + 'style="stroke:black;stroke-width:1" /> ' \
-            + '<text x="' + str(margin + X0 + 150) + '" ' \
+            + '<text x="' + str(margin + 2*X0 - 50) + '" ' \
             + 'y="' + str(margin + Y_height - 8) + '" ' \
             + '>balance</text>'
         )
@@ -221,14 +242,14 @@ def create_balvol_plot(currency_id, ahid_id, plot_other_accounts = False):
                 y = str(margin + Y_height - round(p[1]*v_scale))
                 pf.write(
                     '<circle cx="' + x + '" cy="' + y + '" ' \
-                    + 'r="3" fill="silver" />'
+                    + 'r="2.5" fill="grey" />'
                 )
 
         pf.write('</svg>')
 
     return plot_filename, graph_path
 
-#=============================================================================
+#==============================================================================
 
 def currency_balance_graphs(currency_id):
     currency_fph, currency_hrns, etypes, m = identify_entity(currency_id)
