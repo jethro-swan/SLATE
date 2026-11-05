@@ -1983,8 +1983,28 @@ def new_account(
     currency_metrical_equivalence, currency_dimensions, \
     prefix, suffix, default_account_name, \
     stewards_list, m = get_currency_properties(currency_fph)
+
+    if False:
+        print("\ncurrency_fph = " + currency_fph)
+        print("currency_hrns  = " + currency_hrns)
+        print("active         = " + str(active))
+        print("open           = " + str(open))
+        print("private        = " + str(private))
+        print("sandbox        = " + str(sandbox))
+        print("type           = " + currency_type)
+        print("category       = " + currency_category)
+        print("units          = " + currency_units)
+        print("metrical_equiv = " + currency_metrical_equivalence)
+        print("dimensions     = " + currency_dimensions)
+        print("prefix         = " + prefix)
+        print("suffix         = " + suffix)
+        print("default name   = " + default_account_name)
+        print("stewards_list  = ", end="")
+        print(stewards_list)
+        print("m              = " + m)
+
     if not open:
-        return "", "", "Currency " + currency_hrns + " is not upon for use"
+        return "", "", "Currency " + currency_hrns + " is not open for use"
     if not re_slatename.match(account_name): # invalid *account* name provided
         account_name = default_account_name # from *currency*
     account_fph = register_identifier(account_hrns)
@@ -2007,12 +2027,13 @@ def new_account(
         cursor.execute(
             "INSERT INTO accounts (" \
             + "entity_fph, account_owner_fph, account_currency_fph, " \
-            + "balance, volume, account_type, " \
+            + "balance, volume, " \
             + "account_type, account_category, account_units, " \
             + "account_metrical_equivalence, account_dimensions" \
-            + ") VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+            + ") VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
             (
-                account_fph, owner_fph, currency_fph, 0, 0, "money",
+                account_fph, owner_fph, currency_fph,
+                0, 0,
                 currency_type, currency_category, currency_units,
                 currency_metrical_equivalence, currency_dimensions
             )
@@ -2625,17 +2646,12 @@ def get_account_properties(account_id):
             + "account_currency_fph, " \
             + "balance, " \
             + "volume, " \
-            + "active " \
+            + "active, " \
             + "account_type, " \
             + "account_category, " \
             + "account_units, " \
             + "account_metrical_equivalence, " \
-            + "account_dimensions, " \
-            + "vector, " \
-            + "vector_map, " \
-            + "matrix, " \
-            + "matrix_map, " \
-            + "ts_pointer " \
+            + "account_dimensions " \
             + "FROM accounts WHERE entity_fph = ?",
             (account_fph,)
         )
@@ -2645,9 +2661,8 @@ def get_account_properties(account_id):
         return "", "", 0, 0, False, "", "", "", "", "", "Account not found"
     # The owner of this *account* may be either an *ahid* or a *primid*.
     owner_fph, owner_hrns, etypes, m = identify_entity(result[0])
-    if not (("ahid" in etypes) or ("primid" in etypes)):
-        return "", "", 0, 0, False, "", "", "", "", "", \
-               "Account  has no owner"
+    if not ("ahid" in etypes):
+        return "", "", 0, 0, False, "", "", "", "", "", "Account  has no owner"
     currency_fph = result[1]
     balance = result[2]
     volume = result[3]
@@ -2663,7 +2678,7 @@ def get_account_properties(account_id):
 
 
 #==============================================================================
-# Retrive the status of an account:
+# Retrieve the status of an *account*:
 
 def account_status(account_fph):
     currency_fph, owner_fph, balance, volume, active, \
@@ -2684,18 +2699,25 @@ def sum_account_balances(
         account_category,
         account_units,
         account_metrical_equivalence,
-        account_dimensions
+        account_dimensions,
+        all=False
     ):
     owner_fph, owner_hrns, etypes, m = identify_entity(owner_id)
     if not owner_fph:
         return {}, {}, owner_id + " is not a registered identifier"
-    if not (("ahid" in etypes) or ("primid" in etypes)):
+#    if not (("ahid" in etypes) or ("primid" in etypes)):
+#        return {}, {}, owner_hrns + " is not a registered ahid"
+    if all and not ("primid" in etypes):
+        return {}, {}, owner_hrns + " is not a registered primid"
+    elif not ("ahid" in etypes):
         return {}, {}, owner_hrns + " is not a registered ahid"
 
-    print("category:              " + account_category)
-    print("units:                 " + account_units)
-    print("metrical_equivalence:  " + account_metrical_equivalence)
-    print("dimensions:            " + account_dimensions)
+    testing = True
+    if testing:
+        print("account_category:      " + account_category)
+        print("account_units:         " + account_units)
+        print("metrical_equivalence:  " + account_metrical_equivalence)
+        print("account_dimensions:    " + account_dimensions)
 
     categories = ["money", "htime", "utime", "energy", "unspecified"]
     balance_sum = volume_sum = {}
@@ -2703,14 +2725,30 @@ def sum_account_balances(
         balance_sum[c] = volume_sum[c] = 0
 
     accounts_fph_list, m = list_accounts(owner_fph, "ahid")
+
+    if testing:
+        print("accounts belonging to " + owner_hrns)
+        print(accounts_fph_list)
+
     for account_fph in accounts_fph_list:
-        print(fph_to_hrns(account_fph))
+        if testing:
+            print(fph_to_hrns(account_fph))
         currency_fph, owner_fph, balance, volume, active, \
         type, category, units, metrical_equivalence, dimensions, \
         m = get_account_properties(account_fph)
-        print(category + " & " + account_category)
+
+        if testing:
+            print("\nbalance: " + integer_to_money_format(balance))
+            print("volume:    " + integer_to_money_format(volume))
+            print("type:      " + type)
+            print("category:  " + category)
+            print(category + " & " + account_category)
+
         if category == account_category:
-            print("category match")
+
+            if testing:
+                print("category match")
+
             balance_sum[category] += balance
             volume_sum[category] += volume
     return balance_sum, volume_sum, ""

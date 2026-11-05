@@ -385,8 +385,6 @@ def payment(payer_account_fph, payee_account_fph, amount, annotation):
     return ""
 
 #==============================================================================
-
-#==============================================================================
 # To make a payment using *ahid*|*currency* pairs
 
 # Use of the *account*-to-*account* payment function (in app/core/payments.py)
