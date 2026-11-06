@@ -1201,7 +1201,8 @@ def home_ahc(
             elif payee_ahid_fph_f and ("ahid" in etypes_f):
                 payee_ahid_hrns = payee_ahid_hrns_f
             else:
-                flash(payee_ahid_id + " is not a valid payee")
+#                flash(payee_ahid_id + " is not a valid payee")
+                flash("Invalid payee")
                 return redirect(
                     "/home_ahp/" + payer_ahid_fph + "/" + currency_fph \
                     + "/" + concestor_fph + "/" + payer_balance
@@ -1539,6 +1540,10 @@ def pay_ahid(payer_ahid_fph, payment_currency_fph):
 
 #==============================================================================
 #
+
+# TO DO: Remove requirement to include ahid_fph and currency_fph where these
+#        can be retrieved from session[].
+
 @app.route("/journal/<ahid_fph>/<currency_fph>", methods = ["GET", "POST"])
 @login_required
 def journal(ahid_fph, currency_fph):
@@ -1596,22 +1601,24 @@ def journal(ahid_fph, currency_fph):
     if "all_journal_rows" in session:
         show_all_journal_rows = session["all_journal_rows"]
     else:
-        show_all_journal_rows = False
+        session["all_journal_rows"] = show_all_journal_rows = False
 
-    #
     if "show_annotation" in session:
         show_annotation = session["show_annotation"]
     else:
-        show_annotation = False
+        session["show_annotation"] = show_annotation = False
 
     if "plot_beside_table" in session:
         show_plot_beside_table = session["plot_beside_table"]
     else:
-        show_plot_beside_table = False
+        session["plot_beside_table"] = show_plot_beside_table = False
 
     default_rows_displayed = get_config("default_rows_displayed")
 
-    show_volume = session["show_volume"]
+    if "show_volume" in session:
+        show_volume = session["show_volume"]
+    else:
+        session["show_volume"] = show_volume = False
 
     primid_fph, primid_hrns, etypes, \
     m = identify_entity(current_user.get_id())
@@ -1680,7 +1687,24 @@ def journal(ahid_fph, currency_fph):
         payee_balance = integer_to_money_format(p[8])
         payee_volume = integer_to_money_format(p[9])
 
+        # TO DO: Put these into hub_config
+        max_annotation_length = 30
+        annotation_divider = ":"
+
         annotation = p[10]
+        if annotation_divider in annotation:
+            astr = annotation.split(annotation_divider)
+            short_annotation = astr[0]
+            if len(short_annotation) > max_annotation_length:
+                short_annotation = annotation[:max_annotation_length]
+        elif len(annotation) > max_annotation_length:
+            short_annotation = annotation[:max_annotation_length]
+        else:
+            short_annotation = annotation
+
+
+
+
         # The results are now put into a list of dictionaries to be fed to the
         # template and used to create the balance:volume plot:
         journal_row = {}
@@ -1720,7 +1744,8 @@ def journal(ahid_fph, currency_fph):
             journal_row["balneg"] = ""
             journal_row["balance"] = ""
             journal_row["volume"] = ""
-        journal_row["annotation"] = annotation
+        journal_row["annotation"] = annotation # full
+        journal_row["short_annotation"] = short_annotation # truncated
         journal_rows.insert(0, journal_row)
 
         rows_displayed -= 1

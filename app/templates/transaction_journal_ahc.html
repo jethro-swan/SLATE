@@ -51,9 +51,9 @@ Volume so far = {{ account_volume }} |
 
 <p>
 {% if show_plot %}
-<a href="/toggle_show_plot">hide plot</a>
+<a href="/toggle_show_plot">hide volume:balance plot</a>
 {% else %}
-<a href="/toggle_show_plot">show plot</a>
+<a href="/toggle_show_plot">show  volume:balance plot</a>
 {% endif %}
 {% if show_plot %}
 |
@@ -128,7 +128,9 @@ Volume so far = {{ account_volume }} |
     <td align="right">{{ row.volume }}</td>
     {% endif %}
     {% if show_annotation %}
-    <td align="left">{{ row.annotation }}</td>
+    <td align="left">
+      <div title="{{ row.annotation }}">{{ row.short_annotation }}</div>
+    </td>
     {% endif %}
   </tr>
   {% endif %}
