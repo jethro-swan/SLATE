@@ -817,16 +817,37 @@ def toggle_volume():
     else:
         return redirect("/home_ahc")
 
+# Toggle the display of the full set of rows in the journal screen table:
+@app.route("/toggle_all_journal_rows")
+@login_required
+def toggle_all_journal_rows():
+    if "all_journal_rows" in session:
+        session["all_journal_rows"] = not session["all_journal_rows"]
+    else:
+        session["all_journal_rows"] = False
+    if ("journal_ahid" in session) and ("journal_currency" in session):
+        ahid_fph = session["journal_ahid"]
+        currency_fph = session["journal_currency"]
+        return redirect("/journal/" + ahid_fph + "/" + currency_fph)
+    else:
+        return redirect("/home_ahc")
 
 
-
-
-
-
-
-
-
-
+#
+# Toggle the display of the all *account*s' plots:
+@app.route("/toggle_show_plot")
+@login_required
+def toggle_show_plot():
+    if "show_plot" in session:
+        session["show_plot"] = not session["show_plot"]
+    else:
+        session["show_plot"] = False
+    if ("journal_ahid" in session) and ("journal_currency" in session):
+        ahid_fph = session["journal_ahid"]
+        currency_fph = session["journal_currency"]
+        return redirect("/journal/" + ahid_fph + "/" + currency_fph)
+    else:
+        return redirect("/home_ahc")
 
 # Toggle the display of the all *account*s' plots:
 @app.route("/toggle_plot_all")
@@ -836,21 +857,6 @@ def toggle_plot_all():
         session["plot_all"] = not session["plot_all"]
     else:
         session["plot_all"] = False
-    if ("journal_ahid" in session) and ("journal_currency" in session):
-        ahid_fph = session["journal_ahid"]
-        currency_fph = session["journal_currency"]
-        return redirect("/journal/" + ahid_fph + "/" + currency_fph)
-    else:
-        return redirect("/home_ahc")
-
-# Toggle the display of the full set of rows in the journal screen table:
-@app.route("/toggle_all_journal_rows")
-@login_required
-def toggle_all_journal_rows():
-    if "all_journal_rows" in session:
-        session["all_journal_rows"] = not session["all_journal_rows"]
-    else:
-        session["all_journal_rows"] = False
     if ("journal_ahid" in session) and ("journal_currency" in session):
         ahid_fph = session["journal_ahid"]
         currency_fph = session["journal_currency"]
@@ -1563,6 +1569,12 @@ def journal(ahid_fph, currency_fph):
     else:
         plot_all = False
 
+    if "show_plot" in session:
+        show_plot = session["show_plot"]
+    else:
+        show_plot = False
+
+
 #    print("\njournal_ahid = " + session["journal_ahid"])
 #    print("journal_currency = " + session["journal_currency"])
 
@@ -1713,16 +1725,12 @@ def journal(ahid_fph, currency_fph):
 
         rows_displayed -= 1
 
-#    plot_all = True
-# app/core/bgraph.py
-#    plot_filename = create_balvol_plot(plot_points, currency_fph)
-# app/core/bgraph2.py -- still under development
-#    plot_filepath = create_balvol_plot(currency_fph, ahid_fph)
-    plot_filename, graph_path = create_balvol_plot(
-                                    currency_fph, ahid_fph, plot_all
-                                )
-
-    session["plot_filepath"] =  graph_path + "/" + plot_filename
+    if show_plot:
+        plot_filename, \
+        graph_path = create_balvol_plot(currency_fph, ahid_fph, plot_all)
+        session["plot_filepath"] = graph_path + "/" + plot_filename
+    else:
+        session["plot_filepath"] = plot_filename = graph_path = ""
 
     number_of_messages, \
     number_of_indelible_messages = message_count(primid_fph, hub_mode)
@@ -1755,6 +1763,7 @@ def journal(ahid_fph, currency_fph):
                             "static",
                             filename="graphs/" + ahid_fph + "/" + plot_filename
                         ),
+        show_plot = show_plot,
         plot_all = plot_all,
 #        plot_filepath = plot_filepath,
         show_all_journal_rows = show_all_journal_rows,

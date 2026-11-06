@@ -50,6 +50,13 @@ Volume so far = {{ account_volume }} |
 </p>
 
 <p>
+{% if show_plot %}
+<a href="/toggle_show_plot">hide plot</a>
+{% else %}
+<a href="/toggle_show_plot">show plot</a>
+{% endif %}
+{% if show_plot %}
+|
 {% if show_plot_beside_table %}
 <a href="/toggle_plot_beside_table">plot below table</a>
 {% else %}
@@ -60,6 +67,7 @@ Volume so far = {{ account_volume }} |
 <a href="/toggle_plot_all">plot own only</a>
 {% else %}
 <a href="/toggle_plot_all">plot all</a>
+{% endif %}
 {% endif %}
 </p>
 
@@ -128,6 +136,7 @@ Volume so far = {{ account_volume }} |
 </table>
 </div>
 
+{% if show_plot  %}
 {% if plot_filepath %}
 {% if show_plot_beside_table %}
 <div id="imgright">
@@ -140,6 +149,7 @@ Volume so far = {{ account_volume }} |
 </div>
 {% endif %}
 </div>
+{% endif %}
 
 <div style="clear:both;">
 
