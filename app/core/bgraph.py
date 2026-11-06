@@ -115,9 +115,11 @@ def create_balvol_plot(currency_id, ahid_id, plot_other_accounts = False):
     Y_height = X0 # pixels
 
     # TESTSTUFF
-    sd_count = 0
-    sd_sum = 0
-    sd = 0
+    testing = False
+    if testing:
+        sd_count = 0
+        sd_sum = 0
+        sd = 0
 
     bal_min = bal_max = 0
     pp2 = []
@@ -129,8 +131,9 @@ def create_balvol_plot(currency_id, ahid_id, plot_other_accounts = False):
         pp2.append((bal, vol))
 
         # TESTSTUFF
-        sd_sum += bal*bal
-        sd_count += 1
+        if testing:
+            sd_sum += bal*bal
+            sd_count += 1
 
     # If we are plotting the (balance, volume) values of other *accounts*,
     # these must be accommodated in the autoscaling without polluting the
@@ -145,21 +148,23 @@ def create_balvol_plot(currency_id, ahid_id, plot_other_accounts = False):
             pp2a.append((bal, vol))
 
         # TESTSTUFF
-        sd_sum += bal*bal
-        sd_count += 1
-        if sd:
-            sd = math.sqrt(sd_sum/sd_count)
+        if testing:
+            sd_sum += bal*bal
+            sd_count += 1
+            if sd:
+                sd = math.sqrt(sd_sum/sd_count)
 
     bal_lim = max(abs(bal_min), abs(bal_max))
     if bal_lim == 0:
         return "", "" # unable to plot graph
 
-    print("\nbal_min = " + str(bal_min))
-    print("bal_max = " + str(bal_min))
-    print("sd_count = " + str(sd_count))
-    print("sd = " + str(sd))
-    if sd:
-        print("bal_lim/sd = " + str(bal_lim/sd))
+    if testing:
+        print("\nbal_min = " + str(bal_min))
+        print("bal_max = " + str(bal_min))
+        print("sd_count = " + str(sd_count))
+        print("sd = " + str(sd))
+        if sd:
+            print("bal_lim/sd = " + str(bal_lim/sd))
 
     bal_scale = X0/bal_lim
 

@@ -794,7 +794,6 @@ def toggle_annotation():
     else:
         return redirect("/home_ahc")
 
-#
 # Toggle the display of the annotation column in the home screen table:
 @app.route("/toggle_volume")
 @login_required
