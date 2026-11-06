@@ -2628,7 +2628,8 @@ def list_currencies_in_common_by_hrns(a1_fph, a2_fph):
         print(fph_to_hrns(currency_fph))
 
 #==============================================================================
-#
+# This function is used to identify the type of a an *account* and to scalar
+# retrieve the properties of a scalar *account*.
 
 def get_account_properties(account_id):
     account_fph, account_hrns, etypes, m = identify_entity(account_id)

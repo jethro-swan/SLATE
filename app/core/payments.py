@@ -318,26 +318,16 @@ def payment(payer_account_fph, payee_account_fph, amount, annotation):
         cursor.execute(
             "INSERT INTO payments (" \
             + "timestamp, " \
-            + "payer_fph, " \
-            + "payee_fph, " \
-            + "currency_fph, " \
-            + "amount, " \
-            + "payer_balance, " \
-            + "payer_volume, " \
-            + "payee_balance, " \
-            + "payee_volume, " \
+            + "payer_fph, payee_fph, currency_fph, amount, " \
+            + "payer_balance, payer_volume, " \
+            + "payee_balance, payee_volume, " \
             + "annotation " \
             + ") VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
             (
                 payment_timestamp,
-                payer_account_fph,
-                payee_account_fph,
-                currency_fph,
-                amount,
-                payer_account_balance,
-                payer_account_volume,
-                payee_account_balance,
-                payee_account_volume,
+                payer_account_fph, payee_account_fph, currency_fph, amount,
+                payer_account_balance, payer_account_volume,
+                payee_account_balance, payee_account_volume,
                 annotation
             )
         )

@@ -117,6 +117,7 @@ def create_balvol_plot(currency_id, ahid_id, plot_other_accounts = False):
     # TESTSTUFF
     sd_count = 0
     sd_sum = 0
+    sd = 0
 
     bal_min = bal_max = 0
     pp2 = []
@@ -146,7 +147,8 @@ def create_balvol_plot(currency_id, ahid_id, plot_other_accounts = False):
         # TESTSTUFF
         sd_sum += bal*bal
         sd_count += 1
-        sd = math.sqrt(sd_sum/sd_count)
+        if sd:
+            sd = math.sqrt(sd_sum/sd_count)
 
     bal_lim = max(abs(bal_min), abs(bal_max))
     if bal_lim == 0:
@@ -156,7 +158,8 @@ def create_balvol_plot(currency_id, ahid_id, plot_other_accounts = False):
     print("bal_max = " + str(bal_min))
     print("sd_count = " + str(sd_count))
     print("sd = " + str(sd))
-    print("bal_lim/sd = " + str(bal_lim/sd))
+    if sd:
+        print("bal_lim/sd = " + str(bal_lim/sd))
 
     bal_scale = X0/bal_lim
 

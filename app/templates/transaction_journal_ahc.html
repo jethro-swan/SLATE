@@ -36,16 +36,24 @@ Volume so far = {{ account_volume }} |
 <a href="/toggle_all_journal_rows">show all rows</a>
 {% endif %}
 |
-{% if show_plot_beside_table %}
-<a href="/toggle_plot_beside_table">plot below table</a>
-{% else %}
-<a href="/toggle_plot_beside_table">plot next to table</a>
-{% endif %}
-|
 {% if show_volume %}
 <a href="/toggle_volume">hide volume</a>
 {% else %}
 <a href="/toggle_volume">show volume</a>
+{% endif %}
+|
+{% if show_annotation %}
+<a href="/toggle_annotation">hide annotation</a>
+{% else %}
+<a href="/toggle_annotation">show annotation</a>
+{% endif %}
+</p>
+
+<p>
+{% if show_plot_beside_table %}
+<a href="/toggle_plot_beside_table">plot below table</a>
+{% else %}
+<a href="/toggle_plot_beside_table">plot next to table</a>
 {% endif %}
 |
 {% if plot_all %}
@@ -63,10 +71,12 @@ Volume so far = {{ account_volume }} |
 <div id="journaltbl">
 <table>
   <tr>
-    {% if show_volume %}
+    {% if show_volume and show_annotation %}
     <td class="h" colspan="6">
-    {% else %}
+    {% elif show_volume or show_annotation %}
     <td class="h" colspan="5">
+    {% else %}
+    <td class="h" colspan="4">
     {% endif %}
       <b>Payments made/received</b> (most recent first)
     </td>
@@ -79,7 +89,9 @@ Volume so far = {{ account_volume }} |
     {% if show_volume %}
     <td class="h"><b>volume</b></td>
     {% endif %}
+    {% if show_annotation %}
     <td class="h"><b>annotation</b></td>
+    {% endif %}
   </tr>
   {% for row in journal_rows %}
   {% if row.show %}
@@ -107,7 +119,9 @@ Volume so far = {{ account_volume }} |
     {% if show_volume %}
     <td align="right">{{ row.volume }}</td>
     {% endif %}
+    {% if show_annotation %}
     <td align="left">{{ row.annotation }}</td>
+    {% endif %}
   </tr>
   {% endif %}
   {% endfor %}

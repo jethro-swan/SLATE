@@ -771,26 +771,21 @@ def toggle_more():
     session["show_extended_menu"] = not session["show_extended_menu"]
     return redirect("/home_ahc")
 
-# Toggle the display of the volume column in the home screen table:
-@app.route("/toggle_volume")
+# Toggle the display of the volume column in theaccount journal screen table:
+@app.route("/toggle_annotation")
 @login_required
-def toggle_volume():
-#    session["show_volume"] = not session["show_volume"]
-#    return redirect("/home_ahc")
-    if "show_volume" in session:
-        session["show_volume"] = not session["show_volume"]
+def toggle_annotation():
+    if "show_annotation" in session:
+        session["show_annotation"] = not session["show_annotation"]
     else:
-        session["show_volume"] = False
+        session["show_annotation"] = False
     if "page" in session:
-#        print("page = " + session["page"])
         if session["page"] == "home_ahc":
             return redirect("/home_ahc")
         elif session["page"] == "journal":
             if ("journal_ahid" in session) and ("journal_currency" in session):
                 ahid_fph = session["journal_ahid"]
-#                print("ahid: " + fph_to_hrns(session["journal_ahid"]))
                 currency_fph = session["journal_currency"]
-#                print("currency: " + fph_to_hrns(session["journal_currency"]))
                 return redirect("/journal/" + ahid_fph + "/" + currency_fph)
             else:
                 return redirect("/home_ahc")
@@ -798,6 +793,41 @@ def toggle_volume():
             return redirect("/home_ahc")
     else:
         return redirect("/home_ahc")
+
+#
+# Toggle the display of the annotation column in the home screen table:
+@app.route("/toggle_volume")
+@login_required
+def toggle_volume():
+    if "show_volume" in session:
+        session["show_volume"] = not session["show_volume"]
+    else:
+        session["show_volume"] = False
+    if "page" in session:
+        if session["page"] == "home_ahc":
+            return redirect("/home_ahc")
+        elif session["page"] == "journal":
+            if ("journal_ahid" in session) and ("journal_currency" in session):
+                ahid_fph = session["journal_ahid"]
+                currency_fph = session["journal_currency"]
+                return redirect("/journal/" + ahid_fph + "/" + currency_fph)
+            else:
+                return redirect("/home_ahc")
+        else:
+            return redirect("/home_ahc")
+    else:
+        return redirect("/home_ahc")
+
+
+
+
+
+
+
+
+
+
+
 
 # Toggle the display of the all *account*s' plots:
 @app.route("/toggle_plot_all")
@@ -879,7 +909,6 @@ def home_ahc(
         show_volume = False
         session["show_volume"] = show_volume
     show_volume = session["show_volume"]
-#    print("show_volume = " + str(show_volume))
 
     show_payment_form = True
 
@@ -1559,6 +1588,11 @@ def journal(ahid_fph, currency_fph):
         show_all_journal_rows = False
 
     #
+    if "show_annotation" in session:
+        show_annotation = session["show_annotation"]
+    else:
+        show_annotation = False
+
     if "plot_beside_table" in session:
         show_plot_beside_table = session["plot_beside_table"]
     else:
@@ -1725,6 +1759,7 @@ def journal(ahid_fph, currency_fph):
         plot_all = plot_all,
 #        plot_filepath = plot_filepath,
         show_all_journal_rows = show_all_journal_rows,
+        show_annotation = show_annotation,
         number_of_messages = number_of_messages,
         number_of_indelible_messages = number_of_indelible_messages
     )
