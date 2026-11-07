@@ -95,7 +95,7 @@ from app.core.cctld_list import *
 
 #==============================================================================
 # Log an event:
-#
+
 def log_event(category, summary, details):
     if category not in set(["access",
                             "activity",
@@ -111,8 +111,6 @@ def log_event(category, summary, details):
         log_file.write(details + "\n")
     return True
 
-#==============================================================================
-#
 def log_self_repair(entity_id, message):
     entity_fph, entity_hrns, etypes, m = identify_entity(entity_id)
     log_event(
@@ -181,8 +179,6 @@ def generate_password(min_length):
     for i in range(pwd_length):
         pwd.append(random.choice(valid_chars))
     return "".join(pwd)
-
-
 
 # (2) For "URL-safe" passwords:
 
@@ -501,7 +497,7 @@ def create_identifiers_db():
         cursor.close()
 
 #==============================================================================
-## Create the SQLite entities database
+# Create the SQLite entities database
 
 def create_entities_db(owner_fph):
 
@@ -838,7 +834,7 @@ def register_identifier_by_name_and_parent_fph(name, parent_fph):
     return identifier_fph, ""
 
 #==============================================================================
-## Get the list of *entity* types registered for a specified FPH::
+# Get the list of *entity* types registered for a specified FPH::
 
 def get_entity_types(entity_fph):
     if not re_fph.match(entity_fph):
@@ -1012,7 +1008,6 @@ def deregister_entity_type(identifier_fph, entity_type):
 def identify_entity(entity_id): # HRNS or FPH
     if (entity_id is None) or (not isinstance(entity_id, str)):
         return "", "", [], "Invalid identifier"
-#    entity_id = entity_id.strip()
     entity_id = entity_id.strip().lower() # See Note 1
     if entity_id == SUBSTRATE_FPH: # a unique exception
         return entity_id, "", list("namespace",), ""
@@ -1805,34 +1800,16 @@ def new_currency(
         cursor = conn.cursor()
         cursor.execute(
             "INSERT INTO currencies (" \
-            + "entity_fph, " \
-            + "active, " \
-            + "private, " \
-            + "currency_prefix, " \
-            + "currency_suffix, " \
-            + "default_account_name, " \
-            + "stewards_fph_list, " \
-            + "sandbox, " \
-            + "type, " \
-            + "category, " \
-            + "units, " \
-            + "metrical_equivalence, " \
-            + "dimensions" \
+            + "entity_fph, active, private, sandbox, " \
+            + "currency_prefix, currency_suffix, " \
+            + "default_account_name, stewards_fph_list, " \
+            + "type, category, units, metrical_equivalence, dimensions" \
             + ") VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
             (
-                currency_fph,
-                int(active), # enabled|disable
-                int(private),
-                currency_prefix,
-                currency_suffix,
-                default_account_name,
-                pickle.dumps([initial_steward_fph]),
-                int(sandbox),
-                account_type,
-                category,
-                units,
-                metrical_equivalence,
-                dimensions
+                currency_fph, int(active), int(private), int(sandbox),
+                currency_prefix, currency_suffix,
+                default_account_name, pickle.dumps([initial_steward_fph]),
+                account_type, category, units, metrical_equivalence, dimensions
             )
         )
         cursor.execute(

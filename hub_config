@@ -52,7 +52,7 @@ hide_clade_hrns = TRUE
 # interface:
 training_wheels = TRUE
 
-sandbox_clade_hrns = "cc"
+sandbox_clade_hrns = cc
 
 # If the following is TRUE, a payment may be made directly from an *account* to
 # another *account* (without having to specify an *ahid* and *currency*):
@@ -88,3 +88,6 @@ votes_enabled = FALSE
 counts_enabled = FALSE
 
 default_rows_displayed = 10
+
+#background_colour = #f0f4f0
+background_colour = #ffffff

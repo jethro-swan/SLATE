@@ -428,7 +428,8 @@ def register():
         initial_currency_fph = initial_currency_fph,
         initial_currency_hrns = initial_currency_hrns,
         namespace_steward = False,
-        currency_steward = False
+        currency_steward = False,
+        bgcolour = get_config("background_colour")
     )
 
 # login -----------------------------------------------------------------------
@@ -533,7 +534,8 @@ def login():
         version = get_version(),
         logged_in = logged_in,
         form = form,
-        development_mode = development_mode
+        development_mode = development_mode,
+        bgcolour = get_config("background_colour")
     )
 
 # log out ---------------------------------------------------------------------
@@ -640,7 +642,8 @@ def login_recover():
         page = page,
         mode = mode,
         hub_mode = "slate",
-        version = get_version()
+        version = get_version(),
+        bgcolour = get_config("background_colour")
     )
 
 # [1] Thanks to https://freelancefootprints.substack.com/p/
@@ -705,7 +708,8 @@ def login_reset(user_id, token):
         primid_hrns = primid_hrns,
         form = form,
         hub_mode = "slate",
-        version = get_version()
+        version = get_version(),
+        bgcolour = get_config("background_colour")
     )
 
 
@@ -755,7 +759,8 @@ def hold():
         primid_hrns = primid_hrns,
         working_identity_fph = working_identity_fph,
         working_identity_hrns = working_identity_hrns,
-        working_identity_type = working_identity_type
+        working_identity_type = working_identity_type,
+        bgcolour = get_config("background_colour")
     )
 
 
@@ -1279,7 +1284,8 @@ def home_ahc(
         concestor_fph = concestor_fph,
         payer_balance = payer_balance,
         number_of_messages = number_of_messages,
-        number_of_indelible_messages = number_of_indelible_messages
+        number_of_indelible_messages = number_of_indelible_messages,
+        bgcolour = get_config("background_colour")
     )
 
 #==============================================================================
@@ -1439,7 +1445,8 @@ def list_accounts():
         # List of (nested) dictionaries for display in "home.html":
         identities = identities,
         nstewardships = nstewardships,
-        cstewardships = cstewardships
+        cstewardships = cstewardships,
+        bgcolour = get_config("background_colour")
      )
 
 #==============================================================================
@@ -1532,7 +1539,8 @@ def pay_ahid(payer_ahid_fph, payment_currency_fph):
         payer_ahid_hrns = payer_ahid_hrns,
         currency_hrns = currency_hrns,
         number_of_indelible_messages = number_of_indelible_messages,
-        number_of_messages = number_of_messages
+        number_of_messages = number_of_messages,
+        bgcolour = get_config("background_colour")
     )
 
 
@@ -1781,8 +1789,6 @@ def journal(ahid_fph, currency_fph):
         journal_rows = journal_rows,
         account_fph = account_fph,
         account_volume = integer_to_money_format(account_volume),
-#        imgadjacent = False,
-#        imgadjacent = True,
         show_plot_beside_table = show_plot_beside_table,
         plot_filepath = url_for(
                             "static",
@@ -1790,11 +1796,11 @@ def journal(ahid_fph, currency_fph):
                         ),
         show_plot = show_plot,
         plot_all = plot_all,
-#        plot_filepath = plot_filepath,
         show_all_journal_rows = show_all_journal_rows,
         show_annotation = show_annotation,
         number_of_messages = number_of_messages,
-        number_of_indelible_messages = number_of_indelible_messages
+        number_of_indelible_messages = number_of_indelible_messages,
+        bgcolour = get_config("background_colour")
     )
 
 #=============================================================================
@@ -1915,7 +1921,8 @@ def stewardships():
         logged_in = logged_in,
         stewardships_tabulated = stewardships_tabulated,
         number_of_messages = n_messages,
-        number_of_indelible_messages = n_indelible_messages
+        number_of_indelible_messages = n_indelible_messagesroute,
+        bgcolour = get_config("background_colour")
     )
 
 # list stewardships -----------------------------------------------------------
@@ -2001,7 +2008,8 @@ def currency(currency_fph):
         development_mode = development_mode,
         logged_in = logged_in,
         number_of_messages = number_of_messages,
-        number_of_indelible_messages = number_of_indelible_messages
+        number_of_indelible_messages = number_of_indelible_messages,
+        bgcolour = get_config("background_colour")
     )
 
 
@@ -2075,7 +2083,8 @@ def currency_steward_add(currency_fph):
         stewards_list = stewards_list,
         logged_in = logged_in,
         number_of_messages = number_of_messages,
-        number_of_indelible_messages = number_of_indelible_messages
+        number_of_indelible_messages = number_of_indelible_messages,
+        bgcolour = get_config("background_colour")
     )
 
 #
@@ -2186,7 +2195,8 @@ def manage():
         working_identity_type = working_identity_type,
         development_mode = development_mode,
         namespace_steward = namespace_steward,
-        currency_steward = currency_steward
+        currency_steward = currency_steward,
+        bgcolour = get_config("background_colour")
     )
 
 # create a currency -----------------------------------------------------------
@@ -2290,7 +2300,8 @@ def create_currency():
         namespace_steward = namespace_steward,
         currency_steward = currency_steward,
         number_of_messages = number_of_messages,
-        number_of_indelible_messages = number_of_indelible_messages
+        number_of_indelible_messages = number_of_indelible_messages,
+        bgcolour = get_config("background_colour")
     )
 
 # create an *ahid*-*currency* pairing -----------------------------------------
@@ -2419,7 +2430,8 @@ def create_pairing(owner_fph = ""):
         development_mode = development_mode,
         namespace_steward = namespace_steward,
         number_of_messages = number_of_messages,
-        number_of_indelible_messages = number_of_indelible_messages
+        number_of_indelible_messages = number_of_indelible_messages,
+        bgcolour = get_config("background_colour")
     )
 
 
@@ -2512,7 +2524,8 @@ def create_namespace():
         working_identity_hrns = working_identity_hrns,
         working_identity_type = working_identity_type,
         number_of_messages = number_of_messages,
-        number_of_indelible_messages = number_of_indelible_messages
+        number_of_indelible_messages = number_of_indelible_messages,
+        bgcolour = get_config("background_colour")
     )
 
 # list the existing namespaces ------------------------------------------------
@@ -2568,7 +2581,8 @@ def list_namespaces():
         primid_type = "login identity",
         primid_fph = primid_fph,
         primid_hrns = primid_hrns,
-        available_namespaces = available_namespaces
+        available_namespaces = available_namespaces,
+        bgcolour = get_config("background_colour")
     )
 
 # add steward to entitity =====================================================
@@ -2774,7 +2788,8 @@ def export_account_csv(account_fph):
         ahid_hrns = ahid_hrns,
         csv_file = csv_file,
         number_of_messages = number_of_messages,
-        number_of_indelible_messages = number_of_indelible_messages
+        number_of_indelible_messages = number_of_indelible_messages,
+        bgcolour = get_config("background_colour")
     )
 
 #------------------------------------------------------------------------------
@@ -2862,7 +2877,8 @@ def export_currency_csv(currency_fph):
         #csv_export_path = csv_export_path
         csv_file = csv_file,
         number_of_messages = number_of_messages,
-        number_of_indelible_messages = number_of_indelible_messages
+        number_of_indelible_messages = number_of_indelible_messages,
+        bgcolour = get_config("background_colour")
     )
 
 
@@ -2939,7 +2955,8 @@ def importing(file):
         primid_fph = primid_fph,
         primid_hrns = primid_hrns,
         working_identity_fph = working_identity_fph,
-        working_identity_hrns = working_identity_hrns
+        working_identity_hrns = working_identity_hrns,
+        bgcolour = get_config("background_colour")
     )
 
 @app.route("/import/dataset", methods = ["GET", "POST"])
@@ -2994,7 +3011,8 @@ def import_payment_set():
         working_identity_fph = working_identity_fph,
         working_identity_hrns = working_identity_hrns,
         number_of_messages = number_of_messages,
-        number_of_indelible_messages = number_of_indelible_messages
+        number_of_indelible_messages = number_of_indelible_messages,
+        bgcolour = get_config("background_colour")
     )
 
 
@@ -3198,7 +3216,8 @@ def messages():
         working_identity_type = working_identity_type,
         message_recipients_list = message_recipients_list,
         number_of_messages = number_of_messages,
-        number_of_indelible_messages = number_of_indelible_messages
+        number_of_indelible_messages = number_of_indelible_messages,
+        bgcolour = get_config("background_colour")
     )
 
 @app.route("/message/send", methods = ["GET", "POST"])
@@ -3335,7 +3354,8 @@ def message_send():
         working_identity_type = working_identity_type,
         form = form,
         number_of_messages = number_of_messages,
-        number_of_indelible_messages = number_of_indelible_messages
+        number_of_indelible_messages = number_of_indelible_messages,
+        bgcolour = get_config("background_colour")
     )
 
 
@@ -3407,7 +3427,8 @@ def messages_show(recipient_fph):
         any_messages = any_messages,
         message_list = message_list,
         number_of_indelible_messages = number_of_indelible_messages,
-        number_of_messages = number_of_messages
+        number_of_messages = number_of_messages,
+        bgcolour = get_config("background_colour")
     )
 
 
@@ -3562,7 +3583,8 @@ def invitation_generate():
         working_identity_type = working_identity_type,
         form = form,
         number_of_messages = number_of_messages,
-        number_of_indelible_messages = number_of_indelible_messages
+        number_of_indelible_messages = number_of_indelible_messages,
+        bgcolour = get_config("background_colour")
     )
 
 
@@ -3627,7 +3649,8 @@ def invitation_display(qrfilename):
         working_identity_type = working_identity_type,
         number_of_messages = number_of_messages,
         number_of_indelible_messages = number_of_indelible_messages,
-        qrfilename = qrfilename
+        qrfilename = qrfilename,
+        bgcolour = get_config("background_colour")
     )
 
 # help ========================================================================
@@ -3669,7 +3692,8 @@ def help():
         show_csv_import_link = get_config("show_dataset_csv_import_link"),
         development_mode = development_mode,
         namespace_steward = namespace_steward,
-        currency_steward = currency_steward
+        currency_steward = currency_steward,
+        bgcolour = get_config("background_colour")
     )
 
 @app.route("/back")

@@ -42,10 +42,9 @@ crossorigin="anonymous"
   rel="stylesheet"
   href="{{ url_for('static', filename='css/default.css') }}"
 >
-<!--
--->
-
-
+<style>
+  body { background-color: {{ bgcolour }}; }
+</style>
 <script
   src="{{ url_for('static', filename='js/jquery-3.7.1.min.js') }}"
   type="text/javascript"
