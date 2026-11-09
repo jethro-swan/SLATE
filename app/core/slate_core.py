@@ -667,7 +667,8 @@ def create_entities_db(owner_fph):
             + "stewards_fph_list BLOB, " \
             + "sandbox INTEGER NOT NULL DEFAULT 0, " \
             + "type TEXT DEFAULT 'scalar', " \
-            + "category TEXT DEFAULT 'money', " \
+            + "category TEXT DEFAULT 'zero_sum', " \
+            + "subcategory TEXT DEFAULT 'money', " \
             + "units TEXT DEFAULT 'unspecified', " \
             + "metrical_equivalence DEFAULT 'unspecified', " \
             + "dimensions TEXT DEFAULT 'unspecified'" \
@@ -682,11 +683,6 @@ def create_entities_db(owner_fph):
             + "account_currency_fph TEXT NOT NULL DEFAULT '', " \
             + "balance INTEGER NOT NULL DEFAULT 0, " \
             + "volume INTEGER NOT NULL DEFAULT 0, " \
-            + "account_type TEXT DEFAULT 'scalar', " \
-            + "account_category TEXT DEFAULT 'money', " \
-            + "account_units TEXT DEFAULT 'unspecified', " \
-            + "account_metrical_equivalence 'lt', " \
-            + "account_dimensions TEXT DEFAULT 'unspecified', " \
             + "vector BLOB, " \
             + "vector_map BLOB, " \
             + "matrix BLOB, " \
@@ -1439,12 +1435,13 @@ def new_primid(
             "", "", # prefix | suffix
             username, # default *account* name
             "scalar", # account type
-            "money", # category
+            "zero_sum", # category
+            "money", # subcategory
             "unspecified", # units
             "lt", # metrical_equivalence
             "unspecified", # dimensions
             False, # initially inactive
-            True, # initiall private
+            True, # initially private
             False # initially not sandbox
         )
 
@@ -1740,7 +1737,8 @@ def new_currency(
         currency_suffix="",
         default_account_name="h",
         account_type="scalar",
-        category="money",
+        category="zero_sum",
+        subcategory="money",
         units="",
         metrical_equivalence="",
         dimensions="",
@@ -1866,6 +1864,7 @@ def create_currencies_from_list(initial_steward_id, currency_list):
         default_account_name = currency["default_account_name"]
         account_type = currency["account_type"]
         category = currency["category"]
+        subcategory = currency["subcategory"]
         units = currency["units"]
         metrical_equivalence = currency["metrical_equivalence"]
         dimensions = currency["dimensions"]
@@ -1873,8 +1872,8 @@ def create_currencies_from_list(initial_steward_id, currency_list):
         currency_fph, currency_hrns, \
         m = new_currency(
                 currency_name, parent_id, initial_steward_id,
-                prefix, suffix, default_account_name,
-                account_type, category, units, metrical_equivalence,
+                prefix, suffix, default_account_name, account_type,
+                category, subcategory, units, metrical_equivalence,
                 dimensions, True, False, False
             )
         if m:
@@ -1956,10 +1955,10 @@ def new_account(
         return "", "", currency_fph + " has no registered currency"
     currency_fph, currency_hrns, \
     active, open, private, sandbox, \
-    currency_type, currency_category, currency_units, \
+    currency_type, currency_category, currency_subcategory, currency_units, \
     currency_metrical_equivalence, currency_dimensions, \
-    prefix, suffix, default_account_name, \
-    stewards_list, m = get_currency_properties(currency_fph)
+    prefix, suffix, default_account_name, stewards_list, \
+    m = get_currency_properties(currency_fph)
 
     if False:
         print("\ncurrency_fph = " + currency_fph)
@@ -2004,16 +2003,9 @@ def new_account(
         cursor.execute(
             "INSERT INTO accounts (" \
             + "entity_fph, account_owner_fph, account_currency_fph, " \
-            + "balance, volume, " \
-            + "account_type, account_category, account_units, " \
-            + "account_metrical_equivalence, account_dimensions" \
-            + ") VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
-            (
-                account_fph, owner_fph, currency_fph,
-                0, 0,
-                currency_type, currency_category, currency_units,
-                currency_metrical_equivalence, currency_dimensions
-            )
+            + "balance, volume " \
+            + ") VALUES (?, ?, ?, ?, ?)",
+            (account_fph, owner_fph, currency_fph, 0, 0)
         )
         conn.commit()
         cursor.execute(
@@ -2129,16 +2121,18 @@ def get_currency_properties(currency_id):
     if m:
         return "", "", \
                False, False, False, False, \
-               "", "", "", "", "", \
+               "", "", "", "", "", "", \
                "", "", "", \
                [], m
     with sqlite3.connect(ENTITIES_DB) as conn:
         cursor = conn.cursor()
         cursor.execute(
             "SELECT active, private, open, sandbox, " \
-            + "type, category, units, metrical_equivalence, dimensions, " \
+            + "type, category, subcategory, " \
+            + "units, metrical_equivalence, dimensions, " \
             + "currency_prefix, currency_suffix, default_account_name, " \
-            + "stewards_fph_list FROM currencies WHERE entity_fph = ?",
+            + "stewards_fph_list " \
+            + "FROM currencies WHERE entity_fph = ?",
             (currency_fph,)
         )
         result = cursor.fetchone()
@@ -2147,7 +2141,7 @@ def get_currency_properties(currency_id):
         m = "Currency " + fph_to_hrns(currency_fph) + " not found"
         return "", "", \
                False, False, False, False, \
-               "", "", "", "", "", \
+               "", "", "", "", "", "", \
                "", "", "", \
                [], m
     #
@@ -2157,17 +2151,19 @@ def get_currency_properties(currency_id):
     sandbox = bool(result[3])
     type = result[4]
     category = result[5]
-    units = result[6]
-    metrical_equivalence = result[7]
-    dimensions = result[8]
-    prefix = result[9]
-    suffix = result[10]
-    default_account_name = result[11]
-    stewards_fph_blob = result[12]
+    subcategory = result[6]
+    units = result[7]
+    metrical_equivalence = result[8]
+    dimensions = result[9]
+    prefix = result[10]
+    suffix = result[11]
+    default_account_name = result[12]
+    stewards_fph_blob = result[13]
     stewards_list = pickle.loads(stewards_fph_blob)
     return currency_fph, currency_hrns, \
            active, open, private, sandbox, \
-           type, category, units, metrical_equivalence, dimensions, \
+           type, category, subcategory, \
+           units, metrical_equivalence, dimensions, \
            prefix, suffix, default_account_name, \
            stewards_list, ""
 
@@ -2188,24 +2184,34 @@ def get_currency_name(currency_fph):
 # This will list all *accounts* belonging to an *ahid* or "primid", the
 # *account* itself identifying its *currency*.
 
-def list_accounts(identity_id, identity_etype):
+#def list_accounts(identity_id, identity_etype):
+def list_accounts(identity_id):
     identity_fph, identity_hrns, etypes, m = identify_entity(identity_id)
     if not identity_fph:
         return [], identity_id + " is not a registered identifier (3)"
-    if not (identity_etype in etypes): # *ahid* or *primid*
-        return [], identity_hrns + " has no registered " + identity_etype
+#    if not (identity_etype in etypes): # *ahid* or *primid*
+    if not ("ahid" in etypes): # *ahid*
+        return [], identity_hrns + " has no registered ahid"
     with sqlite3.connect(ENTITIES_DB) as conn:
         cursor = conn.cursor()
+#        cursor.execute(
+#            "SELECT accounts_fph_list FROM " + identity_etype + "s " \
+#            + "WHERE entity_fph = ?", (identity_fph,)
+#        )
         cursor.execute(
-            "SELECT accounts_fph_list FROM " + identity_etype + "s " \
-            + "WHERE entity_fph = ?", (identity_fph,)
+            "SELECT accounts_fph_list FROM ahids WHERE entity_fph = ?",
+            (identity_fph,)
         )
         result = cursor.fetchone()
         if result is None:
             accounts_fph_blob = pickle.dumps([])
+#            cursor.execute(
+#                "UPDATE " + identity_etype + "s SET accounts_fph_list = ? " \
+#                + "WHERE entity_fph = ?", (accounts_fph_blob, identity_fph)
+#            )
             cursor.execute(
-                "UPDATE " + identity_etype + "s SET accounts_fph_list = ? " \
-                + "WHERE entity_fph = ?", (accounts_fph_blob, identity_fph)
+                "UPDATE ahids SET accounts_fph_list = ? WHERE entity_fph = ?",
+                (accounts_fph_blob, identity_fph)
             )
             conn.commit()
             cursor.close()
@@ -2624,12 +2630,7 @@ def get_account_properties(account_id):
             + "account_currency_fph, " \
             + "balance, " \
             + "volume, " \
-            + "active, " \
-            + "account_type, " \
-            + "account_category, " \
-            + "account_units, " \
-            + "account_metrical_equivalence, " \
-            + "account_dimensions " \
+            + "active " \
             + "FROM accounts WHERE entity_fph = ?",
             (account_fph,)
         )
@@ -2637,7 +2638,7 @@ def get_account_properties(account_id):
         cursor.close()
     if result is None:
         return "", "", 0, 0, False, "", "", "", "", "", "Account not found"
-    # The owner of this *account* may be either an *ahid* or a *primid*.
+    # The owner of this *account* is an *ahid*.
     owner_fph, owner_hrns, etypes, m = identify_entity(result[0])
     if not ("ahid" in etypes):
         return "", "", 0, 0, False, "", "", "", "", "", "Account  has no owner"
@@ -2645,14 +2646,15 @@ def get_account_properties(account_id):
     balance = result[2]
     volume = result[3]
     active = bool(result[4])
-    account_type = result[5]
-    account_category = result[6]
-    account_units = result[7]
-    account_metrical_equivalence = result[8]
-    account_dimensions = result[9]
-    return currency_fph, owner_fph, balance, volume, active, \
-           account_type, account_category, account_units, \
-           account_metrical_equivalence, account_dimensions, ""
+    #
+    # The *account* properties are found indirectlt from the *currency*:
+    currency_fph, currency_hrns, active, open, private, sandbox, \
+    type, category, subcategory, units, metrical_equivalence, dimensions, \
+    prefix, suffix, default_account_name, stewards_list, \
+    m = get_currency_properties(currency_fph)
+    #
+    return currency_fph, owner_fph, balance, volume, active, type, \
+           category, subcategory, units, metrical_equivalence, dimensions, ""
 
 
 #==============================================================================
@@ -2672,60 +2674,133 @@ def account_status(account_fph):
 #==============================================================================
 # Sum the balances of *accounts* with similar properties:
 
-def sum_account_balances(
-        owner_id,
-        account_category,
-        account_units,
-        account_metrical_equivalence,
-        account_dimensions,
-        all=False
+# Sum the balances of all *accounts* with similar properties belonging
+# directly to an *ahid*:
+def sum_ahid_account_balances(
+        ahid_fph, # assumed to have been validated already
+        account_category="zero_sum",
+        account_subcategory="money", # money|htime|utime|energy|unspecified
+        account_units="",
+        account_metrical_equivalence="lt"
     ):
-    owner_fph, owner_hrns, etypes, m = identify_entity(owner_id)
-    if not owner_fph:
-        return {}, {}, owner_id + " is not a registered identifier"
-#    if not (("ahid" in etypes) or ("primid" in etypes)):
-#        return {}, {}, owner_hrns + " is not a registered ahid"
-    if all and not ("primid" in etypes):
-        return {}, {}, owner_hrns + " is not a registered primid"
-    elif not ("ahid" in etypes):
-        return {}, {}, owner_hrns + " is not a registered ahid"
-
+    errors = ""
     testing = True
     if testing:
         print("account_category:      " + account_category)
+        print("account_subcategory:   " + account_subcategory)
         print("account_units:         " + account_units)
         print("metrical_equivalence:  " + account_metrical_equivalence)
-        print("account_dimensions:    " + account_dimensions)
+    #
+    # The *account* type is scalar.
 
-    categories = ["money", "htime", "utime", "energy", "unspecified"]
-    balance_sum = volume_sum = {}
-    for c in categories:
-        balance_sum[c] = volume_sum[c] = 0
+    balance_sum = volume_sum = 0
+    accounts_fph_list, m = list_accounts(ahid_fph)
+    for account_fph in accounts_fph_list:
+        currency_fph, owner_fph, balance, volume, active, \
+        type, category, subcategory, units, metrical_equivalence, dimensions, \
+        m = get_account_properties(account_fph)
+        if testing:
+            print("\ncurrency = " + fph_to_hrns(currency_fph))
+            print("type = " + type)
+            print("category = " + category)
+            print("subcategory = " + subcategory)
+            print("units = " + units)
+            print("metrical_equivalence = " + metrical_equivalence)
+        if units == "unspecified":
+            units = ""
+        if metrical_equivalence == "unspecified":
+            metrical_equivalence == ""
+        if m:
+            errors += m + "\n"
+        elif type != "scalar":
+#            print("a")
+            continue
+        elif account_category and category and (account_category != category):
+#            print("b")
+            continue
+        elif account_subcategory and subcategory \
+        and (account_subcategory != subcategory):
+#            print("c")
+            continue
+        elif account_units \
+        and units and (account_units != units):
+#            print("d")
+            continue
+        elif account_metrical_equivalence and metrical_equivalence \
+        and (account_metrical_equivalence != metrical_equivalence):
+#            print("e")
+            continue
+        else:
+#            print("f")
+            balance_sum += balance
+            volume_sum += volume
+            if testing:
+                print("\nbalance:   " + integer_to_money_format(balance))
+                print("volume:      " + integer_to_money_format(volume))
+                print("category:    " + category)
+                print("subcategory: " + subcategory)
 
-    accounts_fph_list, m = list_accounts(owner_fph, "ahid")
+    return balance_sum, volume_sum, errors
+
+
+# Sum the balances of all *accounts* with similar properties belonging
+# indirectly to a *primid*:
+def sum_primid_account_balances(
+        primid_fph,
+        account_category,
+        account_subcategory,
+        account_units,
+        account_metrical_equivalence
+    ):
+    return
+
+
+
+def sum_account_balances(
+        primid_id,
+        account_category,
+        account_subcategory,
+        account_units,
+        account_metrical_equivalence
+    ):
+    testing = True
+    if testing:
+        print("account_category:      " + account_category)
+        print("account_subcategory:   " + account_subcategory)
+        print("account_units:         " + account_units)
+        print("metrical_equivalence:  " + account_metrical_equivalence)
+
+    primid_fph, primid_hrns, etypes, m = identify_entity(primid_id)
+    if not primid_fph:
+        return {}, {}, primid_id + " is not a registered identifier"
 
     if testing:
-        print("accounts belonging to " + owner_hrns)
-        print(accounts_fph_list)
-
-    for account_fph in accounts_fph_list:
+        print()
+        print("accounts belonging to " + primid_hrns + ":")
+    ahids_fph_list = list_ahids(primid_fph)
+    for ahid_fph in ahids_fph_list:
         if testing:
-            print(fph_to_hrns(account_fph))
-        currency_fph, owner_fph, balance, volume, active, \
-        type, category, units, metrical_equivalence, dimensions, \
-        m = get_account_properties(account_fph)
+            print(fph_to_hrns(ahid_fph))
 
-        if testing:
-            print("\nbalance: " + integer_to_money_format(balance))
-            print("volume:    " + integer_to_money_format(volume))
-            print("type:      " + type)
-            print("category:  " + category)
-            print(category + " & " + account_category)
+#    categories = ["money", "htime", "utime", "energy", "unspecified"]
+#    balance_sum = volume_sum = {}
+#    for c in categories:
+#        balance_sum[c] = volume_sum[c] = 0
 
-        if category == account_category:
+#    accounts_fph_list, m = list_accounts(owner_fph, "ahid")
+        accounts_fph_list, m = list_accounts(ahid_fph)
+        for account_fph in accounts_fph_list:
+            currency_fph, owner_fph, balance, volume, active, type, \
+            category, subcategory, units, metrical_equivalence, dimensions, \
+            m = get_account_properties(account_fph)
 
             if testing:
-                print("category match")
+                print("\nbalance:   " + integer_to_money_format(balance))
+                print("volume:      " + integer_to_money_format(volume))
+                print("type:        " + type)
+                print("category:    " + category)
+                print("subcategory: " + subcategory)
+
 
             balance_sum[category] += balance
             volume_sum[category] += volume
@@ -3458,7 +3533,7 @@ def set_currency_parameter(currency_id, parameter, ctype, steward_id):
 
     currency_fph, currency_hrns, \
     active, open, private, sandbox, \
-    currency_type, currency_category, currency_units, \
+    currency_type, currency_category, currency_subcategory, currency_units, \
     currency_metrical_equivalence, currency_dimensions, \
     prefix, suffix, default_account_name, \
     stewards_list, m = get_currency_properties(currency_id)
@@ -3493,7 +3568,7 @@ def set_currency_parameter(currency_id, parameter, ctype, steward_id):
         else:
             return(ctype + " is invalid for " + parameter)
     elif parameter == "category":
-        if ctype in ["money", "count", "vote", "measure"]:
+        if ctype in ["zero_sum", "count", "vote", "measure"]:
             if ctype == currency_category: # nothing to change
                 return ""
             else:
@@ -3506,6 +3581,22 @@ def set_currency_parameter(currency_id, parameter, ctype, steward_id):
                     )
                     conn.commit()
                     cursor.close()
+    #
+    elif parameter == "subcategory":
+        if ctype in ["money", "measure"]:
+            if ctype == currency_subcategory: # nothing to change
+                return ""
+            else:
+                with sqlite3.connect(ENTITIES_DB) as conn:
+                    cursor = conn.cursor()
+                    cursor.execute(
+                        "UPDATE currencies SET subcategory = ? " \
+                        + "WHERE entity_fph = ?",
+                        (ctype, currency_fph)
+                    )
+                    conn.commit()
+                    cursor.close()
+    #
     elif parameter == "units":
         return ""
     elif parameter == "metrical_equivalence":

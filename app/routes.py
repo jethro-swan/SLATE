@@ -369,7 +369,7 @@ def register():
         )
 
         currency_fph, currency_hrns, active, open, private, sandbox, \
-        type, category, units, metrical_equivalence, dimensions, \
+        type, category, subcategory, units, metrical_equivalence, dimensions, \
         prefix, suffix, default_account_name, stewards_list, \
         m = get_currency_properties(currency_fph)
         if m:
@@ -1065,17 +1065,18 @@ def home_ahc(
             account_fph = pmap_t[ahid_hrns][currency_hrns]
 
             account_currency_fph, account_owner_fph, \
-            account_balance, account_volume, account_active, \
-            account_type, account_category, account_units, \
+            account_balance, account_volume, account_active, account_type, \
+            account_category, account_subcategory, account_units, \
             account_metrical_equivalence, account_dimensions, \
             m = get_account_properties(account_fph)
 
             if fph_to_hrns(account_currency_fph) != currency_hrns:
                 continue # (This should never happen)
 
-            currency_fph, currency_hrns, currency_active, open, private, \
-            sandbox, type, category, units, metrical_equivalence, dimensions, \
-            prefix, suffix, default_account_name, stewards_list, \
+            currency_fph, currency_hrns, currency_active, \
+            open, private, sandbox, type, \
+            category, subcategory, units, metrical_equivalence, \
+            dimensions, prefix, suffix, default_account_name, stewards_list, \
             m = get_currency_properties(account_currency_fph)
 
             if currency_active:
@@ -1374,8 +1375,8 @@ def list_accounts():
             m = get_account_properties(account_fph)
 
             # Fetch currency details:
-            currency_fph, currency_hrns, active, open, private, sandbox, \
-            type, category, units, metrical_equivalence, dimensions, \
+            currency_fph, currency_hrns, active, open, private, sandbox, type, \
+            category, subcategory, units, metrical_equivalence, dimensions, \
             prefix, suffix, default_account_name, stewards_list, \
             m = get_currency_properties(account_currency_fph)
 
@@ -1639,8 +1640,8 @@ def journal(ahid_fph, currency_fph):
     m = retrieve_pairing_account_fph(ahid_hrns, currency_fph)
 
     account_currency_fph, account_owner_fph, account_balance, account_volume, \
-    account_active, account_type, account_category, account_units, \
-    account_metrical_equivalence, account_dimensions, \
+    account_active, account_type, account_category, account_subcategory, \
+    account_units, account_metrical_equivalence, account_dimensions, \
     m = get_account_properties(account_fph)
 
     with sqlite3.connect(PAYMENTS_DB) as conn:
@@ -1971,7 +1972,7 @@ def currency(currency_fph):
         return "", "", currency_fph + " is not a currency"
 
     currency_fph, currency_hrns, active, open, private, sandbox, \
-    type, category, units, metrical_equivalence, dimensions, \
+    type, category, subcategory, units, metrical_equivalence, dimensions, \
     prefix, suffix, default_account_name, stewards_list, \
     m = get_currency_properties(currency_fph)
 
@@ -2042,7 +2043,7 @@ def currency_steward_add(currency_fph):
         working_identity_hrns = primid_hrns
 
     currency_fph, currency_hrns, active, open, private, sandbox, \
-    type, category, units, metrical_equivalence, dimensions, \
+    type, category, subcategory, units, metrical_equivalence, dimensions, \
     prefix, suffix, default_account_name, stewards_list, \
     m = get_currency_properties(currency_fph)
 
@@ -2054,7 +2055,7 @@ def currency_steward_add(currency_fph):
         steward_fph, steward_hrns, etypes, \
         m = identify_entity(form.new_steward.data)
         if steward_fph:
-            m = add_currency_stewardship(currency_fph, steward_fph, primid_fph)
+            m = add_currency_steward(currency_fph, primid_fph, steward_fph)
         else:
             flash(form.new_steward.data + " is not a registered identity")
 
@@ -2130,12 +2131,12 @@ def currency_steward_remove(currency_fph, steward_fph):
         working_identity_type = etype_to_adtype(working_identity_type)
 
     currency_fph, currency_hrns, active, open, private, sandbox, \
-    type, category, units, metrical_equivalence, dimensions, \
+    type, category, subcategory, units, metrical_equivalence, dimensions, \
     prefix, suffix, default_account_name, stewards_list, \
     m = get_currency_properties(currency_fph)
 
     if steward_fph in stewards_list:
-        m = remove_currency_stewardship(currency_fph, steward_fph, primid_fph)
+        m = remove_currency_steward(currency_fph, primid_fph, steward_fph)
 
     return redirect("/home_ahc")
 
@@ -2385,7 +2386,7 @@ def create_pairing(owner_fph = ""):
             #return redirect("/create_ahid/" + owner_fph)
 
         currency_fph, currency_hrns, active, open, private, sandbox, \
-        type, category, units, metrical_equivalence, dimensions, \
+        type, category, subcategory, units, metrical_equivalence, dimensions, \
         prefix, suffix, default_account_name, stewards_list, \
         m = get_currency_properties(currency_fph)
 
@@ -2491,7 +2492,7 @@ def create_namespace():
         m = new_namespace(
                 namespace_name,
                 parent_fph,
-                "cc", # TEMPORARY
+                "cc.cc", # TEMPORARY
                 #default_currency_fph,
                 primid_fph,
                 True
@@ -2629,7 +2630,7 @@ def add_steward():
         m = namespace_status(namespace_fph)
     elif "currency" in etypes:
         currency_fph, currency_hrns, active, open, private, sandbox, \
-        type, category, units, metrical_equivalence, dimensions, \
+        type, category, subcategory, units, metrical_equivalence, dimensions, \
         prefix, suffix, default_account_name,  stewards_list, \
         m = get_currency_properties(currency_fph)
     else:
@@ -2837,7 +2838,7 @@ def export_currency_csv(currency_fph):
         return redirect("/home_ahc")
 
     currency_fph, currency_hrns, active, open, private, sandbox, \
-    type, category, units, metrical_equivalence, dimensions, \
+    type, category, subcategory, units, metrical_equivalence, dimensions, \
     prefix, suffix, default_account_name, stewards_list, \
     m = get_currency_properties(currency_fph)
     if m:

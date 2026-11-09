@@ -59,11 +59,22 @@ for c in clist:
             "",             # prefix
             "",             # suffix
             "cname",        # default *account* name
-            account_type="scalar",
-            category="money",
-            units="unspecified",
-            metrical_equivalence="unspecified",
-            dimensions="unspecified"
+            "scalar",
+            "zero_sum",
+            "money",
+            "unspecified",
+            "unspecified",
+            "unspecified",
+            False, # initially inactive
+            True, # initiall private
+            False # initially not sandbox
+
+#            account_type="scalar",
+#            category="zero_sum",
+#            subcategory="money",
+#            units="unspecified",
+#            metrical_equivalence="unspecified",
+#            dimensions="unspecified"
         )
 
 #    print("currency: " + currency_fph + " > " + currency_hrns)

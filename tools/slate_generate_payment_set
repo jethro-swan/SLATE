@@ -114,7 +114,6 @@ ap.add_argument(
     dest = "limit_psize", action = "store_true", default = False,
     help = "Limit payment amount to the square root of the absolute balance"
 )
-
 args = ap.parse_args()
 
 if args.primid_id is None:

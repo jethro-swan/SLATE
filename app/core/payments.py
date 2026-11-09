@@ -455,7 +455,7 @@ def ah_payment(
 
     payer_currency_fph, payer_account_owner_fph, \
     payer_account_balance, payer_account_volume, payer_account_active, \
-    account_type, account_category, account_units, \
+    account_type, account_category, account_subcategory, account_units, \
     account_metrical_equivalence, account_dimensions, \
     m = get_account_properties(payer_account_fph)
     if not payer_account_active:
@@ -463,7 +463,7 @@ def ah_payment(
 
     payee_currency_fph, payee_account_owner_fph, \
     payee_account_balance, payee_account_volume, payee_account_active, \
-    account_type, account_category, account_units, \
+    account_type, account_category, account_subcategory, account_units, \
     account_metrical_equivalence, account_dimensions, \
     m = get_account_properties(payee_account_fph)
 
@@ -497,8 +497,8 @@ def ah_payment(
         conn.commit()
         cursor.close()
 
-    currency_fph, currency_hrns, active, open, private, sandbox, \
-    type, category, units, metrical_equivalence, dimensions, \
+    currency_fph, currency_hrns, active, open, private, sandbox, type, \
+    category, account_subcategory, units, metrical_equivalence, dimensions, \
     prefix, suffix, default_account_name, \
     stewards_list, m = get_currency_properties(currency_hrns)
 

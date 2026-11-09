@@ -153,19 +153,19 @@ def add_or_remove_steward(
         other_steward_id    # The steward affected
     ):
     # Check that target entity identifier exists:
-    entity_fph, entity_hrns, e_etypes, m = identify_entity(entity_id)
+    entity_fph, entity_hrns, entity_etypes, m = identify_entity(entity_id)
     if not entity_fph:
         return entity_id + " is not a registered identifier"
     # If so, does it identify an entity of the type specified above?
-    if not (entity_type in e_etypes):
+    if not (entity_type in entity_etypes):
         return "Identifier " + entity_hrns + " has no " + entity_type
 
     # Check that the authorizing steward is a registered *primid*:
-    auth_steward_fph, auth_steward_hrns, a_etypes, \
+    auth_steward_fph, auth_steward_hrns, auth_etypes, \
     m = identify_entity(auth_steward_id)
     if not auth_steward_fph:
         return auth_steward_id + " is not a registered identifier"
-    if not ("primid" in a_etypes):
+    if not ("primid" in auth_etypes):
         return "Identifier " + auth_steward_id + " has no primid"
 
     # Check that the added/removed steward is a registered *primid*:
@@ -218,7 +218,8 @@ def add_or_remove_steward(
 
         # At the very least, the entity must have a steward *primid* with which
         # it shares an identifier:
-        if not (entity_fph in stewards_fph_list):
+        if ("primid" in entity_etypes) \
+        and (entity_fph not in stewards_fph_list):
             stewards_fph_list.append(entity_fph)
 
         # Control reaches this point if and only if a change has been made to
@@ -273,9 +274,9 @@ def add_or_remove_stewardship(
     elif entity_type == "currency":
         stewardships_col = "cstewardships_fph_list" # column label
         #
-        currency_fph, currency_hrns, active, open, private, sandbox, \
-        c_type, c_category, c_units, c_metrical_equivalence, c_dimensions, \
-        prefix, suffix, default_account_name, \
+        currency_fph, currency_hrns, active, open, private, sandbox, c_type, \
+        c_category, c_subcategory, c_units, c_metrical_equivalence, \
+        c_dimensions, prefix, suffix, default_account_name, \
         stewards_fph_list, m = get_currency_properties(entity_id)
     else:
         return "Invalid type specified: must be a namespace or currency"
@@ -308,7 +309,8 @@ def add_or_remove_stewardship(
 
         # At the very least, the steward *primid* must have stewardship of the
         # entities with which it shares an identifier:
-        if not (entity_fph in stewardships_fph_list):
+        if ("primid" in entity_etypes) \
+        and (entity_fph not in stewardships_fph_list):
             stewardships_fph_list.append(entity_fph)
             cursor.execute(
                 "UPDATE primids SET " + stewardships_col + " = ? " \
@@ -338,68 +340,36 @@ def add_or_remove_stewardship(
 
 
 def add_namespace_steward(entity_id, auth_steward_id, new_steward_id):
-    print(
-        "adding primid " + new_steward_id \
-        + " as steward of namespace " + entity_id
-    )
     m = add_or_remove_steward(
             entity_id, "namespace", "add", auth_steward_id, new_steward_id
         )
-    print(
-        "adding namespace " + entity_id \
-        + " to stewardships of primid " + new_steward_id
-    )
     n = add_or_remove_stewardship(
             entity_id, "namespace", "add", auth_steward_id, new_steward_id
         )
     return m + "\n" + n
 
 def remove_namespace_steward(entity_id, auth_steward_id, other_steward_id):
-    print(
-        "removing primid " + other_steward_id \
-        + " as steward of namespace " + entity_id
-    )
     m = add_or_remove_steward(
             entity_id, "namespace", "remove", auth_steward_id, other_steward_id
         )
-    print(
-        "removing namespace " + entity_id \
-        + " from stewardship of primid " + other_steward_id
-    )
     n = add_or_remove_stewardship(
             entity_id, "namespace", "remove", auth_steward_id, other_steward_id
         )
     return m + "\n" + n
 
 def add_currency_steward(entity_id, auth_steward_id, new_steward_id):
-    print(
-        "adding primid " + new_steward_id \
-        + " as steward of currency " + entity_id
-    )
     m = add_or_remove_steward(
             entity_id, "currency", "add", auth_steward_id, new_steward_id
         )
-    print(
-        "removing currency " + entity_id \
-        + " from stewardship of primid " + new_steward_id
-    )
     n = add_or_remove_stewardship(
             entity_id, "currency", "add", auth_steward_id, new_steward_id
         )
     return m + "\n" + n
 
 def remove_currency_steward(entity_id, auth_steward_id, other_steward_id):
-    print(
-        "removing primid " + other_steward_id \
-        + " as steward of currency " + entity_id
-    )
     m = add_or_remove_steward(
             entity_id, "currency", "remove", auth_steward_id, other_steward_id
         )
-    print(
-        "removing currency " + entity_id \
-        + " from stewardship of primid " + other_steward_id
-    )
     n = add_or_remove_stewardship(
             entity_id, "currency", "remove", auth_steward_id, other_steward_id
         )

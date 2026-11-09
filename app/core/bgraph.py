@@ -58,8 +58,8 @@ def create_balvol_plot(currency_id, ahid_id, plot_other_accounts = False):
     m = retrieve_pairing_account_fph(ahid_hrns, currency_fph)
 
     account_currency_fph, account_owner_fph, account_balance, account_volume, \
-    account_active, account_type, account_category, account_units, \
-    account_metrical_equivalence, account_dimensions, \
+    account_active, account_type, account_category, account_subcategory, \
+    account_units, account_metrical_equivalence, account_dimensions, \
     m = get_account_properties(account_fph)
 
     with sqlite3.connect(PAYMENTS_DB) as conn:

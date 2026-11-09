@@ -141,15 +141,11 @@ def create_substrate():
     record_private_namespace_root(SUBSTRATE_FPH, "")
 #    record_private_namespace_root(SUBSTRATE_FPH, SUBSTRATE_FPH)
 
-
-
 seed_namespace_hrns = "cc"      # Seed *namespace*
 seed_primid_hrns = "adm.cc"     # Seed *namespace*
 seed_currency_hrns = "cc.cc"    # Seed *currency*
 seed_ahid_hrns = "cc.cc"        # Seed *currency*
 seed_account_hrns = "cc.cc"     # Seed *account*
-
-
 
 def create_seed_entities():
 
@@ -344,7 +340,7 @@ def create_seed_entities():
     currency_fph, currency_hrns, \
     m = new_currency(
             "cc", seed_namespace_fph, "adm.cc", "", "", "",
-            "scalar", "money", "unspecified", "lt", "unspecified",
+            "scalar", "zero_sum", "money", "unspecified", "lt", "unspecified",
             True, False, False
         )
     print("Universal currency " + currency_hrns + " has been created")
@@ -474,7 +470,7 @@ def create_root_namespace(name):
     currency_fph, currency_hrns, \
     m = new_currency(
             name, seed_namespace_fph, "adm.cc", "", "h", "hrs",
-            "scalar", "money", "unspecified", "lt", "unspecified",
+            "scalar", "zero_sum", "money", "unspecified", "lt", "unspecified",
             True, False, False
         )
     if m:
@@ -618,7 +614,7 @@ def create_sandbox_space():
     currency_fph, currency_hrns, \
     m = new_currency(
             "g£", sandbox_fph, seed_primid_hrns, "£", "", "hrs",
-            "scalar", "money", "unspecified", "lt", "unspecified",
+            "scalar", "zero_sum", "money", "unspecified", "lt", "unspecified",
             True, False, False
         )
     #
@@ -626,7 +622,7 @@ def create_sandbox_space():
     currency_fph, currency_hrns, \
     m = new_currency(
             "cc", sandbox_fph, seed_primid_hrns, "", "", "",
-            "scalar", "money", "unspecified", "lt", "unspecified",
+            "scalar", "zero_sum", "money", "unspecified", "lt", "unspecified",
             True, False, False
         )
 

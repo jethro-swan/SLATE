@@ -125,7 +125,8 @@ for c in clist:
     currency_fph, currency_hrns, \
     m = new_currency(
             cname, parent_namespace_fph, "adm.cc", "", "", cname,
-            "scalar", "money", "unspecified", "lt", "unspecified"
+            "scalar", "zero_sum", "money", "unspecified", "lt", "unspecified",
+            True, False, False
         )
     if m:
         print(m)
