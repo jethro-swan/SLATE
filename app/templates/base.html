@@ -148,10 +148,12 @@ crossorigin="anonymous"></script>
       <a href="/create_pairing/{{ primid_fph }}">join currency</a>
     </div>
     <div>
+      {% if page == "home_ahc" %}
       {% if show_volume %}
-      <a href="/toggle_volume">hide volume</a>
+      <a href="/toggle_h_volume">hide volume</a>
       {% else %}
-      <a href="/toggle_volume">show volume</a>
+      <a href="/toggle_h_volume">show volume</a>
+      {% endif %}
       {% endif %}
       | <a href="/invitation/generate">invite user</a>
       {% if show_csv_import_link %}

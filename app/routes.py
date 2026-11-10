@@ -784,43 +784,65 @@ def toggle_annotation():
         session["show_annotation"] = not session["show_annotation"]
     else:
         session["show_annotation"] = False
-    if "page" in session:
-        if session["page"] == "home_ahc":
-            return redirect("/home_ahc")
-        elif session["page"] == "journal":
-            if ("journal_ahid" in session) and ("journal_currency" in session):
-                ahid_fph = session["journal_ahid"]
-                currency_fph = session["journal_currency"]
-                return redirect("/journal/" + ahid_fph + "/" + currency_fph)
-            else:
-                return redirect("/home_ahc")
-        else:
-            return redirect("/home_ahc")
+    #
+    if ("journal_ahid" in session) and ("journal_currency" in session):
+        ahid_fph = session["journal_ahid"]
+        currency_fph = session["journal_currency"]
+        return redirect("/journal/" + ahid_fph + "/" + currency_fph)
     else:
         return redirect("/home_ahc")
 
+
+
+
+#    if "page" in session:
+#        if session["page"] == "home_ahc":
+#            return redirect("/home_ahc")
+#        elif session["page"] == "journal":
+#            if ("journal_ahid" in session) and ("journal_currency" in session):
+#                ahid_fph = session["journal_ahid"]
+#                currency_fph = session["journal_currency"]
+#                return redirect("/journal/" + ahid_fph + "/" + currency_fph)
+#            else:
+#                return redirect("/home_ahc")
+#        else:
+#            return redirect("/home_ahc")
+#    else:
+#        return redirect("/home_ahc")
+
 # Toggle the display of the annotation column in the home screen table:
-@app.route("/toggle_volume")
+@app.route("/toggle_h_volume")
 @login_required
 def toggle_volume():
     if "show_volume" in session:
         session["show_volume"] = not session["show_volume"]
     else:
         session["show_volume"] = False
-    if "page" in session:
-        if session["page"] == "home_ahc":
-            return redirect("/home_ahc")
-        elif session["page"] == "journal":
-            if ("journal_ahid" in session) and ("journal_currency" in session):
-                ahid_fph = session["journal_ahid"]
-                currency_fph = session["journal_currency"]
-                return redirect("/journal/" + ahid_fph + "/" + currency_fph)
-            else:
-                return redirect("/home_ahc")
-        else:
-            return redirect("/home_ahc")
+#    if "page" in session \
+#    and session["page"] == "journal" \
+#    and ("journal_ahid" in session) \
+#    and ("journal_currency" in session):
+#        ahid_fph = session["journal_ahid"]
+#        currency_fph = session["journal_currency"]
+#        return redirect("/journal/" + ahid_fph + "/" + currency_fph)
+#    else:
+    return redirect("/home_ahc")
+
+# Toggle the display of the annotation column in the journal screen table:
+@app.route("/toggle_j_volume")
+@login_required
+def toggle_journal_volume():
+    if "show_volume" in session:
+        session["show_volume"] = not session["show_volume"]
+    else:
+        session["show_volume"] = False
+    if ("journal_ahid" in session) and ("journal_currency" in session):
+        ahid_fph = session["journal_ahid"]
+        currency_fph = session["journal_currency"]
+        return redirect("/journal/" + ahid_fph + "/" + currency_fph)
     else:
         return redirect("/home_ahc")
+
 
 # Toggle the display of the full set of rows in the journal screen table:
 @app.route("/toggle_all_journal_rows")
@@ -908,7 +930,8 @@ def home_ahc(
     ):
 
     page = "home_ahc"
-    session["previous_page"] = page
+    session["previous_page"] = "home_ahc"
+    session["page"] = "home_ahc"
 
     if not ("show_top_menu" in session.keys()):
         show_top_menu = False
@@ -1002,11 +1025,11 @@ def home_ahc(
     else:
         page = "home_ahc"
 
-    if "previous_page" in session: # already active
-        previous_page = session["previous_page"]
-    else: # initializing
-        previous_page = "home_ahc"
-    session["previous_page"] = page
+#    if "previous_page" in session: # already active
+#        previous_page = session["previous_page"]
+#    else: # initializing
+#        previous_page = "home_ahc"
+#    session["previous_page"] = page
 
     group = "home" # Used to control top menu behaviour.
 
@@ -1553,6 +1576,7 @@ def pay_ahid(payer_ahid_fph, payment_currency_fph):
 # TO DO: Remove requirement to include ahid_fph and currency_fph where these
 #        can be retrieved from session[].
 
+# Recovered from 0.2.127 version
 @app.route("/journal/<ahid_fph>/<currency_fph>", methods = ["GET", "POST"])
 @login_required
 def journal(ahid_fph, currency_fph):
@@ -1601,6 +1625,265 @@ def journal(ahid_fph, currency_fph):
 
     previous_page = session["previous_page"] # Ensure correct page sequence
     session["previous_page"] = page
+
+#    full_url = request.url #
+    if "current_url" in session:
+        session["previous_url"] = session["current_url"]
+    session["current_url"] = request.url
+
+    if "all_journal_rows" in session:
+        show_all_journal_rows = session["all_journal_rows"]
+    else:
+        session["all_journal_rows"] = show_all_journal_rows = False
+
+    if "show_annotation" in session:
+        show_annotation = session["show_annotation"]
+    else:
+        session["show_annotation"] = show_annotation = False
+
+    if "plot_beside_table" in session:
+        show_plot_beside_table = session["plot_beside_table"]
+    else:
+        session["plot_beside_table"] = show_plot_beside_table = False
+
+    default_rows_displayed = get_config("default_rows_displayed")
+
+    if "show_volume" in session:
+        show_volume = session["show_volume"]
+    else:
+        session["show_volume"] = show_volume = False
+
+    primid_fph, primid_hrns, etypes, \
+    m = identify_entity(current_user.get_id())
+
+    working_identity_fph = primid_fph
+    working_identity_hrns = primid_hrns
+    working_identity_type = "primid"
+
+    account_fph, primid_fph, \
+    m = retrieve_pairing_account_fph(ahid_hrns, currency_fph)
+
+    account_currency_fph, account_owner_fph, account_balance, account_volume, \
+    account_active, account_type, account_category, account_subcategory, \
+    account_units, account_metrical_equivalence, account_dimensions, \
+    m = get_account_properties(account_fph)
+
+    with sqlite3.connect(PAYMENTS_DB) as conn:
+        cursor = conn.cursor()
+        # Read transactions for specified currency:
+        cursor.execute(
+            "SELECT " \
+            + "timestamp, " \
+            + "payment_id, " \
+            + "payer_fph, " \
+            + "payee_fph, " \
+            + "currency_fph, " \
+            + "amount, " \
+            + "payer_balance, " \
+            + "payer_volume, " \
+            + "payee_balance, " \
+            + "payee_volume, " \
+            + "annotation " \
+            + "FROM payments " \
+            + "WHERE (payer_fph = ? OR payee_fph = ?) and (currency_fph = ?)",
+            (ahid_fph, ahid_fph, currency_fph)
+        )
+        all_payments = cursor.fetchall()
+        cursor.close()
+    if all_payments is None:
+        flash("There are no journal entries to display")
+        return redirect("/home_ahc")
+
+    plot_points = []
+
+    rows_displayed = int(default_rows_displayed)
+
+    journal_rows = []
+    for payment in all_payments:
+        p = list(payment)
+        timestamp = p[0]
+        dt = timestamp.split(" ")
+        p_date = dt[0]
+        p_time_ = dt[1].split(":")
+        p_time_.pop()
+        p_time = ":".join(p_time_)
+
+        payment_id = str(p[1]).zfill(8)
+        payer_fph = p[2]
+        payee_fph = p[3]
+        currency_fph = p[4]
+        amount = integer_to_money_format(p[5])
+        payer_balance_negative = (p[6] < 0)
+        payer_balance = integer_to_money_format(p[6])
+        payer_volume = integer_to_money_format(p[7])
+        payee_balance_negative = (p[8] < 0)
+        payee_balance = integer_to_money_format(p[8])
+        payee_volume = integer_to_money_format(p[9])
+
+        # TO DO: Put these into hub_config
+        max_annotation_length = 30
+        annotation_divider = ":"
+
+        annotation = p[10]
+        if annotation_divider in annotation:
+            astr = annotation.split(annotation_divider)
+            short_annotation = astr[0]
+            if len(short_annotation) > max_annotation_length:
+                short_annotation = annotation[:max_annotation_length]
+        elif len(annotation) > max_annotation_length:
+            short_annotation = annotation[:max_annotation_length]
+        else:
+            short_annotation = annotation
+
+
+
+
+        # The results are now put into a list of dictionaries to be fed to the
+        # template and used to create the balance:volume plot:
+        journal_row = {}
+        journal_row["date"] = p_date
+        journal_row["time"] = p_time
+        journal_row["xid"] = payment_id
+        if payer_fph == ahid_fph: # payment
+            journal_row["type"] = "payment"
+            journal_row["amount"] = amount
+            journal_row["other_ahid_hrns"] = fph_to_hrns(payee_fph)
+            journal_row["balneg"] = payer_balance_negative
+            journal_row["balance"] = payer_balance
+            journal_row["volume"] = payer_volume
+            # For plot:
+            plot_points.append((payer_balance,payer_volume ))
+#            x_bal.append(payer_balance)
+#            y_vol.append(payer_volume)
+            # Display?
+            journal_row["show"] = (rows_displayed > 0) or show_all_journal_rows
+        elif payee_fph == ahid_fph: # receipt
+            journal_row["type"] = "receipt"
+            journal_row["amount"] = amount
+            journal_row["other_ahid_hrns"] = fph_to_hrns(payer_fph)
+            journal_row["balneg"] = payee_balance_negative
+            journal_row["balance"] = payee_balance
+            journal_row["volume"] = payee_volume
+            # For plot:
+            plot_points.append((payee_balance,payee_volume ))
+#            x_bal.append(payee_balance)
+#            y_vol.append(payee_volume)
+            # Display?
+            journal_row["show"] = (rows_displayed > 0) or show_all_journal_rows
+        else: # this should never happen
+            journal_row["type"] = ""
+            journal_row["amount"] = ""
+            journal_row["other_ahid_hrns"] = ""
+            journal_row["balneg"] = ""
+            journal_row["balance"] = ""
+            journal_row["volume"] = ""
+        journal_row["annotation"] = annotation # full
+        journal_row["short_annotation"] = short_annotation # truncated
+        journal_rows.insert(0, journal_row)
+
+        rows_displayed -= 1
+
+    if show_plot:
+        plot_filename, \
+        graph_path = create_balvol_plot(currency_fph, ahid_fph, plot_all)
+        session["plot_filepath"] = graph_path + "/" + plot_filename
+    else:
+        session["plot_filepath"] = plot_filename = graph_path = ""
+
+    number_of_messages, \
+    number_of_indelible_messages = message_count(primid_fph, hub_mode)
+
+    return render_template(
+        "transaction_journal_ahc.html",
+        title = "Display transaction journal",
+        page = page,
+        group = group,
+        logged_in = logged_in,
+        hub_mode = "slate",
+        version = get_version(),
+        show_csv_import_link = get_config("show_dataset_csv_import_link"),
+        show_volume = show_volume,
+        primid_type = "login identity",
+        primid_fph = primid_fph,
+        primid_hrns = primid_hrns,
+        working_identity_fph = working_identity_fph,
+        working_identity_hrns = working_identity_hrns,
+        working_identity_type = working_identity_type,
+        ahid_hrns = ahid_hrns,
+        currency_hrns = currency_hrns,
+        journal_rows = journal_rows,
+        account_fph = account_fph,
+        account_volume = integer_to_money_format(account_volume),
+        show_plot_beside_table = show_plot_beside_table,
+        plot_filepath = url_for(
+                            "static",
+                            filename="graphs/" + ahid_fph + "/" + plot_filename
+                        ),
+        show_plot = show_plot,
+        plot_all = plot_all,
+        show_all_journal_rows = show_all_journal_rows,
+        show_annotation = show_annotation,
+        number_of_messages = number_of_messages,
+        number_of_indelible_messages = number_of_indelible_messages,
+        bgcolour = get_config("background_colour")
+    )
+
+
+
+
+
+
+
+#@app.route("/journal/<ahid_fph>/<currency_fph>", methods = ["GET", "POST"])
+#@login_required
+def journal_(ahid_fph, currency_fph):
+
+    ahid_fph, ahid_hrns, etypes, \
+    m = identify_entity(ahid_fph)
+    if ahid_fph == "":
+        flash("Invalid account-holder")
+        return redirect("/home_ahc")
+
+    currency_fph, currency_hrns, etypes, \
+    m = identify_entity(currency_fph)
+    if currency_fph == "":
+        flash("Invalid currency")
+        return redirect("/home_ahc")
+
+    session["journal_ahid"] = ahid_fph
+    session["journal_currency"] = currency_fph
+#    session["previous_page"] = "journal"
+    session["page"] = "journal"
+#    print("journal: previous_page: " + session["previous_page"])
+
+    if "plot_filepath" in session:
+        plot_filepath = session["plot_filepath"]
+        if os.path.exists(plot_filepath):
+            os.remove(plot_filepath)
+
+    if "plot_all" in session:
+        plot_all = session["plot_all"]
+    else:
+        plot_all = False
+
+    if "show_plot" in session:
+        show_plot = session["show_plot"]
+    else:
+        show_plot = False
+
+
+#    print("\njournal_ahid = " + session["journal_ahid"])
+#    print("journal_currency = " + session["journal_currency"])
+
+    # Hub operational mode (read from environment variable HUB_MODE)
+    hub_mode = get_hub_mode()
+
+    page = "journal"
+    group = "home" # Used to control top menu behaviour.
+    logged_in = current_user.is_authenticated
+
+#    previous_page = session["previous_page"] # Ensure correct page sequence
+#    session["previous_page"] = page
 
 #    full_url = request.url #
     if "current_url" in session:
