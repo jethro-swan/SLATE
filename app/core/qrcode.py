@@ -19,9 +19,9 @@ import pyqrcode
 import os
 import datetime
 
-from app.core.slate_core import random_filename
-from app.core.slate_core import identify_entity
-#from app.core.slate_core import get_config
+from app.core.nests_core import random_filename
+from app.core.nests_core import identify_entity
+#from app.core.nests_core import get_config
 from app.core.configdb import get_config
 from app.core.common import unixtime_int
 

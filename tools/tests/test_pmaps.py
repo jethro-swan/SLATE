@@ -3,7 +3,7 @@
 import sqlite3
 from app.core.fph_hrns_maps import hrns_to_fph, fph_to_hrns
 from app.core.constants import ENTITIES_DB
-from app.core.slate_core import retrieve_pmap
+from app.core.nests_core import retrieve_pmap
 
 
 

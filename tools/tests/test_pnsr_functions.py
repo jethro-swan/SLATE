@@ -3,7 +3,7 @@
 from app.core.constants import FPH_TO_HRNS_MAP, HRNS_C_FPH_MAP
 from app.core.fph_hrns_maps import record_private_namespace_root
 from app.core.fph_hrns_maps import get_private_namespace_root
-from app.core.slate_core import create_entities_db
+from app.core.nests_core import create_entities_db
 from app.core.dbm_functions import dbm_list_entries, dbm_keys
 import random
 

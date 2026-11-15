@@ -20,7 +20,7 @@
 # Create a new ad hoc root "namespace" and a *currency* sharing its identifier.
 
 import sys
-from app.core.slate_seed import create_root_namespace
+from app.core.nests_seed import create_root_namespace
 from app.core.fph_hrns_maps import fph_to_hrns
 
 steward_hrns = "cc"

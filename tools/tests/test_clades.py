@@ -1,12 +1,12 @@
 #!/home/slate/SLATE/venv/bin/python3
 
-from app.core.slate_core import list_ancestors_fph
-from app.core.slate_core import most_recent_clade
-from app.core.slate_core import most_recent_concestor
-from app.core.slate_core import get_list_concestor
-from app.core.slate_core import hrns_strip_concestor
-from app.core.slate_core import prune_payment_pair_hrns
-from app.core.slate_core import fph_to_hrns
+from app.core.nests_core import list_ancestors_fph
+from app.core.nests_core import most_recent_clade
+from app.core.nests_core import most_recent_concestor
+from app.core.nests_core import get_list_concestor
+from app.core.nests_core import hrns_strip_concestor
+from app.core.nests_core import prune_payment_pair_hrns
+from app.core.nests_core import fph_to_hrns
 
 test_hrns_1 = "cc"
 test_hrns_2 = "bb.cc"

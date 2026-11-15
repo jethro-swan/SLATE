@@ -24,14 +24,14 @@ from app.core.constants import GRAPHS
 
 from app.core.common import filename_timestamp
 
-from app.core.slate_core import list_ahids
-from app.core.slate_core import list_ahid_accounts
-from app.core.slate_core import get_account_currency
-from app.core.slate_core import get_account_properties
-from app.core.slate_core import identify_entity
-from app.core.slate_core import list_currency_accounts
-from app.core.slate_core import get_ahid_primid
-from app.core.slate_core import retrieve_pairing_account_fph as pairing_account
+from app.core.nests_core import list_ahids
+from app.core.nests_core import list_ahid_accounts
+from app.core.nests_core import get_account_currency
+from app.core.nests_core import get_account_properties
+from app.core.nests_core import identify_entity
+from app.core.nests_core import list_currency_accounts
+from app.core.nests_core import get_ahid_primid
+from app.core.nests_core import retrieve_pairing_account_fph as pairing_account
 
 from app.core.exports import list_currency_payments
 

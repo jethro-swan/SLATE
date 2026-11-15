@@ -5,8 +5,8 @@
 
 from app.core.fph_hrns_maps import fph_to_hrns, hrns_to_fph
 
-from app.core.slate_core import new_namespace, new_currency, new_primid
-from app.core.slate_core import split_hrns
+from app.core.nests_core import new_namespace, new_currency, new_primid
+from app.core.nests_core import split_hrns
 
 from app.core.omtrad import *
 

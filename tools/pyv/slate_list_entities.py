@@ -5,14 +5,14 @@ import os
 import pickle
 from prettytable import PrettyTable
 from app.core.constants import ENTITIES_DB
-from app.core.slate_core import get_entity_types
-from app.core.slate_core import identify_entity
-from app.core.slate_core import get_account_properties
-from app.core.slate_core import get_namespace_properties
-from app.core.slate_core import get_currency_properties
-from app.core.slate_core import get_primid_properties
-from app.core.slate_core import get_ahid_properties
-from app.core.slate_core import get_secid_properties
+from app.core.nests_core import get_entity_types
+from app.core.nests_core import identify_entity
+from app.core.nests_core import get_account_properties
+from app.core.nests_core import get_namespace_properties
+from app.core.nests_core import get_currency_properties
+from app.core.nests_core import get_primid_properties
+from app.core.nests_core import get_ahid_properties
+from app.core.nests_core import get_secid_properties
 from app.core.fph_hrns_maps import hrns_to_fph, fph_to_hrns
 from app.core.display import truefalse
 

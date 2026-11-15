@@ -8,6 +8,7 @@
 # The Python virtual environment is created for each fresh installation so is
 # excluded from the GIT tree:
 venv
+_venv
 
 # The bulk entity creation CSV examples should be ignored (for now):
 csv_examples

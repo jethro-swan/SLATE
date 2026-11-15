@@ -25,8 +25,8 @@ import re
 import argparse
 import shutil
 
-from app.core.slate_core import create_entities_db
-from app.core.slate_seed import create_seed_entities
+from app.core.nests_core import create_entities_db
+from app.core.nests_seed import create_seed_entities
 
 from app.core.unix_functions import create_dir
 from app.core.unix_functions import create_file

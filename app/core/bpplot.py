@@ -17,11 +17,11 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-from app.core.slate_core import list_currency_accounts
-from app.core.slate_core import get_account_currency
-#from app.core.slate_core import get_account_properties
-from app.core.slate_core import identify_entity
-from app.core.slate_core import random_filename
+from app.core.nests_core import list_currency_accounts
+from app.core.nests_core import get_account_currency
+#from app.core.nests_core import get_account_properties
+from app.core.nests_core import identify_entity
+from app.core.nests_core import random_filename
 
 from app.core.constants import GRAPHS, PAYMENTS_DB
 

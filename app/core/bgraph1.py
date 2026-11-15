@@ -19,10 +19,10 @@
 
 import sqlite3
 
-from app.core.slate_core import list_currency_accounts
-from app.core.slate_core import get_account_currency
-from app.core.slate_core import identify_entity
-from app.core.slate_core import random_filename
+from app.core.nests_core import list_currency_accounts
+from app.core.nests_core import get_account_currency
+from app.core.nests_core import identify_entity
+from app.core.nests_core import random_filename
 
 from app.core.constants import GRAPHS
 from app.core.constants import PAYMENTS_DB

@@ -3,14 +3,14 @@
 import sqlite3
 
 from app.core.fph_hrns_maps import fph_to_hrns
-from app.core.slate_core import list_currency_accounts
-from app.core.slate_core import get_account_currency
-from app.core.slate_core import get_account_properties
-from app.core.slate_core import identify_entity
-from app.core.slate_core import random_filename
-from app.core.slate_core import list_ahids
-from app.core.slate_core import list_accounts
-from app.core.slate_core import sum_account_balances
+from app.core.nests_core import list_currency_accounts
+from app.core.nests_core import get_account_currency
+from app.core.nests_core import get_account_properties
+from app.core.nests_core import identify_entity
+from app.core.nests_core import random_filename
+from app.core.nests_core import list_ahids
+from app.core.nests_core import list_accounts
+from app.core.nests_core import sum_account_balances
 from app.core.display import integer_to_money_format
 from app.core.constants import GRAPHS
 

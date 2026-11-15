@@ -25,21 +25,21 @@ from app.core.common import nshash
 from app.core.common import filename_timestamp as timestamp
 from app.core.fph_hrns_maps import hrns_to_fph, fph_to_hrns, create_maps
 from app.core.dbm_functions import dbm_list_entries, dbm_keys
-from app.core.slate_core import create_entities_db
-from app.core.slate_core import new_namespace, new_currency, new_account
-from app.core.slate_core import new_primid, new_secid
-from app.core.slate_core import identify_entity, get_currency_name
-from app.core.slate_core import list_primid_accounts, list_secid_accounts
-from app.core.slate_core import list_primid_currencies, list_secid_currencies
-from app.core.slate_core import list_accounts_in_currency
-from app.core.slate_core import get_entity_types
-#from app.core.slate_core import get_auth_data
-from app.core.slate_core import account_status
-from app.core.slate_core import add_stewardship, remove_stewards
-from app.core.slate_core import list_stewards, list_stewardships
-from app.core.slate_core import list_active_namespaces
-from app.core.slate_core import list_primids
-from app.core.slate_seed import create_seed_entities, create_quasitld_set
+from app.core.nests_core import create_entities_db
+from app.core.nests_core import new_namespace, new_currency, new_account
+from app.core.nests_core import new_primid, new_secid
+from app.core.nests_core import identify_entity, get_currency_name
+from app.core.nests_core import list_primid_accounts, list_secid_accounts
+from app.core.nests_core import list_primid_currencies, list_secid_currencies
+from app.core.nests_core import list_accounts_in_currency
+from app.core.nests_core import get_entity_types
+#from app.core.nests_core import get_auth_data
+from app.core.nests_core import account_status
+from app.core.nests_core import add_stewardship, remove_stewards
+from app.core.nests_core import list_stewards, list_stewardships
+from app.core.nests_core import list_active_namespaces
+from app.core.nests_core import list_primids
+from app.core.nests_seed import create_seed_entities, create_quasitld_set
 from app.core.payments import create_payments_db, payment
 from app.core.payments import dump_currency_payments_table
 from app.core.auth import auth_hash, check_auth_hash
@@ -54,7 +54,7 @@ from app.core.auth import generate_access_token
 from app.core.display import integer_to_money_format
 from app.core.display import thin_line, thick_line, title_line, thin_title_line
 from app.core.display import yN, Yn, yesno, get_cli_number_input, pause
-from app.core.slate_login import get_auth_data
+from app.core.nests_login import get_auth_data
 from app.core.logging import log_event
 #from app.core.cctld_list import cctld_reduced_list, cctld_reduced_set
 #from app.core.cctld_list import cctld_reduced_list2, cctld_reduced_set2

@@ -41,18 +41,18 @@ from app.core.regexp_list import *
 
 from app.core.unix_functions import fcopy
 
-#from app.core.slate_core import account_status
-from app.core.slate_core import get_account_properties
-from app.core.slate_core import list_currencies_in_common_by_fph
-from app.core.slate_core import list_currencies_in_common_by_hrns
-from app.core.slate_core import identify_entity
-from app.core.slate_core import get_currency_properties
-from app.core.slate_core import retrieve_pairing_account_fph
-from app.core.slate_core import new_pairing
-from app.core.slate_core import select_db_filepath
-from app.core.slate_core import ahid_is_robot
-from app.core.slate_core import log_event
-from app.core.slate_core import auth_hash
+#from app.core.nests_core import account_status
+from app.core.nests_core import get_account_properties
+from app.core.nests_core import list_currencies_in_common_by_fph
+from app.core.nests_core import list_currencies_in_common_by_hrns
+from app.core.nests_core import identify_entity
+from app.core.nests_core import get_currency_properties
+from app.core.nests_core import retrieve_pairing_account_fph
+from app.core.nests_core import new_pairing
+from app.core.nests_core import select_db_filepath
+from app.core.nests_core import ahid_is_robot
+from app.core.nests_core import log_event
+from app.core.nests_core import auth_hash
 #from app.core.logging import log_event
 
 #from app.core.robots import ahid_is_robot

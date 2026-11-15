@@ -19,16 +19,16 @@
 
 import sys
 
-from app.core.slate_core import identify_entity
-from app.core.slate_core import get_currency_properties
-from app.core.slate_core import get_namespace_properties
-from app.core.slate_core import activate_currency, deactivate_currency
-from app.core.slate_core import activate_namespace, deactivate_namespace
-from app.core.slate_core import open_namespace, close_namespace
-from app.core.slate_core import open_currency, close_currency
-from app.core.slate_core import add_namespace_steward, remove_namespace_steward
-from app.core.slate_core import add_currency_steward, remove_currency_steward
-from app.core.slate_core import set_currency_parameter
+from app.core.nests_core import identify_entity
+from app.core.nests_core import get_currency_properties
+from app.core.nests_core import get_namespace_properties
+from app.core.nests_core import activate_currency, deactivate_currency
+from app.core.nests_core import activate_namespace, deactivate_namespace
+from app.core.nests_core import open_namespace, close_namespace
+from app.core.nests_core import open_currency, close_currency
+from app.core.nests_core import add_namespace_steward, remove_namespace_steward
+from app.core.nests_core import add_currency_steward, remove_currency_steward
+from app.core.nests_core import set_currency_parameter
 
 # Called as:
 #   slate_manage_entity <auth_id> <type> <entity_id> <op> <auth_id>

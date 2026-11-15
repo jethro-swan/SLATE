@@ -26,12 +26,12 @@ from app.core.fph_hrns_maps import create_maps
 from app.core.fph_hrns_maps import fph_to_hrns
 from app.core.fph_hrns_maps import hrns_to_fph
 
-from app.core.slate_core import create_identifiers_db
-from app.core.slate_core import create_entities_db
-from app.core.slate_core import create_hubs_db
-from app.core.slate_core import new_namespace
-from app.core.slate_core import new_currency
-from app.core.slate_core import split_hrns
+from app.core.nests_core import create_identifiers_db
+from app.core.nests_core import create_entities_db
+from app.core.nests_core import create_hubs_db
+from app.core.nests_core import new_namespace
+from app.core.nests_core import new_currency
+from app.core.nests_core import split_hrns
 
 from app.core.slate_session import create_slate_session_db
 
@@ -39,10 +39,10 @@ from app.core.payments import create_payments_db
 
 from app.core.messaging import create_messages_db
 
-from app.core.slate_seed import create_seed_entities
-from app.core.slate_seed import create_quasitld_set
-from app.core.slate_seed import create_substrate
-from app.core.slate_seed import create_sandbox_space
+from app.core.nests_seed import create_seed_entities
+from app.core.nests_seed import create_quasitld_set
+from app.core.nests_seed import create_substrate
+from app.core.nests_seed import create_sandbox_space
 
 from app.core.constants import SLATE_LOGS
 from app.core.constants import SLATE_LOGS_BKP_DIR

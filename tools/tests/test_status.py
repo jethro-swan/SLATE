@@ -1,15 +1,15 @@
 #!/home/slate/SLATE/venv/bin/python3
 
 from app.core.fph_hrns_maps import fph_to_hrns
-from app.core.slate_core import identify_entity
-from app.core.slate_core import get_currency_properties
-from app.core.slate_core import activate_currency, deactivate_currency
-from app.core.slate_core import activate_namespace, deactivate_namespace
-from app.core.slate_core import open_namespace, close_namespace
-from app.core.slate_core import open_currency, close_currency
-from app.core.slate_core import add_namespace_steward, remove_namespace_steward
-from app.core.slate_core import add_currency_steward, remove_currency_steward
-from app.core.slate_core import get_namespace_properties
+from app.core.nests_core import identify_entity
+from app.core.nests_core import get_currency_properties
+from app.core.nests_core import activate_currency, deactivate_currency
+from app.core.nests_core import activate_namespace, deactivate_namespace
+from app.core.nests_core import open_namespace, close_namespace
+from app.core.nests_core import open_currency, close_currency
+from app.core.nests_core import add_namespace_steward, remove_namespace_steward
+from app.core.nests_core import add_currency_steward, remove_currency_steward
+from app.core.nests_core import get_namespace_properties
 from app.core.display import truefalse
 
 

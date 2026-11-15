@@ -21,8 +21,8 @@ from flask import flash, redirect, url_for
 from flask import render_template
 from app import app
 
-from app.core.slate_core import get_hub_mode
-from app.core.slate_core import get_version
+from app.core.nests_core import get_hub_mode
+from app.core.nests_core import get_version
 
 @app.errorhandler(401)
 def access_unauthorized_error(error):

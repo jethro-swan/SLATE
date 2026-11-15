@@ -1,6 +1,6 @@
 #!/home/slate/SLATE/venv/bin/python3
 
-from app.core.slate_core import display_hrns_local
+from app.core.nests_core import display_hrns_local
 
 hrns = [
     "bb.cc",

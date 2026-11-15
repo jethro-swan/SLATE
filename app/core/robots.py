@@ -28,11 +28,11 @@ from app.core.constants import ROBOTS_LIST
 
 from app.core.fph_hrns_maps import hrns_to_fph, fph_to_hrns
 
-from app.core.slate_core import identify_entity
-from app.core.slate_core import new_ahid
-from app.core.slate_core import list_primid_ahids
-from app.core.slate_core import list_ahid_accounts
-from app.core.slate_core import get_account_currency
+from app.core.nests_core import identify_entity
+from app.core.nests_core import new_ahid
+from app.core.nests_core import list_primid_ahids
+from app.core.nests_core import list_ahid_accounts
+from app.core.nests_core import get_account_currency
 
 from app.core.display import integer_to_money_format, integer_to_money_s_format
 

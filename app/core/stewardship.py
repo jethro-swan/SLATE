@@ -18,16 +18,16 @@
 import sqlite3
 import pickle
 
-from app.core.slate_core import identify_entity
-#from app.core.slate_core import list_stewards
-#from app.core.slate_core import list_namespace_stewardships
-#from app.core.slate_core import list_currency_stewardships
-from app.core.slate_core import set_currency_parameter
+from app.core.nests_core import identify_entity
+#from app.core.nests_core import list_stewards
+#from app.core.nests_core import list_namespace_stewardships
+#from app.core.nests_core import list_currency_stewardships
+from app.core.nests_core import set_currency_parameter
 
-from app.core.slate_core import get_namespace_properties
-from app.core.slate_core import get_currency_properties
+from app.core.nests_core import get_namespace_properties
+from app.core.nests_core import get_currency_properties
 
-from app.core.slate_core import log_self_repair
+from app.core.nests_core import log_self_repair
 
 from app.core.constants import ENTITIES_DB
 

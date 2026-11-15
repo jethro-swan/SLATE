@@ -43,17 +43,17 @@ import pickle
 
 from app.core.regexp_list import re_hrns, re_fph
 
-from app.core.slate_core import hrns_to_fph, fph_to_hrns
-from app.core.slate_core import add_entity_common_properties
-from app.core.slate_core import new_account
-from app.core.slate_core import account_status
-from app.core.slate_core import new_namespace
-from app.core.slate_core import new_primid
-from app.core.slate_core import new_currency
-from app.core.slate_core import identify_entity
-from app.core.slate_core import split_hrns
-from app.core.slate_core import get_currency_specific_properties
-from app.core.slate_core import get_ahid_primid
+from app.core.nests_core import hrns_to_fph, fph_to_hrns
+from app.core.nests_core import add_entity_common_properties
+from app.core.nests_core import new_account
+from app.core.nests_core import account_status
+from app.core.nests_core import new_namespace
+from app.core.nests_core import new_primid
+from app.core.nests_core import new_currency
+from app.core.nests_core import identify_entity
+from app.core.nests_core import split_hrns
+from app.core.nests_core import get_currency_specific_properties
+from app.core.nests_core import get_ahid_primid
 
 from app.core.common import ledger_timestamp
 

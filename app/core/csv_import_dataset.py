@@ -15,12 +15,12 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-from app.core.slate_core import identify_entity
-from app.core.slate_core import complete_parent_namespace
-from app.core.slate_core import new_currency
-from app.core.slate_core import retrieve_pmap
-from app.core.slate_core import new_pairing
-from app.core.slate_core import split_hrns
+from app.core.nests_core import identify_entity
+from app.core.nests_core import complete_parent_namespace
+from app.core.nests_core import new_currency
+from app.core.nests_core import retrieve_pmap
+from app.core.nests_core import new_pairing
+from app.core.nests_core import split_hrns
 from app.core.payments import ah_payment
 from app.core.fph_hrns_maps import fph_to_hrns
 from app.core.constants import NSS # NamseSpace Separator character

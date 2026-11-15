@@ -29,12 +29,12 @@ from app.core.fph_hrns_maps import hrns_to_fph
 #from app.core.auth import set_web_password_hash, authenticate_web_access
 #from app.core.auth import authenticate_web_access
 
-from app.core.slate_login import register_authenticated_login
-from app.core.slate_login import deregister_authenticated_login
-from app.core.slate_login import check_authenticated_login
-from app.core.slate_login import get_auth_data
+from app.core.nests_login import register_authenticated_login
+from app.core.nests_login import deregister_authenticated_login
+from app.core.nests_login import check_authenticated_login
+from app.core.nests_login import get_auth_data
 #from app.core.auth import check_auth_hash
-from app.core.slate_core import check_auth_hash
+from app.core.nests_core import check_auth_hash
 
 from app import app
 

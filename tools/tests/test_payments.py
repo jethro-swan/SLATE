@@ -7,13 +7,13 @@ import math
 
 from app.core.fph_hrns_maps import fph_to_hrns, hrns_to_fph
 
-from app.core.slate_core import new_namespace, new_currency, new_primid
-from app.core.slate_core import split_hrns
-from app.core.slate_core import new_pairing
-from app.core.slate_core import retrieve_pmap
-from app.core.slate_core import retrieve_pairing_account_fph
-from app.core.slate_core import complete_parent_namespace
-from app.core.slate_core import get_account_properties
+from app.core.nests_core import new_namespace, new_currency, new_primid
+from app.core.nests_core import split_hrns
+from app.core.nests_core import new_pairing
+from app.core.nests_core import retrieve_pmap
+from app.core.nests_core import retrieve_pairing_account_fph
+from app.core.nests_core import complete_parent_namespace
+from app.core.nests_core import get_account_properties
 
 from app.core.payments import ah_payment
 

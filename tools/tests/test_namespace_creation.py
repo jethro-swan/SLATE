@@ -1,7 +1,7 @@
 #!/home/slate/SLATE/venv/bin/python3
 
-from app.core.slate_core import new_namespace
-from app.core.slate_core import get_namespace_properties
+from app.core.nests_core import new_namespace
+from app.core.nests_core import get_namespace_properties
 
 print()
 namespace_hrns = "bb.cc"

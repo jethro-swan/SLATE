@@ -1,7 +1,7 @@
 #!/home/slate/SLATE/venv/bin/python3
 
-from app.core.slate_core import fph_to_hrns
-from app.core.slate_core import identify_entity
+from app.core.nests_core import fph_to_hrns
+from app.core.nests_core import identify_entity
 
 from app.core.stewardship import add_or_remove_steward
 from app.core.stewardship import add_or_remove_stewardship

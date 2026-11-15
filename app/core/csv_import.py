@@ -27,7 +27,7 @@ import json
 #from common import hrns_to_fph, fph_to_hrns, fph_to_fip, fph_to_dpath
 #from common import hrns_to_dpath
 #from common import entity_type, account_currency, currency_accounts
-from app.core.slate_core import identify_entity
+from app.core.nests_core import identify_entity
 from app.core.regexp_list import re_fph, re_hrns, re_email
 
 

@@ -3,7 +3,7 @@
 import sys
 import re
 
-from app.core.slate_core import identify_entity, get_entity_type, new_primid
+from app.core.nests_core import identify_entity, get_entity_type, new_primid
 from app.core.fph_hrns_maps import fph_to_hrns, hrns_to_fph
 from app.core.regexp_list import re_realname, re_email, re_password, re_pin
 

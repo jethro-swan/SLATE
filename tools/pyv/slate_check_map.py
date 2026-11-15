@@ -4,10 +4,10 @@ import os
 import sys
 import argparse
 #import re
-#from app.core.slate_core import identify_entity, get_entity_type
+#from app.core.nests_core import identify_entity, get_entity_type
 from app.core.common import nshash
 from app.core.fph_hrns_maps import fph_to_hrns, hrns_to_fph
-from app.core.slate_core import get_entity_type
+from app.core.nests_core import get_entity_type
 from app.core.constants import DB_DIR
 from app.core.constants import MAP_BKP_DIR, FPH_TO_HRNS_MAP, HRNS_C_FPH_MAP
 from app.core.dbm_functions import dbm_store, dbm_fetch

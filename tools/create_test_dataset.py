@@ -30,19 +30,19 @@ import argparse
 
 from app.core.fph_hrns_maps import hrns_to_fph, fph_to_hrns
 from app.core.fph_hrns_maps import hrns_exists_already
-from app.core.slate_core import new_namespace, new_currency, new_account
-#from app.core.slate_core import new_primid, new_secid
-from app.core.slate_core import new_primid, new_ahid
-from app.core.slate_core import identify_entity, get_currency_name
-#from app.core.slate_core import list_primid_accounts, list_secid_accounts
-from app.core.slate_core import list_primid_accounts, list_ahid_accounts
-from app.core.slate_core import list_primid_currencies, list_ahid_currencies
-#from app.core.slate_core import list_primid_currencies, list_secid_currencies
-from app.core.slate_core import list_currency_accounts
-from app.core.slate_core import get_entity_types
-from app.core.slate_core import list_all_namespaces
-from app.core.slate_core import list_all_currencies
-from app.core.slate_seed import create_sandbox_root_set
+from app.core.nests_core import new_namespace, new_currency, new_account
+#from app.core.nests_core import new_primid, new_secid
+from app.core.nests_core import new_primid, new_ahid
+from app.core.nests_core import identify_entity, get_currency_name
+#from app.core.nests_core import list_primid_accounts, list_secid_accounts
+from app.core.nests_core import list_primid_accounts, list_ahid_accounts
+from app.core.nests_core import list_primid_currencies, list_ahid_currencies
+#from app.core.nests_core import list_primid_currencies, list_secid_currencies
+from app.core.nests_core import list_currency_accounts
+from app.core.nests_core import get_entity_types
+from app.core.nests_core import list_all_namespaces
+from app.core.nests_core import list_all_currencies
+from app.core.nests_seed import create_sandbox_root_set
 from app.core.common import filename_timestamp
 from app.core.regexp_list import *
 

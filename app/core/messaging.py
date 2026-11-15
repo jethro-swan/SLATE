@@ -23,11 +23,11 @@ from string import ascii_lowercase
 from datetime import datetime, date, time, timezone
 import calendar
 
-from app.core.slate_core import identify_entity
-from app.core.slate_core import account_status
-from app.core.slate_core import list_ahids
-from app.core.slate_core import get_ahid_primid
-from app.core.slate_core import log_event
+from app.core.nests_core import identify_entity
+from app.core.nests_core import account_status
+from app.core.nests_core import list_ahids
+from app.core.nests_core import get_ahid_primid
+from app.core.nests_core import log_event
 
 from app.core.fph_hrns_maps import hrns_to_fph, fph_to_hrns
 

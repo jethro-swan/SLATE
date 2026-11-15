@@ -22,7 +22,7 @@
 import os, sys
 from pathlib import Path
 
-from app.core.slate_core import split_hrns
+from app.core.nests_core import split_hrns
 from app.core.csv_import_dataset import import_csv_dataset
 from app.core.common import ledger_timestamp
 from app.core.constants import IMPORT_QUEUE, IMPORTING, SLATE_TEMP

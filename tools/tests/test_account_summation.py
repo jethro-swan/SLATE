@@ -3,8 +3,8 @@
 #import sqlite3
 #from app.core.fph_hrns_maps import hrns_to_fph, fph_to_hrns
 #from app.core.constants import ENTITIES_DB
-from app.core.slate_core import sum_account_balances
-from app.core.slate_core import integer_to_money_format
+from app.core.nests_core import sum_account_balances
+from app.core.nests_core import integer_to_money_format
 
 owner_id = "ah1.bb.cc"
 

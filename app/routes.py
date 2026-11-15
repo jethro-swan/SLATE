@@ -42,46 +42,46 @@ from app.core.fph_hrns_maps import hrns_exists_already
 
 from app.core.common import unixtime_int
 
-from app.core.slate_core import get_entity_types
-from app.core.slate_core import get_account_currency
-from app.core.slate_core import identify_entity
-from app.core.slate_core import entity_type_is_registered
-from app.core.slate_core import entity_types_are_registered
-from app.core.slate_core import new_primid
-from app.core.slate_core import get_primid # kludge 06-03-30
-from app.core.slate_core import update_primid_access_details
-from app.core.slate_core import new_namespace
-from app.core.slate_core import new_currency
-from app.core.slate_core import new_account
-from app.core.slate_core import account_status
-from app.core.slate_core import retrieve_primid_access_details
-from app.core.slate_core import list_agent_accounts
-from app.core.slate_core import list_ahids
-from app.core.slate_core import get_namespace_properties
-from app.core.slate_core import get_currency_properties
-from app.core.slate_core import get_account_properties
-from app.core.slate_core import set_default_currency
-from app.core.slate_core import get_default_currency
-from app.core.slate_core import list_all_namespaces
-from app.core.slate_core import hrns_to_name_and_namespace
-from app.core.slate_core import authenticate_primid_email
-from app.core.slate_core import get_hub_mode
-from app.core.slate_core import get_version
-from app.core.slate_core import display_hrns_local
-from app.core.slate_core import list_ancestors_fph, most_recent_clade
-from app.core.slate_core import prune_payment_pair_hrns
-from app.core.slate_core import get_list_concestor
-from app.core.slate_core import hrns_strip_concestor
-from app.core.slate_core import pin_subset_prompt
-from app.core.slate_core import check_auth_hash
-from app.core.slate_core import authenticate_pin
-from app.core.slate_core import retrieve_pmap
-from app.core.slate_core import new_pairing
-from app.core.slate_core import retrieve_pairing_account_fph
-from app.core.slate_core import is_ancestor, is_in_private_namespace
-from app.core.slate_core import get_ahid_primid
-from app.core.slate_core import log_event
-from app.core.slate_core import random_filename
+from app.core.nests_core import get_entity_types
+from app.core.nests_core import get_account_currency
+from app.core.nests_core import identify_entity
+from app.core.nests_core import entity_type_is_registered
+from app.core.nests_core import entity_types_are_registered
+from app.core.nests_core import new_primid
+from app.core.nests_core import get_primid # kludge 06-03-30
+from app.core.nests_core import update_primid_access_details
+from app.core.nests_core import new_namespace
+from app.core.nests_core import new_currency
+from app.core.nests_core import new_account
+from app.core.nests_core import account_status
+from app.core.nests_core import retrieve_primid_access_details
+from app.core.nests_core import list_agent_accounts
+from app.core.nests_core import list_ahids
+from app.core.nests_core import get_namespace_properties
+from app.core.nests_core import get_currency_properties
+from app.core.nests_core import get_account_properties
+from app.core.nests_core import set_default_currency
+from app.core.nests_core import get_default_currency
+from app.core.nests_core import list_all_namespaces
+from app.core.nests_core import hrns_to_name_and_namespace
+from app.core.nests_core import authenticate_primid_email
+from app.core.nests_core import get_hub_mode
+from app.core.nests_core import get_version
+from app.core.nests_core import display_hrns_local
+from app.core.nests_core import list_ancestors_fph, most_recent_clade
+from app.core.nests_core import prune_payment_pair_hrns
+from app.core.nests_core import get_list_concestor
+from app.core.nests_core import hrns_strip_concestor
+from app.core.nests_core import pin_subset_prompt
+from app.core.nests_core import check_auth_hash
+from app.core.nests_core import authenticate_pin
+from app.core.nests_core import retrieve_pmap
+from app.core.nests_core import new_pairing
+from app.core.nests_core import retrieve_pairing_account_fph
+from app.core.nests_core import is_ancestor, is_in_private_namespace
+from app.core.nests_core import get_ahid_primid
+from app.core.nests_core import log_event
+from app.core.nests_core import random_filename
 
 from app.core.stewardship import add_currency_steward
 from app.core.stewardship import add_namespace_steward
@@ -107,8 +107,8 @@ from app.core.regexp_list import re_fph, re_hrns, re_email
 from app.core.regexp_list import re_pvalue, re_bvalue
 from app.core.regexp_list import re_qrfilename
 
-from app.core.slate_login import get_auth_data
-from app.core.slate_login import register_authenticated_login
+from app.core.nests_login import get_auth_data
+from app.core.nests_login import register_authenticated_login
 
 from app.core.payments import payment
 

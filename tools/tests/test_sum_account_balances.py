@@ -1,11 +1,11 @@
 #!/home/slate/SLATE/venv/bin/python3
 
-from app.core.slate_core import identify_entity
-from app.core.slate_core import retrieve_pairing_account_fph
-from app.core.slate_core import get_account_properties
-from app.core.slate_core import sum_account_balances
-from app.core.slate_core import sum_ahid_account_balances
-from app.core.slate_core import sum_primid_account_balances
+from app.core.nests_core import identify_entity
+from app.core.nests_core import retrieve_pairing_account_fph
+from app.core.nests_core import get_account_properties
+from app.core.nests_core import sum_account_balances
+from app.core.nests_core import sum_ahid_account_balances
+from app.core.nests_core import sum_primid_account_balances
 from app.core.display import integer_to_money_format, integer_to_money_s_format
 
 ahid_accounts_balance_sum = {}

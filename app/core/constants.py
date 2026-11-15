@@ -82,7 +82,8 @@ FPH_PARENT_MAP      = "/var/slate/active/maps/FPH_parent_map.dbm"
 PNSR_MAP            = "/var/slate/active/maps/private_namespace_root_map.dbm"
 FLAG_MAP            = "/var/slate/active/maps/flags.dbm"
 
-SUBSTRATE_FPH       = nshash("")
+#SUBSTRATE_FPH       = nshash("")
+SUBSTRATE_FPH       = nshash("".encode("utf-8"))
 
 # Temporary kludge:
 VERSION             = "/home/slate/SLATE/version"

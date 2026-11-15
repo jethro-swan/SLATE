@@ -26,7 +26,7 @@ import sys
 
 from app.core.common import filename_timestamp
 
-from app.core.slate_core import entity_type_is_registered
+from app.core.nests_core import entity_type_is_registered
 
 # CSV can mean either "comma-separated value" or "character-separated value".
 # Here the latter meaning is use, with a comma used as the default separator.

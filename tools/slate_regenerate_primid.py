@@ -5,11 +5,11 @@
 
 from app.core.fph_hrns_maps import hrns_to_fph
 #from app.core.fph_hrns_maps import record_private_namespace_root
-from app.core.slate_core import record_private_namespace_root
-from app.core.slate_core import new_primid
-from app.core.slate_core import get_hub_mode
-from app.core.slate_core import new_pairing
-from app.core.slate_core import split_hrns
+from app.core.nests_core import record_private_namespace_root
+from app.core.nests_core import new_primid
+from app.core.nests_core import get_hub_mode
+from app.core.nests_core import new_pairing
+from app.core.nests_core import split_hrns
 
 import argparse
 

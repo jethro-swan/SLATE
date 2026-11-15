@@ -23,10 +23,10 @@ from pathlib import Path
 
 from app.core.constants import ENTITIES_DB
 from app.core.regexp_list import *
-from app.core.slate_core import get_entity_types
+from app.core.nests_core import get_entity_types
 
-from app.core.slate_core import fph_to_hrns
-from app.core.slate_core import entity_type_is_registered
+from app.core.nests_core import fph_to_hrns
+from app.core.nests_core import entity_type_is_registered
 
 debugging = True
 

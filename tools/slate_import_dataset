@@ -19,16 +19,16 @@
 
 import sys, os, re, argparse
 
-from app.core.slate_core import identify_entity
-from app.core.slate_core import get_entity_types
-from app.core.slate_core import new_account
-from app.core.slate_core import split_hrns
-from app.core.slate_core import new_currency
-from app.core.slate_core import random_filename
-from app.core.slate_core import complete_parent_namespace
-from app.core.slate_core import new_pairing
+from app.core.nests_core import identify_entity
+from app.core.nests_core import get_entity_types
+from app.core.nests_core import new_account
+from app.core.nests_core import split_hrns
+from app.core.nests_core import new_currency
+from app.core.nests_core import random_filename
+from app.core.nests_core import complete_parent_namespace
+from app.core.nests_core import new_pairing
 from app.core.payments import ah_payment
-from app.core.slate_core import retrieve_pmap
+from app.core.nests_core import retrieve_pmap
 
 from app.core.csv_import_dataset import import_csv_dataset
 

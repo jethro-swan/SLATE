@@ -47,7 +47,7 @@ import argparse
 
 from app.core.fph_hrns_maps import hrns_to_fph, fph_to_hrns
 from app.core.common import filename_timestamp as timestamp
-from app.core.slate_core import account_status
+from app.core.nests_core import account_status
 from app.core.payments import payment
 from app.core.common import filename_timestamp
 from app.core.display import integer_to_money_s_format

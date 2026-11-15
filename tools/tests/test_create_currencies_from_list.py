@@ -4,8 +4,8 @@ import random, string
 
 
 
-from app.core.slate_core import create_currencies_from_list
-from app.core.slate_core import create_pairings_from_list
+from app.core.nests_core import create_currencies_from_list
+from app.core.nests_core import create_pairings_from_list
 
 parent_id = "bb.cc"
 

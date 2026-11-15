@@ -23,12 +23,12 @@ import argparse
 from app.core.regexp_list import re_realname, re_slatename, re_email
 from app.core.regexp_list import re_password, re_pin
 from app.core.fph_hrns_maps import hrns_to_fph
-from app.core.slate_core import identify_entity
+from app.core.nests_core import identify_entity
 #from app.core.fph_hrns_maps import record_private_namespace_root
-from app.core.slate_core import record_private_namespace_root
-from app.core.slate_core import new_primid
-from app.core.slate_core import get_hub_mode
-from app.core.slate_core import new_pairing
+from app.core.nests_core import record_private_namespace_root
+from app.core.nests_core import new_primid
+from app.core.nests_core import get_hub_mode
+from app.core.nests_core import new_pairing
 
 
 ap = argparse.ArgumentParser(description = "Create a login identity")
