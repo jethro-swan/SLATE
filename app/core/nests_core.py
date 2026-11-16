@@ -113,11 +113,7 @@ def log_event(category, summary, details):
 
 def log_self_repair(entity_id, message):
     entity_fph, entity_hrns, etypes, m = identify_entity(entity_id)
-    log_event(
-        "error",
-        message,
-        entity_hrns + " : " +  message
-    )
+    log_event("error", message, entity_hrns + " : " +  message)
 
 #==============================================================================
 # Used to authenticate both passwords and recovery details (email addresses or
@@ -420,29 +416,45 @@ def is_in_active_tree(entity_id):
 #==============================================================================
 # Choose the working database file for the *namespace*:
 
-def entity_db_path(entity_id):
-    entity_fph, entity_hrns, etypes, m = identify_entity(entity_id)
-    return ENTITIES_DB_DIR + get_pnsr(entity_fph) + "_entities,db"
+#def entity_db_path(entity_id):
+#    entity_fph, entity_hrns, etypes, m = identify_entity(entity_id)
+#    if not entity_fph:
+#        return ""
+#    #return ENTITIES_DB_DIR + get_pnsr(entity_fph) + "_entities,db"
+#    pnsr = get_pnsr(entity_fph)
+#    if pnsr:
+#        return ENTITIES_DB_DIR + get_pnsr(entity_fph) + "_entities,db"
+#    else:
+#        return ENTITIES_DB_DIR + "entities,db"
 
-def select_db_filepath(db_name, owner_fph):
-    # Is the database name valid?
-    if not (db_name in ["entities", "payments"]):
-        return ""
-    # If the PNSR (FPH) has not been provided, assume public namespace.
-    if isinstance(owner_fph, str) and re_fph.match(owner_fph):
-        DB = DB_DIR + owner_fph + "_" + db_name + ".db"
-    else:
-        DB = DB_DIR + db_name + ".db"
-    return DB
+#def select_db_filepath(db_name, owner_fph):
+#    # Is the database name valid?
+#    if not (db_name in ["entities", "payments"]):
+#        return ""
+#    # If the PNSR (FPH) has not been provided, assume public namespace.
+#    if isinstance(owner_fph, str) and re_fph.match(owner_fph):
+#        DB = DB_DIR + owner_fph + "_" + db_name + ".db"
+#    else:
+#        DB = DB_DIR + db_name + ".db"
+#    return DB
 
 # REPLACE the above with ...
 
-def select_entities_db_filepath(entity_fph):
-    pnsr = get_private_namespace_root(entity_fph)
-    # If the PNSR (FPH) has been provided, assume public *namespace*.
+def select_entities_db_filepath(entity_fph = ""):
+    if entity_fph:
+        entity_fph, entity_hrns, etypes, m = identify_entity(entity_fph)
+        if entity_fph:
+            pnsr = get_private_namespace_root(entity_fph)
+        else:
+            pnsr = ""
+    else:
+        pnsr = ""
+
+    # If the PNSR (FPH) has not been provided, assume public root *namespace*.
     if isinstance(pnsr_fph, str) and re_fph.match(pnsr_fph):
         #DB = DB_DIR + owner_fph + "_entities.db"
         DB = DB_DIR + pnsr + "_entities.db"
+        if not os.path
     else:
         DB = DB_DIR + "_entities.db"
     return DB
@@ -455,7 +467,7 @@ def select_entities_db_filepath(entity_fph):
 
 def select_payments_db_filepath(entity_fph):
     pnsr = get_private_namespace_root(entity_fph)
-    # If the PNSR (FPH) has been provided, assume public *namespace*.
+    # If the PNSR (FPH) has been provided, assume public root *namespace*.
     if isinstance(pnsr_fph, str) and re_fph.match(pnsr_fph):
         DB = DB_DIR + owner_fph + "_payments.db"
     else:
