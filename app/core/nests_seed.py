@@ -23,11 +23,8 @@ from app.core.constants import IDENTIFIERS_DB, ENTITIES_DB, MAP_DB
 from app.core.constants import SUBSTRATE_FPH
 from app.core.common import nshash
 from app.core.regexp_list import *
-#from app.core.nests_core import hrns_to_fph, fph_to_hrns, record_parent
 from app.core.fph_hrns_maps import hrns_to_fph, fph_to_hrns
-#from app.core.fph_hrns_maps import record_parent
 from app.core.nests_core import record_parent
-#from app.core.fph_hrns_maps import record_private_namespace_root
 from app.core.nests_core import record_private_namespace_root
 from app.core.nests_core import register_identifier
 from app.core.nests_core import register_entity_type
@@ -36,7 +33,6 @@ from app.core.nests_core import new_namespace
 from app.core.nests_core import new_currency
 from app.core.nests_core import identify_entity
 from app.core.nests_core import complete_parent_namespace
-#from app.core.auth import auth_hash
 from app.core.nests_core import auth_hash
 from app.core.cctld_list import *
 
@@ -288,28 +284,61 @@ def create_seed_entities():
     # The seed *namespace* type-specific properties are added:
     with sqlite3.connect(ENTITIES_DB) as conn:
         cursor = conn.cursor()
+
+        # 2026-11-17 FUDGE
         cursor.execute(
-            "INSERT INTO namespaces (" \
-                + "entity_fph, " \
-                + "active, " \
-                + "sandbox, " \
-                + "private, " \
-                + "stewards_fph_list, " \
-                + "default_currency_fph, " \
-                + "owner_fph" \
-            + ") VALUES (?, ?, ?, ?, ?, ?, ?)",
-            (
-                seed_namespace_fph, # *account* FPH
-                1,                  # active
-                0,                  # sandbox
-                0,                  # private
-                stewards_fph_blob,  #
-                seed_currency_fph,  # *account* *currency*'s FPH'
-                seed_ahid_fph       # *account* owner's FPH (*ahid*)
-            )
+            "SELECT * FROM namespaces WHERE entity_fph = ?",
+            (seed_namespace_fph,)
         )
-        conn.commit()
+        result = cursor.fetchone()
+        if result is None:
+            cursor.execute(
+                "INSERT INTO namespaces (" \
+                    + "entity_fph, " \
+                    + "active, " \
+                    + "sandbox, " \
+                    + "private, " \
+                    + "stewards_fph_list, " \
+                    + "default_currency_fph, " \
+                    + "owner_fph" \
+                    + ") VALUES (?, ?, ?, ?, ?, ?, ?)",
+                (
+                    seed_namespace_fph, # *account* FPH
+                    1,                  # active
+                    0,                  # sandbox
+                    0,                  # private
+                    stewards_fph_blob,  #
+                    seed_currency_fph,  # *account* *currency*'s FPH'
+                    seed_ahid_fph       # *account* owner's FPH (*ahid*)
+                )
+            )
+            conn.commit()
         cursor.close()
+        ######################################
+
+
+#        cursor.execute(
+#            "INSERT INTO namespaces (" \
+#                + "entity_fph, " \
+#                + "active, " \
+#                + "sandbox, " \
+#                + "private, " \
+#                + "stewards_fph_list, " \
+#                + "default_currency_fph, " \
+#                + "owner_fph" \
+#            + ") VALUES (?, ?, ?, ?, ?, ?, ?)",
+#            (
+#                seed_namespace_fph, # *account* FPH
+#                1,                  # active
+#                0,                  # sandbox
+#                0,                  # private
+#                stewards_fph_blob,  #
+#                seed_currency_fph,  # *account* *currency*'s FPH'
+#                seed_ahid_fph       # *account* owner's FPH (*ahid*)
+#            )
+#        )
+#        conn.commit()
+#        cursor.close()
 
     #--------------------------------------------------------------------------
     # Seed *account*:
@@ -317,24 +346,56 @@ def create_seed_entities():
     # The seed *account* type-specific properties are added:
     with sqlite3.connect(ENTITIES_DB) as conn:
         cursor = conn.cursor()
+
         cursor.execute(
-            "INSERT INTO accounts (" \
-                + "entity_fph, " \
-                + "active, " \
-                + "account_owner_fph, " \
-                + "account_currency_fph, " \
-                + "balance" \
-            + ") VALUES (?, ?, ?, ?, ?)",
-            (
-                seed_account_fph,   # *account* FPH
-                1,                  # active
-                seed_ahid_fph,      # *account* owner's FPH (*ahid*)
-                seed_currency_fph,  # *account* *currency*'s FPH'
-                0
-            )
+            "SELECT * FROM accounts WHERE entity_fph = ?",
+            (seed_account_fph,)
         )
-        conn.commit()
+        result = cursor.fetchone()
+        if result is None:
+            cursor.execute(
+                "INSERT INTO accounts (" \
+                    + "entity_fph, " \
+                    + "active, " \
+                    + "account_owner_fph, " \
+                    + "account_currency_fph, " \
+                    + "balance" \
+                + ") VALUES (?, ?, ?, ?, ?)",
+                (
+                    seed_account_fph,   # *account* FPH
+                    1,                  # active
+                    seed_ahid_fph,      # *account* owner's FPH (*ahid*)
+                    seed_currency_fph,  # *account* *currency*'s FPH'
+                    0
+                )
+            )
+            conn.commit()
         cursor.close()
+
+
+#        cursor.execute(
+#            "INSERT INTO accounts (" \
+#                + "entity_fph, " \
+#                + "active, " \
+#                + "account_owner_fph, " \
+#                + "account_currency_fph, " \
+#                + "balance" \
+#            + ") VALUES (?, ?, ?, ?, ?)",
+#            (
+#                seed_account_fph,   # *account* FPH
+#                1,                  # active
+#                seed_ahid_fph,      # *account* owner's FPH (*ahid*)
+#                seed_currency_fph,  # *account* *currency*'s FPH'
+#                0
+#            )
+#        )
+#        conn.commit()
+#        cursor.close()
+
+
+
+
+
 
     # Create a universal *currency" cc.cc
     currency_fph, currency_hrns, \
@@ -362,70 +423,147 @@ def create_seed_entities():
 
     with sqlite3.connect(ENTITIES_DB) as conn:
         cursor = conn.cursor()
+
+        #######
         cursor.execute(
-            "INSERT INTO primids (" \
-                + "entity_fph, " \
-                + "active, " \
-                + "primid_realname, " \
-                + "primid_email_1_hash, " \
-                + "primid_email_2_hash, " \
-                + "ahids_fph_list, " \
-                + "accounts_fph_list, " \
-                + "pmap, " \
-                + "nstewardships_fph_list, " \
-                + "cstewardships_fph_list, " \
-                + "password_hash, " \
-                + "pin, " \
-                + "access_token_hash" \
-            + ") VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
-            (
-                seed_primid_fph,
-                1,
-                seed_primid_realname,
-                auth_hash(seed_primid_email_1),
-                auth_hash(seed_primid_email_2),
-                pickle.dumps([]),
-                pickle.dumps(ahids_fph_list),
-                pickle.dumps(pmap),
-                pickle.dumps(nstewardships_fph_list),
-                pickle.dumps(cstewardships_fph_list),
-                auth_hash(seed_primid_password),
-                seed_primid_pin,
-                auth_hash(seed_primid_access_token)
-            )
+            "SELECT * FROM primids WHERE entity_fph = ?",
+            (seed_primid_fph,)
         )
-        conn.commit()
+        result = cursor.fetchone()
+        if result is None:
+            cursor.execute(
+                "INSERT INTO primids (" \
+                    + "entity_fph, " \
+                    + "active, " \
+                    + "primid_realname, " \
+                    + "primid_email_1_hash, " \
+                    + "primid_email_2_hash, " \
+                    + "ahids_fph_list, " \
+                    + "accounts_fph_list, " \
+                    + "pmap, " \
+                    + "nstewardships_fph_list, " \
+                    + "cstewardships_fph_list, " \
+                    + "password_hash, " \
+                    + "pin, " \
+                    + "access_token_hash" \
+                + ") VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                (
+                    seed_primid_fph,
+                    1,
+                    seed_primid_realname,
+                    auth_hash(seed_primid_email_1),
+                    auth_hash(seed_primid_email_2),
+                    pickle.dumps([]),
+                    pickle.dumps(ahids_fph_list),
+                    pickle.dumps(pmap),
+                    pickle.dumps(nstewardships_fph_list),
+                    pickle.dumps(cstewardships_fph_list),
+                    auth_hash(seed_primid_password),
+                    seed_primid_pin,
+                    auth_hash(seed_primid_access_token)
+                )
+            )
+            conn.commit()
         cursor.close()
+
+
+#        cursor.execute(
+#            "INSERT INTO primids (" \
+#                + "entity_fph, " \
+#                + "active, " \
+#                + "primid_realname, " \
+#                + "primid_email_1_hash, " \
+#                + "primid_email_2_hash, " \
+#                + "ahids_fph_list, " \
+#                + "accounts_fph_list, " \
+#                + "pmap, " \
+#                + "nstewardships_fph_list, " \
+#                + "cstewardships_fph_list, " \
+#                + "password_hash, " \
+#                + "pin, " \
+#                + "access_token_hash" \
+#            + ") VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+#            (
+#                seed_primid_fph,
+#                1,
+#                seed_primid_realname,
+#                auth_hash(seed_primid_email_1),
+#                auth_hash(seed_primid_email_2),
+#                pickle.dumps([]),
+#                pickle.dumps(ahids_fph_list),
+#                pickle.dumps(pmap),
+#                pickle.dumps(nstewardships_fph_list),
+#                pickle.dumps(cstewardships_fph_list),
+#                auth_hash(seed_primid_password),
+#                seed_primid_pin,
+#                auth_hash(seed_primid_access_token)
+#            )
+#        )
+#        conn.commit()
+#        cursor.close()
 
     #--------------------------------------------------------------------------
     # The seed *namespace* and *currency* specific properties are added:
 
     with sqlite3.connect(ENTITIES_DB) as conn:
         cursor = conn.cursor()
+
+        ################
         cursor.execute(
-            "INSERT INTO currencies (" \
-                + "entity_fph, " \
-                + "active, " \
-                + "private, " \
-                + "currency_prefix, " \
-                + "currency_suffix, " \
-                + "default_account_name, " \
-                + "stewards_fph_list " \
-            + ") VALUES (?, ?, ?, ?, ?, ?, ?)",
-            (
-                seed_currency_fph,
-                1,      # active
-                0,      # private
-                "",     # *currency* prefix
-                "",     # *currency* suffix
-                "cc",   # default *account* name
-                pickle.dumps([seed_primid_fph]) # first steward added to list
-            )
+            "SELECT * FROM currencies WHERE entity_fph = ?",
+            (seed_currency_fph,)
         )
+        result = cursor.fetchall()
+        if result is None:
+            cursor.execute(
+                "INSERT INTO currencies (" \
+                    + "entity_fph, " \
+                    + "active, " \
+                    + "private, " \
+                    + "currency_prefix, " \
+                    + "currency_suffix, " \
+                    + "default_account_name, " \
+                    + "stewards_fph_list " \
+                + ") VALUES (?, ?, ?, ?, ?, ?, ?)",
+                (
+                    seed_currency_fph,
+                    1,      # active
+                    0,      # private
+                    "",     # *currency* prefix
+                    "",     # *currency* suffix
+                    "cc",   # default *account* name
+                    pickle.dumps([seed_primid_fph]) # first steward added to list
+                )
+            )
+            conn.commit()
+        cursor.close()
+
+#        cursor.execute(
+#            "INSERT INTO currencies (" \
+#                + "entity_fph, " \
+#                + "active, " \
+#                + "private, " \
+#                + "currency_prefix, " \
+#                + "currency_suffix, " \
+#                + "default_account_name, " \
+#                + "stewards_fph_list " \
+#            + ") VALUES (?, ?, ?, ?, ?, ?, ?)",
+#            (
+#                seed_currency_fph,
+#                1,      # active
+#                0,      # private
+#                "",     # *currency* prefix
+#                "",     # *currency* suffix
+#                "cc",   # default *account* name
+#                pickle.dumps([seed_primid_fph]) # first steward added to list
+#            )
+#        )
 
     #--------------------------------------------------------------------------
     # The seed *ahid* and *currency* specific properties are added:
 
+    with sqlite3.connect(ENTITIES_DB) as conn:
+        cursor = conn.cursor()
         cursor.execute(
             "INSERT INTO ahids (entity_fph, primid_fph , accounts_fph_list)"  \
             + " VALUES (?, ?, ?)",

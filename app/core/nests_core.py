@@ -444,19 +444,20 @@ def select_entities_db_filepath(entity_fph = ""):
     if entity_fph:
         entity_fph, entity_hrns, etypes, m = identify_entity(entity_fph)
         if entity_fph:
-            pnsr = get_private_namespace_root(entity_fph)
+            pnsr_fph = get_private_namespace_root(entity_fph)
         else:
-            pnsr = ""
+            pnsr_fph = ""
     else:
-        pnsr = ""
+        pnsr_fph = ""
 
     # If the PNSR (FPH) has not been provided, assume public root *namespace*.
-    if isinstance(pnsr_fph, str) and re_fph.match(pnsr_fph):
+    if pnsr_fph \
+    and isinstance(pnsr_fph, str) \
+    and re_fph.match(pnsr_fph):
         #DB = DB_DIR + owner_fph + "_entities.db"
-        EDB = DB_DIR + pnsr + "_entities.db"
+        EDB = DB_DIR + pnsr_fph + "_entities.db"
         if not os.path.exists(EDB):
-            create_db(EDB)
-
+            create_entities_db(owner_fph)
     else:
         EDB = DB_DIR + "_entities.db"
     return EDB
@@ -467,14 +468,42 @@ def select_entities_db_filepath(entity_fph = ""):
 # journal. However, the bulk import payments recorded can be fed initially into
 # a private PAYMENTS_DB before being drip-fed to the journal.
 
-def select_payments_db_filepath(entity_fph):
-    pnsr = get_private_namespace_root(entity_fph)
-    # If the PNSR (FPH) has been provided, assume public root *namespace*.
-    if isinstance(pnsr_fph, str) and re_fph.match(pnsr_fph):
-        DB = DB_DIR + owner_fph + "_payments.db"
+def select_payments_db_filepath(entity_fph = ""):
+
+    if entity_fph:
+        entity_fph, entity_hrns, etypes, m = identify_entity(entity_fph)
+        if entity_fph:
+            pnsr_fph = get_private_namespace_root(entity_fph)
+        else:
+            pnsr_fph = ""
     else:
-        DB = DB_DIR + "_payments.db"
-    return DB
+        pnsr_fph = ""
+
+    # If the PNSR (FPH) has not been provided, assume public root *namespace*.
+    if pnsr_fph \
+    and isinstance(pnsr_fph, str) \
+    and re_fph.match(pnsr_fph):
+        PDB = DB_DIR + pnsr_fph + "_payments.db"
+        if not os.path.exists(PDB):
+            create_entities_db(owner_fph)
+    else:
+        PDB = DB_DIR + "_entities.db"
+    return PDB
+
+
+
+
+
+
+
+
+#    pnsr = get_private_namespace_root(entity_fph)
+#    # If the PNSR (FPH) has been provided, assume public root *namespace*.
+#    if isinstance(pnsr_fph, str) and re_fph.match(pnsr_fph):
+#        DB = DB_DIR + owner_fph + "_payments.db"
+#    else:
+#        DB = DB_DIR + "_payments.db"
+#    return DB
 
 #==============================================================================
 # Create the SQLite indentifiers database
@@ -515,7 +544,7 @@ def create_identifiers_db():
 
 def create_entities_db(owner_fph):
 
-    ENTITIES_DB = select_db_filepath("entities", owner_fph)
+    ENTITIES_DB = select_entities_db_filepath(owner_fph)
 
     print("ENTITIES_DB_ = " + ENTITIES_DB)
 
@@ -1810,6 +1839,9 @@ def new_currency(
     # Now add *currency* specific properties:
     with sqlite3.connect(ENTITIES_DB) as conn:
         cursor = conn.cursor()
+
+        cursor.execute(
+            "SELECT * FROM "
         cursor.execute(
             "INSERT INTO currencies (" \
             + "entity_fph, active, private, sandbox, " \

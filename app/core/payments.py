@@ -49,7 +49,8 @@ from app.core.nests_core import identify_entity
 from app.core.nests_core import get_currency_properties
 from app.core.nests_core import retrieve_pairing_account_fph
 from app.core.nests_core import new_pairing
-from app.core.nests_core import select_db_filepath
+from app.core.nests_core import select_entities_db_filepath
+from app.core.nests_core import select_payments_db_filepath
 from app.core.nests_core import ahid_is_robot
 from app.core.nests_core import log_event
 from app.core.nests_core import auth_hash
@@ -77,7 +78,7 @@ def create_payments_db(owner_fph):
     # set permissions to 660 (rw-rw----)
     os.chmod(PAYMENTS_DB, 0o660)
 
-    ENTITIES_DB = select_db_filepath("payments", owner_fph)
+    ENTITIES_DB = select_payments_db_filepath(owner_fph)
 
     with sqlite3.connect(PAYMENTS_DB) as conn:
         cursor = conn.cursor()
