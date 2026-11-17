@@ -27,9 +27,9 @@
 ##
 ##LOCAL_HUB_NUMBER = $3 #
 ##HUB_PORT = "8000" + $LOCAL_HUB_NUMBER   # ports: 8000, 8001, 8002, ...
-##                                        # allocated to each instance running in
-##
-HUB_MODE="slate_simple"                              # its own VM.
+##                                        # allocated to each instance running
+##                                        # in # its own VM.
+HUB_MODE="slate_simple"
 HUB_USER="slate"
 HUB_GROUP="www-data"
 ##HUB_INSTALLATION=$1
