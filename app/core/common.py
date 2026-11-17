@@ -76,7 +76,7 @@ def ledger_timestamp():
 # Map human-readable entity name (UTF-8) to hash:
 
 def nshash(name):
-    return xxhash.xxh3_128_hexdigest(name.strip())
+    return xxhash.xxh3_128_hexdigest(name.strip().encode("utf-8"))
 
 def fphash(name):
     return xxhash.xxh3_128_hexdigest(name.strip())
