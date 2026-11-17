@@ -20,7 +20,7 @@
 import xxhash
 #from .common import nshash
 def nshash(name): # Defined again here to avoid circular import from common.py
-    return xxhash.xxh3_128_hexdigest(name.strip())
+    return xxhash.xxh3_128_hexdigest(name.strip().encode("utf-8"))
 
 SLATE_DATA_ROOT     = "/var/slate/active/data/"
 SLATE_DATA          = "/var/slate/active"
@@ -82,7 +82,7 @@ FPH_PARENT_MAP      = "/var/slate/active/maps/FPH_parent_map.dbm"
 PNSR_MAP            = "/var/slate/active/maps/private_namespace_root_map.dbm"
 FLAG_MAP            = "/var/slate/active/maps/flags.dbm"
 
-SUBSTRATE_FPH       = nshash("")
+SUBSTRATE_FPH       = nshash("".encode("utf-8"))
 
 # Temporary kludge:
 VERSION             = "/home/slate/SLATE/version"
