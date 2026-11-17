@@ -453,11 +453,13 @@ def select_entities_db_filepath(entity_fph = ""):
     # If the PNSR (FPH) has not been provided, assume public root *namespace*.
     if isinstance(pnsr_fph, str) and re_fph.match(pnsr_fph):
         #DB = DB_DIR + owner_fph + "_entities.db"
-        DB = DB_DIR + pnsr + "_entities.db"
-        if not os.path
+        EDB = DB_DIR + pnsr + "_entities.db"
+        if not os.path.exists(EDB):
+            create_db(EDB)
+
     else:
-        DB = DB_DIR + "_entities.db"
-    return DB
+        EDB = DB_DIR + "_entities.db"
+    return EDB
 
 # The following presents a problem.
 # During a bulk import, this may help to prevent lockout for other users when
