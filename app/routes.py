@@ -72,9 +72,7 @@ from app.core.nests_core import list_ancestors_fph, most_recent_clade
 from app.core.nests_core import prune_payment_pair_hrns
 from app.core.nests_core import get_list_concestor
 from app.core.nests_core import hrns_strip_concestor
-from app.core.nests_core import pin_subset_prompt
-from app.core.nests_core import check_auth_hash
-from app.core.nests_core import authenticate_pin
+
 from app.core.nests_core import retrieve_pmap
 from app.core.nests_core import new_pairing
 from app.core.nests_core import retrieve_pairing_account_fph
@@ -82,6 +80,10 @@ from app.core.nests_core import is_ancestor, is_in_private_namespace
 from app.core.nests_core import get_ahid_primid
 from app.core.nests_core import log_event
 from app.core.nests_core import random_filename
+
+from app.core.auth import pin_subset_prompt
+from app.core.auth import check_auth_hash
+from app.core.auth import authenticate_pin
 
 from app.core.stewardship import add_currency_steward
 from app.core.stewardship import add_namespace_steward

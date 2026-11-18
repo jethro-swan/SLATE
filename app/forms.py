@@ -23,7 +23,7 @@ import sys
 from app.core.fph_hrns_maps import hrns_to_fph
 #from app.core.auth import pin_random_ord, pin_prompt_message
 #from app.core.auth import pin_subset_prompt
-from app.core.nests_core import pin_subset_prompt
+from app.core.auth import pin_subset_prompt
 
 # Flask components: -----------------------------------------------------------
 
