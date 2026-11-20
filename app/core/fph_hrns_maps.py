@@ -170,12 +170,8 @@ def hrns_to_fph(hrns): # returns FPH and message
             # If the FPH is already in the FPH>HRNS map, it will be rehashed
             # repeatedly until no collision is found. (Although this will be an
             # exceedingly rare event, it will not be impossible.)
-#            tcount = 0 # TESTSTUFF
             while fph_to_hrns(fph):
-#                tcount += 1 # TESTSTUFF
                 fph = nshash(fph)
-#            if tcount > 0: # TESTSTUFF
-#                print("Rehash required: " + str(tcount)) # TESTSTUFF
             cursor.execute(
                 "INSERT INTO fph_hrns_map (fph, hrns) VALUES (?, ?)",
                 (fph, hrns)
@@ -187,7 +183,6 @@ def hrns_to_fph(hrns): # returns FPH and message
             conn.commit()
             cursor.close()
             return fph, ""
-
 
 save_fph_to_map = hrns_to_fph # alias
 

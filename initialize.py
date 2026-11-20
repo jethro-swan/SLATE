@@ -54,6 +54,7 @@ from app.core.constants import CONFIG_MAP
 from app.core.constants import FPH_PARENT_MAP
 from app.core.constants import DATA
 from app.core.constants import BACKUPS
+from app.core.constants import SUBSTRATE_FPH
 
 from app.core.unix_functions import create_dir
 from app.core.unix_functions import treecopy
@@ -94,7 +95,7 @@ create_flag_db()
 print("creating identifier entity registration databases (SQLite)")
 create_identifiers_db()
 print("creating entities databases (SQLite)")
-create_entities_db("") # for open/public *namesapce*
+create_entities_db(SUBSTRATE_FPH) # for open/public *namesapce*
 print("creating session databases (SQLite)")
 create_slate_session_db()
 print("creating seed entities")
