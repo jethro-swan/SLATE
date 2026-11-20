@@ -178,16 +178,17 @@ def create_balvol_plot(currency_id, ahid_id, plot_other_accounts = False):
     pp3 = [(0, 0)] # Start at the origin (0, 0)
     y = 0
     for p in pp2:
-        x = round(p[0]*bal_scale)
+#        x = round(p[0]*bal_scale)
+        x = -round(p[0]*bal_scale)
         y = p[1]
         pp3.append((x, y))
-
 
     if plot_other_accounts:
         pp3a = [(0, 0)] # Start at the origin (0, 0)
         y = 0
         for p in pp2a:
-            x = round(p[0]*bal_scale)
+#            x = round(p[0]*bal_scale)
+            x = -round(p[0]*bal_scale)
             y = p[1]
             pp3a.append((x, y))
 
@@ -222,9 +223,15 @@ def create_balvol_plot(currency_id, ahid_id, plot_other_accounts = False):
             + 'x2="' + str(margin + X_width) + '" ' \
             + 'y2="' + str(margin + Y_height) + '" ' \
             + 'style="stroke:black;stroke-width:1" /> ' \
-            + '<text x="' + str(margin + 2*X0 - 50) + '" ' \
+            + '<text x="' + str(margin + 2*X0 - 55) + '" ' \
             + 'y="' + str(margin + Y_height - 8) + '" ' \
-            + '>balance</text>'
+            + '>balance</text>' \
+            + '<text x="' + str(margin) + '" ' \
+            + 'y="' + str(margin + Y_height - 8) + '" ' \
+            + '>+</text>' \
+            + '<text x="' + str(margin + 2*X0 - 5) + '" ' \
+            + 'y="' + str(margin + Y_height - 8) + '" ' \
+            + '>-</text>'
         )
         p_from = pp3.pop()
         while len(pp3) > 0:
